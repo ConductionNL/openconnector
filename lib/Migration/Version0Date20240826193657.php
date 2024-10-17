@@ -102,7 +102,7 @@ use OCP\Migration\SimpleMigrationStep;
 			$table->addColumn('mapping', Types::TEXT, ['notnull' => false]);
 			$table->addColumn('unset', Types::TEXT, ['notnull' => false]);
 			$table->addColumn('cast', Types::TEXT, ['notnull' => false]);
-			$table->addColumn('pass_trough', Types::BOOLEAN, ['notnull' => false]);
+			$table->addColumn('pass_through', Types::BOOLEAN, ['notnull' => false]);
 			$table->addColumn('date_created', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
 			$table->addColumn('date_modified', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
 			$table->setPrimaryKey(['id']);

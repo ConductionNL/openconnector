@@ -107,7 +107,7 @@ class MappingService
 
         // Determine pass trough.
         // Let's get the dot array based on https://github.com/adbario/php-dot-notation.
-        if ($mappingObject->getPassTrough()) {
+        if ($mappingObject->getPassThrough()) {
             $dotArray = new Dot($input);
             // @todo: error loging
             // isset($this->style) === true && $this->style->info('Mapping *with* pass trough');
@@ -188,7 +188,7 @@ class MappingService
             [
                 'input'      => $input,
                 'output'     => $output,
-                'passTrough' => $mappingObject->getPassTrough(),
+                'passThrough' => $mappingObject->getPassThrough(),
                 'mapping'    => $mappingObject->getMapping(),
             ]
         );

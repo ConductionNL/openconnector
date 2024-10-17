@@ -91,7 +91,7 @@ export const useMappingStore = defineStore(
 					})
 			},
 			// Create or save a mapping from store
-			saveMapping(mappingItem) {
+			async saveMapping(mappingItem) {
 				if (!mappingItem) {
 					throw new Error('No mapping item to save')
 				}
@@ -104,37 +104,25 @@ export const useMappingStore = defineStore(
 					: `/index.php/apps/openconnector/api/mappings/${mappingItem.id}`
 				const method = isNewMapping ? 'POST' : 'PUT'
 
-				// Create a copy of the mapping item and remove empty properties
-				const mappingToSave = { ...mappingItem }
-				Object.keys(mappingToSave).forEach(key => {
-					if (mappingToSave[key] === '' || (Array.isArray(mappingToSave[key]) && !mappingToSave[key].length) || key === 'dateCreated' || key === 'dateModified') {
-						delete mappingToSave[key]
-					}
-				})
-
-				return fetch(
+				const response = await fetch(
 					endpoint,
 					{
 						method,
 						headers: {
 							'Content-Type': 'application/json',
 						},
-						body: JSON.stringify(mappingToSave),
+						body: JSON.stringify(mappingItem),
 					},
 				)
-					.then((response) => response.json())
-					.then((data) => {
-						this.setMappingItem(data)
-						console.log('Mapping saved')
-						// Refresh the mapping list
-						return this.refreshMappingList()
-					})
-					.catch((err) => {
-						console.error('Error saving mapping:', err)
-						throw err
-					})
-			},
 
+				const data = await response.json()
+				const entity = new Mapping(data)
+
+				this.setMappingItem(entity)
+				this.refreshMappingList()
+
+				return { response, data, entity }
+			},
 		},
 	},
 )

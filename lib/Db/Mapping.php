@@ -16,7 +16,7 @@ class Mapping extends Entity implements JsonSerializable
 	protected ?array $mapping = null;
 	protected ?array $unset = null;
 	protected ?array $cast = null;
-	protected ?bool $passTrough = null;
+	protected ?bool $passThrough = null;
 	protected ?DateTime $dateCreated = null;
 	protected ?DateTime $dateModified = null;
 
@@ -29,7 +29,7 @@ class Mapping extends Entity implements JsonSerializable
 		$this->addType('mapping', 'json');
 		$this->addType('unset', 'json');
 		$this->addType('cast', 'json');
-		$this->addType('passTrough', 'boolean');
+		$this->addType('passThrough', 'boolean');
 		$this->addType('dateCreated', 'datetime');
 		$this->addType('dateModified', 'datetime');
 	}
@@ -76,7 +76,7 @@ class Mapping extends Entity implements JsonSerializable
 			'mapping' => $this->mapping,
 			'unset' => $this->unset,
 			'cast' => $this->cast,
-			'passTrough' => $this->passTrough,
+			'passThrough' => $this->passThrough,
 			'dateCreated' => isset($this->dateCreated) ? $this->dateCreated->format('c') : null,
 			'dateModified' => isset($this->dateModified) ? $this->dateModified->format('c') : null,
 		];

@@ -39,7 +39,7 @@
             "type": ["array", "null"],
             "description": "The cast of this mapping object."
         },
-        "passTrough": {
+        "passThrough": {
             "type": ["boolean", "null"],
             "default": true,
             "description": "The passThrough of this mapping object."
