@@ -1,94 +1,132 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SafeParseReturnType, z } from 'zod'
 import { TSource } from './source.types'
+import getValidISOstring from '../../services/getValidISOstring.js'
+import ReadonlyBaseClass from '../ReadonlyBaseClass.js'
 
-export class Source implements TSource {
+export class Source extends ReadonlyBaseClass implements TSource {
 
-	public id: string
-	public name: string
-	public description: string | null
-	public reference: string | null
-	public version: string
-	public location: string
-	public isEnabled: boolean
-	public type: 'json' | 'xml' | 'soap' | 'ftp' | 'sftp'
-	public authorizationHeader: string
-	public auth: 'apikey' | 'jwt' | 'username-password' | 'none' | 'jwt-HS256' | 'vrijbrp-jwt' | 'pink-jwt' | 'oauth'
-	public authenticationConfig: object | null
-	public authorizationPassthroughMethod: 'header' | 'query' | 'form_params' | 'json' | 'base_auth'
-	public locale: string | null
-	public accept: string | null
-	public jwt: string | null
-	public jwtId: string | null
-	public secret: string | null
-	public username: string | null
-	public password: string | null
-	public apikey: string | null
-	public documentation: string | null
-	public loggingConfig: object
-	public oas: any[] | null
-	public paths: any[] | null
-	public headers: any[] | null
-	public translationConfig: any[]
-	public configuration: object | null
-	public endpointsConfig: object | null
-	public status: string
-	public logRetention: number
-	public errorRetention: number
-	public lastCall: string | null
-	public lastSync: string | null
-	public objectCount: number
-	public dateCreated: string | null
-	public dateModified: string | null
-	public test: boolean
+	public readonly id: string
+	public readonly name: string
+	public readonly description: string
+	public readonly reference: string
+	public readonly version: string
+	public readonly location: string
+	public readonly isEnabled: boolean
+	public readonly type: 'json' | 'xml' | 'soap' | 'ftp' | 'sftp'
+	public readonly authorizationHeader: string
+	public readonly auth: 'apikey' | 'jwt' | 'username-password' | 'none' | 'jwt-HS256' | 'vrijbrp-jwt' | 'pink-jwt' | 'oauth'
+	public readonly authenticationConfig: object
+	public readonly authorizationPassthroughMethod: 'header' | 'query' | 'form_params' | 'json' | 'base_auth'
+	public readonly locale: string
+	public readonly accept: string
+	public readonly jwt: string
+	public readonly jwtId: string
+	public readonly secret: string
+	public readonly username: string
+	public readonly password: string
+	public readonly apikey: string
+	public readonly documentation: string
+	public readonly loggingConfig: object
+	public readonly oas: any[]
+	public readonly paths: any[]
+	public readonly headers: any[]
+	public readonly translationConfig: any[]
+	public readonly configuration: object
+	public readonly endpointsConfig: object
+	public readonly status: string
+	public readonly logRetention: number
+	public readonly errorRetention: number
+	public readonly lastCall: string
+	public readonly lastSync: string
+	public readonly objectCount: number
+	public readonly dateCreated: string
+	public readonly dateModified: string
+	public readonly test: boolean
 
 	constructor(source: TSource) {
-		this.id = source.id || ''
-		this.name = source.name || ''
-		this.description = source.description || null
-		this.reference = source.reference || null
-		this.version = source.version || '0.0.0'
-		this.location = source.location || ''
-		this.isEnabled = source.isEnabled ?? true
-		this.type = source.type || 'json'
-		this.authorizationHeader = source.authorizationHeader || 'Authorization'
-		this.auth = source.auth || 'none'
-		this.authenticationConfig = source.authenticationConfig || null
-		this.authorizationPassthroughMethod = source.authorizationPassthroughMethod || 'header'
-		this.locale = source.locale || null
-		this.accept = source.accept || null
-		this.jwt = source.jwt || null
-		this.jwtId = source.jwtId || null
-		this.secret = source.secret || null
-		this.username = source.username || null
-		this.password = source.password || null
-		this.apikey = source.apikey || null
-		this.documentation = source.documentation || null
-		this.loggingConfig = source.loggingConfig || {}
-		this.oas = source.oas || null
-		this.paths = source.paths || null
-		this.headers = source.headers || null
-		this.translationConfig = source.translationConfig || []
-		this.configuration = source.configuration || null
-		this.endpointsConfig = source.endpointsConfig || null
-		this.status = source.status || 'No calls have been made yet to this source'
-		this.logRetention = source.logRetention || 3600
-		this.errorRetention = source.errorRetention || 86400
-		this.lastCall = source.lastCall || null
-		this.lastSync = source.lastSync || null
-		this.objectCount = source.objectCount || 0
-		this.dateCreated = source.dateCreated || null
-		this.dateModified = source.dateModified || null
-		this.test = source.test || false
+		const processedSource: TSource = {
+			id: source.id || null,
+			name: source.name || '',
+			description: source.description || '',
+			reference: source.reference || '',
+			version: source.version || '',
+			location: source.location || '',
+			isEnabled: source.isEnabled ?? true,
+			type: source.type || 'json',
+			authorizationHeader: source.authorizationHeader || '',
+			auth: source.auth || 'none',
+			authenticationConfig: source.authenticationConfig || {},
+			authorizationPassthroughMethod: source.authorizationPassthroughMethod || 'header',
+			locale: source.locale || '',
+			accept: source.accept || '',
+			jwt: source.jwt || '',
+			jwtId: source.jwtId || '',
+			secret: source.secret || '',
+			username: source.username || '',
+			password: source.password || '',
+			apikey: source.apikey || '',
+			documentation: source.documentation || '',
+			loggingConfig: source.loggingConfig || {},
+			oas: source.oas || [],
+			paths: source.paths || [],
+			headers: source.headers || [],
+			translationConfig: source.translationConfig || [],
+			configuration: source.configuration || {},
+			endpointsConfig: source.endpointsConfig || {},
+			status: source.status || '',
+			logRetention: source.logRetention || 0,
+			errorRetention: source.errorRetention || 0,
+			lastCall: source.lastCall || '',
+			lastSync: source.lastSync || '',
+			objectCount: source.objectCount || 0,
+			dateCreated: getValidISOstring(source.dateCreated) ?? '',
+			dateModified: getValidISOstring(source.dateModified) ?? '',
+			test: source.test || false,
+		}
+
+		super(processedSource)
 	}
 
 	public validate(): SafeParseReturnType<TSource, unknown> {
 		const schema = z.object({
-			id: z.string().uuid(),
+			id: z.string().nullable(),
 			name: z.string().max(255),
+			description: z.string(),
+			reference: z.string(),
+			version: z.string(),
 			location: z.string().max(255),
+			isEnabled: z.boolean(),
 			type: z.enum(['json', 'xml', 'soap', 'ftp', 'sftp']),
+			authorizationHeader: z.string(),
 			auth: z.enum(['apikey', 'jwt', 'username-password', 'none', 'jwt-HS256', 'vrijbrp-jwt', 'pink-jwt', 'oauth']),
+			authenticationConfig: z.object({}),
+			authorizationPassthroughMethod: z.enum(['header', 'query', 'form_params', 'json', 'base_auth']),
+			locale: z.string(),
+			accept: z.string(),
+			jwt: z.string(),
+			jwtId: z.string(),
+			secret: z.string(),
+			username: z.string(),
+			password: z.string(),
+			apikey: z.string(),
+			documentation: z.string(),
+			loggingConfig: z.object({}),
+			oas: z.array(z.any()),
+			paths: z.array(z.any()),
+			headers: z.array(z.any()),
+			translationConfig: z.array(z.any()),
+			configuration: z.object({}),
+			endpointsConfig: z.object({}),
+			status: z.string(),
+			logRetention: z.number(),
+			errorRetention: z.number(),
+			lastCall: z.string(),
+			lastSync: z.string(),
+			objectCount: z.number(),
+			dateCreated: z.string().datetime(),
+			dateModified: z.string().datetime(),
+			test: z.boolean(),
 		})
 
 		return schema.safeParse({ ...this })

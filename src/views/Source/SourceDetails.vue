@@ -152,6 +152,7 @@ import TimelineQuestionOutline from 'vue-material-design-icons/TimelineQuestionO
 import Plus from 'vue-material-design-icons/Plus.vue'
 import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import FileCogOutline from 'vue-material-design-icons/FileCogOutline.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 
 export default {
 	name: 'SourceDetails',

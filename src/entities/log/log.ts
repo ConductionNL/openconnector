@@ -1,81 +1,101 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TLog } from './log.types'
+import ReadonlyBaseClass from '../ReadonlyBaseClass.js'
+import getValidISOstring from '../../services/getValidISOstring.js'
 
-export class Log implements TLog {
+export class Log extends ReadonlyBaseClass implements TLog {
 
-	public id: string
-	public type: 'in' | 'out'
-	public callId: string
-	public requestMethod: string
-	public requestHeaders: object[]
-	public requestQuery: object[]
-	public requestPathInfo: string
-	public requestLanguages: string[]
-	public requestServer: object
-	public requestContent: string
-	public responseStatus: string | null
-	public responseStatusCode: number | null
-	public responseHeaders: object[] | null
-	public responseContent: string | null
-	public userId: string | null
-	public session: string
-	public sessionValues: object
-	public responseTime: number
-	public routeName: string | null
-	public routeParameters: object | null
-	public entity: object | null
-	public endpoint: object | null
-	public gateway: object | null
-	public handler: object | null
-	public objectId: string | null
-	public dateCreated: string | null
-	public dateModified: string | null
+	public readonly id: string
+	public readonly type: 'in' | 'out'
+	public readonly callId: string
+	public readonly requestMethod: string
+	public readonly requestHeaders: object[]
+	public readonly requestQuery: object[]
+	public readonly requestPathInfo: string
+	public readonly requestLanguages: string[]
+	public readonly requestServer: object
+	public readonly requestContent: string
+	public readonly responseStatus: string
+	public readonly responseStatusCode: number
+	public readonly responseHeaders: object[]
+	public readonly responseContent: string
+	public readonly userId: string
+	public readonly session: string
+	public readonly sessionValues: object
+	public readonly responseTime: number
+	public readonly routeName: string
+	public readonly routeParameters: object
+	public readonly entity: object
+	public readonly endpoint: object
+	public readonly gateway: object
+	public readonly handler: object
+	public readonly objectId: string
+	public readonly dateCreated: string
+	public readonly dateModified: string
 
 	constructor(log: TLog) {
-		this.id = log.id || ''
-		this.type = log.type || 'in'
-		this.callId = log.callId || ''
-		this.requestMethod = log.requestMethod || ''
-		this.requestHeaders = log.requestHeaders || []
-		this.requestQuery = log.requestQuery || []
-		this.requestPathInfo = log.requestPathInfo || ''
-		this.requestLanguages = log.requestLanguages || []
-		this.requestServer = log.requestServer || {}
-		this.requestContent = log.requestContent || ''
-		this.responseStatus = log.responseStatus || null
-		this.responseStatusCode = log.responseStatusCode || null
-		this.responseHeaders = log.responseHeaders || null
-		this.responseContent = log.responseContent || null
-		this.userId = log.userId || null
-		this.session = log.session || ''
-		this.sessionValues = log.sessionValues || {}
-		this.responseTime = log.responseTime || 0
-		this.routeName = log.routeName || null
-		this.routeParameters = log.routeParameters || null
-		this.entity = log.entity || null
-		this.endpoint = log.endpoint || null
-		this.gateway = log.gateway || null
-		this.handler = log.handler || null
-		this.objectId = log.objectId || null
-		this.dateCreated = log.dateCreated || null
-		this.dateModified = log.dateModified || null
+		const processedLog: TLog = {
+			id: log.id || '',
+			type: log.type || 'in',
+			callId: log.callId || '',
+			requestMethod: log.requestMethod || '',
+			requestHeaders: log.requestHeaders || [],
+			requestQuery: log.requestQuery || [],
+			requestPathInfo: log.requestPathInfo || '',
+			requestLanguages: log.requestLanguages || [],
+			requestServer: log.requestServer || {},
+			requestContent: log.requestContent || '',
+			responseStatus: log.responseStatus || '',
+			responseStatusCode: log.responseStatusCode || 0,
+			responseHeaders: log.responseHeaders || [],
+			responseContent: log.responseContent || '',
+			userId: log.userId || '',
+			session: log.session || '',
+			sessionValues: log.sessionValues || {},
+			responseTime: log.responseTime || 0,
+			routeName: log.routeName || '',
+			routeParameters: log.routeParameters || {},
+			entity: log.entity || {},
+			endpoint: log.endpoint || {},
+			gateway: log.gateway || {},
+			handler: log.handler || {},
+			objectId: log.objectId || '',
+			dateCreated: getValidISOstring(log.dateCreated) ?? '',
+			dateModified: getValidISOstring(log.dateModified) ?? '',
+		}
+
+		super(processedLog)
 	}
 
 	public validate(): SafeParseReturnType<TLog, unknown> {
 		const schema = z.object({
-			id: z.string().uuid(),
+			id: z.string().nullable(),
 			type: z.enum(['in', 'out']),
 			callId: z.string().uuid(),
 			requestMethod: z.string().max(255),
-			requestHeaders: z.array(z.object({})),
-			requestQuery: z.array(z.object({})),
+			requestHeaders: z.array(z.record(z.string(), z.string())),
+			requestQuery: z.array(z.record(z.string(), z.string())),
 			requestPathInfo: z.string().max(255),
 			requestLanguages: z.array(z.string()),
-			requestServer: z.object({}),
+			requestServer: z.record(z.string(), z.unknown()),
 			requestContent: z.string(),
+			responseStatus: z.string(),
+			responseStatusCode: z.number().int(),
+			responseHeaders: z.array(z.record(z.string(), z.string())),
+			responseContent: z.string(),
+			userId: z.string(),
 			session: z.string().max(255),
-			sessionValues: z.object({}),
+			sessionValues: z.record(z.string(), z.unknown()),
 			responseTime: z.number().int(),
+			routeName: z.string(),
+			routeParameters: z.record(z.string(), z.unknown()),
+			entity: z.record(z.string(), z.unknown()),
+			endpoint: z.record(z.string(), z.unknown()),
+			gateway: z.record(z.string(), z.unknown()),
+			handler: z.record(z.string(), z.unknown()),
+			objectId: z.string(),
+			dateCreated: z.string().datetime().nullable(),
+			dateModified: z.string().datetime().nullable(),
 		})
 
 		return schema.safeParse({ ...this })

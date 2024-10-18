@@ -17,6 +17,12 @@ export const mockJobData = (): TJob[] => [
 		scheduleAfter: null,
 		userId: 'admin',
 		jobListId: 'daily-jobs',
+		logRetention: 0,
+		errorRetention: 0,
+		lastRun: '',
+		nextRun: '',
+		created: '',
+		updated: '',
 	},
 	{
 		id: '4c3edd34-a90d-4d2a-8894-adb5836ecde8',
@@ -33,6 +39,12 @@ export const mockJobData = (): TJob[] => [
 		scheduleAfter: null,
 		userId: 'reporter',
 		jobListId: 'weekly-jobs',
+		logRetention: 0,
+		errorRetention: 0,
+		lastRun: '',
+		nextRun: '',
+		created: '',
+		updated: '',
 	},
 ]
 

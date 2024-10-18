@@ -3,7 +3,7 @@ import { TSynchronization } from './synchronization.types'
 
 export const mockSynchronizationData = (): TSynchronization[] => [
 	{
-		id: '5137a1e5-b54d-43ad-abd1-4b5bff5fcd3f',
+		id: 1,
 		name: 'Synchronization 1',
 		description: 'Synchronization 1',
 		sourceId: 'source1',
@@ -26,7 +26,7 @@ export const mockSynchronizationData = (): TSynchronization[] => [
 		updated: '2023-05-01T14:00:00Z',
 	},
 	{
-		id: '4c3edd34-a90d-4d2a-8894-adb5836ecde8',
+		id: 2,
 		name: 'Synchronization 2',
 		description: 'Synchronization 2',
 		sourceId: 'source2',

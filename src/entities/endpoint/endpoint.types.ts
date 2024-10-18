@@ -8,7 +8,7 @@ export type TEndpoint = {
     endpoint: string
     endpointArray: string[]
     endpointRegex: string
-    method: string
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
     targetType: string
     targetId: string
     created: string

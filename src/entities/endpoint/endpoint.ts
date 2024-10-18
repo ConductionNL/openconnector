@@ -1,41 +1,44 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TEndpoint } from './endpoint.types'
 import getValidISOstring from '../../services/getValidISOstring'
+import ReadonlyBaseClass from '../ReadonlyBaseClass.js'
 
-export class Endpoint implements TEndpoint {
+export class Endpoint extends ReadonlyBaseClass implements TEndpoint {
 
-	public id: number
-	public uuid: string
-	public name: string
-	public description: string
-	public reference: string
-	public version: string
-	public endpoint: string
-	public endpointArray: string[]
-	public endpointRegex: string
-	public method: string
-	public targetType: string
-	public targetId: string
-	public created: string
-	public updated: string
+	public readonly id: number
+	public readonly uuid: string
+	public readonly name: string
+	public readonly description: string
+	public readonly reference: string
+	public readonly version: string
+	public readonly endpoint: string
+	public readonly endpointArray: string[]
+	public readonly endpointRegex: string
+	public readonly method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+	public readonly targetType: string
+	public readonly targetId: string
+	public readonly created: string
+	public readonly updated: string
 
 	constructor(endpoint: TEndpoint) {
-		this.id = endpoint.id || null
-		this.uuid = endpoint.uuid || ''
-		this.name = endpoint.name || ''
-		this.description = endpoint.description || ''
-		this.reference = endpoint.reference || ''
-		this.version = endpoint.version || '0.0.0'
-		this.endpoint = endpoint.endpoint || ''
-		this.endpointArray = endpoint.endpointArray ?? []
-		this.endpointRegex = endpoint.endpointRegex || ''
-		this.method = endpoint.method || 'GET'
-		this.targetType = endpoint.targetType || ''
-		this.targetId = endpoint.targetId || ''
+		const processedEndpoint: TEndpoint = {
+			id: endpoint.id || null,
+			uuid: endpoint.uuid || '',
+			name: endpoint.name || '',
+			description: endpoint.description || '',
+			reference: endpoint.reference || '',
+			version: endpoint.version || '0.0.0',
+			endpoint: endpoint.endpoint || '',
+			endpointArray: endpoint.endpointArray ?? [],
+			endpointRegex: endpoint.endpointRegex || '',
+			method: endpoint.method || 'GET',
+			targetType: endpoint.targetType || '',
+			targetId: endpoint.targetId || '',
+			created: getValidISOstring(endpoint.created) ?? '',
+			updated: getValidISOstring(endpoint.updated) ?? '',
+		}
 
-		// Convert the received ISO string to a valid ISO string using a Date object if necessary
-		this.created = getValidISOstring(endpoint.created)
-		this.updated = getValidISOstring(endpoint.updated)
+		super(processedEndpoint)
 	}
 
 	// validate data before posting

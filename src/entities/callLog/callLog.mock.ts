@@ -3,7 +3,7 @@ import { TCallLog } from './callLog.types'
 
 export const mockCallLogData = (): TCallLog[] => [
 	{
-		id: '5137a1e5-b54d-43ad-abd1-4b5bff5fcd3f',
+		id: 1,
 		sourceId: '4c3edd34-a90d-4d2a-8894-adb5836ecde8',
 		endpoint: '/api/users',
 		method: 'GET',
@@ -18,7 +18,7 @@ export const mockCallLogData = (): TCallLog[] => [
 		updated: null,
 	},
 	{
-		id: '4c3edd34-a90d-4d2a-8894-adb5836ecde8',
+		id: 2,
 		sourceId: '5137a1e5-b54d-43ad-abd1-4b5bff5fcd3f',
 		endpoint: '/api/posts',
 		method: 'POST',

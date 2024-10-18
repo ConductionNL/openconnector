@@ -1,33 +1,36 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TConsumer } from './consumer.types'
 import getValidISOstring from '../../services/getValidISOstring'
+import ReadonlyBaseClass from '../ReadonlyBaseClass.js'
 
-export class Consumer implements TConsumer {
+export class Consumer extends ReadonlyBaseClass implements TConsumer {
 
-	public id: number
-	public uuid: string
-	public name: string
-	public description: string
-	public domains: string[]
-	public ips: string[]
-	public authorizationType: 'none' | 'basic' | 'bearer' | 'apiKey' | 'oauth2' | 'jwt'
-	public authorizationConfiguration: string[][]
-	public created: string
-	public updated: string
+	public readonly id: number
+	public readonly uuid: string
+	public readonly name: string
+	public readonly description: string
+	public readonly domains: string[]
+	public readonly ips: string[]
+	public readonly authorizationType: 'none' | 'basic' | 'bearer' | 'apiKey' | 'oauth2' | 'jwt'
+	public readonly authorizationConfiguration: string[][]
+	public readonly created: string
+	public readonly updated: string
 
 	constructor(consumer: TConsumer) {
-		this.id = consumer.id || null
-		this.uuid = consumer.uuid || ''
-		this.name = consumer.name || ''
-		this.description = consumer.description || ''
-		this.domains = consumer.domains || []
-		this.ips = consumer.ips || []
-		this.authorizationType = consumer.authorizationType || 'basic'
-		this.authorizationConfiguration = consumer.authorizationConfiguration || []
+		const processedConsumer: TConsumer = {
+			id: consumer.id || null,
+			uuid: consumer.uuid || '',
+			name: consumer.name || '',
+			description: consumer.description || '',
+			domains: consumer.domains || [],
+			ips: consumer.ips || [],
+			authorizationType: consumer.authorizationType || 'basic',
+			authorizationConfiguration: consumer.authorizationConfiguration || [],
+			created: getValidISOstring(consumer.created) ?? '',
+			updated: getValidISOstring(consumer.updated) ?? '',
+		}
 
-		/* Convert dates back to valid javascript ISO date strings */
-		this.created = getValidISOstring(consumer.created)
-		this.updated = getValidISOstring(consumer.updated)
+		super(processedConsumer)
 	}
 
 	public validate(): SafeParseReturnType<TConsumer, unknown> {

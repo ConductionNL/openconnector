@@ -13,6 +13,12 @@ export const mockJobLogData = (): TJobLog[] => [
 		lastRun: '2023-05-01T12:00:00Z',
 		nextRun: '2023-05-02T12:00:00Z',
 		created: '2023-05-01T00:00:00Z',
+		uuid: '',
+		level: '',
+		message: '',
+		sessionId: '',
+		stackTrace: [],
+		expires: '',
 	},
 	{
 		id: '4c3edd34-a90d-4d2a-8894-adb5836ecde8',
@@ -25,6 +31,12 @@ export const mockJobLogData = (): TJobLog[] => [
 		lastRun: '2023-05-01T00:00:00Z',
 		nextRun: '2023-05-08T00:00:00Z',
 		created: '2023-04-30T00:00:00Z',
+		uuid: '',
+		level: '',
+		message: '',
+		sessionId: '',
+		stackTrace: [],
+		expires: '',
 	},
 ]
 

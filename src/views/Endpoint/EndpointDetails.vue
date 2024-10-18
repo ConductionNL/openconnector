@@ -30,8 +30,6 @@ import { endpointStore, navigationStore } from '../../store/store.js'
 					</NcActions>
 				</div>
 
-				<span>{{ endpointStore.endpointItem.description }}</span>
-
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
 						<b>uuid:</b>

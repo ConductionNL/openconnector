@@ -1,41 +1,47 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SafeParseReturnType, z } from 'zod'
 import { TMapping } from './mapping.types'
+import getValidISOstring from '../../services/getValidISOstring.js'
+import ReadonlyBaseClass from '../ReadonlyBaseClass.js'
 
-export class Mapping implements TMapping {
+export class Mapping extends ReadonlyBaseClass implements TMapping {
 
-	public id: number
-	public uuid: string
-	public reference: string
-	public version: string
-	public name: string
-	public description: string
-	public mapping: any[]
-	public unset: any[]
-	public cast: any[]
-	public passThrough: boolean
-	public dateCreated: string
-	public dateModified: string
+	public readonly id: number
+	public readonly uuid: string
+	public readonly reference: string
+	public readonly version: string
+	public readonly name: string
+	public readonly description: string
+	public readonly mapping: any[]
+	public readonly unset: any[]
+	public readonly cast: any[]
+	public readonly passThrough: boolean
+	public readonly dateCreated: string
+	public readonly dateModified: string
 
 	constructor(mapping: TMapping) {
-		this.id = mapping.id || null
-		this.uuid = mapping.uuid || null
-		this.reference = mapping.reference || ''
-		this.version = mapping.version || '0.0.0'
-		this.name = mapping.name || ''
-		this.description = mapping.description || ''
-		this.mapping = mapping.mapping || []
-		this.unset = mapping.unset || []
-		this.cast = mapping.cast || []
-		this.passThrough = mapping.passThrough ?? false
-		this.dateCreated = mapping.dateCreated || ''
-		this.dateModified = mapping.dateModified || ''
+		const processedMapping: TMapping = {
+			id: mapping.id || null,
+			uuid: mapping.uuid || '',
+			reference: mapping.reference || '',
+			version: mapping.version || '',
+			name: mapping.name || '',
+			description: mapping.description || '',
+			mapping: mapping.mapping || [],
+			unset: mapping.unset || [],
+			cast: mapping.cast || [],
+			passThrough: mapping.passThrough ?? true,
+			dateCreated: getValidISOstring(mapping.dateCreated) ?? '',
+			dateModified: getValidISOstring(mapping.dateModified) ?? '',
+		}
+
+		super(processedMapping)
 	}
 
 	public validate(): SafeParseReturnType<TMapping, unknown> {
 		const schema = z.object({
-			id: z.number().or(z.null()),
-			uuid: z.string().uuid().max(36).or(z.null()),
+			id: z.number().nullable(),
+			uuid: z.string().uuid().max(36).nullable(),
 			reference: z.string().max(255),
 			version: z.string().max(255),
 			name: z.string().max(255),

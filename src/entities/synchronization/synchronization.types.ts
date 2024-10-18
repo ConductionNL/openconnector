@@ -1,23 +1,23 @@
 export type TSynchronization = {
-    id?: string
+    id: number
     name: string
     description: string
     sourceId: string
     sourceType: string
-    sourceHash?: string
+    sourceHash: string
     sourceTargetMapping: string
-    sourceConfig?: object
-    sourceLastChanged?: string
-    sourceLastChecked?: string
-    sourceLastSynced?: string
+    sourceConfig: object
+    sourceLastChanged: string
+    sourceLastChecked: string
+    sourceLastSynced: string
     targetId: string
     targetType: string
-    targetHash?: string
+    targetHash: string
     targetSourceMapping: string
-    targetConfig?: object
-    targetLastChanged?: string
-    targetLastChecked?: string
-    targetLastSynced?: string
+    targetConfig: object
+    targetLastChanged: string
+    targetLastChecked: string
+    targetLastSynced: string
     created: string
     updated: string
 }

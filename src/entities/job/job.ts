@@ -1,49 +1,56 @@
 import { SafeParseReturnType, z } from 'zod'
 import { TJob } from './job.types'
+import ReadonlyBaseClass from '../ReadonlyBaseClass.js'
+import getValidISOstring from '../../services/getValidISOstring.js'
 
-export class Job implements TJob {
+export class Job extends ReadonlyBaseClass implements TJob {
 
-	public id: string
-	public name: string
-	public description: string | null
-	public jobClass: string
-	public arguments: object | null
-	public interval: number
-	public executionTime: number
-	public timeSensitive: boolean
-	public allowParallelRuns: boolean
-	public isEnabled: boolean
-	public singleRun: boolean
-	public scheduleAfter: string | null
-	public userId: string | null
-	public jobListId: string | null
-	public logRetention: number
-	public errorRetention: number
-	public lastRun: string | null
-	public nextRun: string | null
-	public created: string | null
-	public updated: string | null
-	public status: string
+	public readonly id: string
+	public readonly name: string
+	public readonly description: string
+	public readonly jobClass: string
+	public readonly arguments: object
+	public readonly interval: number
+	public readonly executionTime: number
+	public readonly timeSensitive: boolean
+	public readonly allowParallelRuns: boolean
+	public readonly isEnabled: boolean
+	public readonly singleRun: boolean
+	public readonly scheduleAfter: string
+	public readonly userId: string
+	public readonly jobListId: string
+	public readonly logRetention: number
+	public readonly errorRetention: number
+	public readonly lastRun: string
+	public readonly nextRun: string
+	public readonly created: string
+	public readonly updated: string
 
 	constructor(job: TJob) {
-		this.id = job.id || ''
-		this.name = job.name || ''
-		this.description = job.description || null
-		this.jobClass = job.jobClass || 'OCA\\OpenConnector\\Action\\PingAction'
-		this.arguments = job.arguments || null
-		this.interval = job.interval || 3600
-		this.executionTime = job.executionTime || 3600
-		this.timeSensitive = job.timeSensitive ?? true
-		this.allowParallelRuns = job.allowParallelRuns ?? false
-		this.isEnabled = job.isEnabled ?? true
-		this.singleRun = job.singleRun ?? false
-		this.scheduleAfter = job.scheduleAfter || null
-		this.userId = job.userId || null
-		this.jobListId = job.jobListId || null
-		this.logRetention = job.logRetention || 3600
-		this.errorRetention = job.errorRetention || 86400
-		this.lastRun = job.lastRun || null
-		this.nextRun = job.nextRun || null
+		const processedJob: TJob = {
+			id: job.id || '',
+			name: job.name || '',
+			description: job.description || '',
+			jobClass: job.jobClass || 'OCA\\OpenConnector\\Action\\PingAction',
+			arguments: job.arguments || {},
+			interval: job.interval || 3600,
+			executionTime: job.executionTime || 3600,
+			timeSensitive: job.timeSensitive ?? true,
+			allowParallelRuns: job.allowParallelRuns ?? false,
+			isEnabled: job.isEnabled ?? true,
+			singleRun: job.singleRun ?? false,
+			scheduleAfter: job.scheduleAfter || '',
+			userId: job.userId || '',
+			jobListId: job.jobListId || '',
+			logRetention: job.logRetention || 3600,
+			errorRetention: job.errorRetention || 86400,
+			lastRun: job.lastRun || '',
+			nextRun: job.nextRun || '',
+			created: getValidISOstring(job.created) ?? '',
+			updated: getValidISOstring(job.updated) ?? '',
+		}
+
+		super(processedJob)
 	}
 
 	public validate(): SafeParseReturnType<TJob, unknown> {

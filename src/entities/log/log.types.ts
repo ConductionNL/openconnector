@@ -1,5 +1,5 @@
 export type TLog = {
-    id?: string
+    id: string
     type: 'in' | 'out'
     callId: string
     requestMethod: string
@@ -9,21 +9,21 @@ export type TLog = {
     requestLanguages: string[]
     requestServer: object
     requestContent: string
-    responseStatus?: string | null
-    responseStatusCode?: number | null
-    responseHeaders?: object[] | null
-    responseContent?: string | null
-    userId?: string | null
+    responseStatus: string
+    responseStatusCode: number
+    responseHeaders: object[]
+    responseContent: string
+    userId: string
     session: string
     sessionValues: object
     responseTime: number
-    routeName?: string | null
-    routeParameters?: object | null
-    entity?: object | null
-    endpoint?: object | null
-    gateway?: object | null
-    handler?: object | null
-    objectId?: string | null
-    dateCreated?: string | null
-    dateModified?: string | null
+    routeName: string
+    routeParameters: object
+    entity: object
+    endpoint: object
+    gateway: object
+    handler: object
+    objectId: string
+    dateCreated: string
+    dateModified: string
 }
