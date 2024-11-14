@@ -90,13 +90,13 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 					<div class="gridContent">
 						<b>Next Run:</b>
 						<p>
-							{{ new Date(jobStore.jobItem.nextRun).toLocaleString() || 'N/A' }}
+							{{ jobStore.jobItem.nextRun ? new Date(jobStore.jobItem.nextRun).toLocaleString() || 'N/A' : 'N/A' }}
 						</p>
 					</div>
 					<div class="gridContent">
 						<b>Last Run:</b>
 						<p>
-							{{ new Date(jobStore.jobItem.lastRun).toLocaleString() || 'N/A' }}
+							{{ jobStore.jobItem.lastRun ? new Date(jobStore.jobItem.lastRun).toLocaleString() || 'N/A' : 'N/A' }}
 						</p>
 					</div>
 				</div>
