@@ -70,24 +70,6 @@ import { jobStore, navigationStore } from '../../store/store.js'
 						<th>Execution Time</th>
 						<td>{{ jobStore.jobTest.executionTime }} ms</td>
 					</tr>
-					<tr>
-						<th>User ID</th>
-						<td>{{ jobStore.jobTest.userId || 'N/A' }}</td>
-					</tr>
-					<tr>
-						<th>Session ID</th>
-						<td>{{ jobStore.jobTest.sessionId || 'N/A' }}</td>
-					</tr>
-					<tr>
-						<th>Stack Trace</th>
-						<td>
-							<ol>
-								<li v-for="(step, index) in jobStore.jobTest.stackTrace" :key="index">
-									{{ step }}
-								</li>
-							</ol>
-						</td>
-					</tr>
 				</table>
 			</div>
 		</div>
