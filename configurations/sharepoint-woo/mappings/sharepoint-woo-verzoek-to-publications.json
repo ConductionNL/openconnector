@@ -12,12 +12,12 @@
 	},
 	"unset": [],
 	"cast": {
-        "title": "d.woo_x005f_titel",
-        "description": "d.woo_x005f_beschrijving",
-        "summary": "d.woo_x005f_samenvatting",
-        "category": "d.woo_x005f_categorie",
-        "published": "d.woo_x005f_publicatiedatum",
-        "modified": "d.vti_x005f_nexttolasttimemodified"
+        "title": "unsetIfValue==d.woo_x005f_titel",
+        "description": "unsetIfValue==d.woo_x005f_beschrijving",
+        "summary": "unsetIfValue==d.woo_x005f_samenvatting",
+        "category": "unsetIfValue==d.woo_x005f_categorie",
+        "published": "unsetIfValue==d.woo_x005f_publicatiedatum",
+        "modified": "unsetIfValue==d.vti_x005f_nexttolasttimemodified"
     },
 	"passThrough": false
 }
