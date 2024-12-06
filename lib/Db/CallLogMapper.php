@@ -194,4 +194,92 @@ class CallLogMapper extends QBMapper
             return null;
         }
     }
+
+    /**
+     * Get call statistics grouped by date for a specific date range
+     * 
+     * @param \DateTime $from Start date
+     * @param \DateTime $to End date
+     * @return array Array of daily statistics with success and error counts
+     */
+    public function getCallStatsByDateRange(\DateTime $from, \DateTime $to): array 
+    {
+        $qb = $this->db->getQueryBuilder();
+
+        // Get the actual data from database
+        $qb->select(
+                $qb->createFunction('DATE(created) as date'),
+                $qb->createFunction('SUM(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 ELSE 0 END) as success'),
+                $qb->createFunction('SUM(CASE WHEN status_code < 200 OR status_code >= 300 THEN 1 ELSE 0 END) as error')
+            )
+            ->from('openconnector_call_logs')
+            ->where($qb->expr()->gte('created', $qb->createNamedParameter($from->format('Y-m-d H:i:s'))))
+            ->andWhere($qb->expr()->lte('created', $qb->createNamedParameter($to->format('Y-m-d H:i:s'))))
+            ->groupBy('date')
+            ->orderBy('date', 'ASC');
+
+        $result = $qb->execute();
+        $stats = [];
+        
+        // Create DatePeriod to iterate through all dates
+        $period = new \DatePeriod(
+            $from,
+            new \DateInterval('P1D'),
+            $to->modify('+1 day')
+        );
+
+        // Initialize all dates with zero values
+        foreach ($period as $date) {
+            $dateStr = $date->format('Y-m-d');
+            $stats[$dateStr] = [
+                'success' => 0,
+                'error' => 0
+            ];
+        }
+
+        // Fill in actual values where they exist
+        while ($row = $result->fetch()) {
+            $stats[$row['date']] = [
+                'success' => (int)$row['success'],
+                'error' => (int)$row['error']
+            ];
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Get call statistics grouped by hour for a specific date range
+     * 
+     * @param \DateTime $from Start date
+     * @param \DateTime $to End date
+     * @return array Array of hourly statistics with success and error counts
+     */
+    public function getCallStatsByHourRange(\DateTime $from, \DateTime $to): array 
+    {
+        $qb = $this->db->getQueryBuilder();
+
+        $qb->select(
+                $qb->createFunction('HOUR(created) as hour'),
+                $qb->createFunction('SUM(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 ELSE 0 END) as success'),
+                $qb->createFunction('SUM(CASE WHEN status_code < 200 OR status_code >= 300 THEN 1 ELSE 0 END) as error')
+            )
+            ->from('openconnector_call_logs')
+            ->where($qb->expr()->gte('created', $qb->createNamedParameter($from->format('Y-m-d H:i:s'))))
+            ->andWhere($qb->expr()->lte('created', $qb->createNamedParameter($to->format('Y-m-d H:i:s'))))
+            ->groupBy('hour')
+            ->orderBy('hour', 'ASC');
+
+        $result = $qb->execute();
+        $stats = [];
+
+        while ($row = $result->fetch()) {
+            $stats[$row['hour']] = [
+                'success' => (int)$row['success'],
+                'error' => (int)$row['error']
+            ];
+        }
+
+        return $stats;
+    }
 }
