@@ -1,3 +1,7 @@
+<script setup>
+import { navigationStore } from '../../store/store.js'
+</script>
+
 <template>
 	<NcAppContent>
 		<h2 class="pageHeader">
@@ -5,23 +9,112 @@
 		</h2>
 
 		<div class="dashboard-content">
-			<div class="graphs">
-				<div>
-					<h5>Source calls</h5>
+			<div class="stats">
+				<div
+					v-for="(stat, key) in statsConfig"
+					:key="key"
+					:class="{ clickable: true }"
+					@click="navigateTo(key)">
+					<h5>{{ stat.label }}</h5>
 					<div class="content">
-						<apexchart
-							width="500"
-							:options="sourcesCalls.options"
-							:series="sourcesCalls.series" />
+						<NcLoadingIcon v-if="isLoading" :size="44" />
+						<template v-else>
+							{{ stats[key] || 0 }}
+						</template>
 					</div>
 				</div>
-				<div>
-					<h5>Zoek aanvragen per uur</h5>
-					<div class="content">
-						<apexchart
-							width="500"
-							:options="incomingCalls.options"
-							:series="incomingCalls.series" />
+			</div>
+
+			<div class="date-range-selector">
+				<div class="date-picker">
+					<label for="fromDate">From:</label>
+					<NcDateTimePicker
+						v-model="dateRange.from"
+						:max-date="dateRange.to"
+						:show-time="true"
+						:placeholder="'Select start date'"
+						@change="handleDateChange" />
+				</div>
+				<div class="date-picker">
+					<label for="toDate">To:</label>
+					<NcDateTimePicker
+						v-model="dateRange.to"
+						:min-date="dateRange.from"
+						:max-date="new Date()"
+						:show-time="true"
+						:placeholder="'Select end date'"
+						@change="handleDateChange" />
+				</div>
+			</div>
+
+			<div class="graph-section">
+				<h3>Calls</h3>
+				<div class="graphs">
+					<div>
+						<h5>Outgoing Calls (Last 7 Days)</h5>
+						<div class="content">
+							<apexchart
+								width="500"
+								:options="sourcesCalls.options"
+								:series="sourcesCalls.series" />
+						</div>
+					</div>
+					<div>
+						<h5>Outgoing Calls by Hour</h5>
+						<div class="content">
+							<apexchart
+								width="500"
+								:options="incomingCalls.options"
+								:series="incomingCalls.series" />
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="graph-section">
+				<h3>Jobs</h3>
+				<div class="graphs">
+					<div>
+						<h5>Job Executions (Last 7 Days)</h5>
+						<div class="content">
+							<apexchart
+								width="500"
+								:options="jobCalls.options"
+								:series="jobCalls.series" />
+						</div>
+					</div>
+					<div>
+						<h5>Job Executions by Hour</h5>
+						<div class="content">
+							<apexchart
+								width="500"
+								:options="jobCallsByHour.options"
+								:series="jobCallsByHour.series" />
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="graph-section">
+				<h3>Synchronizations</h3>
+				<div class="graphs">
+					<div>
+						<h5>Synchronization Executions (Last 7 Days)</h5>
+						<div class="content">
+							<apexchart
+								width="500"
+								:options="syncCalls.options"
+								:series="syncCalls.series" />
+						</div>
+					</div>
+					<div>
+						<h5>Synchronization Executions by Hour</h5>
+						<div class="content">
+							<apexchart
+								width="500"
+								:options="syncCallsByHour.options"
+								:series="syncCallsByHour.series" />
+						</div>
 					</div>
 				</div>
 			</div>
@@ -31,34 +124,62 @@
 
 <script>
 
-import { NcAppContent } from '@nextcloud/vue'
+import { NcAppContent, NcLoadingIcon, NcDateTimePicker } from '@nextcloud/vue'
 import VueApexCharts from 'vue-apexcharts'
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 import { getTheme } from '../../services/getTheme.js'
 
+/**
+ * Dashboard component showing statistics and graphs for the OpenConnector app
+ */
 export default {
 	name: 'DashboardIndex',
 	components: {
 		NcAppContent,
+		NcLoadingIcon,
+		NcDateTimePicker,
 		apexchart: VueApexCharts,
 	},
 	data() {
+		const to = new Date()
+		const from = new Date()
+		from.setDate(from.getDate() - 7)
+
 		return {
+			isLoading: true,
+			stats: {
+				sources: 0,
+				mappings: 0,
+				synchronizations: 0,
+				synchronizationContracts: 0,
+				jobs: 0,
+				endpoints: 0,
+			},
+			statsConfig: {
+				sources: { label: 'Sources' },
+				mappings: { label: 'Mappings' },
+				synchronizations: { label: 'Synchronizations' },
+				synchronizationContracts: { label: 'Contracts' },
+				jobs: { label: 'Jobs' },
+				endpoints: { label: 'Endpoints' },
+			},
+			dateRange: {
+				from,
+				to,
+			},
 			// mock data
 			sourcesCalls: {
 				options: {
 					theme: {
 						mode: getTheme(),
-						monochrome: {
-							enabled: true,
-							color: '#079cff',
-							shadeTo: 'light',
-							shadeIntensity: 0,
-						},
 					},
 					chart: {
 						id: 'source-calls',
 						type: 'area',
+						stacked: true,
+						foreColor: '#000000',
 					},
 					dataLabels: {
 						enabled: false,
@@ -67,33 +188,64 @@ export default {
 						curve: 'smooth',
 					},
 					xaxis: {
-						categories: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15',
-							'16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'],
+						type: 'datetime',
+						labels: {
+							datetimeFormatter: {
+								year: 'yyyy',
+								month: 'MMM \'yy',
+								day: 'dd MMM',
+							},
+							format: 'dd MMM',
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+					tooltip: {
+						x: {
+							format: 'dd MMM yyyy',
+						},
+					},
+					colors: ['#28a745', '#dc3545'], // Green for success, red for errors
+					title: {
+						text: 'Daily Outgoing Calls',
+						align: 'left',
+					},
+					yaxis: {
+						title: {
+							text: 'Number of Calls',
+							style: {
+								color: '#000000',
+							},
+						},
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
 					},
 				},
-				series: [{
-					name: 'outgoing calls',
-					data: [
-						432, 2954, 3287, 3278, 5893, 6839, 7751, 5223, 4332, 4343,
-						4324, 2234, 4902, 4321, 5325, 5324, 3211, 3223, 4432, 2243,
-						4123, 5344, 3754, 4243, 5233, 6435, 4234, 6454, 4344, 3372, // 30 total data points
-					],
-				}],
+				series: [
+					{
+						name: 'Successful Calls',
+						data: [],
+					},
+					{
+						name: 'Failed Calls',
+						data: [],
+					},
+				],
 			},
 			incomingCalls: {
 				options: {
 					theme: {
 						mode: getTheme(),
-						monochrome: {
-							enabled: true,
-							color: '#079cff',
-							shadeTo: 'light',
-							shadeIntensity: 0,
-						},
 					},
 					chart: {
-						id: 'Queries-per-uur',
+						id: 'calls-per-hour',
 						type: 'area',
+						stacked: true,
+						foreColor: '#000000',
 					},
 					dataLabels: {
 						enabled: false,
@@ -102,34 +254,58 @@ export default {
 						curve: 'smooth',
 					},
 					xaxis: {
-						categories: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12',
-							'13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24'],
+						categories: Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00'),
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+					colors: ['#28a745', '#dc3545'],
+					title: {
+						text: 'Hourly Outgoing Calls',
+						align: 'left',
+					},
+					yaxis: {
+						title: {
+							text: 'Average Number of Calls',
+							style: {
+								color: '#000000',
+							},
+						},
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+					legend: {
+						labels: {
+							colors: '#000000',
+						},
 					},
 				},
-				series: [{
-					name: 'incomming calls',
-					data: [
-						32, 43, 12, 23, 32, 45, 32, 12, 31, 42,
-						43, 64, 34, 32, 32, 23, 25, 13, 35, 24,
-						35, 43, 23, 42, // 24 total data points
-					],
-				}],
+				series: [
+					{
+						name: 'Successful Calls',
+						data: Array(24).fill(0),
+					},
+					{
+						name: 'Failed Calls',
+						data: Array(24).fill(0),
+					},
+				],
 			},
-
-			month: {
+			jobCalls: {
 				options: {
 					theme: {
 						mode: getTheme(),
-						monochrome: {
-							enabled: true,
-							color: '#079cff',
-							shadeTo: 'light',
-							shadeIntensity: 0,
-						},
 					},
 					chart: {
-						id: 'Clicks-per-dag',
+						id: 'job-calls',
 						type: 'area',
+						stacked: true,
+						foreColor: '#000000',
 					},
 					dataLabels: {
 						enabled: false,
@@ -138,20 +314,491 @@ export default {
 						curve: 'smooth',
 					},
 					xaxis: {
-						categories: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15',
-							'16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'],
+						type: 'datetime',
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+					colors: ['#28a745', '#ffc107', '#dc3545', '#17a2b8'], // green, yellow, red, blue for info, warning, error, debug
+					title: {
+						text: 'Daily Job Executions by Level',
+						align: 'left',
+					},
+					yaxis: {
+						title: {
+							text: 'Number of Logs',
+							style: {
+								color: '#000000',
+							},
+						},
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
 					},
 				},
-				series: [{
-					name: 'Detail bevragingen per dag',
-					data: [
-						51434, 32559, 32264, 39290, 32854, 54697, 37360, 56957, 34450, 55016,
-						34219, 30221, 23969, 59032, 53820, 39792, 52498, 22735, 42846, 50663,
-						22112, 20460, 51664, 33078, 41214, 42888, 26108, 58835, 40915, 25714,
-					],
-				}],
+				series: [
+					{
+						name: 'Info',
+						data: [],
+					},
+					{
+						name: 'Warning',
+						data: [],
+					},
+					{
+						name: 'Error',
+						data: [],
+					},
+					{
+						name: 'Debug',
+						data: [],
+					},
+				],
+			},
+			jobCallsByHour: {
+				options: {
+					theme: {
+						mode: getTheme(),
+					},
+					chart: {
+						id: 'job-calls-per-hour',
+						type: 'area',
+						stacked: true,
+						foreColor: '#000000',
+					},
+					dataLabels: {
+						enabled: false,
+					},
+					stroke: {
+						curve: 'smooth',
+					},
+					xaxis: {
+						categories: Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00'),
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+					colors: ['#28a745', '#ffc107', '#dc3545', '#17a2b8'],
+					title: {
+						text: 'Hourly Job Executions by Level',
+						align: 'left',
+					},
+					yaxis: {
+						title: {
+							text: 'Average Number of Logs',
+							style: {
+								color: '#000000',
+							},
+						},
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+					legend: {
+						labels: {
+							colors: '#000000',
+						},
+					},
+				},
+				series: [
+					{
+						name: 'Info',
+						data: Array(24).fill(0),
+					},
+					{
+						name: 'Warning',
+						data: Array(24).fill(0),
+					},
+					{
+						name: 'Error',
+						data: Array(24).fill(0),
+					},
+					{
+						name: 'Debug',
+						data: Array(24).fill(0),
+					},
+				],
+			},
+			syncCalls: {
+				options: {
+					theme: {
+						mode: getTheme(),
+					},
+					chart: {
+						id: 'sync-calls',
+						type: 'area',
+						stacked: true,
+						foreColor: '#000000',
+					},
+					dataLabels: {
+						enabled: false,
+					},
+					stroke: {
+						curve: 'smooth',
+					},
+					xaxis: {
+						type: 'datetime',
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+					colors: ['#28a745'], // Only green since we're only showing executions
+					title: {
+						text: 'Daily Synchronization Executions',
+						align: 'left',
+					},
+					yaxis: {
+						title: {
+							text: 'Number of Executions',
+							style: {
+								color: '#000000',
+							},
+						},
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+				},
+				series: [
+					{
+						name: 'Executions',
+						data: [],
+					},
+				],
+			},
+			syncCallsByHour: {
+				options: {
+					theme: {
+						mode: getTheme(),
+					},
+					chart: {
+						id: 'sync-calls-per-hour',
+						type: 'area',
+						stacked: true,
+						foreColor: '#000000',
+					},
+					dataLabels: {
+						enabled: false,
+					},
+					stroke: {
+						curve: 'smooth',
+					},
+					xaxis: {
+						categories: Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00'),
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+					colors: ['#28a745'],
+					title: {
+						text: 'Hourly Synchronization Executions',
+						align: 'left',
+					},
+					yaxis: {
+						title: {
+							text: 'Average Number of Executions',
+							style: {
+								color: '#000000',
+							},
+						},
+						labels: {
+							style: {
+								colors: '#000000',
+							},
+						},
+					},
+					legend: {
+						labels: {
+							colors: '#000000',
+						},
+					},
+				},
+				series: [
+					{
+						name: 'Executions',
+						data: Array(24).fill(0),
+					},
+				],
 			},
 		}
+	},
+	/**
+	 * Fetch stats when component is mounted
+	 * @return {Promise<void>}
+	 */
+	async mounted() {
+		await Promise.all([
+			this.fetchStats(),
+			this.fetchCallStats(),
+			this.fetchJobStats(),
+			this.fetchSyncStats(),
+		])
+	},
+	methods: {
+		/**
+		 * Fetches statistics from the backend
+		 * @return {Promise<void>}
+		 * @throws {Error} When the API call fails
+		 */
+		async fetchStats() {
+			this.isLoading = true
+			try {
+				const response = await axios.get(generateUrl('/apps/openconnector/api/dashboard'))
+				this.stats = response.data
+			} catch (error) {
+				console.error('Error fetching stats:', error)
+				// You might want to show an error message to the user here
+			} finally {
+				this.isLoading = false
+			}
+		},
+
+		/**
+		 * Fetches call statistics from the backend
+		 * @return {Promise<void>}
+		 */
+		async fetchCallStats() {
+			try {
+				const params = this.getDateRangeParams()
+				const response = await axios.get(
+					generateUrl('/apps/openconnector/api/dashboard/callstats'),
+					{ params },
+				)
+				const { daily, hourly } = response.data
+
+				// Ensure dates are properly formatted for the chart
+				this.sourcesCalls.series = [
+					{
+						name: 'Successful Calls',
+						data: Object.entries(daily).map(([date, stats]) => ({
+							x: new Date(date).getTime(), // Convert to timestamp
+							y: stats.success,
+						})).sort((a, b) => a.x - b.x),
+					},
+					{
+						name: 'Failed Calls',
+						data: Object.entries(daily).map(([date, stats]) => ({
+							x: new Date(date).getTime(), // Convert to timestamp
+							y: stats.error,
+						})).sort((a, b) => a.x - b.x),
+					},
+				]
+
+				// Update hourly stats
+				const successData = Array(24).fill(0)
+				const errorData = Array(24).fill(0)
+				Object.entries(hourly).forEach(([hour, stats]) => {
+					successData[parseInt(hour)] = stats.success
+					errorData[parseInt(hour)] = stats.error
+				})
+
+				this.incomingCalls.series = [
+					{
+						name: 'Successful Calls',
+						data: successData,
+					},
+					{
+						name: 'Failed Calls',
+						data: errorData,
+					},
+				]
+			} catch (error) {
+				console.error('Error fetching call stats:', error)
+			}
+		},
+
+		/**
+		 * Fetches job statistics from the backend
+		 * @return {Promise<void>}
+		 */
+		async fetchJobStats() {
+			try {
+				const params = this.getDateRangeParams()
+				const response = await axios.get(
+					generateUrl('/apps/openconnector/api/dashboard/jobstats'),
+					{ params },
+				)
+				const { daily, hourly } = response.data
+
+				// Update daily stats
+				this.jobCalls.series = [
+					{
+						name: 'Info',
+						data: Object.entries(daily).map(([date, stats]) => ({
+							x: new Date(date).getTime(),
+							y: stats.info,
+						})),
+					},
+					{
+						name: 'Warning',
+						data: Object.entries(daily).map(([date, stats]) => ({
+							x: new Date(date).getTime(),
+							y: stats.warning,
+						})),
+					},
+					{
+						name: 'Error',
+						data: Object.entries(daily).map(([date, stats]) => ({
+							x: new Date(date).getTime(),
+							y: stats.error,
+						})),
+					},
+					{
+						name: 'Debug',
+						data: Object.entries(daily).map(([date, stats]) => ({
+							x: new Date(date).getTime(),
+							y: stats.debug,
+						})),
+					},
+				]
+
+				// Update hourly stats
+				const infoData = Array(24).fill(0)
+				const warningData = Array(24).fill(0)
+				const errorData = Array(24).fill(0)
+				const debugData = Array(24).fill(0)
+
+				Object.entries(hourly).forEach(([hour, stats]) => {
+					infoData[parseInt(hour)] = stats.info
+					warningData[parseInt(hour)] = stats.warning
+					errorData[parseInt(hour)] = stats.error
+					debugData[parseInt(hour)] = stats.debug
+				})
+
+				this.jobCallsByHour.series = [
+					{
+						name: 'Info',
+						data: infoData,
+					},
+					{
+						name: 'Warning',
+						data: warningData,
+					},
+					{
+						name: 'Error',
+						data: errorData,
+					},
+					{
+						name: 'Debug',
+						data: debugData,
+					},
+				]
+			} catch (error) {
+				console.error('Error fetching job stats:', error)
+			}
+		},
+
+		/**
+		 * Fetches synchronization statistics from the backend
+		 * @return {Promise<void>}
+		 */
+		async fetchSyncStats() {
+			try {
+				const params = this.getDateRangeParams()
+				const response = await axios.get(
+					generateUrl('/apps/openconnector/api/dashboard/syncstats'),
+					{ params },
+				)
+				const { daily, hourly } = response.data
+
+				// Update daily stats
+				this.syncCalls.series = [
+					{
+						name: 'Executions',
+						data: Object.entries(daily).map(([date, count]) => ({
+							x: new Date(date).getTime(),
+							y: count,
+						})),
+					},
+				]
+
+				// Update hourly stats
+				const executionData = Array(24).fill(0)
+				Object.entries(hourly).forEach(([hour, count]) => {
+					executionData[parseInt(hour)] = count
+				})
+
+				this.syncCallsByHour.series = [
+					{
+						name: 'Executions',
+						data: executionData,
+					},
+				]
+			} catch (error) {
+				console.error('Error fetching sync stats:', error)
+			}
+		},
+
+		/**
+		 * Navigate to the selected section
+		 * @param {string} section - The section to navigate to
+		 */
+		navigateTo(section) {
+			navigationStore.setSelected(section)
+		},
+
+		/**
+		 * Handle date change events from either date picker
+		 */
+		async handleDateChange() {
+			this.isLoading = true
+			try {
+				await this.fetchGraphStats()
+			} finally {
+				this.isLoading = false
+			}
+		},
+
+		/**
+		 * Fetch all graph-related statistics
+		 */
+		async fetchGraphStats() {
+			await Promise.all([
+				this.fetchCallStats(),
+				this.fetchJobStats(),
+				this.fetchSyncStats(),
+			])
+		},
+
+		/**
+		 * Fetch all statistics
+		 */
+		async fetchAllStats() {
+			this.isLoading = true
+			try {
+				await Promise.all([
+					this.fetchStats(),
+					this.fetchGraphStats(),
+				])
+			} finally {
+				this.isLoading = false
+			}
+		},
+
+		/**
+		 * Get date range parameters for API calls
+		 * @return {object} Object containing from and to dates in ISO format
+		 */
+		getDateRangeParams() {
+			return {
+				from: this.dateRange.from.toISOString(),
+				to: this.dateRange.to.toISOString(),
+			}
+		},
 	},
 }
 </script>
@@ -192,28 +839,173 @@ export default {
     --dashboard-item-background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* graphs */
-.dashboard-content > .graphs {
+/* most searched terms */
+.dashboard-content > .stats {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-    gap: 2rem;
+    grid-template-columns: 1fr;
+    gap: 1rem;
 }
-.dashboard-content > .graphs .full-width {
-    grid-column-start: 1;
-    grid-column-end: 3;
+@media screen and (min-width: 880px) {
+    .dashboard-content > .stats {
+        grid-template-columns: 1fr 1fr;
+    }
 }
-.dashboard-content > .graphs .content {
-    display: flex;
-    gap: 4px;
+@media screen and (min-width: 1024px) {
+    .dashboard-content > .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
-.dashboard-content > .graphs .dashboard-small-list {
-    display: flex;
-    flex-direction: column;
+@media screen and (min-width: 1220px) {
+    .dashboard-content > .stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
-.dashboard-content > .graphs .dashboard-small-list > li {
+@media screen and (min-width: 1590px) {
+    .dashboard-content > .stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+.dashboard-content > .stats > div {
     padding: 1rem;
+    height: 150px;
+    width: 250px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
 }
-.dashboard-content > .graphs .dashboard-small-list > li:not(:last-child) {
-    border-bottom: 1px solid grey;
+
+.dashboard-content > .stats > div:hover {
+    transform: scale(1.02);
+}
+
+/* default theme */
+@media (prefers-color-scheme: light) {
+    .dashboard-content > .stats > div {
+        background-color: rgba(0, 0, 0, 0.07);
+    }
+}
+@media (prefers-color-scheme: dark) {
+    .dashboard-content > .stats > div {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+}
+/* do theme checks, light mode | dark mode */
+body[data-theme-light] .dashboard-content > .stats > div {
+    background-color: rgba(0, 0, 0, 0.07);
+}
+body[data-theme-dark] .dashboard-content > .stats > div {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.dashboard-content > .stats > div > h5 {
+    margin: 0;
+    font-weight: normal;
+}
+.dashboard-content > .stats > div > .content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100% - 40px);
+
+    font-size: 3.5rem;
+}
+
+/* Update the graph section styling */
+.graph-section {
+    width: 100%;
+    margin-bottom: 4rem;
+}
+
+.graph-section > h3 {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+/* Update the graphs container styling */
+.dashboard-content > .graph-section > .graphs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.dashboard-content > .graph-section > .graphs > div {
+    flex: 1;
+    min-width: 300px; /* Minimum width for readable graphs */
+    max-width: calc(50% - 1rem); /* Maximum width of 50% minus half the gap */
+}
+
+/* On smaller screens (mobile) */
+@media screen and (max-width: 768px) {
+    .dashboard-content > .graph-section > .graphs {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .dashboard-content > .graph-section > .graphs > div {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* Remove the old .graphs styles that were causing the issue */
+.dashboard-content > .graphs {
+    display: none;
+}
+
+/* Add these new styles for the loading state */
+.dashboard-content > .stats > div > .content {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: calc(100% - 40px);
+	font-size: 3.5rem;
+}
+
+/* Adjust the loading icon size and color to match the theme */
+.dashboard-content > .stats .icon-loading {
+	width: 44px;
+	height: 44px;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.date-range-selector {
+	display: flex;
+	gap: 2rem;
+	margin: 2rem 0;
+	padding: 1rem;
+	width: 100%;
+	justify-content: center;
+	background-color: var(--dashboard-item-background-color);
+	border-radius: 8px;
+}
+
+.date-picker {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.date-picker label {
+	font-weight: bold;
+	color: var(--color-text-maxcontrast);
+}
+
+/* Make date picker more visible */
+:deep(.mx-input) {
+	height: 34px;
+	padding: 6px 12px;
+	border-radius: 4px;
+	border: 1px solid var(--color-border);
+	background-color: var(--color-main-background);
+	color: var(--color-text-maxcontrast);
+}
+
+:deep(.mx-input:hover),
+:deep(.mx-input:focus) {
+	border-color: var(--color-primary);
 }
 </style>
