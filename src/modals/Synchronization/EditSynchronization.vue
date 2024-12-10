@@ -81,6 +81,9 @@ import { synchronizationStore, navigationStore, sourceStore, mappingStore } from
 				<NcTextArea :value.sync="synchronizationItem.description"
 					label="Description" />
 
+				<NcTextArea :value.sync="synchronizationItem.conditions"
+					label="Conditions (json logic)" />
+
 				<NcSelect v-bind="typeOptions"
 					v-model="typeOptions.value"
 					input-label="Source Type" />
@@ -199,6 +202,7 @@ export default {
 			synchronizationItem: { // Initialize with empty fields
 				name: '',
 				description: '',
+				conditions: '',
 				sourceId: '',
 				sourceType: '',
 				sourceConfig: {
@@ -274,7 +278,10 @@ export default {
 	mounted() {
 		if (this.IS_EDIT) {
 			// If there is a synchronization item in the store, use it
-			this.synchronizationItem = { ...synchronizationStore.synchronizationItem }
+			this.synchronizationItem = {
+				...synchronizationStore.synchronizationItem,
+				conditions: JSON.stringify(synchronizationStore.synchronizationItem.conditions),
+			}
 
 			// update targetTypeOptions with the synchronization item target type
 			this.targetTypeOptions.value = this.targetTypeOptions.options.find(option => option.id === this.synchronizationItem.targetType)
@@ -529,6 +536,7 @@ export default {
 				sourceId: this.sourceOptions.sourceValue?.id || null,
 				sourceType: this.typeOptions.value?.id || null,
 				sourceTargetMapping: this.sourceTargetMappingOptions.sourceValue?.id || null,
+				conditions: JSON.parse(this.synchronizationItem.conditions) || null,
 				targetType: this.targetTypeOptions.value?.id || null,
 				targetId: targetId || null,
 				targetSourceMapping: this.sourceTargetMappingOptions.targetValue?.id || null,

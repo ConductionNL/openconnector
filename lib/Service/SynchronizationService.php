@@ -98,6 +98,16 @@ class SynchronizationService
         $objectList = $this->getAllObjectsFromSource(synchronization: $synchronization, isTest: $isTest);
 
         foreach ($objectList as $key => $object) {
+
+            // Check if object adheres to conditions.
+            // Take note, JsonLogic::apply() returns a range of return types, so checking it with '=== false' or '!== true' does not work properly.
+            if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $object)) {
+
+                // @todo log that this object is not valid
+                unset($objectList[$key]);
+                continue;
+            }
+
             // If the source configuration contains a dot notation for the id position, we need to extract the id from the source object
             $originId = $this->getOriginId($synchronization, $object);
 
@@ -339,12 +349,6 @@ class SynchronizationService
         $synchronizationContract->setOriginHash($originHash);
         $synchronizationContract->setSourceLastChanged(new DateTime());
 		$synchronizationContract->setSourceLastChecked(new DateTime());
-
-		// Check if object adheres to conditions.
-		// Take note, JsonLogic::apply() returns a range of return types, so checking it with '=== false' or '!== true' does not work properly.
-		if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $object)) {
-			return $synchronizationContract;
-		}
 
         // If no source target mapping is defined, use original object
         if (empty($synchronization->getSourceTargetMapping()) === true) {

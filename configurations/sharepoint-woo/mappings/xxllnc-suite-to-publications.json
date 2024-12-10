@@ -5,7 +5,7 @@
         "title": "omschrijving",
         "summary": "zaaktypeomschrijving",
         "description": "zaaktypeomschrijving",
-        "category": "{% if zaaktypecode|default %}{% set wooVerzoekenEnBesluiten = ['LP00000431', 'B1873', 'cherry'] %}{% set klachtoordelen = ['LP00000091', 'LP00001132', 'LP00000121', 'B0757', 'LP00000832', 'LP00001096'] %}{% if zaaktypecode in wooVerzoekenEnBesluiten %}{{ 'Woo-verzoeken en -besluiten' }}{% elseif zaaktypecode in klachtoordelen %}{{ 'Klachtoordelen' }}{% endif %}{% endif %}",
+        "category": "{% if zaaktypecode|default %}{% set wooVerzoekenEnBesluiten = ['LP00000431', 'B1873'] %}{% set klachtoordelen = ['LP00000091', 'LP00001132', 'LP00000121', 'B0757', 'LP00000832', 'LP00001096'] %}{% if zaaktypecode in wooVerzoekenEnBesluiten %}{{ 'Woo-verzoeken en -besluiten' }}{% elseif zaaktypecode in klachtoordelen %}{{ 'Klachtoordelen' }}{% endif %}{% endif %}",
         "published": "startdatum",
         "modified": "{{ 'now'|date('H:i:sTm-d-Y') }}",
         "attachments": "[{% if files|default %}{% for file in files %} { {% if file['titel']|default %}\"title\": \"{{ file['titel'] }}\",{% endif %}\"labels\": [\"{{ 'Informatieverzoek' }}\"],{% if file['formaat']|default %}\"extension\": \"{{ file['formaat']|split('/')|last }}\",\"type\": \"{{ file['formaat'] }}\",{% endif %}{% if file['inhoud']|default and file['formaat']|default %}\"accessUrl\": \"data:{{ file['formaat'] }};base64,{{ file.inhoud }}\"{% endif %} }{{ loop.last ? '' : ',' }} {% endfor %}{% endif %}]",
