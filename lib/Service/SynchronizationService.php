@@ -294,6 +294,57 @@ class SynchronizationService
         return $extraData;
     }
 
+    /**
+     * Fetches multiple extra data entries for an object based on the source configuration.
+     *
+     * This method iterates through a list of extra data configurations, fetches the additional data for each configuration,
+     * and merges it with the original object.
+     *
+     * @param Synchronization $synchronization The synchronization instance containing configuration details.
+     * @param array           $sourceConfig    The source configuration containing extra data retrieval settings.
+     * @param array           $object          The original object for which extra data needs to be fetched.
+     *
+     * @return array The updated object with all fetched extra data merged into it.
+     */
+    private function fetchMultipleExtraData(Synchronization $synchronization, array $sourceConfig, array $object): array
+    {
+        if (isset($sourceConfig[$this::EXTRA_DATA_CONFIGS_LOCATION]) === true) {
+            foreach ($sourceConfig[$this::EXTRA_DATA_CONFIGS_LOCATION] as $extraDataConfig) {
+                $object = array_merge($object, $this->fetchExtraDataForObject($synchronization, $extraDataConfig, $object));
+            }
+        }
+
+        return $object;
+    }
+
+    /**
+     * Maps a given object using a source hash mapping configuration.
+     *
+     * This function retrieves a hash mapping configuration for a synchronization instance, if available,
+     * and applies it to the input object using the mapping service.
+     *
+     * @param Synchronization $synchronization The synchronization instance containing the hash mapping configuration.
+     * @param array           $object          The input object to be mapped.
+     *
+     * @return array The mapped object, or the original object if no mapping is found.
+     */
+    private function mapHashObject(Synchronization $synchronization, array $object): array
+    {
+        if (empty($synchronization->getSourceHashMapping()) === false) {
+            try {
+                $sourceHashMapping = $this->mappingMapper->find(id: $synchronization->getSourceHashMapping());
+            } catch (DoesNotExistException $exception) {
+                return new Exception($exception->getMessage());
+            }
+
+            // Execute mapping if found
+            if ($sourceHashMapping) {
+                return $this->mappingService->executeMapping(mapping: $sourceHashMapping, input: $object);
+            }
+        }
+
+        return $object;
+    }
 
 	/**
 	 * Synchronize a contract
@@ -314,27 +365,19 @@ class SynchronizationService
         $sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
 
         // Check if extra data needs to be fetched
-        if (isset($sourceConfig[$this::EXTRA_DATA_CONFIGS_LOCATION]) === true) {
-            foreach ($sourceConfig[$this::EXTRA_DATA_CONFIGS_LOCATION] as $extraDataConfig) {
-                $object = array_merge($object, $this->fetchExtraDataForObject($synchronization, $extraDataConfig, $object));
-            }
-        }
+        $object = $this->fetchMultipleExtraData(synchronization: $synchronization, sourceConfig: $sourceConfig, object: $object);
 
-		// @TODO: This should be unset through pre-mapping
-		if(isset($object['d']['vti_x005f_dirlateststamp']) === true) {
-			unset($object['d']['vti_x005f_dirlateststamp']);
-		}
-
-
+        // Get mapped hash object (some fields can make it look the object has changed even if it hasn't)
+        $hashObject = $this->mapHashObject(synchronization: $synchronization, object: $object);
         // Let create a source hash for the object
-        $originHash = md5(serialize($object));
+        $originHash = md5(serialize($hashObject));
 
         // Let's prevent pointless updates @todo account for omnidirectional sync, unless the config has been updated since last check then we do want to rebuild and check if the tagert object has changed
         if ($originHash === $synchronizationContract->getOriginHash() && $synchronization->getUpdated() < $synchronizationContract->getSourceLastChecked()) {
             // The object has not changed and the config has not been updated since last check
 			return $synchronizationContract;
         }
-		
+
         // The object has changed, oke let do mappig and bla die bla
         $synchronizationContract->setOriginHash($originHash);
         $synchronizationContract->setSourceLastChanged(new DateTime());

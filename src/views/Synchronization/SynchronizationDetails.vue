@@ -89,6 +89,10 @@ import { synchronizationStore, navigationStore, logStore } from '../../store/sto
 						<p>{{ synchronizationStore.synchronizationItem.sourceHash || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
+						<b>Source Hash mapping id:</b>
+						<p>{{ synchronizationStore.synchronizationItem.sourceHashMapping || 'N/A' }}</p>
+					</div>
+					<div class="gridContent gridFullWidth">
 						<b>Source Last Changed:</b>
 						<p>{{ synchronizationStore.synchronizationItem.sourceLastChanged || 'N/A' }}</p>
 					</div>

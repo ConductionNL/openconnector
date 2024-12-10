@@ -16,6 +16,7 @@ class Synchronization extends Entity implements JsonSerializable
 	protected ?string $sourceId = null;	// The id of the source object
 	protected ?string $sourceType = null;	// The type of the source object (e.g. api, database, register/schema.)
 	protected ?string $sourceHash = null;	// The hash of the source object when it was last synced.
+	protected ?string $sourceHashMapping = null;	// The mapping id of the mapping that we map the object to for hashing.
 	protected ?string $sourceTargetMapping = null;	// The mapping of the source object to the target object
 	protected ?array $sourceConfig = null; // The configuration of the object in the source
 	protected ?DateTime $sourceLastChanged = null;	// The last changed date of the source object
@@ -46,6 +47,7 @@ class Synchronization extends Entity implements JsonSerializable
 		$this->addType('sourceId', 'string');
 		$this->addType('sourceType', 'string');
 		$this->addType('sourceHash', 'string');
+		$this->addType('sourceHashMapping', 'string');
 		$this->addType('sourceTargetMapping', 'string');
 		$this->addType('sourceConfig', 'json');
 		$this->addType('sourceLastChanged', 'datetime');
@@ -121,6 +123,7 @@ class Synchronization extends Entity implements JsonSerializable
 			'sourceId' => $this->sourceId,
 			'sourceType' => $this->sourceType,
 			'sourceHash' => $this->sourceHash,
+			'sourceHashMapping' => $this->sourceHashMapping,
 			'sourceTargetMapping' => $this->sourceTargetMapping,
 			'sourceConfig' => $this->sourceConfig,
 			'sourceLastChanged' => isset($this->sourceLastChanged) === true ? $this->sourceLastChanged->format('c') : null,
