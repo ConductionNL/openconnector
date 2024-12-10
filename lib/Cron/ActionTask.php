@@ -10,7 +10,9 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use OCP\IUserManager;
 use OCP\IUserSession;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Component\Uid\Uuid;
 use DateInterval;
 use DateTime;
@@ -59,6 +61,9 @@ class ActionTask extends TimedJob
 	 * @param $argument
 	 *
 	 * @return JobLog|void
+	 * @throws \OCP\DB\Exception
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
 	 */
     public function run($argument)
     {
@@ -81,10 +86,22 @@ class ActionTask extends TimedJob
 
         // if the next run is in the the future, we don't need to do anything
         if ($job->getNextRun() !== null && $job->getNextRun() > new DateTime()) {
-            return;
+			$jobLog = $this->jobLogMapper->createFromArray([
+				'level'			=> 'WARNING',
+				'message'		=> 'Next Run is still in the future for this job',
+				'jobId'         => $job->getId(),
+				'jobClass'      => $job->getJobClass(),
+				'jobListId'     => $job->getJobListId(),
+				'arguments'     => $job->getArguments(),
+				'lastRun'       => $job->getLastRun(),
+				'nextRun'       => $job->getNextRun(),
+				'executionTime' => 0
+			]);
+
+            return $jobLog;
         }
 
-		if(empty($job->getUserId()) === false && $this->userSession->getUser() === null) {
+		if (empty($job->getUserId()) === false && $this->userSession->getUser() === null) {
 			$user = $this->userManager->get($job->getUserId());
 			$this->userSession->setUser($user);
 		}
@@ -106,11 +123,17 @@ class ActionTask extends TimedJob
             $job->setIsEnabled(false);
         }
 
-
         // Update the job
-        $job->setLastRun(new DateTime());
 		$nextRun = new DateTime('now + '.$job->getInterval().' seconds');
+		if (isset($result['nextRun']) === true) {
+			$nextRun = DateTime::createFromFormat('U', $result['nextRun'], $nextRun->getTimezone());
+			// Check if the current seconds part is not zero, and if so, round up to the next minute
+			if ($nextRun->format('s') !== '00') {
+				$nextRun->modify('next minute');
+			}
+		}
 		$nextRun->setTime(hour: $nextRun->format('H'), minute: $nextRun->format('i'));
+        $job->setLastRun(new DateTime());
         $job->setNextRun($nextRun);
         $this->jobMapper->update($job);
 
