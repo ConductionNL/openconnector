@@ -283,7 +283,7 @@ use OCP\Migration\SimpleMigrationStep;
             $table->addIndex(['user_id'], 'openconnector_job_logs_user_id_index');
         }
 
-        if (!$schema->hasTable('openconnector_source_contract_logs')) {
+        if (!$schema->hasTable('openconnector_synchronization_contract_logs')) {
             $table = $schema->createTable('openconnector_synchronization_contract_logs');
             $table->addColumn('id', Types::BIGINT, ['autoincrement' => true, 'notnull' => true, 'length' => 20]);
             $table->addColumn('uuid', Types::STRING, ['notnull' => true, 'length' => 36]);

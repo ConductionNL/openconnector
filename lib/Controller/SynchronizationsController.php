@@ -2,6 +2,7 @@
 
 namespace OCA\OpenConnector\Controller;
 
+use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenConnector\Service\ObjectService;
 use OCA\OpenConnector\Service\SearchService;
 use OCA\OpenConnector\Service\SynchronizationService;
@@ -15,6 +16,8 @@ use OCP\IAppConfig;
 use OCP\IRequest;
 use Exception;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class SynchronizationsController extends Controller
 {
@@ -213,33 +216,36 @@ class SynchronizationsController extends Controller
         }
     }
 
-    /**
-     * Tests a synchronization
-     *
-     * This method tests a synchronization without persisting anything to the database.
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     *
-     * @param int $id The ID of the synchronization
-     *
-     * @return JSONResponse A JSON response containing the test results
-     *
-     * @example
-     * Request:
-     * empty POST
-     *
-     * Response:
-     * {
-     *     "resultObject": {
-     *         "fullName": "John Doe",
-     *         "userAge": 30,
-     *         "contactEmail": "john@example.com"
-     *     },
-     *     "isValid": true,
-     *     "validationErrors": []
-     * }
-     */
+	/**
+	 * Tests a synchronization
+	 *
+	 * This method tests a synchronization without persisting anything to the database.
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @param int $id The ID of the synchronization
+	 *
+	 * @return JSONResponse A JSON response containing the test results
+	 * @throws GuzzleException
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 *
+	 * @example
+	 * Request:
+	 * empty POST
+	 *
+	 * Response:
+	 * {
+	 *     "resultObject": {
+	 *         "fullName": "John Doe",
+	 *         "userAge": 30,
+	 *         "contactEmail": "john@example.com"
+	 *     },
+	 *     "isValid": true,
+	 *     "validationErrors": []
+	 * }
+	 */
     public function test(int $id): JSONResponse
     {
         try {
@@ -250,17 +256,26 @@ class SynchronizationsController extends Controller
 
         // Try to synchronize
         try {
-            $logAndContractArray = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: true);
+            $logAndContractArray = $this->synchronizationService->synchronize(
+				synchronization: $synchronization,
+				isTest: true
+			);
+
             // Return the result as a JSON response
             return new JSONResponse(data: $logAndContractArray, statusCode: 200);
         } catch (Exception $e) {
-            // If synchronizaiton fails, return an error response
-            return new JSONResponse([
-                'error' => 'Synchronization error',
-                'message' => $e->getMessage()
-            ], 400);
-        }
+			// Check if getHeaders method exists and use it if available
+			$headers = method_exists($e, 'getHeaders') ? $e->getHeaders() : [];
 
-        return new JSONResponse($resultFromTest, 200);
+            // If synchronization fails, return an error response
+            return new JSONResponse(
+				data: [
+					'error' => 'Synchronization error',
+					'message' => $e->getMessage()
+				],
+				statusCode: $e->getCode() ?? 400,
+				headers: $headers
+			);
+        }
     }
 }

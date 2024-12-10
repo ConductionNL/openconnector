@@ -9,6 +9,7 @@ use OCP\AppFramework\Db\Entity;
 class SynchronizationContractLog extends Entity implements JsonSerializable
 {
     protected ?string $uuid = null;
+	protected ?string $message = null;
     protected ?string $synchronizationId = null;
     protected ?string $synchronizationContractId = null;
     protected ?array $source = [];
@@ -20,6 +21,7 @@ class SynchronizationContractLog extends Entity implements JsonSerializable
 
     public function __construct() {
         $this->addType('uuid', 'string');
+		$this->addType('message', 'string');
         $this->addType('synchronizationId', 'string');
         $this->addType('synchronizationContractId', 'string');
         $this->addType('source', 'json');
@@ -65,6 +67,7 @@ class SynchronizationContractLog extends Entity implements JsonSerializable
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
+			'message' => $this->message,
             'synchronizationId' => $this->synchronizationId,
             'synchronizationContractId' => $this->synchronizationContractId,
             'source' => $this->source,

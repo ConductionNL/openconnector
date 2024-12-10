@@ -21,6 +21,7 @@ use OCA\OpenConnector\Service\MappingService;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\Uid\Uuid;
 use OCP\AppFramework\Db\DoesNotExistException;
 use Adbar\Dot;
@@ -92,10 +93,23 @@ class SynchronizationService
     public function synchronize(Synchronization $synchronization, ?bool $isTest = false): array
 	{
         if (empty($synchronization->getSourceId()) === true) {
-            throw new Exception('sourceId of synchronziation cannot be empty. Canceling synchronization..');
+			$log = [
+				'synchronizationId' => $synchronization->getId(),
+				'synchronizationContractId' => 0,
+				'message' => 'sourceId of synchronization cannot be empty. Canceling synchronization...',
+				'created' => new DateTime(),
+				'expires' => new DateTime('+1 day')
+			];
+
+			$this->synchronizationContractLogMapper->createFromArray($log);
+            throw new Exception('sourceId of synchronization cannot be empty. Canceling synchronization...');
         }
 
-        $objectList = $this->getAllObjectsFromSource(synchronization: $synchronization, isTest: $isTest);
+		try {
+			$objectList = $this->getAllObjectsFromSource(synchronization: $synchronization, isTest: $isTest);
+		} catch (TooManyRequestsHttpException $e) {
+			$rateLimitException = $e;
+		}
 
         foreach ($objectList as $key => $object) {
             // If the source configuration contains a dot notation for the id position, we need to extract the id from the source object
@@ -144,6 +158,23 @@ class SynchronizationService
 		foreach ($synchronization->getFollowUps() as $followUp) {
 			$followUpSynchronization = $this->synchronizationMapper->find($followUp);
 			$this->synchronize($followUpSynchronization, $isTest);
+		}
+
+		if (isset($rateLimitException) === true) {
+			$log = [
+				'synchronizationId' => $synchronization->getId(),
+				'synchronizationContractId' => isset($synchronizationContract) === true ? $synchronizationContract->getId() : 0,
+				'message' => $rateLimitException->getMessage(),
+				'created' => new DateTime(),
+				'expires' => new DateTime('+1 day')
+			];
+
+			$this->synchronizationContractLogMapper->createFromArray($log);
+			throw new TooManyRequestsHttpException(
+				message: $rateLimitException->getMessage(),
+				code: 429,
+				headers: $rateLimitException->getHeaders()
+			);
 		}
 
         return $objectList;
@@ -334,7 +365,7 @@ class SynchronizationService
             // The object has not changed and the config has not been updated since last check
 			return $synchronizationContract;
         }
-		
+
         // The object has changed, oke let do mappig and bla die bla
         $synchronizationContract->setOriginHash($originHash);
         $synchronizationContract->setSourceLastChanged(new DateTime());
@@ -499,6 +530,7 @@ class SynchronizationService
 
 	/**
 	 * Retrieves all objects from an API source for a given synchronization.
+	 * @todo re-write this entire function so that it is recursive.
 	 *
 	 * @param Synchronization $synchronization The synchronization object containing source information.
 	 * @param bool $isTest If we only want to return a single object (for example a test)
@@ -512,7 +544,17 @@ class SynchronizationService
         $objects = [];
         $source = $this->sourceMapper->find(id: $synchronization->getSourceId());
 
-        // Lets get the source config
+		if ($source->getRateLimitRemaining() !== null && $source->getRateLimitReset() !== null
+			&& $source->getRateLimitRemaining() <= 0 && $source->getRateLimitReset() > time()
+		) {
+			throw new TooManyRequestsHttpException(
+				message: "Rate Limit on Source has been exceeded. Canceling synchronization...",
+				code: 429,
+				headers: $this->getRateLimitHeaders($source)
+			);
+		}
+
+        // Let's get the source config
         $sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
         $endpoint = $sourceConfig['endpoint'] ?? '';
         $headers = $sourceConfig['headers'] ?? [];
@@ -522,13 +564,32 @@ class SynchronizationService
             'query' => $query,
         ];
 
+		// Get CurrentPage from Synchronization.
+		$currentPage = $synchronization->getCurrentPage() ?? 1;
+		// Current Page could be higher than 1 if we continue after rate limit had been reached previously.
+		if ($currentPage > 1) {
+			$config = $this->getNextPage(config: $config, sourceConfig: $sourceConfig, currentPage: $currentPage);
+		}
+
         // Make the initial API call
 		// @TODO: method is now fixed to GET, but could end up in configuration.
-        $response = $this->callService->call(source: $source, endpoint: $endpoint, method: 'GET', config: $config)->getResponse();
+		$callLog = $this->callService->call(source: $source, endpoint: $endpoint, method: 'GET', config: $config);
+        $response = $callLog->getResponse();
+		if ($response === null) {
+			// @todo
+			if ($callLog->getStatusCode() === 429) {
+				throw new TooManyRequestsHttpException(
+					message: "Stopped sync because rate limit on Source has been exceeded.",
+					code: 429,
+					headers: $this->getRateLimitHeaders($source)
+				);
+			}
+		}
+
 		$lastHash = md5($response['body']);
         $body = json_decode($response['body'], true);
         if (empty($body) === true) {
-            // @todo log that we got a empty response
+            // @todo log that we got an empty response
             return [];
         }
         $objects = array_merge($objects, $this->getAllObjectsFromArray(array: $body, synchronization: $synchronization));
@@ -538,29 +599,61 @@ class SynchronizationService
             return [$objects[0]] ?? [];
         }
 
-        // Current page is 2 because the first call made above is page 1.
-        $currentPage = 2;
+        // Increase Current page because of the first call made above.
+        $currentPage++;
+		// Update CurrentPage on Synchronization
+		$synchronization->setCurrentPage($currentPage);
+		$this->synchronizationMapper->update($synchronization);
+
         $useNextEndpoint = false;
         if (array_key_exists('next', $body)) {
             $useNextEndpoint = true;
         }
 
-
 		// Continue making API calls if there are more pages from 'next' the response body or if paginationQuery is set
-		while($useNextEndpoint === true && $nextEndpoint = $this->getNextEndpoint(body: $body, url: $source->getLocation(), sourceConfig: $sourceConfig, currentPage: $currentPage)) {
-            // Do not pass $config here becuase it overwrites the query attached to nextEndpoint
-			$response = $this->callService->call(source: $source, endpoint: $nextEndpoint)->getResponse();
+		while ($useNextEndpoint === true && $nextEndpoint = $this->getNextEndpoint(body: $body, url: $source->getLocation())) {
+			// Do not pass $config here because it overwrites the query attached to nextEndpoint
+			$callLog = $this->callService->call(source: $source, endpoint: $nextEndpoint);
+			$response = $callLog->getResponse();
+			if ($response === null) {
+				// @todo
+				if ($callLog->getStatusCode() === 429) {
+					throw new TooManyRequestsHttpException(
+						message: "Stopped sync because rate limit on Source has been exceeded.",
+						code: 429,
+						headers: $this->getRateLimitHeaders($source)
+					);
+				}
+			}
+
 			$body = json_decode($response['body'], true);
 			$objects = array_merge($objects, $this->getAllObjectsFromArray($body, $synchronization));
+
+			// Increase Current page. And update CurrentPage on Synchronization.
+			$currentPage++;
+			$synchronization->setCurrentPage($currentPage);
+			$this->synchronizationMapper->update($synchronization);
 		}
 
 		if ($useNextEndpoint === false && $synchronization->usesPagination() === true) {
 			do {
 				$config   = $this->getNextPage(config: $config, sourceConfig: $sourceConfig, currentPage: $currentPage);
-				$response = $this->callService->call(source: $source, endpoint: $endpoint, method: 'GET', config: $config)->getResponse();
+				$callLog = $this->callService->call(source: $source, endpoint: $endpoint, method: 'GET', config: $config);
+				$response = $callLog->getResponse();
+				if ($response === null) {
+					// @todo
+					if ($callLog->getStatusCode() === 429) {
+						throw new TooManyRequestsHttpException(
+							message: "Stopped sync because rate limit on Source has been exceeded.",
+							code: 429,
+							headers: $this->getRateLimitHeaders($source)
+						);
+					}
+				}
+
 				$hash     = md5($response['body']);
 
-				if($hash === $lastHash) {
+				if ($hash === $lastHash) {
 					break;
 				}
 
@@ -573,24 +666,57 @@ class SynchronizationService
 
 				$newObjects = $this->getAllObjectsFromArray(array: $body, synchronization: $synchronization);
 				$objects = array_merge($objects, $newObjects);
+
+				// Increase Current page. And update CurrentPage on Synchronization.
 				$currentPage++;
+				$synchronization->setCurrentPage($currentPage);
+				$this->synchronizationMapper->update($synchronization);
 			} while (empty($newObjects) === false);
 		}
 
+		// Reset Current Page to 1 when we are done with all pages.
+		$synchronization->setCurrentPage(1);
+		$this->synchronizationMapper->update($synchronization);
+
         return $objects;
     }
+
+	/**
+	 * Retrieves rate limit information from a given source and formats it as HTTP headers.
+	 *
+	 * This function extracts rate limit details from the provided source object and returns them
+	 * as an associative array of headers. The headers can be used for communicating rate limit status
+	 * in API responses or logging purposes.
+	 *
+	 * @param Source $source The source object containing rate limit details, such as limits, remaining requests, and reset times.
+	 *
+	 * @return array An associative array of rate limit headers:
+	 *               - 'X-RateLimit-Limit' (int|null): The maximum number of allowed requests.
+	 *               - 'X-RateLimit-Remaining' (int|null): The number of requests remaining in the current window.
+	 *               - 'X-RateLimit-Reset' (int|null): The Unix timestamp when the rate limit resets.
+	 *               - 'X-RateLimit-Used' (int|null): The number of requests used so far.
+	 *               - 'X-RateLimit-Window' (int|null): The duration of the rate limit window in seconds.
+	 */
+	private function getRateLimitHeaders(Source $source): array
+	{
+		return [
+			'X-RateLimit-Limit' => $source->getRateLimitLimit(),
+			'X-RateLimit-Remaining' => $source->getRateLimitRemaining(),
+			'X-RateLimit-Reset' => $source->getRateLimitReset(),
+			'X-RateLimit-Used' => 0,
+			'X-RateLimit-Window' => $source->getRateLimitWindow(),
+		];
+	}
 
 	/**
 	 * Determines the next API endpoint based on a provided next.
 	 *
 	 * @param array $body
 	 * @param string $url
-	 * @param array $sourceConfig
-	 * @param int $currentPage
 	 *
 	 * @return string|null The next endpoint URL if a next link or pagination query is available, or null if neither exists.
 	 */
-    private function getNextEndpoint(array $body, string $url, array $sourceConfig, int $currentPage): ?string
+    private function getNextEndpoint(array $body, string $url): ?string
     {
         $nextLink = $this->getNextlinkFromCall($body);
 

@@ -14,13 +14,13 @@ use OCP\DB\ISchemaWrapper;
 use OCP\DB\Types;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
-use OCP\IDBConnection;
 
 /**
  * This migration changes the following:
- * - Adding 4 new columns for the table Source: rateLimitLimit, rateLimitRemaining, rateLimitReset & rateLimitWindow
+ * - Adding 1 new column for the table Synchronization: currentPage
+ * - Adding 1 new column for the table SynchronizationContractLogs: message
  */
-class Version1Date20241121160300 extends SimpleMigrationStep {
+class Version1Date20241210120155 extends SimpleMigrationStep {
 
 	/**
 	 * @param IOutput $output
@@ -41,35 +41,29 @@ class Version1Date20241121160300 extends SimpleMigrationStep {
 		 * @var ISchemaWrapper $schema
 		 */
 		$schema = $schemaClosure();
-		// Sources table
-		$table = $schema->getTable('openconnector_sources');
 
-		if ($table->hasColumn('rate_limit_limit') === false) {
-			$table->addColumn('rate_limit_limit', Types::INTEGER, [
-				'notnull' => false,
-				'default' => null
-			]);
+		// Synchronizations table
+		if ($schema->hasTable('openconnector_synchronizations') === true) {
+			$table = $schema->getTable('openconnector_synchronizations');
+
+			if ($table->hasColumn('current_page') === false) {
+				$table->addColumn('current_page', Types::INTEGER, [
+					'notnull' => false,
+					'default' => 1
+				]);
+			}
 		}
 
-		if ($table->hasColumn('rate_limit_remaining') === false) {
-			$table->addColumn('rate_limit_remaining', Types::INTEGER, [
-				'notnull' => false,
-				'default' => null
-			]);
-		}
+		// SynchronizationContractLogs table
+		if ($schema->hasTable('openconnector_synchronization_contract_logs') === true) {
+			$table = $schema->getTable('openconnector_synchronization_contract_logs');
 
-		if ($table->hasColumn('rate_limit_reset') === false) {
-			$table->addColumn('rate_limit_reset', Types::INTEGER, [
-				'notnull' => false,
-				'default' => null
-			]);
-		}
-
-		if ($table->hasColumn('rate_limit_window') === false) {
-			$table->addColumn('rate_limit_window', Types::INTEGER, [
-				'notnull' => false,
-				'default' => null
-			]);
+			if ($table->hasColumn('message') === false) {
+				$table->addColumn('message', Types::STRING, [
+					'length' => 255,
+					'notnull' => false,
+				])->setDefault(null);
+			}
 		}
 
 		return $schema;
