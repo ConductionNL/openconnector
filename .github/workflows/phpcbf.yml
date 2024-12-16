@@ -1,0 +1,19 @@
+name: Run PHPCBF to fix code style issues
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: cs2pr, phpcbf
+
+      - name: Run phpcbf
+        run: phpcbf -q --report=checkstyle lib | cs2pr
+        continue-on-error: true
