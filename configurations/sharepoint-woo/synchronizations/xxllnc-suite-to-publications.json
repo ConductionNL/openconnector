@@ -5,6 +5,7 @@
 	"sourceId": "1",
 	"sourceType": "api",
 	"sourceHash": "",
+	"sourceHashMapping": "1",
 	"sourceTargetMapping": "1",
 	"sourceConfig": {
         "idPosition": "identificatie",
@@ -13,6 +14,7 @@
         "headers": [],
         "query.startdatum__gte": "2024-08-01",
         "query.einddatum__lt": "2025-01-01",
+        "query.maximaleVertrouwelijkheidaanduiding": "openbaar",
         "usesPagination": "false",
         "extraDataConfigs.0.staticEndpoint": "/tlb/zaaksysteem/api/v1/zaken/{{ originId }}/informatieobjecten",
         "extraDataConfigs.0.mergeExtraData": "true",
@@ -21,5 +23,17 @@
         "extraDataConfigs.0.extraDataConfigPerResult.staticEndpoint": "/tlb/zaaksysteem/api/v1/informatieobjecten/{{ originId }}"
     },
 	"targetId": "1/1",
-	"targetType": "register/schema"
+	"targetType": "register/schema",
+    "conditions": {
+        "if": [
+            {
+            "or": [
+                { "in": [{ "var": "zaaktypecode" }, ["LP00000431", "B1873"]] },
+                { "in": [{ "var": "zaaktypecode" }, ["LP00000091", "LP00001132", "LP00000121", "B0757", "LP00000832", "LP00001096"]] }
+            ]
+            },
+            true,
+            false
+        ]
+    }
 }

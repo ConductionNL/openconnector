@@ -118,6 +118,32 @@ class SynchronizationContractMapper extends QBMapper
     }
 
     /**
+     * Find all target IDs of synchronization contracts by synchronization ID
+     *
+     * @param string $synchronization The synchronization ID
+     *
+     * @return array An array of target IDs or an empty array if none found
+     */
+    public function findAllBySynchronization(string $synchronizationId): array
+    {
+        // Create query builder
+        $qb = $this->db->getQueryBuilder();
+
+        // Build select query with synchronization ID filter
+        $qb->select('*')
+            ->from('openconnector_synchronization_contracts')
+            ->where(
+                $qb->expr()->eq('synchronization_id', $qb->createNamedParameter($synchronizationId))
+            );
+
+        try {
+            return $this->findEntities($qb);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
      * Find all synchronization contracts with optional filtering and pagination
      *
      * @param int|null $limit Maximum number of results to return
@@ -200,6 +226,34 @@ class SynchronizationContractMapper extends QBMapper
 
         return $this->update($obj);
     }
+
+    /**
+     * Find a synchronization contract by origin ID.
+     *
+     * @param string $originId The origin ID to search for.
+     *
+     * @return SynchronizationContract|null The matching contract or null if not found.
+     */
+    public function findByOriginId(string $originId): ?SynchronizationContract
+    {
+        // Create query builder
+        $qb = $this->db->getQueryBuilder();
+
+        // Build query to find contract matching origin_id
+        $qb->select('*')
+            ->from('openconnector_synchronization_contracts')
+            ->where(
+                $qb->expr()->eq('origin_id', $qb->createNamedParameter($originId))
+            )
+            ->setMaxResults(1); // Ensure only one result is returned
+
+        try {
+            return $this->findEntity($qb); // Use findEntity to return a single result
+        } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
+            return null; // Return null if no match is found
+        }
+    }
+
 
     /**
      * Find synchronization contracts by type and ID
