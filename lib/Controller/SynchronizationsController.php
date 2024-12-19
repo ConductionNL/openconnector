@@ -256,17 +256,26 @@ class SynchronizationsController extends Controller
 
         // Try to synchronize
         try {
-            $logAndContractArray = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: true);
+            $logAndContractArray = $this->synchronizationService->synchronize(
+				synchronization: $synchronization,
+				isTest: true
+			);
+
             // Return the result as a JSON response
             return new JSONResponse(data: $logAndContractArray, statusCode: 200);
         } catch (Exception $e) {
-            // If synchronizaiton fails, return an error response
-            return new JSONResponse([
-                'error' => 'Synchronization error',
-                'message' => $e->getMessage()
-            ], 400);
-        }
+			// Check if getHeaders method exists and use it if available
+			$headers = method_exists($e, 'getHeaders') ? $e->getHeaders() : [];
 
-        return new JSONResponse($resultFromTest, 200);
+            // If synchronization fails, return an error response
+            return new JSONResponse(
+				data: [
+					'error' => 'Synchronization error',
+					'message' => $e->getMessage()
+				],
+				statusCode: $e->getCode() ?? 400,
+				headers: $headers
+			);
+        }
     }
 }

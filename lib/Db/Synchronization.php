@@ -21,6 +21,7 @@ class Synchronization extends Entity implements JsonSerializable
 	protected ?DateTime $sourceLastChanged = null;	// The last changed date of the source object
 	protected ?DateTime $sourceLastChecked = null;	// The last checked date of the source object
 	protected ?DateTime $sourceLastSynced = null;	// The last synced date of the source object
+	protected ?int $currentPage = 1; // The last page synced. Used for keeping track where to continue syncing after Rate Limit has been exceeded on source with pagination.
 	// Target
 	protected ?string $targetId = null;	// The id of the target object
 	protected ?string $targetType = null;	// The type of the target object (e.g. api, database, register/schema.)
@@ -51,6 +52,7 @@ class Synchronization extends Entity implements JsonSerializable
 		$this->addType('sourceLastChanged', 'datetime');
 		$this->addType('sourceLastChecked', 'datetime');
 		$this->addType('sourceLastSynced', 'datetime');
+		$this->addType('currentPage', 'integer');
 		$this->addType('targetId', 'string');
 		$this->addType('targetType', 'string');
 		$this->addType('targetHash', 'string');
@@ -126,6 +128,7 @@ class Synchronization extends Entity implements JsonSerializable
 			'sourceLastChanged' => isset($this->sourceLastChanged) === true ? $this->sourceLastChanged->format('c') : null,
 			'sourceLastChecked' => isset($this->sourceLastChecked) === true ? $this->sourceLastChecked->format('c') : null,
 			'sourceLastSynced' => isset($this->sourceLastSynced) === true ? $this->sourceLastSynced->format('c') : null,
+			'currentPage' => $this->currentPage,
 			'targetId' => $this->targetId,
 			'targetType' => $this->targetType,
 			'targetHash' => $this->targetHash,

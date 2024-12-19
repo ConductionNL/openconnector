@@ -10,7 +10,9 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use OCP\IUserManager;
 use OCP\IUserSession;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Component\Uid\Uuid;
 use DateInterval;
 use DateTime;
@@ -59,6 +61,9 @@ class ActionTask extends TimedJob
 	 * @param $argument
 	 *
 	 * @return JobLog|void
+	 * @throws \OCP\DB\Exception
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
 	 */
     public function run($argument)
     {
@@ -128,13 +133,20 @@ class ActionTask extends TimedJob
         }
 
         // Update the job
+		$job->setLastRun(new DateTime());
 		if ($forceRun === false) {
-			$job->setLastRun(new DateTime());
 			$nextRun = new DateTime('now + '.$job->getInterval().' seconds');
+			if (isset($result['nextRun']) === true) {
+				$nextRun = DateTime::createFromFormat('U', $result['nextRun'], $nextRun->getTimezone());
+				// Check if the current seconds part is not zero, and if so, round up to the next minute
+				if ($nextRun->format('s') !== '00') {
+					$nextRun->modify('next minute');
+				}
+			}
 			$nextRun->setTime(hour: $nextRun->format('H'), minute: $nextRun->format('i'));
 			$job->setNextRun($nextRun);
-			$this->jobMapper->update($job);
 		}
+		$this->jobMapper->update($job);
 
         // Log the job
         $jobLog = $this->jobLogMapper->createForJob($job, [
