@@ -599,8 +599,9 @@ class SynchronizationService
         switch ($action) {
             case 'save':
                 $target = $objectService->saveObject($register, $schema, $targetObject);
+                $targetId = is_array($target) ? $target['uuid'] : $target->getUuid();
                 // Get the id form the target object
-                $synchronizationContract->setTargetId($target->getUuid());
+                $synchronizationContract->setTargetId($targetId);
                 break;
             case 'delete':
                 $objectService->deleteObject(register: $register, schema: $schema, uuid: $synchronizationContract->getTargetId());
