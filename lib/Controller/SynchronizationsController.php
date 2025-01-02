@@ -278,4 +278,51 @@ class SynchronizationsController extends Controller
 			);
         }
     }
+
+    /**
+     * Run a synchronization
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * Endpoint: /api/synchronizations-run/{id}
+     *
+     * @param int $id The ID of the synchronization to test
+     * @return JSONResponse A JSON response containing the run results
+	 * @throws GuzzleException
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+     */
+    public function run(int $id): JSONResponse
+    {
+        try {
+            $synchronization = $this->synchronizationMapper->find(id: $id);
+        } catch (DoesNotExistException $exception) {
+            return new JSONResponse(data: ['error' => 'Not Found'], statusCode: 404);
+        }
+
+        // Try to synchronize
+        try {
+            $logAndContractArray = $this->synchronizationService->synchronize(
+				synchronization: $synchronization,
+				isTest: false
+			);
+
+            // Return the result as a JSON response
+            return new JSONResponse(data: $logAndContractArray, statusCode: 200);
+        } catch (Exception $e) {
+			// Check if getHeaders method exists and use it if available
+			$headers = method_exists($e, 'getHeaders') ? $e->getHeaders() : [];
+
+            // If synchronization fails, return an error response
+            return new JSONResponse(
+				data: [
+					'error' => 'Synchronization error',
+					'message' => $e->getMessage()
+				],
+				statusCode: $e->getCode() ?? 400,
+				headers: $headers
+			);
+        }
+    }
 }

@@ -20,6 +20,7 @@ return [
 		['name' => 'synchronizations#contracts', 'url' => '/api/synchronizations-contracts/{id}', 'verb' => 'GET'],
 		['name' => 'synchronizations#logs', 'url' => '/api/synchronizations-logs/{id}', 'verb' => 'GET'],
 		['name' => 'synchronizations#test', 'url' => '/api/synchronizations-test/{id}', 'verb' => 'POST'],
+		['name' => 'synchronizations#run', 'url' => '/api/synchronizations-run/{id}', 'verb' => 'POST'],
 		// Mapping endpoints
 		['name' => 'mappings#test', 'url' => '/api/mappings/test', 'verb' => 'POST'],
 		['name' => 'mappings#saveObject', 'url' => '/api/mappings/objects', 'verb' => 'POST'],

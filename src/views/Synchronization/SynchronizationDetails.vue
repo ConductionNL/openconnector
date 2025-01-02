@@ -39,6 +39,12 @@ import { synchronizationStore, navigationStore, logStore } from '../../store/sto
 							</template>
 							Test
 						</NcActionButton>
+						<NcActionButton @click="navigationStore.setModal('runSynchronization')">
+							<template #icon>
+								<Play :size="20" />
+							</template>
+							Run
+						</NcActionButton>
 						<NcActionButton @click="navigationStore.setDialog('deleteSynchronization')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
@@ -291,6 +297,7 @@ import Sync from 'vue-material-design-icons/Sync.vue'
 import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import DatabaseSettingsOutline from 'vue-material-design-icons/DatabaseSettingsOutline.vue'
 import CardBulletedSettingsOutline from 'vue-material-design-icons/CardBulletedSettingsOutline.vue'
+import Play from 'vue-material-design-icons/Play.vue'
 
 export default {
 	name: 'SynchronizationDetails',

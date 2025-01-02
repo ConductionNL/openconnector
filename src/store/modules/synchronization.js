@@ -7,6 +7,7 @@ export const useSynchronizationStore = defineStore('synchronization', {
 		synchronizationList: [],
 		synchronizationContracts: [],
 		synchronizationTest: null,
+		synchronizationRun: null,
 		synchronizationLogs: [],
 		synchronizationSourceConfigKey: null,
 		synchronizationTargetConfigKey: null,
@@ -207,6 +208,31 @@ export const useSynchronizationStore = defineStore('synchronization', {
 			this.synchronizationTest = data
 
 			console.info('Synchronization tested')
+			this.refreshSynchronizationLogs()
+
+			return { response, data }
+		},
+		// Test a synchronization
+		async runSynchronization(id) {
+			if (!id) {
+				throw new Error('No synchronization item to run')
+			}
+
+			console.info('Testing synchronization...')
+
+			const endpoint = `/index.php/apps/openconnector/api/synchronizations-run/${id}`
+
+			const response = await fetch(endpoint, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			})
+
+			const data = await response.json()
+			this.synchronizationRun = data
+
+			console.info('Synchronization run')
 			this.refreshSynchronizationLogs()
 
 			return { response, data }
