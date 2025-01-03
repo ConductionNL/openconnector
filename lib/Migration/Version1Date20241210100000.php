@@ -14,13 +14,11 @@ use OCP\DB\ISchemaWrapper;
 use OCP\DB\Types;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
-use OCP\IDBConnection;
 
 /**
- * This migration changes the following:
- * - Adding 4 new columns for the table Source: rateLimitLimit, rateLimitRemaining, rateLimitReset & rateLimitWindow
+ * FIXME Auto-generated migration step: Please modify to your needs!
  */
-class Version1Date20241121160300 extends SimpleMigrationStep {
+class Version1Date20241210100000 extends SimpleMigrationStep {
 
 	/**
 	 * @param IOutput $output
@@ -41,35 +39,14 @@ class Version1Date20241121160300 extends SimpleMigrationStep {
 		 * @var ISchemaWrapper $schema
 		 */
 		$schema = $schemaClosure();
-		// Sources table
-		$table = $schema->getTable('openconnector_sources');
 
-		if ($table->hasColumn('rate_limit_limit') === false) {
-			$table->addColumn('rate_limit_limit', Types::INTEGER, [
-				'notnull' => false,
-				'default' => null
-			]);
-		}
+		if ($schema->hasTable('openconnector_synchronizations') === true) {
+			$table = $schema->getTable('openconnector_synchronizations');
 
-		if ($table->hasColumn('rate_limit_remaining') === false) {
-			$table->addColumn('rate_limit_remaining', Types::INTEGER, [
-				'notnull' => false,
-				'default' => null
-			]);
-		}
-
-		if ($table->hasColumn('rate_limit_reset') === false) {
-			$table->addColumn('rate_limit_reset', Types::INTEGER, [
-				'notnull' => false,
-				'default' => null
-			]);
-		}
-
-		if ($table->hasColumn('rate_limit_window') === false) {
-			$table->addColumn('rate_limit_window', Types::INTEGER, [
-				'notnull' => false,
-				'default' => null
-			]);
+			if ($table->hasColumn('sourceHashMapping') === false) {
+				$table->dropColumn('sourceHashMapping');
+				$table->addColumn('source_hash_mapping', Types::STRING)->setNotnull(false);
+			}
 		}
 
 		return $schema;

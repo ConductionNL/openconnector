@@ -22,11 +22,11 @@ import { jobStore, navigationStore } from '../../store/store.js'
 			</NcButton>
 
 			<div v-if="jobStore.jobTest">
-				<NcNoteCard v-if="jobStore.jobTest?.message === 'success'" type="success">
-					<p>The job test was successful.</p>
+				<NcNoteCard v-if="jobStore.jobTest?.level === 'INFO'" type="success">
+					<p>The job test was successful. {{ jobStore.jobTest?.message }}</p>
 				</NcNoteCard>
-				<NcNoteCard v-if="(jobStore.jobTest?.message !== 'success') || error" type="error">
-					<p>An error occurred while testing the job: {{ jobStore.jobTest ? jobStore.jobTest.message : error }}</p>
+				<NcNoteCard v-if="(jobStore.jobTest?.level !== 'INFO') || error" type="error">
+					<p>An error occurred while testing the job test: {{ jobStore.jobTest ? jobStore.jobTest.message : error }}</p>
 				</NcNoteCard>
 			</div>
 

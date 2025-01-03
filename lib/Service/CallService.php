@@ -254,7 +254,7 @@ class CallService
 
 		$body = $response->getBody()->getContents();
 
-		// Let create the data array
+		// Let's create the data array
 		$data = [
 			'request' => [
 				'url' => $url,

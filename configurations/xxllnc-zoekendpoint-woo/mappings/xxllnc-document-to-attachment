@@ -1,0 +1,22 @@
+{
+    "name": "Xxllnc document to attachment",
+    "version": "0.0.1",
+    "mapping": {
+        "title": "filename",
+        "labels": "[{{ label }}]",
+        "size": "size",
+        "type": "mimetype",
+        "extension": "{{ filename|split('.')|last }}",
+        "shareUrl": "{ \"accessUrl\": \"https://urlvanzaaksysteem/{{ caseId }}/document/{{ uuid }}/download\",\"downloadUrl\": \"https://zaaksysteem-accept.noordwijk.nl/api/case/{{ caseId }}/document/{{ uuid }}/download\",\"shareUrl\": \"https://zaaksysteem-accept.noordwijk.nl/api/case/{{ caseId }}/document/{{ uuid }}/download\", {% if filename|default %}\"filename\": \"filename\",\"extension\": \"{{ filename|split('.')|last }}\",{% endif %}\"source\": \"1\" }"
+    },
+    "unset": [],
+    "cast": {
+        "title": "unsetIfValue==filename",
+        "labels": "jsonToArray",
+        "size": "unsetIfValue==size",
+        "type": "unsetIfValue==mimetype",
+        "extension": "unsetIfValue==",
+        "shareUrl": "jsonToArray"
+    },
+    "passThrough": false
+}

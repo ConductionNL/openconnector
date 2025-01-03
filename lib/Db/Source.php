@@ -165,8 +165,8 @@ class Source extends Entity implements JsonSerializable
 			'rateLimitRemaining' => $this->rateLimitRemaining,
 			'rateLimitReset' => $this->rateLimitReset,
 			'rateLimitWindow' => $this->rateLimitWindow,
-			'lastCall' => $this->lastCall,
-			'lastSync' => $this->lastSync,
+			'lastCall' => isset($this->lastCall) ? $this->lastCall->format('c') : null,
+			'lastSync' => isset($this->lastSync) ? $this->lastSync->format('c') : null,
 			'dateCreated' => isset($this->dateCreated) ? $this->dateCreated->format('c') : null,
 			'dateModified' => isset($this->dateModified) ? $this->dateModified->format('c') : null,
 		];

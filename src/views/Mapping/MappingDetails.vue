@@ -160,9 +160,6 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 											disable-menu
 											:size="44" />
 									</template>
-									<template #subname>
-										{{ value }}
-									</template>
 									<template #actions>
 										<NcActionButton @click="mappingStore.setMappingUnsetKey(value); navigationStore.setModal('editMappingUnset')">
 											<template #icon>

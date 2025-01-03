@@ -8,9 +8,11 @@ export class Synchronization extends ReadonlyBaseClass implements TSynchronizati
 	public id: number
 	public name: string
 	public description: string
+	public conditions: string
 	public sourceId: string
 	public sourceType: string
 	public sourceHash: string
+	public sourceHashMapping: string
 	public sourceTargetMapping: string
 	public sourceConfig: Record<string, string>
 	public sourceLastChanged: string
@@ -32,9 +34,11 @@ export class Synchronization extends ReadonlyBaseClass implements TSynchronizati
 			id: synchronization.id || null,
 			name: synchronization.name || '',
 			description: synchronization.description || '',
+			conditions: synchronization.conditions || '',
 			sourceId: synchronization.sourceId || '',
 			sourceType: synchronization.sourceType || '',
 			sourceHash: synchronization.sourceHash || '',
+			sourceHashMapping: synchronization.sourceHashMapping || '',
 			sourceTargetMapping: synchronization.sourceTargetMapping || '',
 			sourceConfig: synchronization.sourceConfig || {},
 			sourceLastChanged: synchronization.sourceLastChanged || '',
@@ -60,9 +64,11 @@ export class Synchronization extends ReadonlyBaseClass implements TSynchronizati
 			id: z.number().nullable(),
 			name: z.string(),
 			description: z.string(),
+			conditions: z.string(),
 			sourceId: z.string(),
 			sourceType: z.string(),
 			sourceHash: z.string(),
+			sourceHashMapping: z.string(),
 			sourceTargetMapping: z.string(),
 			sourceConfig: z.record(z.string(), z.string()),
 			sourceLastChanged: z.string(),

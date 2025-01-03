@@ -1,0 +1,29 @@
+{
+    "name": "Xxllnc zoek endpoint to Publication",
+    "version": "0.0.1",
+    "mapping": {
+        "title": "{{ values['case.subject'] }}",
+        "summary": "{{ values['attribute.woo_samenvatting'] }}",
+        "description": "{{ values['attribute.woo_beschrijving'] }}",
+        "category": "{{ values['attribute.woo_categorie'] }}",
+        "featured": false,
+        "status": "Published",
+        "attachmentCount": 0,
+        "published": "{{ values['attribute.woo_publicatiedatum'] }}",
+        "modified": "{{ \"now\"|date(\"Y-m-d\\\\TH:i:s.v\\\\Z\") }}",
+        "license": "eupl2",
+        "catalog": "1bcb99cd-7e47-4242-b7a7-ac7d36fe5d5e",
+        "attachments": "[{% set fileCount = 0 %}{% for file in values['attribute.woo_publicatie'] %}{% if fileCount > 0 %}, {% endif %}{% set file = file|merge({'label': 'Publicatie', 'caseId': id}) %}{{ executeMapping(2, file)|json_encode }}{% set fileCount = fileCount + 1 %}{% endfor %}{% for file in values['attribute.woo_inventarisatielijst'] %}{% if fileCount > 0 %}, {% endif %}{% set file = file|merge({'label': 'Inventarisatielijst', 'caseId': id}) %}{{ executeMapping(2, file)|json_encode }}{% set fileCount = fileCount + 1 %}{% endfor %}{% for file in values['attribute.woo_informatieverzoek'] %}{% if fileCount > 0 %}, {% endif %}{% set file = file|merge({'label': 'Informatieverzoek', 'caseId': id}) %}{{ executeMapping(2, file)|json_encode }}{% set fileCount = fileCount + 1 %}{% endfor %}{% for file in values['attribute.woo_besluit'] %}{% if fileCount > 0 %}, {% endif %}{% set file = file|merge({'label': 'Besluit', 'caseId': id}) %}{{ executeMapping(2, file)|json_encode }}{% set fileCount = fileCount + 1 %}{% endfor %}]"
+    },
+    "unset": [],
+    "cast": {
+        "title": "unsetIfValue==",
+        "summary": "unsetIfValue==",
+        "description": "unsetIfValue==",
+        "category": "unsetIfValue==",
+        "published": "unsetIfValue==",
+        "modified": "unsetIfValue==",
+        "attachments": "jsonToArray"
+    },
+    "passThrough": false
+}

@@ -16,11 +16,13 @@ class Synchronization extends Entity implements JsonSerializable
 	protected ?string $sourceId = null;	// The id of the source object
 	protected ?string $sourceType = null;	// The type of the source object (e.g. api, database, register/schema.)
 	protected ?string $sourceHash = null;	// The hash of the source object when it was last synced.
+	protected ?string $sourceHashMapping = null;	// The mapping id of the mapping that we map the object to for hashing.
 	protected ?string $sourceTargetMapping = null;	// The mapping of the source object to the target object
 	protected ?array $sourceConfig = null; // The configuration of the object in the source
 	protected ?DateTime $sourceLastChanged = null;	// The last changed date of the source object
 	protected ?DateTime $sourceLastChecked = null;	// The last checked date of the source object
 	protected ?DateTime $sourceLastSynced = null;	// The last synced date of the source object
+	protected ?int $currentPage = 1; // The last page synced. Used for keeping track where to continue syncing after Rate Limit has been exceeded on source with pagination.
 	// Target
 	protected ?string $targetId = null;	// The id of the target object
 	protected ?string $targetType = null;	// The type of the target object (e.g. api, database, register/schema.)
@@ -46,11 +48,13 @@ class Synchronization extends Entity implements JsonSerializable
 		$this->addType('sourceId', 'string');
 		$this->addType('sourceType', 'string');
 		$this->addType('sourceHash', 'string');
+		$this->addType('sourceHashMapping', 'string');
 		$this->addType('sourceTargetMapping', 'string');
 		$this->addType('sourceConfig', 'json');
 		$this->addType('sourceLastChanged', 'datetime');
 		$this->addType('sourceLastChecked', 'datetime');
 		$this->addType('sourceLastSynced', 'datetime');
+		$this->addType('currentPage', 'integer');
 		$this->addType('targetId', 'string');
 		$this->addType('targetType', 'string');
 		$this->addType('targetHash', 'string');
@@ -121,11 +125,13 @@ class Synchronization extends Entity implements JsonSerializable
 			'sourceId' => $this->sourceId,
 			'sourceType' => $this->sourceType,
 			'sourceHash' => $this->sourceHash,
+			'sourceHashMapping' => $this->sourceHashMapping,
 			'sourceTargetMapping' => $this->sourceTargetMapping,
 			'sourceConfig' => $this->sourceConfig,
 			'sourceLastChanged' => isset($this->sourceLastChanged) === true ? $this->sourceLastChanged->format('c') : null,
 			'sourceLastChecked' => isset($this->sourceLastChecked) === true ? $this->sourceLastChecked->format('c') : null,
 			'sourceLastSynced' => isset($this->sourceLastSynced) === true ? $this->sourceLastSynced->format('c') : null,
+			'currentPage' => $this->currentPage,
 			'targetId' => $this->targetId,
 			'targetType' => $this->targetType,
 			'targetHash' => $this->targetHash,
