@@ -7,6 +7,7 @@ export const useJobStore = defineStore(
 		state: () => ({
 			jobItem: false,
 			jobTest: false,
+			jobRun: false,
 			jobList: [],
 			jobLog: false,
 			jobLogs: [],
@@ -20,6 +21,10 @@ export const useJobStore = defineStore(
 			setJobTest(jobTest) {
 				this.jobTest = jobTest
 				console.log('Job test set to ' + jobTest)
+			},
+			setJobRun(jobRun) {
+				this.jobRun = jobRun
+				console.log('Job run set to ' + jobRun)
 			},
 			setJobList(jobList) {
 				this.jobList = jobList.map(
@@ -140,6 +145,31 @@ export const useJobStore = defineStore(
 						this.refreshJobLogs()
 						throw err
 					})
+			},
+			// Run a job
+			async runJob(id) {
+				if (!id) {
+					throw new Error('No job item to run')
+				}
+				console.log('Running job...')
+
+				const endpoint = `/index.php/apps/openconnector/api/jobs-test/${id}`
+
+				const response = await fetch(endpoint, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify([]),
+				})
+
+				const data = await response.json()
+				this.setJobRun(data)
+				console.log('Job run')
+				// Refresh the job list
+				this.refreshJobLogs()
+
+				return { response, data }
 			},
 			// Create or save a job from store
 			saveJob(jobItem) {

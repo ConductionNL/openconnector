@@ -33,6 +33,12 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 							</template>
 							Test
 						</NcActionButton>
+						<NcActionButton @click="navigationStore.setModal('runJob')">
+							<template #icon>
+								<Play :size="20" />
+							</template>
+							Run
+						</NcActionButton>
 
 						<NcActionButton @click="refreshJobLogs()">
 							<template #icon>
@@ -194,6 +200,7 @@ import SitemapOutline from 'vue-material-design-icons/SitemapOutline.vue'
 import Update from 'vue-material-design-icons/Update.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
+import Play from 'vue-material-design-icons/Play.vue'
 
 import getValidISOstring from '../../services/getValidISOstring.js'
 

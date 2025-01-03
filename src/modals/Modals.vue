@@ -13,6 +13,7 @@ import { navigationStore } from '../store/store.js'
 		<TestSource />
 		<DeleteJob />
 		<TestJob />
+		<RunJob v-if="navigationStore.modal === 'runJob'" />
 		<EditJob />
 		<DeleteLog />
 		<EditLog />
@@ -54,6 +55,7 @@ import EditSource from './Source/EditSource.vue'
 import TestSource from './TestSource/TestSource.vue'
 import DeleteSource from './Source/DeleteSource.vue'
 import TestJob from './Job/TestJob.vue'
+import RunJob from './Job/RunJob.vue'
 import EditJob from './Job/EditJob.vue'
 import DeleteJob from './Job/DeleteJob.vue'
 import EditLog from './Log/EditLog.vue'
@@ -97,6 +99,7 @@ export default {
 		TestSource,
 		DeleteJob,
 		EditJob,
+		RunJob,
 		TestJob,
 		DeleteLog,
 		EditLog,
