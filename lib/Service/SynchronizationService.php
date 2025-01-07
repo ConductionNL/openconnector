@@ -51,6 +51,7 @@ class SynchronizationService
     const EXTRA_DATA_CONFIGS_LOCATION          = 'extraDataConfigs';
     const EXTRA_DATA_DYNAMIC_ENDPOINT_LOCATION = 'dynamicEndpointLocation';
     const EXTRA_DATA_STATIC_ENDPOINT_LOCATION  = 'staticEndpoint';
+    const EXTRA_DATA_ID_POSITION_LOCATION      = 'idPosition';
     const KEY_FOR_EXTRA_DATA_LOCATION          = 'keyToSetExtraData';
     const MERGE_EXTRA_DATA_OBJECT_LOCATION     = 'mergeExtraData';
 
@@ -303,10 +304,6 @@ class SynchronizationService
         // Get endpoint static defined in config.
         if (isset($extraDataConfig[$this::EXTRA_DATA_STATIC_ENDPOINT_LOCATION]) === true) {
 
-            if ($originId === null) {
-                $originId = $this->getOriginId($synchronization, $object);
-            }
-
             if (isset($extraDataConfig['endpointIdLocation']) === true) {
                 $dotObject = new Dot($object);
                 $originId = $dotObject->get($extraDataConfig['endpointIdLocation']);
@@ -315,8 +312,12 @@ class SynchronizationService
 
             $endpoint = $extraDataConfig[$this::EXTRA_DATA_STATIC_ENDPOINT_LOCATION];
 
-            if ($originId === null) {
-                $originId = $this->getOriginId($synchronization, $object);
+            if ($originId === null || isset($extraDataConfig[$this::EXTRA_DATA_ID_POSITION_LOCATION]) === true) {
+                if (isset($extraDataConfig[$this::EXTRA_DATA_ID_POSITION_LOCATION]) === true) {
+                    $synchronization->setSourceConfig(array_merge($synchronization->getSourceConfig(), ['idPosition' => $extraDataConfig[$this::EXTRA_DATA_ID_POSITION_LOCATION]]));
+                }
+
+                $originId = $this->getOriginId(synchronization: $synchronization, object: $object);
             }
 
             $endpoint = str_replace(search: '{{ originId }}', replace: $originId, subject: $endpoint);
