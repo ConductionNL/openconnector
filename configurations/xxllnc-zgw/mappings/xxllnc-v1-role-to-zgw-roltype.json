@@ -2,11 +2,13 @@
     "name": "Xxllnc Role to ZGW RolType",
     "version": "0.0.1",
     "mapping": {
+        "originId": "instance.role_id",
         "omschrijving": "{% if instance.description|default %}{{ instance.description }}{% endif %}",
         "omschrijvingGeneriek": "{% if instance.name|default %}{{ instance.name|lower }}{% endif %}"
     },
     "unset": [],
     "cast": {
+        "originId": "unsetIfValue==instance.role_id",
         "omschrijving": "unsetIfValue==",
         "omschrijvingGeneriek": "unsetIfValue=="
     },

@@ -3,7 +3,6 @@
     "version": "0.0.1",
     "mapping": {
         "originId": "reference",
-        "_sourceId": "reference",
         "identificatie": "instance.legacy.zaaktype_id",
         "catalogus": "_catalogus",
         "onderwerp": "instance.title",

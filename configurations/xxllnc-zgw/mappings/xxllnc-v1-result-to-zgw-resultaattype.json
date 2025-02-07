@@ -2,6 +2,7 @@
     "name": "Xxllnc Result to ZGW ResultaatType",
     "version": "0.0.1",
     "mapping": {
+        "originId": "resultaat_id",
         "omschrijving": "type",
         "toelichting": "label",
         "selectielijstklasse": "{% if selection_list|default %}https://inavigator.bizzib.nl/bsd/sl2020.gem.html#{{ selection_list_number|replace({'.': '_'}) }}{% else %}http://localhost{% endif %}",
@@ -10,6 +11,7 @@
     },
     "unset": [],
     "cast": {
+        "originId": "unsetIfValue==resultaat_id",
         "omschrijving": "unsetIfValue==type",
         "toelichting": "unsetIfValue==label",
         "archiefactietermijn": "unsetIfValue=="

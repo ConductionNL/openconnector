@@ -2,6 +2,7 @@
     "name": "Xxllnc Field to ZGW Eigenschap",
     "version": "0.0.1",
     "mapping": {
+        "originId": "id",
         "naam": "magic_string",
         "definitie": "{% if original_label|default %}{{ original_label }}{% elseif label|default %}{{ label }}{% else %}{{ magic_string }}{% endif %}",
         "specificatie.formaat": "{% if type == 'date' %}datum{% elseif type == 'datetime' %}datum_tijd{% elseif type=='number' %}getal{% else %}tekst{% endif %}",
@@ -11,6 +12,7 @@
     },
     "unset": [],
     "cast": {
+        "originId": "unsetIfValue==id",
         "naam": "unsetIfValue==magic_string",
         "definitie": "unsetIfValue==",
         "catalogus": "unsetIfValue==_catalogus",

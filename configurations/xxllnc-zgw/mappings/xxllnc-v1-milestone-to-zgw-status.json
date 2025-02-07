@@ -2,6 +2,7 @@
     "name": "Xxllnc Milestone to ZGW Status",
     "version": "0.0.1",
     "mapping": {
+        "originId": "{% if milestone.reference|default %}{{ milestone.reference }}{% endif %}",
         "datumStatusGezet": "milestone.instance.date_modified",
         "statustoelichting": "milestone.instance.phase_label",
         "indicatieLaatstGezetteStatus": "{{ true }}",
@@ -9,6 +10,7 @@
     },
     "unset": [],
     "cast": {
+        "originId": "unsetIfValue==",
         "indicatieLaatstGezetteStatus": "bool",
         "statustype": "unsetIfValue==",
         "datumStatusGezet": "unsetIfValue==milestone.instance.date_modified",

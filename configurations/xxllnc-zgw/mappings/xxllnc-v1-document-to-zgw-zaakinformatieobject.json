@@ -2,6 +2,7 @@
     "name": "Xxllnc Document to ZGW ZaakInformatieObject",
     "version": "0.0.1",
     "mapping": {
+        "originId": "reference",
         "titel": "instance.name",
         "registratiedatum": "instance.file.instance.date_created",
         "informatieobject.identificatie": "instance.number",
@@ -21,6 +22,7 @@
     },
     "unset": [],
     "cast": {
+        "originId": "unsetIfValue==reference",
         "informatieobject.versie": "integer",
         "informatieobject.bestandsomvang": "integer",
         "informatieobject.inhoud": "jsonToArray",

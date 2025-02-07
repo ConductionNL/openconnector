@@ -2,6 +2,7 @@
     "name": "Xxllnc RoleRequestor to ZGW Rol",
     "version": "0.0.1",
     "mapping": {
+        "originId": "{% if role.reference|default %}{{ role.reference }}{% endif %}",
         "betrokkeneType": "{% if role.instance.name|default %}{% if role.instance.name == 'Behandelaar'|lower %}medewerker{% else %}medewerker{% endif %}{% endif %}",
         "omschrijving": "{% if role.instance.name|default %}{{ role.instance.name }}{% endif %}",
         "omschrijvingGeneriek": "{% if role.instance.description|default %}{{ role.instance.description }}{% endif %}",
@@ -30,6 +31,7 @@
     },
     "unset": [],
     "cast": {
+        "originId": "unsetIfValue==",
         "roltype": "unsetIfValue==",
         "betrokkeneIdentificatie": "unsetIfValue==",
         "omschrijving": "unsetIfValue==",

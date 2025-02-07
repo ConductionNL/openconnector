@@ -2,7 +2,7 @@
     "name": "Xxllnc Phase to ZGW StatusType",
     "version": "0.0.1",
     "mapping": {
-        "_sourceId": "{% if fields.0.label|default and casetypeReference|default  %}{{ casetypeReference~fields.0.label }}{% endif %}",
+        "originId": "{% if fields.0.label|default and casetypeReference|default  %}{{ casetypeReference~fields.0.label }}{% endif %}",
         "volgnummer": "seq",
         "omschrijving": "name",
         "omschrijvingGeneriek": "{% if fields.0.label|default %}{{ fields.0.label }}{% else %}geen statustekst{% endif %}",
@@ -12,7 +12,7 @@
     },
     "unset": [],
     "cast": {
-        "_sourceId": "unsetIfValue==",
+        "originId": "unsetIfValue==",
         "volgnummer": "unsetIfValue==seq",
         "omschrijving": "unsetIfValue==name",
         "catalogus": "unsetIfValue==_catalogus",

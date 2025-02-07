@@ -2,6 +2,7 @@
     "name": "Xxllnc Field to ZGW InformatieObjectType",
     "version": "0.0.1",
     "mapping": {
+        "originId": "id",
         "omschrijving": "{% if original_label|default %}{{ original_label }}{% elseif label|default %}{{ label }}{% else %}{{ magic_string }}{% endif %}",
         "vertrouwelijkheidsaanduiding": "{% if publish_public|default and publish_public == true %}openbaar{% else %}zaakvertrouwelijk{% endif %}",
         "beginGeldigheid": "{{ 'now'|date('Y-m-d') }}",
@@ -9,6 +10,7 @@
     },
     "unset": [],
     "cast": {
+        "originId": "unsetIfValue==id",
         "omschrijving": "unsetIfValue=="
     },
     "passTrough": false

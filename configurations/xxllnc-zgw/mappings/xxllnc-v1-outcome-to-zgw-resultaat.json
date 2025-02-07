@@ -2,11 +2,13 @@
     "name": "Xxllnc Outcome to ZGW Resultaat",
     "version": "0.0.1",
     "mapping": {
+        "originId": "{% if outcome.reference|default %}{{ outcome.reference }}{% endif %}",
         "toelichting": "{% if outcome.instance.name|default %}{{ outcome.instance.name }}{% endif %}",
         "resultaattype": "{% if resultaattypen|default %}{% for resultaattype in resultaattypen %}{% if resultaattype.toelichting == outcome.instance.name %}{{ resultaattype['_self']['id'] }}{% endif %}{% endfor %}{% endif %}"
     },
     "unset": [],
     "cast": {
+        "originId": "unsetIfValue==",
         "resultaattype": "unsetIfValue==",
         "toelichting": "unsetIfValue=="
     },
