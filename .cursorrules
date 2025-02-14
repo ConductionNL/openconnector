@@ -6,3 +6,8 @@
 - add phpunit tests to all methods
 - add inline comments to all logic explaining the steps being taken
 - use readonly properties where appropriate
+- use phpstan annotations to improve code quality
+- use phpcs to enforce code style
+- use phpcbf to fix code style issues
+- apply all the rules defined in phpcs.xml
+- use phpunit to test all methods
