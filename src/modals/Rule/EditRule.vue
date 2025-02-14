@@ -295,6 +295,13 @@ import { Rule } from '../../entities/index.js'
 						</template>
 					</NcSelect>
 
+					<NcCheckboxRadioSwitch
+						type="checkbox"
+						label="Auto Share"
+						:checked.sync="ruleItem.configuration.fetch_file.autoShare">
+						Auto share
+					</NcCheckboxRadioSwitch>
+
 					<div class="json-editor">
 						<label>Source Configuration (JSON)</label>
 						<div :class="`codeMirrorContainer ${getTheme()}`">
@@ -340,6 +347,13 @@ import { Rule } from '../../entities/index.js'
 							type to add tags
 						</template>
 					</NcSelect>
+
+					<NcCheckboxRadioSwitch
+						type="checkbox"
+						label="Auto Share"
+						:checked.sync="ruleItem.configuration.write_file.autoShare">
+						Auto share
+					</NcCheckboxRadioSwitch>
 				</template>
 
 				<!-- Fileparts Create Configuration -->
@@ -442,6 +456,7 @@ import {
 	NcInputField,
 	NcActions,
 	NcActionButton,
+	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
 import { json, jsonParseLinter } from '@codemirror/lang-json'
 import CodeMirror from 'vue-codemirror6'
@@ -467,6 +482,7 @@ export default {
 		NcInputField,
 		NcActions,
 		NcActionButton,
+		NcCheckboxRadioSwitch,
 	},
 	data() {
 		return {
@@ -541,11 +557,13 @@ export default {
 						method: '',
 						tags: [],
 						sourceConfiguration: '[]',
+						autoShare: false,
 					},
 					write_file: {
 						filePath: '',
 						tags: [],
 						fileNamePath: '',
+						autoShare: false,
 					},
 					fileparts_create: {
 						sizeLocation: '',
@@ -625,11 +643,13 @@ export default {
 						method: ruleStore.ruleItem.configuration?.fetch_file?.method ?? '',
 						tags: ruleStore.ruleItem.configuration?.fetch_file?.tags ?? [],
 						sourceConfiguration: JSON.stringify(ruleStore.ruleItem.configuration?.fetch_file?.sourceConfiguration, null, 2) ?? '[]',
+						autoShare: ruleStore.ruleItem.configuration?.fetch_file?.autoShare ?? false,
 					},
 					write_file: {
 						filePath: ruleStore.ruleItem.configuration?.write_file?.filePath ?? '',
 						fileNamePath: ruleStore.ruleItem.configuration?.write_file?.fileNamePath ?? '',
 						tags: ruleStore.ruleItem.configuration?.write_file?.tags ?? [],
+						autoShare: ruleStore.ruleItem.configuration?.write_file?.autoShare ?? false,
 					},
 					fileparts_create: {
 						sizeLocation: ruleStore.ruleItem.configuration?.fileparts_create?.sizeLocation ?? '',
@@ -997,6 +1017,7 @@ export default {
 					method: this.methodOptions.value?.label,
 					tags: this.ruleItem.configuration.fetch_file.tags,
 					sourceConfiguration: this.ruleItem.configuration.fetch_file.sourceConfiguration ? JSON.parse(this.ruleItem.configuration.fetch_file.sourceConfiguration) : [],
+					autoShare: this.ruleItem.configuration.fetch_file.autoShare,
 				}
 				break
 			case 'write_file':
@@ -1004,6 +1025,7 @@ export default {
 					filePath: this.ruleItem.configuration.write_file.filePath,
 					fileNamePath: this.ruleItem.configuration.write_file.fileNamePath,
 					tags: this.ruleItem.configuration.write_file.tags,
+					autoShare: this.ruleItem.configuration.write_file.autoShare,
 				}
 				break
 			case 'fileparts_create':

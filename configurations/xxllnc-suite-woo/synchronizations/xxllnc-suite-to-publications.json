@@ -13,14 +13,15 @@
         "endpoint": "\/tlb\/zaaksysteem\/api\/v1\/zaken",
         "headers": [],
         "query.startdatum__gte": "2024-08-01",
-        "query.einddatum__lt": "2025-01-01",
+        "query.einddatum__lt": "2025-04-01",
         "query.maximaleVertrouwelijkheidaanduiding": "openbaar",
         "usesPagination": "false",
         "extraDataConfigs.0.staticEndpoint": "/tlb/zaaksysteem/api/v1/zaken/{{ originId }}/informatieobjecten",
         "extraDataConfigs.0.mergeExtraData": "true",
         "extraDataConfigs.0.keyToSetExtraData": "files",
         "extraDataConfigs.0.resultsLocation": "results",
-        "extraDataConfigs.0.extraDataConfigPerResult.staticEndpoint": "/tlb/zaaksysteem/api/v1/informatieobjecten/{{ originId }}"
+        "extraDataConfigs.0.extraDataConfigPerResult.staticEndpoint": "/tlb/zaaksysteem/api/v1/informatieobjecten/{{ subObjectId }}",
+        "extraDataConfigs.0.extraDataConfigPerResult.subObjectId": "identificatie"
     },
 	"targetId": "1/1",
 	"targetType": "register/schema",

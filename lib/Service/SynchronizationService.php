@@ -202,7 +202,7 @@ class SynchronizationService
 					synchronization: $synchronization,
 					object: $object,
 					isTest: $isTest,
-					force: false,
+					force: $force,
 					log: $log
 				);
 
@@ -216,7 +216,7 @@ class SynchronizationService
 					synchronization: $synchronization,
 					object: $object,
 					isTest: $isTest,
-					force: false,
+					force: $force,
 					log: $log
 				);
 
@@ -1634,7 +1634,7 @@ class SynchronizationService
 
 		// Write file with OpenRegister ObjectService.
 		$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
-		$file = $objectService->addFile(object: $objectId, fileName: $filename, base64Content: $response['body']);
+		$file = $objectService->addFile(object: $objectId, fileName: $filename, base64Content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false);
 
         // Attach passed down tags
         $tags[] = "object:$objectId";
@@ -1779,27 +1779,72 @@ class SynchronizationService
 
         $config  = $rule->getConfiguration()['write_file'];
         $dataDot = new Dot($data);
-        $content = base64_decode($dataDot[$config['filePath']]);
-        $fileName = $dataDot[$config['fileNamePath']];
-        $openRegisters = $this->objectService->getOpenRegisters();
-        $openRegisters->setRegister($registerId);
-        $openRegisters->setSchema($schemaId);
-
-        $object = $openRegisters->find($objectId);
-
-        try {
-			// Write file with OpenRegister ObjectService.
-			$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
-			$file = $objectService->addFile(object: $objectId, fileName: $fileName, base64Content: $content);
-
-			$tags = array_merge($config['tags'] ?? [], ["object:$objectId"]);
-			if ($file instanceof File === true) {
-				$this->attachTagsToFile(fileId: $file->getId(), tags: $tags);
-			}
-        } catch (Exception $exception) {
+        $files = $dataDot[$config['filePath']];
+        if (isset($files) === false || empty($files) === true) {
+            return $dataDot->jsonSerialize();
         }
 
-        $dataDot[$config['filePath']] = $file->getPath();
+        // Check if associative array
+        if (is_array($files) === true && isset($files[0]) === true & array_keys($files[0]) !== range(0, count($files[0]) - 1)) {
+            $result = [];
+			foreach ($files as $key => $value) {
+
+                // Check for tags
+                $tags = [];
+                if (is_array($value) === true) {
+                    $content = $value['content'];
+                    if (isset($value['label']) === true && isset($config['tags']) === true &&
+                        in_array(needle: $value['label'], haystack: $config['tags']) === true) {
+                        $tags = [$value['label']];
+                    }
+                    if (isset($value['filename']) === true) {
+                        $fileName = $value['filename'];
+                    }
+                } else {
+                    $content = $value;
+                }
+
+                $openRegisters = $this->objectService->getOpenRegisters();
+                $openRegisters->setRegister($registerId);
+                $openRegisters->setSchema($schemaId);
+
+                try {
+                    // Write file with OpenRegister ObjectService.
+                    $objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
+                    $file = $objectService->addFile(object: $objectId, fileName: $fileName, base64Content: $content);
+
+                    $tags = array_merge($config['tags'] ?? [], ["object:$objectId"]);
+                    if ($file instanceof File === true) {
+                        $this->attachTagsToFile(fileId: $file->getId(), tags: $tags);
+                    }
+
+                    $result[$key] = $file->getPath();
+                } catch (Exception $exception) {
+                }
+            }
+            $result[$key] = $file->getPath();
+            $dataDot[$config['filePath']] = $result;
+        } else { 
+            $content = $files;
+            $fileName = $dataDot[$config['fileNamePath']];
+            $openRegisters = $this->objectService->getOpenRegisters();
+            $openRegisters->setRegister($registerId);
+            $openRegisters->setSchema($schemaId);
+
+            try {
+                // Write file with OpenRegister ObjectService.
+                $objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
+                $file = $objectService->addFile(object: $objectId, fileName: $fileName, base64Content: $content);
+
+                $tags = array_merge($config['tags'] ?? [], ["object:$objectId"]);
+                if ($file instanceof File === true) {
+                    $this->attachTagsToFile(fileId: $file->getId(), tags: $tags);
+                }
+                $dataDot[$config['filePath']] = $file->getPath();
+            } catch (Exception $exception) {
+            }
+        }
+
 
         return $dataDot->jsonSerialize();
     }
