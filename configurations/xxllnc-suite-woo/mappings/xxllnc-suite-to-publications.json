@@ -9,7 +9,7 @@
         "category": "{% if zaaktypecode|default %}{% set wooVerzoekenEnBesluiten = ['LP00000431', 'B1873'] %}{% set klachtoordelen = ['LP00000091', 'LP00001132', 'LP00000121', 'B0757', 'LP00000832', 'LP00001096'] %}{% if zaaktypecode in wooVerzoekenEnBesluiten %}{{ 'Woo-verzoeken en -besluiten' }}{% elseif zaaktypecode in klachtoordelen %}{{ 'Klachtoordelen' }}{% endif %}{% endif %}",
         "published": "startdatum",
         "modified": "{{ 'now'|date('H:i:sTm-d-Y') }}",
-        "attachments": "[{% if files is defined and files is not empty %}{% for file in files %}{ {% if file['titel']|default %}\"filename\": \"{{ file['bestandsnaam'] }}\",{% endif %}\"label\": \"{{ 'woo_informatieverzoek' }}\",{% if file['inhoud']|default %}\"content\": \"{{ file.inhoud }}\"{% endif %} }{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}]",
+        "attachments": "[{% if files is defined and files is not empty %}{% set count = 0 %}{% for file in files %}{% if file['titel']|default and file['inhoud']|default %}{% if count > 0 %}, {% endif %}{\"filename\": \"{{ file['bestandsnaam'] }}\", \"label\": \"{{ 'woo_informatieverzoek' }}\", \"content\": \"{{ file.inhoud }}\"}{% set count = count + 1 %}{% endif %} {% endfor %}{% endif %}]",
         "status": "Concept"
     },
     "unset": [
