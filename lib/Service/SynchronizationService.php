@@ -1744,7 +1744,7 @@ class SynchronizationService
 
                 // Check for tags
                 $tags = [];
-                if (is_array($value) === true) {
+                if (is_array($value) === true && isset($value['endpoint']) === true) {
                     $endpoint = $value['endpoint'];
                     if (isset($value['label']) === true && isset($config['tags']) === true &&
                         in_array(needle: $value['label'], haystack: $config['tags']) === true) {
