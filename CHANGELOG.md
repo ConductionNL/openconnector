@@ -1,3 +1,10 @@
+# Version: 0.1.47
+
+* [#240](https://github.com/ConductionNL/openconnector/pull/240): If synchronization is a test, deleted objects is 0
+* [#241](https://github.com/ConductionNL/openconnector/pull/241): Multiple fixes
+* [#242](https://github.com/ConductionNL/openconnector/pull/242): Dev to main
+
+
 # Changelog
 
 ## [Unreleased]
