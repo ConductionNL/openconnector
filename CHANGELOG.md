@@ -1,3 +1,9 @@
+# Version: 0.1.51
+
+* [#235](https://github.com/ConductionNL/openconnector/pull/235): RX fixes
+* [#258](https://github.com/ConductionNL/openconnector/pull/258): Update Main with RX changes
+
+
 # Changelog
 
 ## [Unreleased]
