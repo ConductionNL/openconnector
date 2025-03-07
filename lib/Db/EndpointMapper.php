@@ -88,7 +88,7 @@ class EndpointMapper extends QBMapper
 		$obj = new Endpoint();
 		$obj->hydrate($object);
 		// Set uuid
-		if ($obj->getUuid() === null){
+		if ($obj->getUuid() === null) {
 			$obj->setUuid(Uuid::v4());
 		}
 

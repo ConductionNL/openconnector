@@ -312,7 +312,7 @@ class ImportService
 		$jsonLdDefault = [
 			'@context' => [
 				"schema" => "http://schema.org",
-				"register" => "501"
+				"register" => "Not Implemented"
 			],
 			'@type' => $objectArray['@type'],
 			'@id' => $objectArray['reference'] ?? null

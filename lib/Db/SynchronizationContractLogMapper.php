@@ -2,18 +2,23 @@
 
 namespace OCA\OpenConnector\Db;
 
+use DateInterval;
+use DatePeriod;
+use DateTime;
 use OCA\OpenConnector\Db\SynchronizationContractLog;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use OCP\ISession;
 use OCP\IUserSession;
 use Symfony\Component\Uid\Uuid;
+use OCP\Session\Exceptions\SessionNotAvailableException;
 
 /**
  * Class SynchronizationContractLogMapper
- * 
+ *
  * Mapper class for handling SynchronizationContractLog entities
  */
 class SynchronizationContractLogMapper extends QBMapper
@@ -89,9 +94,9 @@ class SynchronizationContractLogMapper extends QBMapper
 	{
 		$obj = new SynchronizationContractLog();
 		$obj->hydrate($object);
-		
+
 		// Set uuid if not provided
-		if ($obj->getUuid() === null){
+		if ($obj->getUuid() === null) {
 			$obj->setUuid(Uuid::v4());
 		}
 
@@ -102,7 +107,12 @@ class SynchronizationContractLogMapper extends QBMapper
 
 		// Auto-fill sessionId from current session
 		if ($obj->getSessionId() === null) {
-			$obj->setSessionId($this->session->getId());
+			// Try catch because we could run this from a Job and in that case have no session.
+			try {
+				$obj->setSessionId($this->session->getId());
+			} catch (SessionNotAvailableException $exception) {
+				$obj->setSessionId(null);
+			}
 		}
 
 		// If no synchronizationLogId is provided, we assume that the contract is run directly from the synchronization log and set the synchronizationLogId to n.a.
@@ -119,5 +129,85 @@ class SynchronizationContractLogMapper extends QBMapper
 		$obj->hydrate($object);
 
 		return $this->update($obj);
+	}
+
+	/**
+	 * Get synchronization execution counts by date for a specific date range
+	 *
+	 * @param DateTime $from Start date
+	 * @param DateTime $to End date
+	 *
+	 * @return array Array of daily execution counts
+	 * @throws Exception
+	 */
+	public function getSyncStatsByDateRange(DateTime $from, DateTime $to): array
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select(
+				$qb->createFunction('DATE(created) as date'),
+				$qb->createFunction('COUNT(*) as executions')
+			)
+			->from('openconnector_synchronization_contract_logs')
+			->where($qb->expr()->gte('created', $qb->createNamedParameter($from->format('Y-m-d H:i:s'))))
+			->andWhere($qb->expr()->lte('created', $qb->createNamedParameter($to->format('Y-m-d H:i:s'))))
+			->groupBy('date')
+			->orderBy('date', 'ASC');
+
+		$result = $qb->execute();
+		$stats = [];
+
+		// Create DatePeriod to iterate through all dates
+		$period = new DatePeriod(
+			$from,
+			new DateInterval('P1D'),
+			$to->modify('+1 day')
+		);
+
+		// Initialize all dates with zero values
+		foreach ($period as $date) {
+			$dateStr = $date->format('Y-m-d');
+			$stats[$dateStr] = 0;
+		}
+
+		// Fill in actual values where they exist
+		while ($row = $result->fetch()) {
+			$stats[$row['date']] = (int)$row['executions'];
+		}
+
+		return $stats;
+	}
+
+	/**
+	 * Get synchronization execution counts by hour for a specific date range
+	 *
+	 * @param DateTime $from Start date
+	 * @param DateTime $to End date
+	 * 
+	 * @return array Array of hourly execution counts
+	 * @throws Exception
+	 */
+	public function getSyncStatsByHourRange(DateTime $from, DateTime $to): array
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select(
+				$qb->createFunction('HOUR(created) as hour'),
+				$qb->createFunction('COUNT(*) as executions')
+			)
+			->from('openconnector_synchronization_contract_logs')
+			->where($qb->expr()->gte('created', $qb->createNamedParameter($from->format('Y-m-d H:i:s'))))
+			->andWhere($qb->expr()->lte('created', $qb->createNamedParameter($to->format('Y-m-d H:i:s'))))
+			->groupBy('hour')
+			->orderBy('hour', 'ASC');
+
+		$result = $qb->execute();
+		$stats = [];
+
+		while ($row = $result->fetch()) {
+			$stats[$row['hour']] = (int)$row['executions'];
+		}
+
+		return $stats;
 	}
 }

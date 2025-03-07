@@ -147,7 +147,7 @@ class SynchronizationService
 
 		// lets always create the log entry first, because we need its uuid later on for contractLogs
 		$log = $this->synchronizationLogMapper->createFromArray($log);
-		
+
 
 		$sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
 
@@ -171,6 +171,8 @@ class SynchronizationService
 		$result = $log->getResult();
 		// Update found objects count while preserving other result properties
 		$result['objects']['found'] = count($objectList);
+
+		$synchronizedTargetIds = [];
 
 		foreach ($objectList as $key => $object) {
 			// We can only deal with arrays (bassed on the source empty values or string might be returned)
@@ -214,6 +216,7 @@ class SynchronizationService
 				$synchronizationContract = $synchronizationContractResult['contract'];
 				$result['contracts'][] = $synchronizationContractResult['contract']['uuid'];
 				$result['logs'][] = $synchronizationContractResult['log']['uuid'];
+				$result['objects']['created']++;
 			} else {
 				// @todo this is wierd
 				$synchronizationContractResult = $this->synchronizeContract(
@@ -228,18 +231,17 @@ class SynchronizationService
 				$synchronizationContract = $synchronizationContractResult['contract'];
 				$result['contracts'][] = $synchronizationContractResult['contract']['uuid'];
 				$result['logs'][] = $synchronizationContractResult['log']['uuid'];
+				$result['objects']['updated']++;
 			}
 
 			$synchronizedTargetIds[] = $synchronizationContract['targetId'];
 		}
 
 		// Delete invalid objects
-		if($isTest === false) {
+		if ($isTest === false) {
 			$result['objects']['deleted'] = $this->deleteInvalidObjects(synchronization: $synchronization, synchronizedTargetIds: $synchronizedTargetIds);
-		}
-		else {
-			// In test mode we don't delete objects, so we guess the deleted count by subtracting the invalid, sjipped, updated and created count form the found count
-			$result['objects']['deleted'] = $log['result']['objects']['found'] - $log['result']['objects']['invalid'] - $log['result']['objects']['skipped'] - $log['result']['objects']['updated'] - $log['result']['objects']['created'];
+		} else {
+			$result['objects']['deleted'] = 0;
 		}
 
 		// @todo: refactor to actions
@@ -324,13 +326,14 @@ class SynchronizationService
 
 		// Let's get the source config
 		$sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
-		$headers = $sourceConfig['headers'] ?? [];
-		$query = $sourceConfig['query'] ?? [];
-		$config = [
-			'headers' => $headers,
-			'query' => $query,
-		];
 
+		$config = [];
+		if (empty($sourceConfig['headers']) === false) {
+			$config['headers'] = $sourceConfig['headers'];
+		}
+		if (empty($sourceConfig['query']) === false) {
+			$config['query'] = $sourceConfig['query'];
+		}
 
 		if (str_starts_with($endpoint, $source->getLocation()) === true) {
 			$endpoint = str_replace(search: $source->getLocation(), replace: '', subject: $endpoint);
@@ -1066,18 +1069,28 @@ class SynchronizationService
 	 */
 	public function getAllObjectsFromApi(Synchronization $synchronization, ?bool $isTest = false): array
 	{
-		$objects = [];
 		$source = $this->sourceMapper->find($synchronization->getSourceId());
 
 		// Check rate limit before proceeding
 		$this->checkRateLimit($source);
 
 		// Extract source configuration
-		$sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig()); // TODO; This is the second time this function is called in the synchonysation flow, needs further refactoring investigation 
+		$sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig()); // TODO; This is the second time this function is called in the synchonysation flow, needs further refactoring investigation
 		$endpoint = $sourceConfig['endpoint'] ?? '';
 		$headers = $sourceConfig['headers'] ?? [];
 		$query = $sourceConfig['query'] ?? [];
-		$config = ['headers' => $headers, 'query' => $query];
+        $usesPagination = true;
+        if (isset($sourceConfig['usesPagination']) === true) {
+            $usesPagination = filter_var($sourceConfig['usesPagination'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        }
+
+		$config = [];
+		if (empty($headers) === false) {
+			$config['headers'] = $headers;
+		}
+		if (empty($query) === false) {
+			$config['query'] = $query;
+		}
 
 		$currentPage = 1;
 
@@ -1093,7 +1106,8 @@ class SynchronizationService
 			config: $config,
 			synchronization: $synchronization,
 			currentPage: $currentPage,
-			isTest: $isTest
+			isTest: $isTest,
+            usesPagination: $usesPagination
 		);
 
 		// Reset the current page after synchronization if not a test
@@ -1123,13 +1137,8 @@ class SynchronizationService
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
 	 */
-	private function fetchAllPages(Source $source, string $endpoint, array $config, Synchronization $synchronization, int $currentPage, bool $isTest = false, ?bool $usesNextEndpoint = false): array
+	private function fetchAllPages(Source $source, string $endpoint, array $config, Synchronization $synchronization, int $currentPage, bool $isTest = false, ?bool $usesNextEndpoint = null, ?bool $usesPagination = true): array
 	{
-		// Update pagination configuration for the current page
-		if ($usesNextEndpoint === false) {
-			$config = $this->getNextPage(config: $config, sourceConfig: $synchronization->getSourceConfig(), currentPage: $currentPage);
-		}
-
 		// Make the API call
 		$callLog = $this->callService->call(source: $source, endpoint: $endpoint, config: $config);
 		$response = $callLog->getResponse();
@@ -1142,18 +1151,18 @@ class SynchronizationService
 				headers: $this->getRateLimitHeaders($source)
 			);
 		}
-        
+
 		$body = $response['body'];
 
 		// Try parsing the response body in different formats, starting with JSON (since its the most common)
 		$result = json_decode($body, true);
 
-		
+
 		// If JSON parsing failed, try XML
 		if (empty($result) === true) {
 			$xml =  simplexml_load_string($body, "SimpleXMLElement", LIBXML_NOCDATA);
 
-			if ($xml !== false) {				
+			if ($xml !== false) {
 				$result = json_decode(json_encode($xml), true);
 			}
 		}
@@ -1165,48 +1174,72 @@ class SynchronizationService
 
 		// Process the current page
 		$objects = $this->getAllObjectsFromArray(array: $result, synchronization: $synchronization);
-		
+
+        // Return objects if we dont paginate (also means we dont use next endpoint).
+        if ($usesPagination === false) {
+            return $objects;
+        }
+
 		// If test mode is enabled, return only the first object
 		if ($isTest === true) {
 			return [$objects[0]] ?? [];
 		}
 
-		// if the results was xml no pagination is possible
+		// If the results were XML, no pagination is possible
 		if (isset($xml) && $xml !== false) {
 			return $objects;
 		}
-
 
 		// Increment the current page and update synchronization
 		$currentPage++;
 		$synchronization->setCurrentPage($currentPage);
 		$this->synchronizationMapper->update($synchronization);
 
-		$nextEndpoint = null;
-		$newNextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation());
-		if ($newNextEndpoint !== $endpoint) {
-			$nextEndpoint = $newNextEndpoint;
+		$nextEndpoint = $endpoint;
+		$newNextEndpoint = null;
+
+		if (array_key_exists('next', $result) && $usesNextEndpoint === null) {
+			$usesNextEndpoint = true;
 		}
 
-		// Check if there's a next page
-		if ($nextEndpoint !== null) {
-			// Recursively fetch the next pages
-			$objects = array_merge(
-				$objects,
-				$this->fetchAllPages(
-					source: $source,
-					endpoint: $nextEndpoint,
-					config: $config,
-					synchronization: $synchronization,
-					currentPage: $currentPage,
-					isTest: $isTest,
-					usesNextEndpoint: true
-				)
-			);
+		if ($usesNextEndpoint !== false) {
+			$newNextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation());
 		}
+
+		// Check if the new next endpoint is not the same as before
+		// else use pagination
+		if ($newNextEndpoint !== null && $newNextEndpoint !== $endpoint) {
+			$nextEndpoint = $newNextEndpoint;
+			$usesNextEndpoint = true;
+		} elseif ($newNextEndpoint === null && $usesNextEndpoint !== true) {
+			$usesNextEndpoint = false;
+			$config = $this->getNextPage(config: $config, sourceConfig: $synchronization->getSourceConfig(), currentPage: $currentPage);
+		}
+
+		// If no new next endpoint or its the same as last request, or we dotn use next endpoints and fetched a empty result, return and dont iterate further
+		if (($usesNextEndpoint === true && ($newNextEndpoint === null || $newNextEndpoint === $endpoint)) || ($usesNextEndpoint === false && ($objects === null || empty($objects) === true))) {
+			return $objects;
+		}
+
+
+		// If we have a next endpoint we fetch that page
+		// or if we have had results this iteration, we will try to fetch another page
+		$objects = array_merge(
+			$objects,
+			$this->fetchAllPages(
+				source: $source,
+				endpoint: $nextEndpoint,
+				config: $config,
+				synchronization: $synchronization,
+				currentPage: $currentPage,
+				isTest: $isTest,
+				usesNextEndpoint: $usesNextEndpoint
+			)
+		);
 
 		return $objects;
 	}
+
 
 	/**
 	 * Checks if the source has exceeded its rate limit and throws an exception if true.
@@ -1733,6 +1766,10 @@ class SynchronizationService
 		$dataDot = new Dot($data);
 		$endpoint = $dataDot[$config['filePath']];
 
+		if ($endpoint === null) {
+			return $dataDot->jsonSerialize();
+		}
+
 		// If we get one endpoint, fetch that file, otherwise fetch all files from endpoint array.
 		if (is_array($endpoint) === true) {
 			$result = [];
@@ -1852,7 +1889,7 @@ class SynchronizationService
             }
             $result[$key] = $file->getPath();
             $dataDot[$config['filePath']] = $result;
-        } else { 
+        } else {
             $content = $files;
             $fileName = $dataDot[$config['fileNamePath']];
             $openRegisters = $this->objectService->getOpenRegisters();

@@ -212,10 +212,8 @@ export default {
 
 			synchronizationStore.runSynchronization(
 				synchronizationStore.synchronizationItem.id,
-				{
-					test: this.testMode,
-					force: this.forceSync,
-				},
+				this.testMode,
+				this.forceSync,
 			)
 				.then(({ response, data }) => {
 					this.response = response

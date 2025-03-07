@@ -115,7 +115,7 @@ class ExportService
 		$jsonLdDefault = [
 			'@context' => [
 				"schema" => "http://schema.org",
-				"register" => "501"
+				"register" => "Not Implemented"
 			],
 			'@type' => $objectType,
 			'@id' => $url

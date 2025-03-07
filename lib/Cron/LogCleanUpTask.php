@@ -30,7 +30,7 @@ class LogCleanUpTask extends TimedJob
 		$this->setAllowParallelRuns(false);
 	}
 
-    public function run(mixed $argument){
+    public function run(mixed $argument) {
         $this->callLogMapper->clearLogs();
     }
 

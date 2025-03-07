@@ -455,14 +455,14 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 		return { response, data }
 	}
 
-	const runSynchronization = async (id: string) => {
+	const runSynchronization = async (id: string, test: boolean = false, force: boolean = false) => {
 		if (!id) {
 			throw new Error('No synchronization item to run')
 		}
 
 		console.info('Testing synchronization...')
 
-		const endpoint = `/index.php/apps/openconnector/api/synchronizations-run/${id}`
+		const endpoint = `/index.php/apps/openconnector/api/synchronizations-run/${id}?test=${test}&force=${force}`
 
 		const response = await fetch(endpoint, {
 			method: 'POST',

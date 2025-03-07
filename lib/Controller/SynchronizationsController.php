@@ -290,15 +290,18 @@ class SynchronizationsController extends Controller
      * Endpoint: /api/synchronizations-run/{id}
      *
      * @param int $id The ID of the synchronization to run
-     * @param bool|null $test Whether to run in test mode (default: false)
-     * @param bool|null $force Whether to force synchronization regardless of changes (default: false)
+     *
      * @return JSONResponse A JSON response containing the run results
      * @throws GuzzleException
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
-    public function run(int $id, ?bool $test = false, ?bool $force = false): JSONResponse
+    public function run(int $id): JSONResponse
     {
+        $parameters = $this->request->getParams();
+        $test  = filter_var($parameters['test'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $force = filter_var($parameters['force'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
         try {
             $synchronization = $this->synchronizationMapper->find(id: $id);
         } catch (DoesNotExistException $exception) {

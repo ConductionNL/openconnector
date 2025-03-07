@@ -42,7 +42,7 @@ class Version1Date20250123100521 extends SimpleMigrationStep {
 
         if ($schema->hasTable(tableName: 'openconnector_synchronizations') === true) {
             $table = $schema->getTable(tableName: 'openconnector_synchronizations');
-            if ($table->hasColumn('actions') === false){
+            if ($table->hasColumn('actions') === false) {
                 $table->addColumn(name: 'actions', typeName: Types::JSON)->setNotnull(false)->setDefault('[]');
             }
         }

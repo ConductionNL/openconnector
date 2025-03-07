@@ -78,7 +78,7 @@ class CallService
 				&& str_contains(haystack: $value, needle: "}}") === true
 			) {
 				return $this->twig->createTemplate(template: $value, name: "sourceConfig")->render(context: ['source' => $source]);
-			} else if (is_array($value) === true){
+			} else if (is_array($value) === true) {
 				$value = array_map(function($value) use ($source) { return $this->renderValue($value, $source);}, $value);
 			}
 
@@ -262,9 +262,6 @@ class CallService
 			unset($config['pagination']);
 		}
 
-		// We want to surpress guzzle exceptions and return the response instead
-		$config['http_errors'] = false;
-
 		$config = $this->renderConfiguration(configuration: $config, source: $source);
 
 		// Set the URL to call and add an endpoint if needed
@@ -277,6 +274,9 @@ class CallService
 		$config = array_filter($config, function ($key) {
 			return str_contains(strtolower($key), 'authentication') === false;
 		}, ARRAY_FILTER_USE_KEY);
+
+		// We want to surpress guzzle exceptions and return the response instead
+		$config['http_errors'] = false;
 
 		// Let's log the call.
 		$this->source->setLastCall(new \DateTime());

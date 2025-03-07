@@ -10,6 +10,7 @@ use OCP\IDBConnection;
 use OCP\ISession;
 use OCP\IUserSession;
 use Symfony\Component\Uid\Uuid;
+use OCP\Session\Exceptions\SessionNotAvailableException;
 
 class SynchronizationLogMapper extends QBMapper
 {
@@ -104,28 +105,35 @@ class SynchronizationLogMapper extends QBMapper
 	public function createFromArray(array $object): SynchronizationLog
 	{
 		$obj = new SynchronizationLog();
-		
+
 		// Auto-fill system fields
 		$object['uuid'] = $object['uuid'] ?? Uuid::v4();
 		$object['userId'] = $object['userId'] ?? $this->userSession->getUser()?->getUID();
-		$object['sessionId'] = $object['sessionId'] ?? $this->session->getId();
+
+		// Catch error from session, because when running from a Job this might cause an error preventing the Job from being ran.
+		try {
+			$object['sessionId'] = $object['sessionId'] ?? $this->session->getId();
+		} catch (SessionNotAvailableException $exception) {
+			$object['sessionId'] = null;
+		}
+
 		$object['created'] = $object['created'] ?? new DateTime();
 		$object['expires'] = $object['expires'] ?? new DateTime('+30 days');
 		$object['test'] = $object['test'] ?? false;
 		$object['force'] = $object['force'] ?? false;
-		
+
 		// Process contracts in results if they exist
 		if (isset($object['result']['contracts']) && is_array($object['result']['contracts'])) {
 			$object['result']['contracts'] = $this->processContracts($object['result']['contracts']);
 		}
-		
+
 		$obj->hydrate($object);
-		
+
 		// Set uuid
 		if ($obj->getUuid() === null){
 			$obj->setUuid(Uuid::v4());
 		}
-		
+
 		return $this->insert($obj);
 	}
 

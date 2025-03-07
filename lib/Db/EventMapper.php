@@ -11,7 +11,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Mapper class for Event entities
- * 
+ *
  * Handles database operations for events including CRUD operations
  */
 class EventMapper extends QBMapper
@@ -95,7 +95,7 @@ class EventMapper extends QBMapper
 		$obj = new Event();
 		$obj->hydrate($object);
 		// Set uuid
-		if ($obj->getUuid() === null){
+		if ($obj->getUuid() === null) {
 			$obj->setUuid(Uuid::v4());
 		}
 		return $this->insert(entity: $obj);

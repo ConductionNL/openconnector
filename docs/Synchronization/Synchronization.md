@@ -22,6 +22,7 @@ Synchronization is a core feature that enables data transfer between different s
 - Source type can be set to API or other supported types
 - Source ID mapping allows specifying position of IDs in source objects
 - Optional endpoint configuration for fetching data
+- usesPagination: configure this field if you know this source **does not** uses pagination or next endpoint. Use value "false". If this source uses next endpoint it will auto detect.
 
 ### Target Configuration 
 - Defines where to send synchronized data

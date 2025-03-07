@@ -1,5 +1,5 @@
 {
-	"name": "Sharepoint Convenanten to Publications",
+	"name": "Sharepoint Publications",
 	"description": "",
 	"version": "0.0.1",
 	"sourceId": "1",
@@ -9,7 +9,8 @@
 	"sourceConfig": {
         "idPosition": "UniqueId",
         "resultsPosition": "d.results",
-        "endpoint": "\/Web\/GetFolderByServerRelativePath(decodedurl='\/WOO\/Convenanten')\/folders",
+        "endpoint": "\/Web\/GetFolderByServerRelativePath(decodedurl='\/WOO\/Publications')\/folders",
+        "usesPagination": "false",
         "extraDataConfigs.0.dynamicEndpointLocation": "Properties.__deferred.uri",
         "extraDataConfigs.0.mergeExtraData": "true",
         "extraDataConfigs.1.dynamicEndpointLocation": "Files.__deferred.uri",

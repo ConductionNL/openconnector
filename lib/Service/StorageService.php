@@ -50,7 +50,7 @@ class StorageService
 		private readonly IAppConfig $config,
 		ICacheFactory $cacheFactory,
         private readonly IUserSession $userSession,
-	){
+	) {
 		$this->cache = $cacheFactory->createDistributed(self::CACHE_KEY);
 	}
 

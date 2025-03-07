@@ -103,7 +103,7 @@ class Job extends Entity implements JsonSerializable
 			'allowParallelRuns' => $this->allowParallelRuns,
 			'isEnabled' => $this->isEnabled,
 			'singleRun' => $this->singleRun,
-			'scheduleAfter' => $this->scheduleAfter,
+			'scheduleAfter' => isset($this->scheduleAfter) ? $this->scheduleAfter->format('c') : $this->scheduleAfter,
 			'userId' => $this->userId,
 			'jobListId' => $this->jobListId,
 			'logRetention' => $this->logRetention,

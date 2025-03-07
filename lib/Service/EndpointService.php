@@ -5,12 +5,14 @@ namespace OCA\OpenConnector\Service;
 use Adbar\Dot;
 use Exception;
 use JWadhams\JsonLogic;
+use OC\AppFramework\Http;
 use OC\AppFramework\Http\Request;
 use OC\AppFramework\Http\RequestId;
 use OC\Config;
 use OC\Security\SecureRandom;
 use OCA\OpenConnector\Db\EndpointMapper;
 use OCA\OpenConnector\Db\SourceMapper;
+use OCA\OpenConnector\Exception\AuthenticationException;
 use OCA\OpenConnector\Service\AuthenticationService;
 use OCA\OpenConnector\Service\MappingService;
 use OCA\OpenConnector\Service\ObjectService;
@@ -68,7 +70,8 @@ class EndpointService
 		private readonly RuleMapper    $ruleMapper,
 		private readonly IConfig $config,
         private readonly IAppConfig $appConfig,
-        private readonly StorageService $storageService
+        private readonly StorageService $storageService,
+        private readonly AuthorizationService $authorizationService
 	)
 	{
 	}
@@ -225,7 +228,7 @@ class EndpointService
                 str_contains(needle: 'localhost', haystack: $use)
                 || str_contains(needle: 'nextcloud.local', haystack: $use)
                 || str_contains(needle: $this->urlGenerator->getBaseUrl(), haystack: $use)
-            ){
+            ) {
                 $explodedUrl = explode(separator: '/', string: $use);
                 $useId = end(array: $explodedUrl);
             } else {
@@ -592,6 +595,7 @@ class EndpointService
 
 				// Process rule based on type
 				$result = match ($rule->getType()) {
+                    'authentication' => $this->processAuthenticationRule($rule, $data),
 					'error' => $this->processErrorRule($rule),
 					'mapping' => $this->processMappingRule($rule, $data),
 					'synchronization' => $this->processSyncRule($rule, $data),
@@ -633,6 +637,58 @@ class EndpointService
 			return null;
 		}
 	}
+
+    /**
+     * Processes authentication rules
+     *
+     * @param Rule $rule The rule to process
+     * @param array $data The data of the request
+     *
+     * @return array|JSONResponse the unchanged $data array if authentication succeeds, or a JSONResponse containing an error on authentication.
+     */
+    private function processAuthenticationRule (Rule $rule, array $data): array|JSONResponse
+    {
+        $configuration = $rule->getConfiguration();
+        $header = $data['headers']['Authorization'] ?? $data['headers']['authorization'];
+
+        if ($header === '') {
+            return new JSONResponse(['error' => 'forbidden', 'details' => 'you are not allowed to access this endpoint unauththenticated'], Http::STATUS_FORBIDDEN);
+        }
+
+        if(isset($configuration['authentication']) === false) {
+            return $data;
+        }
+
+        switch($configuration['authentication']['type']) {
+            case 'jwt':
+            case 'jwt-zgw':
+                try {
+                    $this->authorizationService->authorizeJwt(authorization: $header);
+                } catch (AuthenticationException $exception) {
+                    return new JSONResponse(
+                        data: ['error' => $exception->getMessage(), 'details' => $exception->getDetails()],
+                        statusCode: 401
+                    );
+                }
+                break;
+            case 'basic':
+                try {
+                    $this->authorizationService->authorizeBasic($header, $configuration['authentication']['users'], $configuration['authentication']['groups']);
+                } catch (AuthenticationException $exception) {
+                    return new JSONResponse(
+                        data: ['error' => $exception->getMessage(), 'details' => $exception->getDetails()],
+                        statusCode: 401
+                    );
+                }
+                break;
+            case 'oauth':
+                return new JSONResponse(data: ['error' => 'OAuth authentication is not yet implemented'], statusCode: 501);
+            default:
+                return new JSONResponse(data: ['error' => 'The authentication method is not supported'], statusCode: Http::STATUS_NOT_IMPLEMENTED);
+        }
+
+        return $data;
+    }
 
 	/**
 	 * Processes an error rule
