@@ -327,11 +327,18 @@ class CallService
 		$callLog->setStatusCode($data['response']['statusCode']);
 		$callLog->setStatusMessage($data['response']['statusMessage']);
 		$callLog->setRequest($data['request']);
-		$callLog->setResponse($data['response']);
 		$callLog->setCreated(new \DateTime());
 		$callLog->setExpires(new \DateTime('now + '.($data['response']['statusCode'] < 400 ? $source->getLogRetention() : $source->getErrorRetention()).' seconds'));
 
+		// Only persist response if we get bad requests or server errors.
+		if ($callLog->getStatusCode() >= 400 && $callLog->getStatusCode() < 600) {
+			$callLog->setResponse($data['response']);
+		}
+
 		$this->callLogMapper->insert($callLog);
+
+		// Set response after persist so we can process the response body.
+		$callLog->setResponse($data['response']);
 
 		return $callLog;
 	}
