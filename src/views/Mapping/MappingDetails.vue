@@ -64,6 +64,10 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
 						<b>id:</b>
+						<p>{{ mappingStore.mappingItem.id }}</p>
+					</div>
+					<div class="gridContent gridFullWidth">
+						<b>uuid:</b>
 						<p>{{ mappingStore.mappingItem.uuid }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">

@@ -64,6 +64,10 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
 						<b>id:</b>
+						<p>{{ synchronizationStore.synchronizationItem.id }}</p>
+					</div>
+					<div class="gridContent gridFullWidth">
+						<b>uuid:</b>
 						<p>{{ synchronizationStore.synchronizationItem.uuid }}</p>
 					</div>
 					<div class="gridContent">
