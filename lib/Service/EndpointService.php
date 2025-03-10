@@ -221,10 +221,10 @@ class EndpointService
         } else {
             $object = $mapper->find($serializedObject['id']);
         }
-    
+
         $uses = $object->getRelations();
         $useUrls = [];
-    
+
         $uuidToUrlMap = [];
         // Initiate schemaMapper here once for performance
         $schemaMapper = $this->containerInterface->get('OCA\OpenRegister\Db\SchemaMapper');
@@ -237,7 +237,7 @@ class EndpointService
                 $validUriProperties[] = $propertyName;
             }
         }
-    
+
         foreach ($uses as $key => $use) {
             $baseKey = explode('.', $key, 2)[0];
             // Skip if the key (or its base form) is not in the valid URI properties
@@ -248,8 +248,8 @@ class EndpointService
             if (Uuid::isValid(uuid: $use)) {
                 $useId = $use;
             } else if (
-                str_contains(haystack: $use, needle: 'localhost') 
-                || str_contains(haystack: $use, needle: 'nextcloud.local') 
+                str_contains(haystack: $use, needle: 'localhost')
+                || str_contains(haystack: $use, needle: 'nextcloud.local')
                 || str_contains(haystack: $use, needle: $this->urlGenerator->getBaseUrl())
             ) {
                 $explodedUrl = explode(separator: '/', string: $use);
@@ -258,7 +258,7 @@ class EndpointService
                 unset($uses[$key]);
                 continue;
             }
-    
+
             try {
                 $generatedUrl = $this->generateEndpointUrl(id: $useId, parentIds: [$object->getUuid()], schemaMapper: $schemaMapper);
                 $uuidToUrlMap[$useId] = $generatedUrl;
@@ -268,37 +268,56 @@ class EndpointService
             }
         }
 
-    
+
         // Add self object URI mapping
         $uuidToUrlMap[$object->getUuid()] = $this->generateEndpointUrl(id: $object->getUuid(), schemaMapper: $schemaMapper);
-    
+
         // Replace UUIDs in serializedObject recursively
         $serializedObject = $this->replaceUuidsInArray($serializedObject, $uuidToUrlMap);
-    
+
         return $serializedObject;
     }
-    
-    /**   
+
+    /**
      * Recursively replaces UUIDs in an array with their corresponding URLs.
      *
-     * This function traverses the given array and replaces any UUID values found in the 
-     * mapping array ($uuidToUrlMap) with their associated URLs. It ensures that 'id' and 'uuid' 
+     * This function traverses the given array and replaces any UUID values found in the
+     * mapping array ($uuidToUrlMap) with their associated URLs. It ensures that 'id' and 'uuid'
      * fields remain unchanged.
      *
      * @param array $data The input array that may contain UUIDs.
      * @param array $uuidToUrlMap An associative array mapping UUIDs to URLs.
-     * 
+     * @param bool  $isRelatedObject Are we currently iterating through a related object.
+     *
      * @return array The modified array with UUIDs replaced by URLs.
      */
-    private function replaceUuidsInArray(array $data, array $uuidToUrlMap): array {
+    private function replaceUuidsInArray(array $data, array $uuidToUrlMap, ?bool $isRelatedObject = false): array {
         foreach ($data as $key => $value) {
-            // Never replace 'id' or 'uuid' fields
+
+			// Don't check @self
+			if ($key === '@self') {
+				continue;
+			}
+
+			// If related object and has id
+			if ($isRelatedObject === true && $key === 'id' && isset($uuidToUrlMap[$value]) === true) {
+				$data[$key] = $uuidToUrlMap[$value];
+				continue;
+			}
+
+			// If in array of multiple objects and has id
+			if ($isRelatedObject === true && is_array($value) === true && isset($value['id']) === true && isset($uuidToUrlMap[$value['id']]) === true) {
+				$data[$key] = $uuidToUrlMap[$value['id']];
+				continue;
+			}
+
+            // Never replace 'id' or 'uuid' fields but only in previous checks
             if ($key === 'id' || $key === 'uuid') {
                 continue;
             }
 
-            if (is_array($value) === true) {
-                $data[$key] = $this->replaceUuidsInArray(data: $value, uuidToUrlMap: $uuidToUrlMap);
+            if (is_array($value) === true && empty($value) === false) {
+                $data[$key] = $this->replaceUuidsInArray(data: $value, uuidToUrlMap: $uuidToUrlMap, isRelatedObject: true);
             } elseif (is_string($value) === true && isset($uuidToUrlMap[$value]) === true) {
                 $data[$key] = $uuidToUrlMap[$value];
             }
@@ -343,7 +362,6 @@ class EndpointService
 			$ids = $main[$property];
 
 			if (isset($id) === true && in_array(needle: $id, haystack: $ids) === true) {
-
 				return $this->replaceInternalReferences(mapper: $mapper, object: $mapper->findSubObjects([$id], $property)[0]);
 			} else if (isset($id) === true) {
 				$status = 404;
@@ -599,12 +617,23 @@ class EndpointService
 
         // Use first parentId if available
         $parentId = $parentIds[0] ?? null;
-        
+
+		// Make sure we are dealing with a sub endpoint
+		$isSubEndpoint = false;
+        foreach ($location as $key => $part) {
+            if (preg_match('#{{([^}]+)}}#', $part, $matches)) {
+                $placeholder = trim($matches[1]);
+				if ($placeholder === "{$schemaTitle}_id") {
+					$isSubEndpoint = true;
+				}
+			}
+		}
+
         foreach ($location as $key => $part) {
             if (preg_match('#{{([^}]+)}}#', $part, $matches)) {
                 $placeholder = trim($matches[1]);
 
-                if ($placeholder === 'id' && $parentId !== null) {
+                if ($placeholder === 'id' && $parentId !== null && $isSubEndpoint === true) {
                     // Replace {{id}} with parent id if set
                     $location[$key] = $parentId;
                 } elseif ($placeholder === 'id') {
@@ -793,6 +822,15 @@ class EndpointService
 	{
 		$config = $rule->getConfiguration();
 		$mapping = $this->mappingService->getMapping($config['mapping']);
+
+		if (isset($data['results']) === true && strtolower($rule->getAction()) === 'get') {
+			foreach ($data['results'] as $key => $result) {
+				$data['results'][$key] = $this->mappingService->executeMapping($mapping, $result);
+			}
+
+			return $data;
+		}
+
 		return $this->mappingService->executeMapping($mapping, $data);
 	}
 
