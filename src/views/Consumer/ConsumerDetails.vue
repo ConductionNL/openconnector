@@ -34,6 +34,10 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
+						<b>id:</b>
+						<p>{{ consumerStore.consumerItem.id }}</p>
+					</div>
+					<div class="gridContent gridFullWidth">
 						<b>uuid:</b>
 						<p>{{ consumerStore.consumerItem.uuid }}</p>
 					</div>
