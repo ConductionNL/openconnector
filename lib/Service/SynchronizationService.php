@@ -215,8 +215,8 @@ class SynchronizationService
 				);
 
 				$synchronizationContract = $synchronizationContractResult['contract'];
-				$result['contracts'][] = $synchronizationContractResult['contract']['uuid'];
-				$result['logs'][] = $synchronizationContractResult['log']['uuid'];
+				$result['contracts'][] = isset($synchronizationContractResult['contract']['uuid']) ? $synchronizationContractResult['contract']['uuid'] : null;
+				$result['logs'][] = isset($synchronizationContractResult['log']['uuid']) ? $synchronizationContractResult['log']['uuid'] : null;
 				$result['objects']['created']++;
 			} else {
 				// @todo this is wierd
@@ -230,8 +230,8 @@ class SynchronizationService
 				);
 
 				$synchronizationContract = $synchronizationContractResult['contract'];
-				$result['contracts'][] = $synchronizationContractResult['contract']['uuid'];
-				$result['logs'][] = $synchronizationContractResult['log']['uuid'];
+				$result['contracts'][] = isset($synchronizationContractResult['contract']['uuid']) === true ? $synchronizationContractResult['contract']['uuid'] : null;
+				$result['logs'][] =isset($synchronizationContractResult['log']['uuid']) === true ? $synchronizationContractResult['log']['uuid'] : null;
 				$result['objects']['updated']++;
 			}
 
@@ -595,6 +595,8 @@ class SynchronizationService
 		?SynchronizationLog $log = null
 		): SynchronizationContract|Exception|array
 	{
+		$contractLog = null;
+
 		// We are doing something so lets log it
         if ($synchronizationContract->getId() !== null) {
             $contractLog = $this->synchronizationContractLogMapper->createFromArray(
