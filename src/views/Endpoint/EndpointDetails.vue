@@ -43,61 +43,61 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 				</div>
 
 				<div class="detailGrid">
-					<div class="gridContent gridFullWidth">
-						<b>id:</b>
-						<p>{{ endpointStore.endpointItem.id }}</p>
+					<div class="gridContent">
+						<b>Id:</b>
+						<p>{{ endpointStore.endpointItem.id ? endpointStore.endpointItem.id : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
-						<b>uuid:</b>
-						<p>{{ endpointStore.endpointItem.uuid }}</p>
+					<div class="gridContent">
+						<b>Uuid:</b>
+						<p>{{ endpointStore.endpointItem.uuid ? endpointStore.endpointItem.uuid : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth" />
+					<div class="gridContent" />
 
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Name:</b>
-						<p>{{ endpointStore.endpointItem.name }}</p>
+						<p>{{ endpointStore.endpointItem.name ? endpointStore.endpointItem.name : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Description:</b>
-						<p>{{ endpointStore.endpointItem.description }}</p>
+						<p>{{ endpointStore.endpointItem.description ? endpointStore.endpointItem.description : '-' }}</p>
 					</div>
 
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Version:</b>
-						<p>{{ endpointStore.endpointItem.version }}</p>
+						<p>{{ endpointStore.endpointItem.version ? endpointStore.endpointItem.version : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Endpoint:</b>
-						<p>{{ endpointStore.endpointItem.endpoint }}</p>
+						<p>{{ endpointStore.endpointItem.endpoint ? endpointStore.endpointItem.endpoint : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Endpoint Array:</b>
-						<p>{{ endpointStore.endpointItem.endpointArray.join(', ') }}</p>
+						<p>{{ endpointStore.endpointItem.endpointArray.length > 0 ? endpointStore.endpointItem.endpointArray.join(', ') : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Endpoint Regex:</b>
-						<p>{{ endpointStore.endpointItem.endpointRegex }}</p>
+						<p>{{ endpointStore.endpointItem.endpointRegex ? endpointStore.endpointItem.endpointRegex : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Method:</b>
-						<p>{{ endpointStore.endpointItem.method }}</p>
+						<p>{{ endpointStore.endpointItem.method ? endpointStore.endpointItem.method : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Target Type:</b>
-						<p>{{ endpointStore.endpointItem.targetType }}</p>
+						<p>{{ endpointStore.endpointItem.targetType ? endpointStore.endpointItem.targetType : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Target Id:</b>
-						<p>{{ endpointStore.endpointItem.targetId }}</p>
+						<p>{{ endpointStore.endpointItem.targetId ? endpointStore.endpointItem.targetId : '-' }}</p>
 					</div>
 
-					<div class="gridContent gridFullWidth">
-						<b>created:</b>
-						<p>{{ endpointStore.endpointItem.created }}</p>
+					<div class="gridContent">
+						<b>Created:</b>
+						<p>{{ endpointStore.endpointItem.created ? endpointStore.endpointItem.created : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
-						<b>updated:</b>
-						<p>{{ endpointStore.endpointItem.updated }}</p>
+					<div class="gridContent">
+						<b>Updated:</b>
+						<p>{{ endpointStore.endpointItem.updated ? endpointStore.endpointItem.updated : '-' }}</p>
 					</div>
 				</div>
 
@@ -273,11 +273,14 @@ export default {
 
 .detailGrid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	grid-template-columns: 1fr 1fr;
 	gap: 20px;
 	margin: 20px 0;
 }
-
+.gridContent {
+	display: flex;
+	gap: 10px;
+}
 .gridFullWidth {
 	grid-column: 1 / -1;
 }

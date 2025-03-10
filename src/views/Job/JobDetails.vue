@@ -336,4 +336,9 @@ export default {
 		background-color: var(--OC-color-status-background-debug);
 		color: var(--OC-color-status-debug);
 	}
+	.gridContent p {
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+}
 </style>

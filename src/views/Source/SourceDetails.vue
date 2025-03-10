@@ -68,6 +68,10 @@ import { sourceStore, navigationStore, logStore, synchronizationStore } from '..
 						<b>version:</b>
 						<p>{{ sourceStore.sourceItem.version }}</p>
 					</div>
+					<div class="gridContent">
+						<b>type:</b>
+						<p>{{ sourceStore.sourceItem.type }}</p>
+					</div>
 				</div>
 				<div class="tabContainer">
 					<BTabs content-class="mt-3" justified>

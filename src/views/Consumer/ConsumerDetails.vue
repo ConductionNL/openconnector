@@ -33,48 +33,48 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 				<span>{{ consumerStore.consumerItem.description }}</span>
 
 				<div class="detailGrid">
-					<div class="gridContent gridFullWidth">
-						<b>id:</b>
-						<p>{{ consumerStore.consumerItem.id }}</p>
+					<div class="gridContent">
+						<b>Id:</b>
+						<p>{{ consumerStore.consumerItem.id ? consumerStore.consumerItem.id : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
-						<b>uuid:</b>
-						<p>{{ consumerStore.consumerItem.uuid }}</p>
+					<div class="gridContent">
+						<b>Uuid:</b>
+						<p>{{ consumerStore.consumerItem.uuid ? consumerStore.consumerItem.uuid : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth" />
+					<div class="gridContent" />
 
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Name:</b>
-						<p>{{ consumerStore.consumerItem.name }}</p>
+						<p>{{ consumerStore.consumerItem.name ? consumerStore.consumerItem.name : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Description:</b>
-						<p>{{ consumerStore.consumerItem.description }}</p>
+						<p>{{ consumerStore.consumerItem.description ? consumerStore.consumerItem.description : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Domains:</b>
-						<p>{{ consumerStore.consumerItem.domains.join(', ') }}</p>
+						<p>{{ consumerStore.consumerItem.domains.length > 0 ? consumerStore.consumerItem.domains.join(', ') : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>IP's:</b>
-						<p>{{ consumerStore.consumerItem.ips.join(', ') }}</p>
+						<p>{{ consumerStore.consumerItem.ips.length > 0 ? consumerStore.consumerItem.ips.join(', ') : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Authorization Type:</b>
-						<p>{{ consumerStore.consumerItem.authorizationType }}</p>
+						<p>{{ consumerStore.consumerItem.authorizationType ? consumerStore.consumerItem.authorizationType : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Authorization Configuration:</b>
-						<p>{{ JSON.stringify(consumerStore.consumerItem.authorizationConfiguration) }}</p>
+						<p>{{ consumerStore.consumerItem.authorizationConfiguration ? consumerStore.consumerItem.authorizationConfiguration : '-' }}</p>
 					</div>
 
-					<div class="gridContent gridFullWidth">
-						<b>created:</b>
-						<p>{{ new Date(consumerStore.consumerItem.created).toLocaleDateString() }}</p>
+					<div class="gridContent">
+						<b>Created:</b>
+						<p>{{ consumerStore.consumerItem.created ? new Date(consumerStore.consumerItem.created).toLocaleDateString() : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
-						<b>updated:</b>
-						<p>{{ new Date(consumerStore.consumerItem.updated).toLocaleDateString() }}</p>
+					<div class="gridContent">
+						<b>Updated:</b>
+						<p>{{ consumerStore.consumerItem.updated ? new Date(consumerStore.consumerItem.updated).toLocaleDateString() : '-' }}</p>
 					</div>
 				</div>
 				<!-- Add more consumer-specific details here -->
@@ -103,4 +103,14 @@ export default {
 
 <style>
 /* Styles remain the same */
+.gridContent {
+	display: flex;
+	gap: 10px;
+}
+
+.gridContent p {
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+}
 </style>
