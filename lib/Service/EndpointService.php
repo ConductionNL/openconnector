@@ -44,6 +44,7 @@ use ValueError;
 use OCA\OpenConnector\Db\Rule;
 use OCA\OpenConnector\Db\RuleMapper;
 use Psr\Container\ContainerInterface;
+use DateTime;
 
 /**
  * Service class for handling endpoint requests
@@ -102,6 +103,9 @@ class EndpointService
 		try {
 			// Process initial data
 			$data = [
+                'utility' => [
+                    'currentDate' => (new DateTime())->format('c')
+                ],
 				'parameters' => $request->getParams(),
 				'headers' => $this->getHeaders($request->server, true),
 				'path' => $path,
@@ -134,6 +138,9 @@ class EndpointService
 				
 				// Process initial data
 				$data = [
+                    'utility' => [
+                        'currentDate' => (new DateTime())->format('c')
+                    ],
 					'parameters' => $request->getParams(),
 					'requestHeaders' => $this->getHeaders($request->server, true),
 					'headers' => $result->getHeaders(),

@@ -43,6 +43,33 @@ The current implementation shows:
 - Rule IDs are stored and validated as strings within endpoints
 - The endpoint entity ensures rules are always stored as an array
 
+## Rule Conditions
+
+The conditions will determine if functionality of the rule will be exexcuted or applied. 
+These conditions are validated against data with with [json logic](https://jsonlogic.com).
+You have access to data from:
+- The request or response data in `body`.
+- The request parameters in `parameters`.
+- If the `type` of the Rule is `before` the headers will be in `headers` else if the `type` is `after` the headers can be found in `requestHeaders`.
+- The current path of the endpoint in `path`.
+- The method of the request in `method`.
+- The current date in `utility.currentDate`
+
+All other utility values should be through code to `utility`.
+
+In your json conditions you can test against all of the above mentioned values. 
+
+For example you only want to execute a Rule if `name` is set in your request body and is not empty and you POST a object to an endpoint with {"name": "John"} your condition would look like:
+`{
+  "if": [
+    { "var": "body.name" },
+    true,
+    false
+  ]
+}`
+
+What will result in `true` and so the Rule is valid and will be executed/applied.
+
 ## Rule Types
 
 ### Authentication Rules
