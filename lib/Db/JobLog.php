@@ -14,7 +14,7 @@ class JobLog extends Entity implements JsonSerializable
     protected ?string $jobId = null;
     protected ?string $jobListId = null;
     protected ?string $jobClass = 'OCA\OpenConnector\Action\PingAction';
-    protected ?array $arguments = null;
+    protected ?array $arguments = [];
     protected ?int $executionTime = 3600;
     protected ?string $userId = null;
     protected ?string $sessionId = null;
@@ -23,6 +23,26 @@ class JobLog extends Entity implements JsonSerializable
     protected ?DateTime $lastRun = null;
     protected ?DateTime $nextRun = null;
     protected ?DateTime $created = null;
+
+    /**
+     * Get the job arguments
+     *
+     * @return array The job arguments or empty array if null
+     */
+    public function getArguments(): array
+    {
+        return $this->arguments ?? [];
+    }
+
+    /**
+     * Get the stack trace
+     *
+     * @return array The stack trace or empty array if null
+     */
+    public function getStackTrace(): array
+    {
+        return $this->stackTrace ?? [];
+    }
 
     public function __construct() {
         $this->addType('uuid', 'string');

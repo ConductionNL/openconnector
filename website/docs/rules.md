@@ -43,6 +43,33 @@ The current implementation shows:
 - Rule IDs are stored and validated as strings within endpoints
 - The endpoint entity ensures rules are always stored as an array
 
+## Rule Conditions
+
+The conditions will determine if functionality of the rule will be exexcuted or applied. 
+These conditions are validated against data with with [json logic](https://jsonlogic.com).
+You have access to data from:
+- The request or response data in `body`.
+- The request parameters in `parameters`.
+- If the `type` of the Rule is `before` the headers will be in `headers` else if the `type` is `after` the headers can be found in `requestHeaders`.
+- The current path of the endpoint in `path`.
+- The method of the request in `method`.
+- The current date in `utility.currentDate`
+
+All other utility values should be through code to `utility`.
+
+In your json conditions you can test against all of the above mentioned values. 
+
+For example you only want to execute a Rule if `name` is set in your request body and is not empty and you POST a object to an endpoint with {"name": "John"} your condition would look like:
+`{
+  "if": [
+    { "var": "body.name" },
+    true,
+    false
+  ]
+}`
+
+What will result in `true` and so the Rule is valid and will be executed/applied.
+
 ## Rule Types
 
 ### Authentication Rules
@@ -54,8 +81,24 @@ Authentication rules control access to endpoints by validating user credentials 
   - jwt: JSON Web Token authentication
   - jwt-zgw: ZGW-specific JWT authentication
   - oauth: OAuth 2.0 authentication
+  - apikey: Authentication using Api keys
 - users: Array of specific users allowed to access the endpoint
 - groups: Array of user groups allowed to access the endpoint
+- keys (when type is apikey): A key-value list with allowed api keys as keys, and the user which is authenticated using the api key as value.
+
+When the authentication rule is not validated, a response is given with 401 (unauthorized) status code with error and reason. The Api Key version will return Invalid API key if the api key is not know, and also when the user that is connected to the api key is not known in Nextcloud.
+
+### Synchronization Rules
+
+Synchronization rules can be used to run a synchronization in case an endpoint is requested. This synchronization has to be present in the database and defined in the rule.
+
+The synchronization rules take the following configuration options:
+
+- synchronization (required): The synchronization to run.
+- isTest (optional): if set to true, always treat the synchronization as if it is in test mode.
+- force (optional): if set to true, always force objects to be overwritten from the synchronization.
+
+The isTest and force options can also be overridden from the endpoint by setting the corresponding fields on the request body.
 
 ### Download Rules
 

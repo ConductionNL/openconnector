@@ -108,12 +108,19 @@ class EventMessageMapper extends QBMapper
      */
     public function createFromArray(array $data): EventMessage
     {
-        $message = new EventMessage();
-        $message->setUuid(Uuid::v4()->toString());
-        $message->setCreated(new DateTime());
-        $message->setUpdated(new DateTime());
-        $message->hydrate($data);
-        return $this->insert($message);
+        $obj = new EventMessage();
+        $obj->hydrate($data);
+        
+        // Set uuid
+        if ($obj->getUuid() === null) {
+            $obj->setUuid(Uuid::v4());
+        }
+        
+        // Set timestamps
+        $obj->setCreated(new DateTime());
+        $obj->setUpdated(new DateTime());
+
+        return $this->insert(entity: $obj);
     }
 
     /**
@@ -125,10 +132,13 @@ class EventMessageMapper extends QBMapper
      */
     public function updateFromArray(int $id, array $data): EventMessage
     {
-        $message = $this->find($id);
-        $message->setUpdated(new DateTime());
-        $message->hydrate($data);
-        return $this->update($message);
+        $obj = $this->find($id);
+        $obj->hydrate($data);
+        
+        // Update timestamp
+        $obj->setUpdated(new DateTime());
+
+        return $this->update($obj);
     }
 
     /**

@@ -21,18 +21,47 @@ class Endpoint extends Entity implements JsonSerializable
 	protected ?string   $reference = null; // The reference of the endpoint
 	protected ?string   $version = '0.0.0'; // The version of the endpoint
 	protected ?string   $endpoint = null; // The actual endpoint e.g /api/buildings/{{id}}. An endpoint may contain parameters e.g {{id}}
-	protected ?array    $endpointArray = null; // An array representation of the endpoint. Automatically generated
+	protected ?array    $endpointArray = []; // An array representation of the endpoint. Automatically generated
 	protected ?string   $endpointRegex = null; // A regex representation of the endpoint. Automatically generated
 	protected ?string   $method = null; // One of GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD. method and endpoint combination should be unique
 	protected ?string   $targetType = null; // The target to attach this endpoint to, should be one of source (to create a proxy endpoint) or register/schema (to create an object endpoint) or job (to fire an event) or synchronization (to create a synchronization endpoint)
 	protected ?string   $targetId = null; // The target id to attach this endpoint to
-
-	protected ?array $conditions = null;
+	protected ?array 	$conditions = []; // Array of conditions to be applied
 	protected ?DateTime $created = null;
 	protected ?DateTime $updated = null;
-	protected ?string $inputMapping = null;
-	protected ?string $outputMapping = null;
-	protected ?array $rules = null; // Array of rules to be applied
+	protected ?string 	$inputMapping = null;
+	protected ?string 	$outputMapping = null;
+	protected ?array 	$rules = []; // Array of rules to be applied
+
+	/**
+	 * Get the endpoint array representation
+	 *
+	 * @return array The endpoint array or empty array if null
+	 */
+	public function getEndpointArray(): array
+	{
+		return $this->endpointArray ?? [];
+	}
+
+	/**
+	 * Get the conditions array
+	 *
+	 * @return array The conditions or empty array if null
+	 */
+	public function getConditions(): array
+	{
+		return $this->conditions ?? [];
+	}
+
+	/**
+	 * Get the rules array
+	 *
+	 * @return array The rules or empty array if null
+	 */
+	public function getRules(): array
+	{
+		return $this->rules ?? [];
+	}
 
 	public function __construct() {
         $this->addType(fieldName:'uuid', type: 'string');

@@ -31,6 +31,16 @@ class Job extends Entity implements JsonSerializable
 	protected ?DateTime $created = null; // the date and time the job was created
 	protected ?DateTime $updated = null; // the date and time the job was updated
 
+	/**
+	 * Get the job arguments
+	 *
+	 * @return array The job arguments or empty array if null
+	 */
+	public function getArguments(): array
+	{
+		return $this->arguments ?? [];
+	}
+
 	public function __construct() {
         $this->addType('uuid', 'string');
 		$this->addType('name', 'string');

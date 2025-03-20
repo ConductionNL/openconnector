@@ -22,11 +22,19 @@ use Jose\Component\Signature\JWSTokenSupport;
 use Jose\Component\Signature\JWSVerifier;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use Jose\Component\Signature\Serializer\JWSSerializerManager;
+use OC\AppFramework\Http\Request;
+use OC\AppFramework\Middleware\Security\Exceptions\SecurityException;
+use OCA\OAuth2\Db\AccessTokenMapper;
+use OCA\OAuth2\Db\Client;
 use OCA\OpenConnector\Db\Consumer;
 use OCA\OpenConnector\Db\ConsumerMapper;
 use OCA\OpenConnector\Exception\AuthenticationException;
+use OCP\AppFramework\Http\Attribute\CORS;
+use OCP\AppFramework\Http\Response;
+use OCP\Authentication\Token\IProvider;
 use OCP\IGroup;
 use OCP\IGroupManager;
+use OCP\ISession;
 use OCP\IUserManager;
 use OCP\IUserSession;
 
@@ -49,7 +57,8 @@ class AuthorizationService
 		private readonly IUserManager   $userManager,
 		private readonly IUserSession   $userSession,
 		private readonly ConsumerMapper $consumerMapper,
-        private readonly IGroupManager  $groupManager
+        private readonly IGroupManager  $groupManager,
+        private readonly IProvider $tokenProvider,
 	)
 	{
 	}
@@ -160,7 +169,7 @@ class AuthorizationService
 	{
 		$token = substr(string: $authorization, offset: strlen('Bearer '));
 
-		if ($token === '') {
+		if ($token === '' || $token === null) {
 			throw new AuthenticationException(message: 'No token has been provided', details: []);
 		}
 
@@ -188,6 +197,9 @@ class AuthorizationService
 		}
 
 		$payload = json_decode(json: $jws->getPayload(), associative: true);
+		if (isset($payload['iss']) === false || empty($payload['iss']) === true) {
+			throw new AuthenticationException(message: 'The token could not be validated', details: ['reason' => 'No issuer mentioned']);
+		}
 		$issuer = $this->findIssuer(issuer: $payload['iss']);
 
 		$publicKey = $issuer->getAuthorizationConfiguration()['publicKey'];
@@ -208,7 +220,7 @@ class AuthorizationService
      * @param string $header The authorization header given in the request
      * @param array $users The users allowed to be authenticated according to the rule
      * @param array $groups The groups allowed to be authenticated according to the rule
-     * 
+     *
      * @return void
      * @throws AuthenticationException
      */
@@ -224,18 +236,103 @@ class AuthorizationService
             throw new AuthenticationException(message: 'Invalid username or password', details: []);
         }
 
-        $userInAllowedUsers = array_intersect($users, [$user->getUID(), $user->getEMailAddress()]) !== [];
-
-        $userGroups = array_map(function(IGroup $group) {
-            return $group->getGID();
-        }, $this->groupManager->getUserGroups($user));
-
-        $userInAllowedGroups = array_intersect($groups, $userGroups) !== [];
-
-        if($userInAllowedUsers === false && $userInAllowedGroups === false) {
-            throw new AuthenticationException(message: 'Not authorized', details: ['reason' => 'The selected user is not allowed to login on this endpoint']);
-        }
+        //@TODO: This code can be enabled once the frontend can properly set users and usergroups
+//        $userInAllowedUsers = array_intersect($users, [$user->getUID(), $user->getEMailAddress()]) !== [];
+//
+//        $userGroups = array_map(function(IGroup $group) {
+//            return $group->getGID();
+//        }, $this->groupManager->getUserGroups($user));
+//
+//        $userInAllowedGroups = array_intersect($groups, $userGroups) !== [];
+//
+//        if($userInAllowedUsers === false && $userInAllowedGroups === false) {
+//            throw new AuthenticationException(message: 'Not authorized', details: ['reason' => 'The selected user is not allowed to login on this endpoint']);
+//        }
 
         $this->userSession->setUser($user);
+    }
+
+    public function authorizeOAuth(string $header, array $users, array $groups): void
+    {
+        if (str_starts_with($header, 'Bearer') === false) {
+            throw new AuthenticationException(message: 'Invalid method', details: ['reason' => 'The authentication method you are using is not allowed on this resource.']);
+        }
+
+        if ($this->userSession->isLoggedIn() === false) {
+            throw new AuthenticationException(message: 'Not authorized', details: ['reason' => 'The token you used has either expired or was not recognized as a valid token']);
+        }
+
+        $user = $this->userSession->getUser();
+
+        if ($user === false) {
+            throw new AuthenticationException(message: 'Invalid token', details: []);
+        }
+
+        //@TODO: This code can be enabled once the frontend can properly set users and usergroups
+//        $userInAllowedUsers = array_intersect($users, [$user->getUID(), $user->getEMailAddress()]) !== [];
+//
+//        $userGroups = array_map(function(IGroup $group) {
+//            return $group->getGID();
+//        }, $this->groupManager->getUserGroups($user));
+//
+//        $userInAllowedGroups = array_intersect($groups, $userGroups) !== [];
+//
+//        if($userInAllowedUsers === false && $userInAllowedGroups === false) {
+//            throw new AuthenticationException(message: 'Not authorized', details: ['reason' => 'The selected user is not allowed to view endpoint']);
+//        }
+    }
+
+    /**
+     * Add CORS headers to controller result
+     *
+     * @param Request $request The incoming request.
+     * @param Response $response The outgoing response.
+     * @return Response The updated response.
+     * @throws SecurityException
+     */
+    public function corsAfterController(Request $request, Response $response) {
+        // only react if it's a CORS request and if the request sends origin and
+
+        if (isset($request->server['HTTP_ORIGIN'])) {
+            // allow credentials headers must not be true or CSRF is possible
+            // otherwise
+            foreach ($response->getHeaders() as $header => $value) {
+                if (strtolower($header) === 'access-control-allow-credentials' &&
+                    strtolower(trim($value)) === 'true') {
+                    $msg = 'Access-Control-Allow-Credentials must not be '.
+                        'set to true in order to prevent CSRF';
+                    throw new SecurityException($msg);
+                }
+            }
+
+            $origin = $request->server['HTTP_ORIGIN'];
+            $response->addHeader('Access-Control-Allow-Origin', $origin);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Authorize user based on APIkey
+     *
+     * @param string $header The authorization header used.
+     * @param array $keys The array of keys configured on the rule.
+     * @return void
+     * @throws AuthenticationException
+     */
+    public function authorizeApiKey(string $header, array $keys): void
+    {
+
+        if (array_key_exists(key: $header, array: $keys) === false) {
+            throw new AuthenticationException(message: 'Invalid API key', details: []);
+        }
+
+        $user = $this->userManager->get(uid: $keys[$header]);
+
+        if ($user === null){
+            throw new AuthenticationException(message: 'Invalid API key', details: []);
+        }
+
+        $this->userSession->setUser(user: $user);
     }
 }

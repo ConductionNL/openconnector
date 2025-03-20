@@ -275,6 +275,9 @@ class CallService
 			return str_contains(strtolower($key), 'authentication') === false;
 		}, ARRAY_FILTER_USE_KEY);
 
+        $logBody = isset($config['logBody']) === true && (bool)$config['logBody'];
+        unset($config['logBody']);
+
 		// We want to surpress guzzle exceptions and return the response instead
 		$config['http_errors'] = false;
 
@@ -327,11 +330,22 @@ class CallService
 		$callLog->setStatusCode($data['response']['statusCode']);
 		$callLog->setStatusMessage($data['response']['statusMessage']);
 		$callLog->setRequest($data['request']);
-		$callLog->setResponse($data['response']);
 		$callLog->setCreated(new \DateTime());
 		$callLog->setExpires(new \DateTime('now + '.($data['response']['statusCode'] < 400 ? $source->getLogRetention() : $source->getErrorRetention()).' seconds'));
 
+		// Only persist response if we get bad requests or server errors.
+		if ($callLog->getStatusCode() >= 400 && $callLog->getStatusCode() < 600 || $logBody === true) {
+			$callLog->setResponse($data['response']);
+		} else {
+            $response = $data['response'];
+            unset($response['body']);
+            $callLog->setResponse($response);
+        }
+
 		$this->callLogMapper->insert($callLog);
+
+		// Set response after persist so we can process the response body.
+		$callLog->setResponse($data['response']);
 
 		return $callLog;
 	}

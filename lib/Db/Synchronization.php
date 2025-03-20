@@ -19,7 +19,7 @@ class Synchronization extends Entity implements JsonSerializable
 	protected ?string $sourceHash = null;	// The hash of the source object when it was last synced.
 	protected ?string $sourceHashMapping = null;	// The mapping id of the mapping that we map the object to for hashing.
 	protected ?string $sourceTargetMapping = null;	// The mapping of the source object to the target object
-	protected ?array $sourceConfig = null; // The configuration of the object in the source
+	protected ?array $sourceConfig = []; // The configuration of the object in the source
 	protected ?DateTime $sourceLastChanged = null;	// The last changed date of the source object
 	protected ?DateTime $sourceLastChecked = null;	// The last checked date of the source object
 	protected ?DateTime $sourceLastSynced = null;	// The last synced date of the source object
@@ -29,7 +29,7 @@ class Synchronization extends Entity implements JsonSerializable
 	protected ?string $targetType = null;	// The type of the target object (e.g. api, database, register/schema.)
 	protected ?string $targetHash = null;	// The hash of the target object
 	protected ?string $targetSourceMapping = null;	// The mapping of the target object to the source object
-	protected ?array $targetConfig = null; // The configuration of the object in the target
+	protected ?array $targetConfig = []; // The configuration of the object in the target
 	protected ?DateTime $targetLastChanged = null;	// The last changed date of the target object
 	protected ?DateTime $targetLastChecked = null;	// The last checked date of the target object
 	protected ?DateTime $targetLastSynced = null;	// The last synced date of the target object
@@ -41,6 +41,55 @@ class Synchronization extends Entity implements JsonSerializable
 	protected array $followUps = [];
     protected array $actions = [];
 
+	/**
+	 * Get the source configuration array
+	 *
+	 * @return array The source configuration or empty array if null
+	 */
+	public function getSourceConfig(): array
+	{
+		return $this->sourceConfig ?? [];
+	}
+
+	/**
+	 * Get the target configuration array
+	 *
+	 * @return array The target configuration or empty array if null
+	 */
+	public function getTargetConfig(): array
+	{
+		return $this->targetConfig ?? [];
+	}
+
+	/**
+	 * Get the conditions array
+	 *
+	 * @return array The conditions or empty array if null
+	 */
+	public function getConditions(): array
+	{
+		return $this->conditions ?? [];
+	}
+
+	/**
+	 * Get the follow-ups array
+	 *
+	 * @return array The follow-ups or empty array if null
+	 */
+	public function getFollowUps(): array
+	{
+		return $this->followUps ?? [];
+	}
+
+	/**
+	 * Get the actions array
+	 *
+	 * @return array The actions or empty array if null
+	 */
+	public function getActions(): array
+	{
+		return $this->actions ?? [];
+	}
 
 	public function __construct() {
         $this->addType('uuid', 'string');

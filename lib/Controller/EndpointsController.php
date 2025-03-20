@@ -195,7 +195,6 @@ class EndpointsController extends Controller
 	 * This method checks if the current path matches any registered endpoint patterns
 	 * and forwards the request to the appropriate endpoint service if found
 	 *
-	 * @CORS
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 * @PublicPage
@@ -204,7 +203,7 @@ class EndpointsController extends Controller
 	 * @return JSONResponse|XMLResponse The response from the endpoint service or 404 if no match
 	 * @throws Exception
 	 */
-	public function handlePath(string $_path): JSONResponse|XMLResponse
+	public function handlePath(string $_path): Response
 	{
 		// Find matching endpoints for the given path and method
 		$matchingEndpoints = $this->endpointMapper->findByPathRegex(
@@ -220,20 +219,19 @@ class EndpointsController extends Controller
 			);
 		}
 
-		// Get the first matching endpoint since we already filtered by method
+		// Get the first matching endpoint since we have already filtered by method
 		$endpoint = reset($matchingEndpoints);
 
 		// Forward the request to the endpoint service
 		$response = $this->endpointService->handleRequest($endpoint, $this->request, $_path);
 
-		// Controleer of de Accept-header op XML staat
+		// Check if the Accept header is set to XML
 		$acceptHeader = $this->request->getHeader('Accept');
 		if (stripos($acceptHeader, 'application/xml') !== false) {
-			return new XMLResponse($response->getData(), $response->getStatus());
+			$response = new XMLResponse($response->getData(), $response->getStatus());
 		}
 
-		return $response;
-
+        return $this->authorizationService->corsAfterController($this->request, $response);
 	}
 
     /**

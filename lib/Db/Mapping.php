@@ -13,12 +13,42 @@ class Mapping extends Entity implements JsonSerializable
 	protected ?string $version = '0.0.0';
 	protected ?string $name = null;
 	protected ?string $description = null;
-	protected ?array $mapping = null;
-	protected ?array $unset = null;
-	protected ?array $cast = null;
+	protected ?array $mapping = [];
+	protected ?array $unset = [];
+	protected ?array $cast = [];
 	protected ?bool $passThrough = null;
 	protected ?DateTime $dateCreated = null;
 	protected ?DateTime $dateModified = null;
+
+	/**
+	 * Get the mapping configuration
+	 *
+	 * @return array The mapping configuration or empty array if null
+	 */
+	public function getMapping(): array
+	{
+		return $this->mapping ?? [];
+	}
+
+	/**
+	 * Get the unset configuration
+	 *
+	 * @return array The unset configuration or empty array if null
+	 */
+	public function getUnset(): array
+	{
+		return $this->unset ?? [];
+	}
+
+	/**
+	 * Get the cast configuration
+	 *
+	 * @return array The cast configuration or empty array if null
+	 */
+	public function getCast(): array
+	{
+		return $this->cast ?? [];
+	}
 
 	public function __construct() {
         $this->addType('uuid', 'string');

@@ -13,34 +13,41 @@ use OCP\AppFramework\Db\Entity;
  * Tracks delivery attempts, responses, and current status.
  *
  * @package OCA\OpenConnector\Db
- *
- * @property string|null $uuid Unique identifier for the message
- * @property int|null $eventId Reference to the original event
- * @property int|null $consumerId Reference to the consumer
- * @property int|null $subscriptionId Reference to the subscription
- * @property string|null $status Current status of the message (pending, delivered, failed)
- * @property array|null $payload The actual message payload to be delivered
- * @property array|null $lastResponse The last response received from the consumer
- * @property int $retryCount Number of delivery attempts
- * @property DateTime|null $lastAttempt Timestamp of the last delivery attempt
- * @property DateTime|null $nextAttempt Scheduled time for next attempt
- * @property DateTime|null $created Creation timestamp
- * @property DateTime|null $updated Last update timestamp
  */
 class EventMessage extends Entity implements JsonSerializable
 {
-    protected ?string $uuid = null;
-    protected ?int $eventId = null;
-    protected ?int $consumerId = null;
-    protected ?int $subscriptionId = null;
-    protected ?string $status = 'pending';
-    protected ?array $payload = null;
-    protected ?array $lastResponse = null;
-    protected int $retryCount = 0;
-    protected ?DateTime $lastAttempt = null;
-    protected ?DateTime $nextAttempt = null;
-    protected ?DateTime $created = null;
-    protected ?DateTime $updated = null;
+    protected ?string $uuid = null; // Unique identifier for the message
+    protected ?int $eventId = null; // Reference to the original event
+    protected ?int $consumerId = null; // Reference to the consumer
+    protected ?int $subscriptionId = null; // Reference to the subscription
+    protected ?string $status = 'pending'; // Current status of the message (pending, delivered, failed)
+    protected ?array $payload = null; // The actual message payload to be delivered
+    protected ?array $lastResponse = null; // The last response received from the consumer
+    protected int $retryCount = 0; // Number of delivery attempts
+    protected ?DateTime $lastAttempt = null; // Timestamp of the last delivery attempt
+    protected ?DateTime $nextAttempt = null; // Scheduled time for next attempt
+    protected ?DateTime $created = null; // Creation timestamp
+    protected ?DateTime $updated = null; // Last update timestamp
+
+    /**
+     * Get the message payload
+     *
+     * @return array The message payload or empty array if null
+     */
+    public function getPayload(): array
+    {
+        return $this->payload ?? [];
+    }
+
+    /**
+     * Get the last response from consumer
+     *
+     * @return array The last response or empty array if null
+     */
+    public function getLastResponse(): array
+    {
+        return $this->lastResponse ?? [];
+    }
 
     /**
      * Constructor to set up data types for properties

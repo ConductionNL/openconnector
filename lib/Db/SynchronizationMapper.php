@@ -73,10 +73,18 @@ class SynchronizationMapper extends QBMapper
 
 	public function createFromArray(array $object): Synchronization
 	{
-		$object['uuid'] = Uuid::v4();
-
 		$obj = new Synchronization();
-		$obj->hydrate(object: $object);
+		$obj->hydrate($object);
+
+		// Set uuid
+		if ($obj->getUuid() === null) {
+			$obj->setUuid(Uuid::v4());
+		}
+
+		// Set version
+		if (empty($obj->getVersion()) === true) {
+			$obj->setVersion('0.0.1');
+		}
 
 		return $this->insert(entity: $obj);
 	}
@@ -84,15 +92,20 @@ class SynchronizationMapper extends QBMapper
 	public function updateFromArray(int $id, array $object): Synchronization
 	{
 		$obj = $this->find($id);
-		$obj->hydrate($object);
 
-		// Up the version
-		if (isset($object['version']) === false) {
-			// Set or update the version
+		// Set version
+		if (empty($obj->getVersion()) === true) {
+			$object['version'] = '0.0.1';
+		} else if (empty($object['version']) === true) {
+			// Update version
 			$version = explode('.', $obj->getVersion());
-			$version[2] = (int)$version[2] + 1;
-			$obj->setVersion(implode('.', $version));
+			if (isset($version[2]) === true) {
+				$version[2] = (int) $version[2] + 1;
+				$object['version'] = implode('.', $version);
+			}
 		}
+
+		$obj->hydrate($object);
 
 		return $this->update($obj);
 	}

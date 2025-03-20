@@ -47,6 +47,46 @@ class EventSubscription extends Entity implements JsonSerializable
     protected ?DateTime $updated = null;
 
     /**
+     * Get the event types to subscribe to
+     *
+     * @return array The event types or empty array if null
+     */
+    public function getTypes(): array
+    {
+        return $this->types ?? [];
+    }
+
+    /**
+     * Get the subscription configuration
+     *
+     * @return array The configuration or empty array if null
+     */
+    public function getConfig(): array
+    {
+        return $this->config ?? [];
+    }
+
+    /**
+     * Get the subscription filters
+     *
+     * @return array The filters or empty array if null
+     */
+    public function getFilters(): array
+    {
+        return $this->filters ?? [];
+    }
+
+    /**
+     * Get the protocol settings
+     *
+     * @return array The protocol settings or empty array if null
+     */
+    public function getProtocolSettings(): array
+    {
+        return $this->protocolSettings ?? [];
+    }
+
+    /**
      * Constructor to set up data types for properties
      */
     public function __construct() {

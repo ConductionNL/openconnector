@@ -31,11 +31,10 @@ class XMLResponse extends Response
 	 * 
 	 * @phpstan-param int $status Valid HTTP status code
 	 */
-	public function __construct(array $data, int $status = 200)
+	public function __construct(array $data, int $status = 200, array $headers = [])
 	{
-		parent::__construct();
+		parent::__construct($status, $headers);
 		$this->addHeader('Content-Type', 'application/xml; charset=UTF-8');
-		$this->setStatus($status);
 		
 		// Extract root tag if specified in the data
 		$rootTag = 'response';

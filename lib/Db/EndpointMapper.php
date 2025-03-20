@@ -74,10 +74,25 @@ class EndpointMapper extends QBMapper
 		return $this->findEntities(query: $qb);
 	}
 
-	private function createEndpointRegex(string $endpoint) {
-		$regex = '#'.preg_replace(pattern: ['#\/{{([^}}]+)}}\/#', '#\/{{([^}}]+)}}$#'], replacement: ['/([^/]+)/', '(/([^/]+))?'], subject: $endpoint).'#';
-		if (str_ends_with(haystack: $regex, needle: '?#') === false && str_ends_with(haystack: $regex, needle: '$#') === false) {
-			$regex = substr($regex, 0, -1). '$#';
+	private function createEndpointRegex(string $endpoint): string {
+		$regex = '#' . preg_replace(
+			['#\/{{([^}}]+)}}\/#', '#\/{{([^}}]+)}}$#'],
+			['/([^/]+)/', '(/([^/]+))?'],
+			$endpoint
+		) . '#';
+
+		// Replace only the LAST occurrence of "(/([^/]+))?#" with "(?:/([^/]+))?$#"
+		$regex = preg_replace_callback(
+			'/\(\/\(\[\^\/\]\+\)\)\?#/',
+			function ($matches) {
+				return '(?:/([^/]+))?$#';
+			},
+			$regex,
+			1 // Limit to only one replacement
+		);
+
+		if (str_ends_with($regex, '?#') === false && str_ends_with($regex, '$#') === false) {
+			$regex = substr($regex, 0, -1) . '$#';
 		}
 
 		return $regex;
@@ -87,11 +102,18 @@ class EndpointMapper extends QBMapper
 	{
 		$obj = new Endpoint();
 		$obj->hydrate($object);
+
 		// Set uuid
 		if ($obj->getUuid() === null) {
 			$obj->setUuid(Uuid::v4());
 		}
 
+		// Set version
+		if (empty($obj->getVersion()) === true) {
+			$obj->setVersion('0.0.1');
+		}
+
+		// Endpoint-specific logic
 		$obj->setEndpointRegex($this->createEndpointRegex($obj->getEndpoint()));
 		$obj->setEndpointArray(explode('/', $obj->getEndpoint()));
 
@@ -101,15 +123,22 @@ class EndpointMapper extends QBMapper
 	public function updateFromArray(int $id, array $object): Endpoint
 	{
 		$obj = $this->find($id);
-		$obj->hydrate($object);
 
-		if (isset($object['version']) === false) {
-			// Set or update the version
+		// Set version
+		if (empty($obj->getVersion()) === true) {
+			$object['version'] = '0.0.1';
+		} else if (empty($object['version']) === true) {
+			// Update version
 			$version = explode('.', $obj->getVersion());
-			$version[2] = (int)$version[2] + 1;
-			$obj->setVersion(implode('.', $version));
+			if (isset($version[2]) === true) {
+				$version[2] = (int) $version[2] + 1;
+				$object['version'] = implode('.', $version);
+			}
 		}
 
+		$obj->hydrate($object);
+
+		// Endpoint-specific logic
 		$obj->setEndpointRegex($this->createEndpointRegex($obj->getEndpoint()));
 		$obj->setEndpointArray(explode('/', $obj->getEndpoint()));
 

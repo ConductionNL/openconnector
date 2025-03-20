@@ -23,6 +23,16 @@ class SynchronizationLog extends Entity implements JsonSerializable
     protected ?DateTime $created = null;
     protected ?DateTime $expires = null;
 
+    /**
+     * Get the synchronization result
+     *
+     * @return array The result data or empty array if null
+     */
+    public function getResult(): array
+    {
+        return $this->result ?? [];
+    }
+
     public function __construct() {
         $this->addType('uuid', 'string');
         $this->addType('message', 'string');

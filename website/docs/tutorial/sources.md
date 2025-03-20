@@ -52,6 +52,12 @@ Each source type has specific configuration parameters:
 - Authentication method
 - Headers
 - Request parameters
+- Additional configuration
+
+#### Additional configuration
+You can set some additional configuration parameters for sources in the configuration parameters. The current list of additional configuration parameters is:
+
+- logBody: This parameter (containing either a boolean or the numbers 0 and 1) sets if all response bodies have to be logged. If this parameter is true (1), all response bodies for this source will be logged. If it is false (0), or the parameter is not given, only the response bodies of errors (status codes between 400 and 600) will be logged.
 
 ### Database Configuration
 - Host

@@ -174,68 +174,26 @@ class SynchronizationService
 
 		$synchronizedTargetIds = [];
 
+		if ($sourceConfig['resultsPosition'] === '_object') {
+			$objectList = [$objectList];
+			$result['objects']['found'] = count($objectList);
+		}
+
 		foreach ($objectList as $key => $object) {
-			// We can only deal with arrays (bassed on the source empty values or string might be returned)
-			if (is_array($object) === false) {
-				$result['objects']['invalid']++;
-				unset($objectList[$key]);
-				continue;
+			$processResult = $this->processSynchronizationObject(
+				synchronization: $synchronization,
+				object: $object,
+				result: $result,
+				isTest: $isTest,
+				force: $force,
+				log: $log
+			);
+			
+			$result = $processResult['result'];
+			
+			if ($processResult['targetId'] !== null) {
+				$synchronizedTargetIds[] = $processResult['targetId'];
 			}
-			$conditionsObject = $this->encodeArrayKeys($object, '.', '&#46;');
-
-			// Check if object adheres to conditions.
-			// Take note, JsonLogic::apply() returns a range of return types, so checking it with '=== false' or '!== true' does not work properly.
-			if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $conditionsObject)) {
-
-				// Increment skipped count in log since object doesn't meet conditions
-				$result['objects']['skipped']++;
-				unset($objectList[$key]);
-				continue;
-			}
-
-			// If the source configuration contains a dot notation for the id position, we need to extract the id from the source object
-			$originId = $this->getOriginId($synchronization, $object);
-
-			// Get the synchronization contract for this object
-			$synchronizationContract = $this->synchronizationContractMapper->findSyncContractByOriginId(synchronizationId: $synchronization->id, originId: $originId);
-
-			if ($synchronizationContract instanceof SynchronizationContract === false) {
-				// Only persist if not test
-				$synchronizationContract = new SynchronizationContract();
-				$synchronizationContract->setSynchronizationId($synchronization->getId());
-				$synchronizationContract->setOriginId($originId);
-
-				$synchronizationContractResult = $this->synchronizeContract(
-					synchronizationContract: $synchronizationContract,
-					synchronization: $synchronization,
-					object: $object,
-					isTest: $isTest,
-					force: $force,
-					log: $log
-				);
-
-				$synchronizationContract = $synchronizationContractResult['contract'];
-				$result['contracts'][] = $synchronizationContractResult['contract']['uuid'];
-				$result['logs'][] = $synchronizationContractResult['log']['uuid'];
-				$result['objects']['created']++;
-			} else {
-				// @todo this is wierd
-				$synchronizationContractResult = $this->synchronizeContract(
-					synchronizationContract: $synchronizationContract,
-					synchronization: $synchronization,
-					object: $object,
-					isTest: $isTest,
-					force: $force,
-					log: $log
-				);
-
-				$synchronizationContract = $synchronizationContractResult['contract'];
-				$result['contracts'][] = $synchronizationContractResult['contract']['uuid'];
-				$result['logs'][] = $synchronizationContractResult['log']['uuid'];
-				$result['objects']['updated']++;
-			}
-
-			$synchronizedTargetIds[] = $synchronizationContract['targetId'];
 		}
 
 		// Delete invalid objects
@@ -595,6 +553,8 @@ class SynchronizationService
 		?SynchronizationLog $log = null
 		): SynchronizationContract|Exception|array
 	{
+		$contractLog = null;
+
 		// We are doing something so lets log it
         if ($synchronizationContract->getId() !== null) {
             $contractLog = $this->synchronizationContractLogMapper->createFromArray(
@@ -1159,13 +1119,15 @@ class SynchronizationService
 		// Try parsing the response body in different formats, starting with JSON (since its the most common)
 		$result = json_decode($body, true);
 
-
 		// If JSON parsing failed, try XML
 		if (empty($result) === true) {
-			$xml =  simplexml_load_string($body, "SimpleXMLElement", LIBXML_NOCDATA);
+			libxml_use_internal_errors(true);
+			$xml = simplexml_load_string($body, "SimpleXMLElement", LIBXML_NOCDATA);
 
 			if ($xml !== false) {
-				$result = json_decode(json_encode($xml), true);
+				// Instead of using json_encode/decode which loses namespaced attributes
+				// Use a custom XML to array conversion that preserves namespaced attributes
+				$result = $this->xmlToArray($xml);
 			}
 		}
 
@@ -1365,7 +1327,7 @@ class SynchronizationService
 		if (empty($sourceConfig['resultsPosition']) === false) {
 			$position = $sourceConfig['resultsPosition'];
 			// if position is root, return the array
-			if ($position === '_root') {
+			if ($position === '_root' || $position === '_object') {
 				return $array;
 			}
 			// Use Dot notation to access nested array elements
@@ -2022,5 +1984,183 @@ class SynchronizationService
         return $result;
 
     }//end encodeArrayKeys()
+
+	/**
+	 * Convert SimpleXMLElement to array while preserving namespaced attributes
+	 *
+	 * @param \SimpleXMLElement $xml The XML element to convert
+	 * @return array The array representation with preserved namespaced attributes
+	 */
+	private function xmlToArray(\SimpleXMLElement $xml): array
+	{
+		$result = [];
+
+		// Handle attributes - this preserves namespaced attributes with colons
+		$attributes = $xml->attributes();
+		if (count($attributes) > 0) {
+			$result['@attributes'] = [];
+			foreach ($attributes as $attrName => $attrValue) {
+				$result['@attributes'][(string)$attrName] = (string)$attrValue;
+			}
+		}
+
+		// Handle namespaced attributes
+		$namespaces = $xml->getNamespaces(true);
+		foreach ($namespaces as $prefix => $namespace) {
+			$nsAttributes = $xml->attributes($namespace);
+			if (count($nsAttributes) > 0) {
+				if (!isset($result['@attributes'])) {
+					$result['@attributes'] = [];
+				}
+
+				foreach ($nsAttributes as $attrName => $attrValue) {
+					// Preserve the namespace prefix in the attribute name (with colon)
+					$nsAttrName = $prefix ? "$prefix:$attrName" : $attrName;
+					$result['@attributes'][$nsAttrName] = (string)$attrValue;
+				}
+			}
+		}
+
+		// Handle child elements
+		foreach ($xml->children() as $childName => $child) {
+			$childArray = $this->xmlToArray($child);
+
+			if (isset($result[$childName])) {
+				// If this child name already exists, convert to or add to array
+				if (!is_array($result[$childName]) || !isset($result[$childName][0])) {
+					$result[$childName] = [$result[$childName]];
+				}
+				$result[$childName][] = $childArray;
+			} else {
+				$result[$childName] = $childArray;
+			}
+		}
+
+		// Handle text content
+		$text = trim((string)$xml);
+		if (count($result) === 0 && $text !== '') {
+			return ['#text' => $text];
+		} elseif ($text !== '') {
+			$result['#text'] = $text;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Process a single object during synchronization
+	 *
+	 * @param Synchronization $synchronization The synchronization being processed
+	 * @param array $object The object to synchronize
+	 * @param array $result The current result tracking data
+	 * @param bool $isTest Whether this is a test run
+	 * @param bool $force Whether to force synchronization regardless of changes
+	 * @param SynchronizationLog $log The synchronization log
+	 * 
+	 * @return array Contains updated result data and the targetId ['result' => array, 'targetId' => string|null]
+	 */
+	private function processSynchronizationObject(
+		Synchronization $synchronization, 
+		array $object, 
+		array $result, 
+		bool $isTest, 
+		bool $force, 
+		SynchronizationLog $log
+	): array {
+		// We can only deal with arrays (based on the source empty values or string might be returned)
+		if (is_array($object) === false) {
+			$result['objects']['invalid']++;
+			return ['result' => $result, 'targetId' => null];
+		}
+		
+		$conditionsObject = $this->encodeArrayKeys($object, '.', '&#46;');
+
+		// Check if object adheres to conditions.
+		// Take note, JsonLogic::apply() returns a range of return types, so checking it with '=== false' or '!== true' does not work properly.
+		if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $conditionsObject)) {
+			// Increment skipped count in log since object doesn't meet conditions
+			$result['objects']['skipped']++;
+			return ['result' => $result, 'targetId' => null];
+		}
+
+		// If the source configuration contains a dot notation for the id position, we need to extract the id from the source object
+		$originId = $this->getOriginId($synchronization, $object);
+
+		// Get the synchronization contract for this object
+		$synchronizationContract = $this->synchronizationContractMapper->findSyncContractByOriginId(
+			synchronizationId: $synchronization->id, 
+			originId: $originId
+		);
+
+		if ($synchronizationContract instanceof SynchronizationContract === false) {
+			// Only persist if not test
+			$synchronizationContract = new SynchronizationContract();
+			$synchronizationContract->setSynchronizationId($synchronization->getId());
+			$synchronizationContract->setOriginId($originId);
+
+			$synchronizationContractResult = $this->synchronizeContract(
+				synchronizationContract: $synchronizationContract,
+				synchronization: $synchronization,
+				object: $object,
+				isTest: $isTest,
+				force: $force,
+				log: $log
+			);
+
+			$synchronizationContract = $synchronizationContractResult['contract'];
+			$result['contracts'][] = isset($synchronizationContractResult['contract']['uuid']) ? 
+				$synchronizationContractResult['contract']['uuid'] : null;
+			$result['logs'][] = isset($synchronizationContractResult['log']['uuid']) ? 
+				$synchronizationContractResult['log']['uuid'] : null;
+			$result['objects']['created']++;
+		} else {
+			// @todo this is weird
+			$synchronizationContractResult = $this->synchronizeContract(
+				synchronizationContract: $synchronizationContract,
+				synchronization: $synchronization,
+				object: $object,
+				isTest: $isTest,
+				force: $force,
+				log: $log
+			);
+
+			$synchronizationContract = $synchronizationContractResult['contract'];
+			$result['contracts'][] = isset($synchronizationContractResult['contract']['uuid']) === true ? 
+				$synchronizationContractResult['contract']['uuid'] : null;
+			$result['logs'][] = isset($synchronizationContractResult['log']['uuid']) === true ? 
+				$synchronizationContractResult['log']['uuid'] : null;
+			$result['objects']['updated']++;
+		}
+
+		$targetId = $synchronizationContract['targetId'] ?? null;
+		
+		return ['result' => $result, 'targetId' => $targetId];
+	}
+
+    /**
+     * Fetch an synchronization by id or other characteristics.
+     * Prevents other services from having to interact with the synchronizationmapper directly.
+     *
+     * @param string|int|null $id The id of the synchronization.
+     * @param array $filters Other filters to find the synchronization by.
+     * @return Synchronization The resulting synchronization
+     * @throws DoesNotExistException Thrown if the synchronization does not exist.
+     */
+    public function getSynchronization(null|string|int $id = null, array $filters = []) :Synchronization
+    {
+        if($id !== null) {
+            $id = intval($id);
+            return $this->synchronizationMapper->find($id);
+        }
+
+        /** @var Synchronization[] $synchronizations */
+        $synchronizations = $this->synchronizationMapper->findAll(filters: $filters);
+
+        if($synchronizations === 0) {
+            throw new DoesNotExistException('The synchronization you are looking for does not exist');
+        }
+
+        return $synchronizations[0];
+    }
 
 }

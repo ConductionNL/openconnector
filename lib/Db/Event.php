@@ -25,7 +25,7 @@ class Event extends Entity implements JsonSerializable
     protected ?string $datacontenttype = 'application/json'; // Content type of data
     protected ?string $dataschema = null; // URI to the schema that data adheres to
     protected ?string $subject = null; // Subject of the event
-    protected ?array $data = null; // Event payload
+    protected ?array $data = []; // Event payload
 
     // Additional tracking fields
     protected ?string $userId = null; // User who triggered the event
@@ -33,6 +33,16 @@ class Event extends Entity implements JsonSerializable
     protected ?DateTime $updated = null; // When the event was last updated
     protected ?DateTime $processed = null; // When the event was processed
     protected ?string $status = 'pending'; // Event processing status
+
+    /**
+     * Get the event data payload
+     *
+     * @return array The event data or empty array if null
+     */
+    public function getData(): array
+    {
+        return $this->data ?? [];
+    }
 
     /**
      * Constructor to set up data types for properties

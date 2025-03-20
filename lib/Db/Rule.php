@@ -31,6 +31,26 @@ class Rule extends Entity implements JsonSerializable
     protected ?DateTime $created = null;
     protected ?DateTime $updated = null;
 
+    /**
+     * Get the conditions array
+     *
+     * @return array The conditions in JSON Logic format or empty array if null
+     */
+    public function getConditions(): array
+    {
+        return $this->conditions ?? [];
+    }
+
+    /**
+     * Get the configuration array
+     *
+     * @return array The type-specific configuration or empty array if null
+     */
+    public function getConfiguration(): array
+    {
+        return $this->configuration ?? [];
+    }
+
     public function __construct() {
         $this->addType('uuid', 'string');
         $this->addType('name', 'string');

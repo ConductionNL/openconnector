@@ -166,6 +166,9 @@ import SitemapOutline from 'vue-material-design-icons/SitemapOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import LinkOff from 'vue-material-design-icons/LinkOff.vue'
+import _ from 'lodash'
+
+import { Endpoint } from '../../entities/index.js'
 
 export default {
 	name: 'EndpointDetails',
@@ -235,19 +238,21 @@ export default {
 		},
 		async removeRule(ruleId) {
 			try {
-				const updatedEndpoint = { ...endpointStore.endpointItem }
+				const updatedEndpoint = _.cloneDeep(endpointStore.endpointItem)
 
 				// Remove the rule ID from the rules array
 				updatedEndpoint.rules = updatedEndpoint.rules.filter(id => String(id) !== String(ruleId))
 
-				// Save the updated endpoint
-				await endpointStore.saveEndpoint({
+				const newEndpointItem = new Endpoint({
 					...updatedEndpoint,
 					endpointArray: Array.isArray(updatedEndpoint.endpointArray)
 						? updatedEndpoint.endpointArray
 						: updatedEndpoint.endpointArray.split(/ *, */g),
 					rules: updatedEndpoint.rules.map(id => String(id)),
 				})
+
+				// Save the updated endpoint
+				await endpointStore.saveEndpoint(newEndpointItem)
 
 				// Refresh the rules list
 				await this.loadRules()
