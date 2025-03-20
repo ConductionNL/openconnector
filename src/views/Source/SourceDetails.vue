@@ -53,24 +53,24 @@ import { sourceStore, navigationStore, logStore, synchronizationStore } from '..
 						</NcActionButton>
 					</NcActions>
 				</div>
-				<span>{{ sourceStore.sourceItem.description }}</span>
+				<span>{{ sourceStore.sourceItem?.description || '-' }}</span>
 
 				<div class="detailGrid">
 					<div class="gridContent">
 						<b>id:</b>
-						<p>{{ sourceStore.sourceItem.id || sourceStore.sourceItem.uuid }}</p>
+						<p>{{ sourceStore.sourceItem?.id || sourceStore.sourceItem?.uuid || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>location:</b>
-						<p>{{ sourceStore.sourceItem.location }}</p>
+						<p>{{ sourceStore.sourceItem?.location || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>version:</b>
-						<p>{{ sourceStore.sourceItem.version }}</p>
+						<p>{{ sourceStore.sourceItem?.version || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>type:</b>
-						<p>{{ sourceStore.sourceItem.type }}</p>
+						<p>{{ sourceStore.sourceItem?.type || '-' }}</p>
 					</div>
 				</div>
 				<div class="tabContainer">

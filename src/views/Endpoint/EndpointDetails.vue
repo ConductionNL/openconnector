@@ -45,59 +45,59 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 				<div class="detailGrid">
 					<div class="gridContent">
 						<b>Id:</b>
-						<p>{{ endpointStore.endpointItem.id ? endpointStore.endpointItem.id : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Uuid:</b>
-						<p>{{ endpointStore.endpointItem.uuid ? endpointStore.endpointItem.uuid : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.uuid || '-' }}</p>
 					</div>
 					<div class="gridContent" />
 
 					<div class="gridContent">
 						<b>Name:</b>
-						<p>{{ endpointStore.endpointItem.name ? endpointStore.endpointItem.name : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.name || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Description:</b>
-						<p>{{ endpointStore.endpointItem.description ? endpointStore.endpointItem.description : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.description || '-' }}</p>
 					</div>
 
 					<div class="gridContent">
 						<b>Version:</b>
-						<p>{{ endpointStore.endpointItem.version ? endpointStore.endpointItem.version : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.version || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Endpoint:</b>
-						<p>{{ endpointStore.endpointItem.endpoint ? endpointStore.endpointItem.endpoint : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.endpoint || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Endpoint Array:</b>
-						<p>{{ endpointStore.endpointItem.endpointArray.length > 0 ? endpointStore.endpointItem.endpointArray.join(', ') : '-' }}</p>
+						<p>{{ endpointStore.endpointItem.endpointArray.join(', ') || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Endpoint Regex:</b>
-						<p>{{ endpointStore.endpointItem.endpointRegex ? endpointStore.endpointItem.endpointRegex : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.endpointRegex || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Method:</b>
-						<p>{{ endpointStore.endpointItem.method ? endpointStore.endpointItem.method : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.method || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Target Type:</b>
-						<p>{{ endpointStore.endpointItem.targetType ? endpointStore.endpointItem.targetType : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.targetType || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Target Id:</b>
-						<p>{{ endpointStore.endpointItem.targetId ? endpointStore.endpointItem.targetId : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.targetId || '-' }}</p>
 					</div>
 
 					<div class="gridContent">
 						<b>Created:</b>
-						<p>{{ endpointStore.endpointItem.created ? endpointStore.endpointItem.created : '-' }}</p>
+						<p>{{ endpointStore.endpointItem?.created ? new Date(endpointStore.endpointItem.created).toLocaleDateString() : '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Updated:</b>
-						<p>{{ endpointStore.endpointItem.updated ? endpointStore.endpointItem.updated : '-' }}</p>
+						<p>{{ endpointStore.endpointItem.updated ? new Date(endpointStore.endpointItem.updated).toLocaleDateString() : '-' }}</p>
 					</div>
 				</div>
 

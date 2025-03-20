@@ -64,43 +64,43 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
 						<b>id:</b>
-						<p>{{ jobStore.jobItem.id }}</p>
+						<p>{{ jobStore.jobItem?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Status:</b>
-						<p>{{ jobStore.jobItem.status }}</p>
+						<p>{{ jobStore.jobItem?.status || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Version:</b>
-						<p>{{ jobStore.jobItem.version }}</p>
+						<p>{{ jobStore.jobItem?.version || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Enabled:</b>
-						<p>{{ jobStore.jobItem.isEnabled }}</p>
+						<p>{{ jobStore.jobItem?.isEnabled || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Job Class:</b>
-						<p>{{ jobStore.jobItem.jobClass }}</p>
+						<p>{{ jobStore.jobItem?.jobClass || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Interval:</b>
-						<p>{{ jobStore.jobItem.interval }}</p>
+						<p>{{ jobStore.jobItem?.interval || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Execution Time:</b>
-						<p>{{ jobStore.jobItem.executionTime }}</p>
+						<p>{{ jobStore.jobItem?.executionTime || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Time Sensitive:</b>
-						<p>{{ jobStore.jobItem.timeSensitive }}</p>
+						<p>{{ jobStore.jobItem?.timeSensitive || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Allow Parallel Runs:</b>
-						<p>{{ jobStore.jobItem.allowParallelRuns }}</p>
+						<p>{{ jobStore.jobItem?.allowParallelRuns || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Single Run:</b>
-						<p>{{ jobStore.jobItem.singleRun }}</p>
+						<p>{{ jobStore.jobItem?.singleRun || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Next Run:</b>

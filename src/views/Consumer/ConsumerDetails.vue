@@ -35,37 +35,37 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 				<div class="detailGrid">
 					<div class="gridContent">
 						<b>Id:</b>
-						<p>{{ consumerStore.consumerItem.id ? consumerStore.consumerItem.id : '-' }}</p>
+						<p>{{ consumerStore.consumerItem?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Uuid:</b>
-						<p>{{ consumerStore.consumerItem.uuid ? consumerStore.consumerItem.uuid : '-' }}</p>
+						<p>{{ consumerStore.consumerItem?.uuid || '-' }}</p>
 					</div>
 					<div class="gridContent" />
 
 					<div class="gridContent">
 						<b>Name:</b>
-						<p>{{ consumerStore.consumerItem.name ? consumerStore.consumerItem.name : '-' }}</p>
+						<p>{{ consumerStore.consumerItem?.name || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Description:</b>
-						<p>{{ consumerStore.consumerItem.description ? consumerStore.consumerItem.description : '-' }}</p>
+						<p>{{ consumerStore.consumerItem?.description || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Domains:</b>
-						<p>{{ consumerStore.consumerItem.domains.length > 0 ? consumerStore.consumerItem.domains.join(', ') : '-' }}</p>
+						<p>{{ consumerStore.consumerItem?.domains?.join(', ') || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>IP's:</b>
-						<p>{{ consumerStore.consumerItem.ips.length > 0 ? consumerStore.consumerItem.ips.join(', ') : '-' }}</p>
+						<p>{{ consumerStore.consumerItem?.ips?.join(', ') || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Authorization Type:</b>
-						<p>{{ consumerStore.consumerItem.authorizationType ? consumerStore.consumerItem.authorizationType : '-' }}</p>
+						<p>{{ consumerStore.consumerItem?.authorizationType || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Authorization Configuration:</b>
-						<p>{{ consumerStore.consumerItem.authorizationConfiguration ? consumerStore.consumerItem.authorizationConfiguration : '-' }}</p>
+						<p>{{ consumerStore.consumerItem?.authorizationConfiguration || '-' }}</p>
 					</div>
 
 					<div class="gridContent">
