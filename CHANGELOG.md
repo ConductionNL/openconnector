@@ -1,3 +1,9 @@
+# Version: 0.1.66
+
+* [#339](https://github.com/ConductionNL/openconnector/pull/339): Reverse changes
+* [#340](https://github.com/ConductionNL/openconnector/pull/340): Reverse changes
+
+
 # Changelog
 
 ## [Unreleased]
