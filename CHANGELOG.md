@@ -1,3 +1,10 @@
+# Version: 0.1.27
+
+* [#123](https://github.com/ConductionNL/openconnector/pull/123): Fixes on jobs and log cleanup
+* [#124](https://github.com/ConductionNL/openconnector/pull/124): Merge branch 'main' into development
+* [#125](https://github.com/ConductionNL/openconnector/pull/125): Fixes on log retention and job interval
+
+
 # Changelog
 
 ## [Unreleased]
