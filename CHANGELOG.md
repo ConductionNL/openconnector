@@ -1,3 +1,11 @@
+# Version: 0.1.26
+
+* [#118](https://github.com/ConductionNL/openconnector/pull/118): Updated mapping
+* [#119](https://github.com/ConductionNL/openconnector/pull/119): Store JobLogs after updating them
+* [#120](https://github.com/ConductionNL/openconnector/pull/120): Check if have to use pagination
+* [#121](https://github.com/ConductionNL/openconnector/pull/121): Dev to main
+
+
 # Changelog
 
 ## [Unreleased]
