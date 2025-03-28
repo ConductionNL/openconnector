@@ -1,3 +1,10 @@
+# Version: 0.1.54
+
+* [#271](https://github.com/ConductionNL/openconnector/pull/271): Update dev branch with changes from hot-fix to main
+* [#272](https://github.com/ConductionNL/openconnector/pull/272): Fix for dots in keys
+* [#273](https://github.com/ConductionNL/openconnector/pull/273): Dev to main
+
+
 # Changelog
 
 ## [Unreleased]
