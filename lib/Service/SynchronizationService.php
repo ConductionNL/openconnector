@@ -728,13 +728,13 @@ class SynchronizationService
 		// Save the object to the target
 		switch ($action) {
 			case 'save':
-				$target = $objectService->saveObject($register, $schema, $targetObject);
+				$target = $objectService->saveObject(register: $register, schema: $schema, object: $targetObject);
 				// Get the id form the target object
 				$synchronizationContract->setTargetId($target->getUuid());
 
 				// Handle sub-objects synchronization if sourceConfig is defined
 				if (isset($sourceConfig['subObjects']) === true) {
-					$targetObject = $objectService->extendEntity($target->jsonSerialize(), ['all']);
+					$targetObject = $objectService->renderEntity($target->jsonSerialize(), ['all']);
 					$this->updateContractsForSubObjects(subObjectsConfig: $sourceConfig['subObjects'], synchronizationId: $synchronization->getId(), targetObject: $targetObject);
 				}
 

@@ -240,6 +240,14 @@ class EndpointsController extends Controller
 			);
 		}
 
+		// If no matching endpoints found, return 404
+		if (count($matchingEndpoints) > 1) {
+			return new JSONResponse(
+				data: ['error' => 'Multiple endpoints found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
+				statusCode: 409
+			);
+		}
+
 		// Get the first matching endpoint since we have already filtered by method
 		$endpoint = reset($matchingEndpoints);
 
