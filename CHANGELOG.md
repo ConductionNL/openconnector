@@ -1,3 +1,10 @@
+# Version: 0.1.72
+
+* [#360](https://github.com/ConductionNL/openconnector/pull/360): Let's ignore branches main/master for checkstyle / php-cs workflow
+* [#361](https://github.com/ConductionNL/openconnector/pull/361): Temporary hardcoded fix for returning file download response
+* [#362](https://github.com/ConductionNL/openconnector/pull/362): Temporary hardcoded fix for returning file download response
+
+
 # Changelog
 
 ## [Unreleased]
