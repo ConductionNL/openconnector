@@ -1,3 +1,9 @@
+# Version: 0.1.65
+
+* [#333](https://github.com/ConductionNL/openconnector/pull/333): Map all request data
+* [#336](https://github.com/ConductionNL/openconnector/pull/336): Dev to main
+
+
 # Changelog
 
 ## [Unreleased]
