@@ -1,3 +1,9 @@
+# Version: 0.1.38
+
+* [#183](https://github.com/ConductionNL/openconnector/pull/183): re-introduce authentication
+* [#184](https://github.com/ConductionNL/openconnector/pull/184): dev to main auth fix
+
+
 # Changelog
 
 ## [Unreleased]
