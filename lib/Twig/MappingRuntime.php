@@ -35,7 +35,13 @@ class MappingRuntime implements RuntimeExtensionInterface
 
 			$mapping = $mappingObject;
 		} else if (is_string($mapping) === true || is_int($mapping) === true) {
-			$mapping = $this->mappingMapper->find($mapping);
+			if (is_string($mapping) === true && str_starts_with($mapping, 'http')) {
+				$mapping = $this->mappingMapper->findByRef($mapping)[0];
+			} else {
+				// If the mapping is an int, we assume it's an ID and try to find the mapping by ID.
+				// In the future we should be able to find the mapping by uuid (string) as well.
+				$mapping = $this->mappingMapper->find($mapping);
+			}
 		}
 
 		return $this->mappingService->executeMapping(

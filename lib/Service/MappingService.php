@@ -115,7 +115,7 @@ class MappingService
 
         // @todo: error logging
 
-        // Determine pass trough.
+        // Determine pass through.
         // Let's get the dot array based on https://github.com/adbario/php-dot-notation.
         if ($mapping->getPassThrough()) {
             $dotArray = new Dot($input);
@@ -124,7 +124,6 @@ class MappingService
             $dotArray = new Dot();
             // @todo: error logging
         }
-
         $dotInput = new Dot($input);
 
         // Let's do the actual mapping.
@@ -419,7 +418,7 @@ class MappingService
 
     /**
      * Retrieves a single mapping by its ID.
-     * 
+     *
      * This is a wrapper function that provides controlled access to the mapping mapper.
      * We use this wrapper pattern to ensure other Nextcloud apps can only interact with
      * mappings through this service layer, rather than accessing the mapper directly.
@@ -438,7 +437,7 @@ class MappingService
 
     /**
      * Retrieves all available mappings.
-     * 
+     *
      * This is a wrapper function that provides controlled access to the mapping mapper.
      * We use this wrapper pattern to ensure other Nextcloud apps can only interact with
      * mappings through this service layer, rather than accessing the mapper directly.
@@ -446,7 +445,7 @@ class MappingService
      *
      * @return array<Mapping> An array containing all mapping entities
      */
-    public function getMappings(): array 
+    public function getMappings(): array
     {
         // Forward the findAll request to the mapper while maintaining encapsulation
         // @todo: add filtering options

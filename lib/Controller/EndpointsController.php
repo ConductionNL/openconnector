@@ -3,14 +3,16 @@
 namespace OCA\OpenConnector\Controller;
 
 use Exception;
-use OCA\OpenConnector\Exception\AuthenticationException;
+use OCA\OpenConnector\Http\XMLResponse;
 use OCA\OpenConnector\Service\AuthorizationService;
 use OCA\OpenConnector\Service\ObjectService;
 use OCA\OpenConnector\Service\SearchService;
 use OCA\OpenConnector\Service\EndpointService;
-use OCA\OpenConnector\Db\Endpoint;
 use OCA\OpenConnector\Db\EndpointMapper;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -22,6 +24,27 @@ use OCP\AppFramework\Db\DoesNotExistException;
  */
 class EndpointsController extends Controller
 {
+	/**
+	 * CORS allowed methods
+	 *
+	 * @var string
+	 */
+	private string $corsMethods;
+
+	/**
+	 * CORS allowed headers
+	 *
+	 * @var string
+	 */
+	private string $corsAllowedHeaders;
+
+	/**
+	 * CORS max age
+	 *
+	 * @var int
+	 */
+	private int $corsMaxAge;
+
 	/**
 	 * Constructor for the EndpointsController
 	 *
@@ -37,10 +60,16 @@ class EndpointsController extends Controller
 		private IAppConfig $config,
 		private EndpointMapper $endpointMapper,
 		private EndpointService $endpointService,
-		private AuthorizationService $authorizationService
+		private AuthorizationService $authorizationService,
+		$corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		$corsMaxAge = 1728000
 	)
 	{
 		parent::__construct($appName, $request);
+        $this->corsMethods = $corsMethods;
+        $this->corsAllowedHeaders = $corsAllowedHeaders;
+        $this->corsMaxAge = $corsMaxAge;
 	}
 
 	/**
@@ -119,7 +148,7 @@ class EndpointsController extends Controller
 		$data = $this->request->getParams();
 
 		foreach ($data as $key => $value) {
-			if (str_starts_with($key, '_')) {
+			if (str_starts_with($key, '_') === true) {
 				unset($data[$key]);
 			}
 		}
@@ -149,7 +178,7 @@ class EndpointsController extends Controller
 		$data = $this->request->getParams();
 
 		foreach ($data as $key => $value) {
-			if (str_starts_with($key, '_')) {
+			if (str_starts_with($key, '_') === true) {
 				unset($data[$key]);
 			}
 		}
@@ -192,10 +221,10 @@ class EndpointsController extends Controller
 	 * @PublicPage
 	 *
 	 * @param string $_path
-	 * @return JSONResponse The response from the endpoint service or 404 if no match
+	 * @return JSONResponse|XMLResponse The response from the endpoint service or 404 if no match
 	 * @throws Exception
 	 */
-	public function handlePath(string $_path): JSONResponse
+	public function handlePath(string $_path): Response
 	{
 		// Find matching endpoints for the given path and method
 		$matchingEndpoints = $this->endpointMapper->findByPathRegex(
@@ -204,18 +233,62 @@ class EndpointsController extends Controller
 		);
 
 		// If no matching endpoints found, return 404
-		if (empty($matchingEndpoints)) {
+		if (empty($matchingEndpoints) === true) {
 			return new JSONResponse(
 				data: ['error' => 'No matching endpoint found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
 				statusCode: 404
 			);
 		}
 
-		// Get the first matching endpoint since we already filtered by method
+		// If no matching endpoints found, return 404
+		if (count($matchingEndpoints) > 1) {
+			return new JSONResponse(
+				data: ['error' => 'Multiple endpoints found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
+				statusCode: 409
+			);
+		}
+
+		// Get the first matching endpoint since we have already filtered by method
 		$endpoint = reset($matchingEndpoints);
 
 		// Forward the request to the endpoint service
-		return $this->endpointService->handleRequest($endpoint, $this->request, $_path);
+		$response = $this->endpointService->handleRequest($endpoint, $this->request, $_path);
+
+		// Check if the Accept header is set to XML
+		$acceptHeader = $this->request->getHeader('Accept');
+		if (stripos($acceptHeader, 'application/xml') !== false) {
+			// Convert JSON response to XML response
+			$response = new XMLResponse($response->getData(), $response->getStatus(), $response->getHeaders(), $_path);
+		}
+
+        return $this->authorizationService->corsAfterController($this->request, $response);
 	}
+
+    /**
+     * Implements a preflighted CORS response for OPTIONS requests.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     * @since 7.0.0
+     *
+     * @return Response The CORS response
+     */
+    #[NoCSRFRequired]
+    #[PublicPage]
+    public function preflightedCors(): Response {
+        // Determine the origin
+        $origin = isset($this->request->server['HTTP_ORIGIN']) === true ? $this->request->server['HTTP_ORIGIN'] : '*';
+
+        // Create and configure the response
+        $response = new Response();
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+        $response->addHeader('Access-Control-Allow-Credentials', 'false');
+
+        return $response;
+    }
 
 }

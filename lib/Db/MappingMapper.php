@@ -75,26 +75,37 @@ class MappingMapper extends QBMapper
 	{
 		$obj = new Mapping();
 		$obj->hydrate($object);
+
 		// Set uuid
 		if ($obj->getUuid() === null) {
 			$obj->setUuid(Uuid::v4());
 		}
+
+		// Set version
+		if (empty($obj->getVersion()) === true) {
+			$obj->setVersion('0.0.1');
+		}
+
 		return $this->insert(entity: $obj);
 	}
 
 	public function updateFromArray(int $id, array $object): Mapping
 	{
 		$obj = $this->find($id);
-		$obj->hydrate($object);
 
-        if ($obj->getVersion() !== null && isset($object['version']) === false) {
-			// Set or update the version
-            $version = explode('.', $obj->getVersion());
-            if (isset($version[2]) === true) {
-                $version[2] = (int) $version[2] + 1;
-                $obj->setVersion(implode('.', $version));
-            }
-        }
+		// Set version
+		if (empty($obj->getVersion()) === true) {
+			$object['version'] = '0.0.1';
+		} else if (empty($object['version']) === true) {
+			// Update version
+			$version = explode('.', $obj->getVersion());
+			if (isset($version[2]) === true) {
+				$version[2] = (int) $version[2] + 1;
+				$object['version'] = implode('.', $version);
+			}
+		}
+
+		$obj->hydrate($object);
 
 		return $this->update($obj);
 	}

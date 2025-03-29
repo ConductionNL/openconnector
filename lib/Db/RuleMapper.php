@@ -114,18 +114,24 @@ class RuleMapper extends QBMapper
 		$obj = new Rule();
 		$obj->hydrate($object);
 
-		// Set uuid if not provided
+		// Set uuid
 		if ($obj->getUuid() === null) {
 			$obj->setUuid(Uuid::v4());
 		}
 
+		// Set version
+		if (empty($obj->getVersion()) === true) {
+			$obj->setVersion('0.0.1');
+		}
+
+		// Rule-specific logic
 		// If no order is specified, append to the end
 		if ($obj->getOrder() === null) {
 			$maxOrder = $this->getMaxOrder();
 			$obj->setOrder($maxOrder + 1);
 		}
 
-		return $this->insert($obj);
+		return $this->insert(entity: $obj);
 	}
 
 	/**
@@ -138,6 +144,19 @@ class RuleMapper extends QBMapper
 	public function updateFromArray(int $id, array $object): Rule
 	{
 		$obj = $this->find($id);
+
+		// Set version
+		if (empty($obj->getVersion()) === true) {
+			$object['version'] = '0.0.1';
+		} else if (empty($object['version']) === true) {
+			// Update version
+			$version = explode('.', $obj->getVersion());
+			if (isset($version[2]) === true) {
+				$version[2] = (int) $version[2] + 1;
+				$object['version'] = implode('.', $version);
+			}
+		}
+
 		$obj->hydrate($object);
 
 		return $this->update($obj);

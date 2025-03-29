@@ -64,43 +64,43 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
 						<b>id:</b>
-						<p>{{ jobStore.jobItem.id }}</p>
+						<p>{{ jobStore.jobItem?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Status:</b>
-						<p>{{ jobStore.jobItem.status }}</p>
+						<p>{{ jobStore.jobItem?.status || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Version:</b>
-						<p>{{ jobStore.jobItem.version }}</p>
+						<p>{{ jobStore.jobItem?.version || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Enabled:</b>
-						<p>{{ jobStore.jobItem.isEnabled }}</p>
+						<b>{{ jobStore.jobItem?.isEnabled ? 'Enabled' : 'Disabled' }}</b>
+						<NcUserStatusIcon :class="!jobStore.jobItem?.isEnabled && 'jobStatusDisabled'" :status="'online'" />
 					</div>
 					<div class="gridContent">
 						<b>Job Class:</b>
-						<p>{{ jobStore.jobItem.jobClass }}</p>
+						<p>{{ jobStore.jobItem?.jobClass || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Interval:</b>
-						<p>{{ jobStore.jobItem.interval }}</p>
+						<p>{{ jobStore.jobItem?.interval || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Execution Time:</b>
-						<p>{{ jobStore.jobItem.executionTime }}</p>
+						<p>{{ jobStore.jobItem?.executionTime || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Time Sensitive:</b>
-						<p>{{ jobStore.jobItem.timeSensitive }}</p>
+						<p>{{ jobStore.jobItem?.timeSensitive || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Allow Parallel Runs:</b>
-						<p>{{ jobStore.jobItem.allowParallelRuns }}</p>
+						<p>{{ jobStore.jobItem?.allowParallelRuns || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Single Run:</b>
-						<p>{{ jobStore.jobItem.singleRun }}</p>
+						<p>{{ jobStore.jobItem?.singleRun || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Next Run:</b>
@@ -197,7 +197,7 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcListItem } from '@nextcloud/vue'
+import { NcActions, NcActionButton, NcListItem, NcUserStatusIcon } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -228,7 +228,7 @@ export default {
 		NcListItem,
 	},
 	mounted() {
-		jobStore.refreshJobLogs()
+		jobStore.refreshJobLogs(jobStore.jobItem.id)
 	},
 	methods: {
 		deleteJobArgument(key) {
@@ -260,7 +260,7 @@ export default {
 			navigationStore.setModal('viewJobLog')
 		},
 		refreshJobLogs() {
-			jobStore.refreshJobLogs()
+			jobStore.refreshJobLogs(jobStore.jobItem.id)
 		},
 		getLevelColor(level) {
 			switch (level) {
@@ -291,49 +291,56 @@ export default {
 }
 </script>
 
-<style>
-	.successLevel * .counter-bubble__counter {
-		background-color: var(--OC-color-status-background-success);
-		color: var(--OC-color-status-success);
-	}
+<style scoped>
+.successLevel * .counter-bubble__counter {
+	background-color: var(--OC-color-status-background-success);
+	color: var(--OC-color-status-success);
+}
 
-	.errorLevel * .counter-bubble__counter {
-		background-color: var(--OC-color-status-background-error);
-		color: var(--OC-color-status-error);
-	}
+.errorLevel * .counter-bubble__counter {
+	background-color: var(--OC-color-status-background-error);
+	color: var(--OC-color-status-error);
+}
 
-	.noticeLevel * .counter-bubble__counter {
-		background-color: var(--OC-color-status-background-notice);
-		color: var(--OC-color-status-notice);
-	}
+.noticeLevel * .counter-bubble__counter {
+	background-color: var(--OC-color-status-background-notice);
+	color: var(--OC-color-status-notice);
+}
 
-	.warningLevel * .counter-bubble__counter {
-		background-color: var(--OC-color-status-background-warning);
-		color: var(--OC-color-status-warning);
-	}
+.warningLevel * .counter-bubble__counter {
+	background-color: var(--OC-color-status-background-warning);
+	color: var(--OC-color-status-warning);
+}
 
-	.infoLevel * .counter-bubble__counter {
-		background-color: var(--OC-color-status-background-info);
-		color: var(--OC-color-status-info);
-	}
+.infoLevel * .counter-bubble__counter {
+	background-color: var(--OC-color-status-background-info);
+	color: var(--OC-color-status-info);
+}
 
-	.criticalLevel * .counter-bubble__counter {
-		background-color: var(--OC-color-status-background-critical);
-		color: var(--OC-color-status-critical);
-	}
+.criticalLevel * .counter-bubble__counter {
+	background-color: var(--OC-color-status-background-critical);
+	color: var(--OC-color-status-critical);
+}
 
-	.alertLevel * .counter-bubble__counter {
-		background-color: var(--OC-color-status-background-alert);
-		color: var(--OC-color-status-alert);
-	}
+.alertLevel * .counter-bubble__counter {
+	background-color: var(--OC-color-status-background-alert);
+	color: var(--OC-color-status-alert);
+}
 
-	.emergencyLevel * .counter-bubble__counter {
-		background-color: var(--OC-color-status-background-emergency);
-		color: var(--OC-color-status-emergency);
-	}
+.emergencyLevel * .counter-bubble__counter {
+	background-color: var(--OC-color-status-background-emergency);
+	color: var(--OC-color-status-emergency);
+}
 
-	.debugLevel * .counter-bubble__counter {
-		background-color: var(--OC-color-status-background-debug);
-		color: var(--OC-color-status-debug);
-	}
+.debugLevel * .counter-bubble__counter {
+	background-color: var(--OC-color-status-background-debug);
+	color: var(--OC-color-status-debug);
+}
+
+.gridContent p {
+	white-space: normal;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+}
+
 </style>

@@ -28,6 +28,26 @@ class SynchronizationContractLog extends Entity implements JsonSerializable
     protected ?DateTime $expires = null;
     protected ?DateTime $created = null;
 
+    /**
+     * Get the source data
+     *
+     * @return array The source data or null
+     */
+    public function getSource(): ?array
+    {
+        return $this->source;
+    }
+
+    /**
+     * Get the target data
+     *
+     * @return array The target data or null
+     */
+    public function getTarget(): ?array
+    {
+        return $this->target;
+    }
+
     public function __construct() {
         $this->addType('uuid', 'string');
 		$this->addType('message', 'string');

@@ -8,18 +8,61 @@ use OCP\AppFramework\Db\Entity;
 
 class CallLog extends Entity implements JsonSerializable
 {
+    /** @var string|null $uuid Unique identifier for this call log entry */
     protected ?string $uuid = null;
+
+    /** @var int|null $statusCode HTTP status code returned from the API call */
     protected ?int $statusCode = null;
+
+    /** @var string|null $statusMessage Status message or description returned with the response */
     protected ?string $statusMessage = null;
+
+    /** @var array|null $request Complete request data including headers, method, body, etc. */
     protected ?array $request = null;
+
+    /** @var array|null $response Complete response data including headers, body, and status info */
     protected ?array $response = null;
+
+    /** @var int|null $sourceId Reference to the source/endpoint that was called */
     protected ?int $sourceId = null;
+
+    /** @var int|null $actionId Reference to the action that triggered this call */
     protected ?int $actionId = null;
+
+    /** @var int|null $synchronizationId Reference to the synchronization process if this call is part of one */
     protected ?int $synchronizationId = null;
+
+    /** @var string|null $userId Identifier of the user who initiated the call */
     protected ?string $userId = null;
+
+    /** @var string|null $sessionId Session identifier associated with this call */
     protected ?string $sessionId = null;
+
+    /** @var DateTime|null $expires When this log entry should expire/be deleted */
     protected ?DateTime $expires = null;
+
+    /** @var DateTime|null $created When this log entry was created */
     protected ?DateTime $created = null;
+
+    /**
+     * Get the request data
+     *
+     * @return array The request data or null
+     */
+    public function getRequest(): ?array
+    {
+        return $this->request;
+    }
+
+    /**
+     * Get the response data
+     *
+     * @return array The response data or null
+     */
+    public function getResponse(): ?array
+    {
+        return $this->response;
+    }
 
     public function __construct() {
         $this->addType('uuid', 'string');

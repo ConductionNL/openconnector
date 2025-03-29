@@ -18,7 +18,7 @@ class Source extends Entity implements JsonSerializable
 	protected ?string $type = null;
 	protected ?string $authorizationHeader = null;
 	protected ?string $auth = null;
-	protected ?array $authenticationConfig = null;
+	protected ?array $authenticationConfig = [];
 	protected ?string $authorizationPassthroughMethod = null;
 	protected ?string $locale = null;
 	protected ?string $accept = null;
@@ -29,13 +29,13 @@ class Source extends Entity implements JsonSerializable
 	protected ?string $password = null;
 	protected ?string $apikey = null;
 	protected ?string $documentation = null;
-	protected ?array $loggingConfig = null;
+	protected ?array $loggingConfig = [];
 	protected ?string $oas = null;
-	protected ?array $paths = null;
-	protected ?array $headers = null;
-	protected ?array $translationConfig = null;
-	protected ?array $configuration = null;
-	protected ?array $endpointsConfig = null;
+	protected ?array $paths = [];
+	protected ?array $headers = [];
+	protected ?array $translationConfig = [];
+	protected ?array $configuration = [];
+	protected ?array $endpointsConfig = [];
 	protected ?string $status = null;
 	protected ?int $logRetention = 3600; // seconds to save all logs
 	protected ?int $errorRetention = 86400; // seconds to save error logs
@@ -49,6 +49,76 @@ class Source extends Entity implements JsonSerializable
 	protected ?DateTime $lastSync = null;
 	protected ?DateTime $dateCreated = null;
 	protected ?DateTime $dateModified = null;
+
+	/**
+	 * Get the authentication configuration
+	 *
+	 * @return array The authentication configuration or empty array if null
+	 */
+	public function getAuthenticationConfig(): array
+	{
+		return $this->authenticationConfig ?? [];
+	}
+
+	/**
+	 * Get the logging configuration
+	 *
+	 * @return array The logging configuration or empty array if null
+	 */
+	public function getLoggingConfig(): array
+	{
+		return $this->loggingConfig ?? [];
+	}
+
+	/**
+	 * Get the paths array
+	 *
+	 * @return array The paths or empty array if null
+	 */
+	public function getPaths(): array
+	{
+		return $this->paths ?? [];
+	}
+
+	/**
+	 * Get the headers array
+	 *
+	 * @return array The headers or empty array if null
+	 */
+	public function getHeaders(): array
+	{
+		return $this->headers ?? [];
+	}
+
+	/**
+	 * Get the translation configuration
+	 *
+	 * @return array The translation configuration or empty array if null
+	 */
+	public function getTranslationConfig(): array
+	{
+		return $this->translationConfig ?? [];
+	}
+
+	/**
+	 * Get the general configuration
+	 *
+	 * @return array The configuration or empty array if null
+	 */
+	public function getConfiguration(): array
+	{
+		return $this->configuration ?? [];
+	}
+
+	/**
+	 * Get the endpoints configuration
+	 *
+	 * @return array The endpoints configuration or empty array if null
+	 */
+	public function getEndpointsConfig(): array
+	{
+		return $this->endpointsConfig ?? [];
+	}
 
 	public function __construct() {
 		$this->addType('uuid', 'string');

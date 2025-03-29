@@ -190,8 +190,9 @@ import { Rule } from '../../entities/index.js'
 					<!-- Users Multi-Select -->
 					<NcSelect
 						v-model="ruleItem.configuration.authentication.users"
-						:options="usersList"
+						v-bind="usersList"
 						input-label="Allowed Users"
+						:user-select="true"
 						:multiple="true"
 						:clearable="true"
 						placeholder="Select users who can access" />
@@ -199,7 +200,7 @@ import { Rule } from '../../entities/index.js'
 					<!-- Groups Multi-Select -->
 					<NcSelect
 						v-model="ruleItem.configuration.authentication.groups"
-						:options="groupsList"
+						v-bind="groupsList"
 						input-label="Allowed Groups"
 						:multiple="true"
 						:clearable="true"
@@ -492,6 +493,8 @@ export default {
 			error: false,
 			closeAlert: false,
 			sourcesLoading: false,
+			usersLoading: false,
+			groupsLoading: false,
 			openRegister: {
 				isInstalled: true,
 				isAvailable: true,
@@ -506,15 +509,8 @@ export default {
 				value: null,
 				loading: false,
 			},
-			// @todoMock data for users and groups - should be fetched from backend
-			usersList: [
-				{ label: 'User 1', value: 'user1' },
-				{ label: 'User 2', value: 'user2' },
-			],
-			groupsList: [
-				{ label: 'Group 1', value: 'group1' },
-				{ label: 'Group 2', value: 'group2' },
-			],
+			usersList: [],
+			groupsList: [],
 
 			ruleItem: {
 				name: '',
@@ -535,7 +531,7 @@ export default {
 					},
 					javascript: '',
 					authentication: {
-						type: 'basic',
+						type: { label: 'Basic Authentication', value: 'basic' },
 						users: [],
 						groups: [],
 					},
@@ -677,6 +673,8 @@ export default {
 		this.getSynchronizations()
 		this.getSources()
 		this.getSchemas()
+		this.getAllowedUsers()
+		this.getGroups()
 	},
 	methods: {
 		async getMappings() {
@@ -851,6 +849,93 @@ export default {
 			}
 		},
 
+		async getAllowedUsers() {
+			this.usersLoading = true
+			const response = await fetch('/ocs/v1.php/cloud/users/details', {
+				method: 'GET',
+				headers: {
+					Accept: 'application/json',
+					'OCS-APIRequest': 'true',
+				},
+			})
+			if (!response.ok) {
+				console.info('Fetching users was not successful')
+				this.usersLoading = false
+				return
+			}
+
+			const responseData = await response.json()
+
+			const selectedUsersValues = await Object.values(responseData.ocs.data.users).filter(user => this.ruleItem.configuration.authentication.users.includes(user.id))
+
+			this.usersList = {
+				options: Object.values(responseData.ocs.data.users).map((user) => ({
+					id: user.id,
+					displayName: user.displayname,
+					subname: user.email,
+					user: user.id,
+				})),
+				value: selectedUsersValues
+					? selectedUsersValues.map(user => ({
+						id: user.id,
+						displayName: user.displayname,
+						subname: user.email,
+						user: user.id,
+					}))
+					: [],
+			}
+
+			this.ruleItem.configuration.authentication.users = selectedUsersValues.map(user => ({
+				id: user.id,
+				displayName: user.displayname,
+				subname: user.email,
+				user: user.id,
+			}))
+
+			this.usersLoading = false
+		},
+
+		async getGroups() {
+			this.groupsLoading = true
+			const response = await fetch('/ocs/v1.php/cloud/groups/details', {
+				method: 'GET',
+				headers: {
+					Accept: 'application/json',
+					'OCS-APIRequest': 'true',
+				},
+			},
+			)
+			if (!response.ok) {
+				console.info('Fetching groups was not successful')
+				this.groupsLoading = false
+				return
+			}
+
+			const responseData = await response.json()
+
+			const selectedGroupsValues = await responseData.ocs.data.groups.filter(group => this.ruleItem.configuration.authentication.groups.includes(group.id))
+
+			this.groupsList = {
+				options: await responseData.ocs.data.groups.map(group => ({
+					label: group.displayname,
+					value: group.id,
+				})),
+				value: selectedGroupsValues
+					? selectedGroupsValues.map(group => ({
+						label: group.displayname,
+						value: group.id,
+					}))
+					: [],
+			}
+
+			this.ruleItem.configuration.authentication.groups = selectedGroupsValues.map(group => ({
+				label: group.displayname,
+				value: group.id,
+			}))
+
+			this.groupsLoading = false
+		},
+
 		setMethodOptions() {
 			const options = [
 				{ label: 'GET' },
@@ -988,8 +1073,8 @@ export default {
 			case 'authentication':
 				configuration.authentication = {
 					type: this.ruleItem.configuration.authentication.type.value,
-					users: this.ruleItem.configuration.authentication.users,
-					groups: this.ruleItem.configuration.authentication.groups,
+					users: this.ruleItem.configuration.authentication.users.map(user => user.id),
+					groups: this.ruleItem.configuration.authentication.groups.map(group => group.value),
 				}
 				break
 			case 'download':

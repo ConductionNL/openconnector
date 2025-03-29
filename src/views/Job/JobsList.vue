@@ -42,7 +42,7 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 					:name="job.name"
 					:active="jobStore.jobItem?.id === job?.id"
 					:force-display-actions="true"
-					@click="jobStore.setJobItem(job)">
+					@click="jobStore.setJobItem(job); jobStore.refreshJobLogs(job.id)">
 					<template #icon>
 						<Update :class="jobStore.jobItem?.id === job.id && 'selectedJobIcon'"
 							disable-menu
@@ -80,7 +80,7 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 							</template>
 							Run
 						</NcActionButton>
-						<NcActionButton @click="jobStore.setJobItem(job); jobStore.refreshJobLogs()">
+						<NcActionButton @click="jobStore.setJobItem(job); jobStore.refreshJobLogs(job.id)">
 							<template #icon>
 								<Sync :size="20" />
 							</template>

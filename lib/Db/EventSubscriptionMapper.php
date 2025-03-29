@@ -102,10 +102,15 @@ class EventSubscriptionMapper extends QBMapper
      */
     public function createFromArray(array $data): EventSubscription
     {
-        $subscription = new EventSubscription();
-        $subscription->setUuid(Uuid::v4()->toString());
-        $subscription->hydrate($data);
-        return $this->insert($subscription);
+        $obj = new EventSubscription();
+        $obj->hydrate($data);
+        
+        // Set uuid
+        if ($obj->getUuid() === null) {
+            $obj->setUuid(Uuid::v4());
+        }
+
+        return $this->insert(entity: $obj);
     }
 
     /**
@@ -117,8 +122,9 @@ class EventSubscriptionMapper extends QBMapper
      */
     public function updateFromArray(int $id, array $data): EventSubscription
     {
-        $subscription = $this->find($id);
-        $subscription->hydrate($data);
-        return $this->update($subscription);
+        $obj = $this->find($id);
+        $obj->hydrate($data);
+
+        return $this->update($obj);
     }
 }

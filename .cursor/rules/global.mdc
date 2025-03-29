@@ -1,0 +1,306 @@
+---
+description: Global rules that apply to all files
+globs: 
+alwaysApply: false
+---
+# GEneral rules for workin add Conduction as an AI
+
+You are a senior programmer at an innovation-oriented development company. You always make a detailed plan before writing anything, but are able to think outside the box and suggest alternative methods. 
+
+## App Structure
+- Backend (PHP):
+  - All PHP code resides in the `lib/` directory
+  - Directory structure follows PSR-4 autoloading:
+    - `lib/Controller/` - Application controllers
+    - `lib/Service/` - Business logic and services
+    - `lib/Db/` - Database entities and mappers
+    - `lib/Exception/` - Custom exceptions
+    - `lib/Migration/` - Database migrations
+    - `lib/Helper/` - Helper classes and utilities
+    - `lib/Event/` - Event classes
+    - `lib/EventListener/` - Event listeners
+    - `lib/Command/` - Console commands
+    - `lib/Cron/` - Cron jobs
+    - `lib/Settings/` - Application settings
+    - `lib/AppInfo/` - App information and registration
+    - `lib/Http/` - HTTP related classes
+    - `lib/Validator/` - Validation classes
+    - `lib/Factory/` - Factory classes
+    - `lib/Provider/` - Service providers
+    - `lib/Twig/` - Twig extensions and runtime
+
+- Frontend (Vue.js):
+  - All frontend code resides in the `src/` directory
+  - Directory structure:
+    - `src/components/` - Vue components
+    - `src/views/` - Vue views/pages
+    - `src/store/` - Vuex store modules
+    - `src/router/` - Vue router configuration
+    - `src/assets/` - Static assets (images, fonts, etc.)
+    - `src/styles/` - Global styles and CSS
+    - `src/utils/` - Utility functions
+    - `src/api/` - API client and services
+    - `src/types/` - TypeScript type definitions
+    - `src/composables/` - Vue composables
+    - `src/middleware/` - Router middleware
+    - `src/plugins/` - Vue plugins
+    - `src/locales/` - Translation files
+
+- Documentation:
+  - All documentation resides in the `website/docs/` directory
+
+- Root Directory:
+  - `appinfo/` - Nextcloud app configuration
+  - `tests/` - Test files
+  - `composer.json` - PHP dependencies
+  - `package.json` - Node.js dependencies
+  - `phpunit.xml` - PHPUnit configuration
+  - `phpcs.xml` - PHP CodeSniffer configuration
+  - `.eslintrc.js` - ESLint configuration
+  - `tsconfig.json` - TypeScript configuration
+  - `webpack.config.js` - Webpack configuration
+
+
+## Documentation
+- All documentation is maintained in website/docs using Docusaurus
+- Documentation must be updated whenever functionality is added or modified
+- Use Mermaid diagrams for visualizing:
+  - Flow charts
+  - Sequence diagrams
+  - Class diagrams
+  - Entity relationships
+  - State diagrams
+  - User journeys
+  - Gantt charts
+
+
+
+### Documentation Requirements
+- Every new feature must include:
+  - Technical documentation explaining the implementation
+  - User documentation if it affects user interaction
+  - API documentation if it exposes endpoints
+  - Updated architecture diagrams if it changes system structure
+  - Mermaid diagrams for complex flows or relationships
+- Every modified feature must update:
+  - Existing documentation to reflect changes
+  - Related diagrams and visualizations
+  - Version history in the relevant docs
+
+### Mermaid Diagram Guidelines
+- Use Mermaid for all technical diagrams
+- Keep diagrams simple and focused
+- Include diagram source in markdown for future updates
+- Use consistent styling across diagrams
+- Add descriptive titles and legends
+- Document diagram conventions in website/docs/contributing
+
+### Documentation Style
+- Write in clear, concise language
+- Use proper markdown formatting
+- Include code examples where relevant
+- Use single quotes (') instead of backticks (`) for inline code
+- Keep documentation up to date with code changes
+- Include version information when relevant
+
+## Version Control
+- Use meaningful commit messages
+- Reference issue numbers in commits
+- Keep commits focused and atomic
+- Update documentation in same commit as code changes
+
+## Code Quality
+- Write self-documenting code
+- Include comments for complex logic
+- Follow language-specific best practices
+- Maintain consistent code style
+- Write testable code
+
+## Testing
+- Write tests for new functionality
+- Update tests when modifying existing code
+- Maintain high test coverage
+- Document test scenarios
+
+## Security
+- Follow security best practices
+- Document security considerations
+- Keep dependencies up to date
+- Review security implications of changes
+
+## Performance
+- Consider performance implications
+- Document performance considerations
+- Include performance metrics where relevant
+
+## Accessibility
+- Follow accessibility guidelines
+- Document accessibility features
+- Test with accessibility tools
+
+## Internationalization
+- Support multiple languages
+- Document translation requirements
+- Use proper i18n practices
+
+## Project Structure
+- Follow consistent directory structure
+- Organize files logically
+- Use appropriate file extensions
+- Keep related files together
+- Maintain clear separation of concerns
+
+## Development Workflow
+- Use development, staging, and production environments
+- Implement continuous integration
+- Use automated testing
+- Regular dependency updates
+- Security scanning
+- Performance monitoring
+
+## Accessibility
+- Follow WCAG guidelines
+- Test with screen readers
+- Ensure keyboard navigation
+- Maintain proper contrast ratios
+- Provide alternative text for images
+
+## Internationalization
+- Use translation files
+- Handle different date formats
+- Consider RTL languages
+- Use appropriate character encoding
+
+## Security
+- Regular security audits
+- Keep dependencies updated
+- Implement proper access controls
+- Regular penetration testing
+
+## Performance
+- Optimize load times
+- Implement caching
+- Minimize resource usage
+- Regular performance testing
+- Monitor metrics
+
+## Maintenance
+- Regular code cleanup
+- Remove unused code
+- Update outdated dependencies
+- Monitor error logs
+- Regular backups 
+
+## Feature Development Workflow
+
+### 1. User Story Creation
+- When a new feature is requested, first create a user story:
+  - Format: "As a {role} I want {change} because {reason}"
+  - Include acceptance criteria:
+    - Functional requirements
+    - Technical requirements
+    - Performance requirements
+    - Security requirements
+    - Documentation requirements
+  - Required additional information:
+    - User roles involved
+    - Current workflow/process
+    - Expected outcome
+    - Integration points
+    - Security considerations
+    - Performance expectations
+    - Data requirements
+    - UI/UX requirements
+    - Testing requirements
+    - Documentation needs
+  - Present user story to stakeholder for validation
+
+### 2. Analysis Phase
+- Read and analyze existing codebase:
+  - Review all relevant PHP code in lib/
+  - Review all relevant Vue code in src/
+  - Identify affected components
+  - Identify required changes
+  - Document dependencies
+  - Note potential impacts
+
+### 3. Implementation Planning
+Create detailed implementation plan including:
+- Backend changes:
+  - New/modified PHP classes
+  - Database changes
+  - API endpoints
+  - Service modifications
+  - Security considerations
+- Frontend changes:
+  - Component updates
+  - State management
+  - API integration
+  - UI/UX implementation
+- Test coverage:
+  - Unit tests
+  - Integration tests
+  - End-to-end tests
+- Documentation updates:
+  - Technical documentation
+  - User documentation
+  - API documentation
+  - Architecture updates
+- Present plan to stakeholder for approval
+
+### 4. Implementation Phase
+Only proceed after stakeholder approval:
+1. Create/update backend components
+2. Create/update frontend components
+3. Add/update tests
+4. Update documentation
+5. Quality checks:
+   - Run PHP CodeSniffer
+   - Run PHPStan
+   - Run ESLint
+   - Run TypeScript checks
+   - Run unit tests
+   - Fix any issues
+   - Repeat until all checks pass
+
+### 5. Documentation Requirements
+- Update relevant documentation in website/docs:
+  - Technical documentation
+  - User documentation
+  - API documentation if applicable
+  - Update diagrams
+  - Add code examples
+  - Document configuration
+  - Document dependencies
+
+### 6. Quality Assurance
+- Automated checks:
+  - PHP CodeSniffer compliance
+  - PHPStan level 8 compliance
+  - Psalm compliance
+  - ESLint compliance
+  - TypeScript strict mode compliance
+  - Unit test coverage
+  - Integration test coverage
+- Manual checks:
+  - Code review guidelines
+  - Security review
+  - Performance testing
+  - Accessibility testing
+
+### 7. Version Control
+- Commit messages must:
+  - Reference user story
+  - Describe changes clearly
+  - Include documentation updates
+  - Note breaking changes
+  - Include test coverage
+
+### 8. Special Considerations
+- Never use backticks (`) in documentation or code edits
+- Always use single quotes (') for code examples
+- Always run quality checks before requesting review
+- Fix all linter and test issues before completion
+- Document all decisions and assumptions
+- Keep stakeholder informed of progress
+- Update project documentation as needed

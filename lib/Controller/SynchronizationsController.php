@@ -328,7 +328,7 @@ class SynchronizationsController extends Controller
                     'error' => 'Synchronization error',
                     'message' => $e->getMessage()
                 ],
-                statusCode: $e->getCode() ?? 400,
+                statusCode: 400,
                 headers: $headers
             );
         }

@@ -43,57 +43,61 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 				</div>
 
 				<div class="detailGrid">
-					<div class="gridContent gridFullWidth">
-						<b>uuid:</b>
-						<p>{{ endpointStore.endpointItem.uuid }}</p>
+					<div class="gridContent">
+						<b>Id:</b>
+						<p>{{ endpointStore.endpointItem?.id || '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth" />
+					<div class="gridContent">
+						<b>Uuid:</b>
+						<p>{{ endpointStore.endpointItem?.uuid || '-' }}</p>
+					</div>
+					<div class="gridContent" />
 
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Name:</b>
-						<p>{{ endpointStore.endpointItem.name }}</p>
+						<p>{{ endpointStore.endpointItem?.name || '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Description:</b>
-						<p>{{ endpointStore.endpointItem.description }}</p>
+						<p>{{ endpointStore.endpointItem?.description || '-' }}</p>
 					</div>
 
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Version:</b>
-						<p>{{ endpointStore.endpointItem.version }}</p>
+						<p>{{ endpointStore.endpointItem?.version || '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Endpoint:</b>
-						<p>{{ endpointStore.endpointItem.endpoint }}</p>
+						<p>{{ endpointStore.endpointItem?.endpoint || '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Endpoint Array:</b>
-						<p>{{ endpointStore.endpointItem.endpointArray.join(', ') }}</p>
+						<p>{{ endpointStore.endpointItem.endpointArray.join(', ') || '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Endpoint Regex:</b>
-						<p>{{ endpointStore.endpointItem.endpointRegex }}</p>
+						<p>{{ endpointStore.endpointItem?.endpointRegex || '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Method:</b>
-						<p>{{ endpointStore.endpointItem.method }}</p>
+						<p>{{ endpointStore.endpointItem?.method || '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Target Type:</b>
-						<p>{{ endpointStore.endpointItem.targetType }}</p>
+						<p>{{ endpointStore.endpointItem?.targetType || '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
+					<div class="gridContent">
 						<b>Target Id:</b>
-						<p>{{ endpointStore.endpointItem.targetId }}</p>
+						<p>{{ endpointStore.endpointItem?.targetId || '-' }}</p>
 					</div>
 
-					<div class="gridContent gridFullWidth">
-						<b>created:</b>
-						<p>{{ endpointStore.endpointItem.created }}</p>
+					<div class="gridContent">
+						<b>Created:</b>
+						<p>{{ endpointStore.endpointItem?.created ? new Date(endpointStore.endpointItem.created).toLocaleDateString() : '-' }}</p>
 					</div>
-					<div class="gridContent gridFullWidth">
-						<b>updated:</b>
-						<p>{{ endpointStore.endpointItem.updated }}</p>
+					<div class="gridContent">
+						<b>Updated:</b>
+						<p>{{ endpointStore.endpointItem.updated ? new Date(endpointStore.endpointItem.updated).toLocaleDateString() : '-' }}</p>
 					</div>
 				</div>
 
@@ -162,6 +166,9 @@ import SitemapOutline from 'vue-material-design-icons/SitemapOutline.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import LinkOff from 'vue-material-design-icons/LinkOff.vue'
+import _ from 'lodash'
+
+import { Endpoint } from '../../entities/index.js'
 
 export default {
 	name: 'EndpointDetails',
@@ -231,19 +238,21 @@ export default {
 		},
 		async removeRule(ruleId) {
 			try {
-				const updatedEndpoint = { ...endpointStore.endpointItem }
+				const updatedEndpoint = _.cloneDeep(endpointStore.endpointItem)
 
 				// Remove the rule ID from the rules array
 				updatedEndpoint.rules = updatedEndpoint.rules.filter(id => String(id) !== String(ruleId))
 
-				// Save the updated endpoint
-				await endpointStore.saveEndpoint({
+				const newEndpointItem = new Endpoint({
 					...updatedEndpoint,
 					endpointArray: Array.isArray(updatedEndpoint.endpointArray)
 						? updatedEndpoint.endpointArray
 						: updatedEndpoint.endpointArray.split(/ *, */g),
 					rules: updatedEndpoint.rules.map(id => String(id)),
 				})
+
+				// Save the updated endpoint
+				await endpointStore.saveEndpoint(newEndpointItem)
 
 				// Refresh the rules list
 				await this.loadRules()
@@ -269,11 +278,14 @@ export default {
 
 .detailGrid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	grid-template-columns: 1fr 1fr;
 	gap: 20px;
 	margin: 20px 0;
 }
-
+.gridContent {
+	display: flex;
+	gap: 10px;
+}
 .gridFullWidth {
 	grid-column: 1 / -1;
 }

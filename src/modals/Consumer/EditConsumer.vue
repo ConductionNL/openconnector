@@ -1,10 +1,12 @@
 <script setup>
 import { consumerStore, navigationStore } from '../../store/store.js'
 import { Consumer } from '../../entities/index.js'
+import { getTheme } from '../../services/getTheme.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'editConsumer'"
+	<NcModal
+		v-if="navigationStore.modal === 'editConsumer'"
 		ref="modalRef"
 		label-id="editConsumer"
 		@close="closeModal">
@@ -13,22 +15,18 @@ import { Consumer } from '../../entities/index.js'
 
 			<div v-if="success !== null">
 				<NcNoteCard v-if="success" type="success">
-					<p>Consumer successfully added</p>
+					<p>Consumer successfully {{ consumerItem.id ? 'updated' : 'added' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error }}</p>
 				</NcNoteCard>
 			</div>
 
-			<form v-if="success === null" @submit.prevent="handleSubmit">
+			<form v-if="success === null">
 				<div class="form-group editConsumerForm">
-					<NcTextField
-						label="Name*"
-						:value.sync="consumerItem.name" />
+					<NcTextField label="Name*" :value.sync="consumerItem.name" />
 
-					<NcTextArea
-						label="Description"
-						:value.sync="consumerItem.description" />
+					<NcTextArea label="Description" :value.sync="consumerItem.description" />
 
 					<NcTextArea
 						label="Domains"
@@ -38,24 +36,43 @@ import { Consumer } from '../../entities/index.js'
 					<NcTextArea
 						label="IPs"
 						:value.sync="consumerItem.ips"
-						helper-text="Enter IP's separated by commas (e.g. 127.0.0.1, 1.1.1.1)." />
+						helper-text="Enter IP's separated by commas (e.g. 127.0.0.1, 1.1.1.1)."
+						resize="none" />
 
-					<NcSelect v-bind="authorizationTypeOptions"
+					<NcSelect
+						v-bind="authorizationTypeOptions"
 						v-model="authorizationTypeOptions.value" />
+
+					<div :class="`codeMirrorContainer ${getTheme()}`">
+						<CodeMirror
+							v-model="authConfig"
+							:basic="true"
+							:dark="getTheme() === 'dark'"
+							:lang="json()"
+							:linter="jsonParseLinter()"
+							placeholder="Enter authorization configuration in JSON format..." />
+					</div>
+					<NcButton class="prettifyButton" @click="prettifyJson">
+						<template #icon>
+							<AutoFix :size="20" />
+						</template>
+						Prettify
+					</NcButton>
 				</div>
 			</form>
-
-			<NcButton
-				v-if="success === null"
-				:disabled="loading || !consumerItem.name"
-				type="primary"
-				@click="editConsumer()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<ContentSaveOutline v-if="!loading" :size="20" />
-				</template>
-				Save
-			</NcButton>
+			<div class="buttonContainer">
+				<NcButton
+					v-if="success === null"
+					:disabled="loading || !consumerItem.name || !isAuthConfigValid"
+					type="primary"
+					@click="editConsumer()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<ContentSaveOutline v-else :size="20" />
+					</template>
+					Save
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -71,6 +88,9 @@ import {
 	NcTextArea,
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import AutoFix from 'vue-material-design-icons/AutoFix.vue'
+import { json, jsonParseLinter } from '@codemirror/lang-json'
+import CodeMirror from 'vue-codemirror6'
 
 export default {
 	name: 'EditConsumer',
@@ -82,17 +102,22 @@ export default {
 		NcNoteCard,
 		NcTextField,
 		NcTextArea,
+		CodeMirror,
+		ContentSaveOutline,
+		AutoFix,
 	},
 	data() {
 		return {
 			consumerItem: {
+				id: null,
 				name: '',
 				description: '',
 				domains: '',
 				ips: '',
 				authorizationType: '',
-				authorizationConfiguration: '',
+				authorizationConfiguration: [],
 			},
+			authConfig: '[]',
 			success: null,
 			loading: false,
 			error: false,
@@ -106,13 +131,21 @@ export default {
 					{ label: 'oauth2' },
 					{ label: 'jwt' },
 				],
-				value: {
-					label: 'none',
-				},
+				value: { label: 'none' },
 			},
 			hasUpdated: false,
 			closeTimeoutFunc: null,
 		}
+	},
+	computed: {
+		isAuthConfigValid() {
+			try {
+				JSON.parse(this.authConfig)
+				return true
+			} catch (e) {
+				return false
+			}
+		},
 	},
 	mounted() {
 		this.initializeConsumerItem()
@@ -125,20 +158,34 @@ export default {
 	},
 	methods: {
 		initializeConsumerItem() {
-			if (consumerStore.getConsumerItem()?.id) {
+			const item = consumerStore.getConsumerItem()
+			if (item?.id) {
 				this.consumerItem = {
-					...consumerStore.getConsumerItem(),
-					domains: consumerStore.getConsumerItem().domains.join(', '),
-					ips: consumerStore.getConsumerItem().ips.join(', '),
+					...item,
+					domains: Array.isArray(item.domains)
+						? item.domains.join(', ')
+						: item.domains,
+					ips: Array.isArray(item.ips)
+						? item.ips.join(', ')
+						: item.ips,
 				}
-
-				// If the authorizationType of the consumerItem exists on the authorizationTypeOptions, apply it to the value
-				// this is done for future proofing incase we were to change the authorization Types
-				if (this.authorizationTypeOptions.options.map(i => i.label).indexOf(consumerStore.getConsumerItem().authorizationType) !== -1) {
-					this.authorizationTypeOptions.value = { label: consumerStore.getConsumerItem().authorizationType }
+				if (this.authorizationTypeOptions.options
+					.map(i => i.label)
+					.includes(item.authorizationType)) {
+					this.authorizationTypeOptions.value = { label: item.authorizationType }
 				}
+				this.authConfig = JSON.stringify(item.authorizationConfiguration || [], null, 2)
 			}
 		},
+
+		prettifyJson() {
+			try {
+				this.authConfig = JSON.stringify(JSON.parse(this.authConfig), null, 2)
+			} catch (e) {
+				this.error = 'Invalid JSON in authorization configuration'
+			}
+		},
+
 		closeModal() {
 			navigationStore.setModal(false)
 			clearTimeout(this.closeTimeoutFunc)
@@ -147,35 +194,44 @@ export default {
 			this.error = false
 			this.hasUpdated = false
 			this.consumerItem = {
+				id: null,
 				name: '',
 				description: '',
 				domains: '',
 				ips: '',
 				authorizationType: '',
-				authorizationConfiguration: '',
+				authorizationConfiguration: [],
 			}
 			this.authorizationTypeOptions.value = { label: 'none' }
+			this.authConfig = '[]'
 		},
+
 		async editConsumer() {
 			this.loading = true
+			const parsedAuthConfig = JSON.parse(this.authConfig)
+			const finalAuthorizationConfiguration
+			= (Array.isArray(parsedAuthConfig) && parsedAuthConfig.length === 0) || (parsedAuthConfig && typeof parsedAuthConfig === 'object' && !Array.isArray(parsedAuthConfig) && Object.keys(parsedAuthConfig).length === 0)
+			 ? null
+				: parsedAuthConfig
 
-			const newConsumer = new Consumer({
+			const updatedConsumer = {
 				...this.consumerItem,
-				domains: this.consumerItem.domains.trim().split(/ *, */g).filter(Boolean), // split on comma's, also take any spaces into consideration
+				domains: this.consumerItem.domains.trim().split(/ *, */g).filter(Boolean),
 				ips: this.consumerItem.ips.trim().split(/ *, */g).filter(Boolean),
 				authorizationType: this.authorizationTypeOptions.value.label,
-				authorizationConfiguration: [['']],
-				// authorizationConfiguration is unclear as to what it does and why it exists, but to avoid any issues it'll still make a array array string
-			})
-
+				authorizationConfiguration: finalAuthorizationConfiguration,
+			}
+			const newConsumer = new Consumer(updatedConsumer)
 			consumerStore.saveConsumer(newConsumer)
 				.then(({ response }) => {
 					this.success = response.ok
 					this.closeTimeoutFunc = setTimeout(this.closeModal, 2000)
-				}).catch((e) => {
+				})
+				.catch((e) => {
 					this.success = false
 					this.error = e.message || 'An error occurred while saving the consumer'
-				}).finally(() => {
+				})
+				.finally(() => {
 					this.loading = false
 				})
 		},
@@ -185,10 +241,38 @@ export default {
 
 <style lang="css">
 .editConsumerForm .textarea__helper-text-message {
-    padding-block: 4px;
-    padding-inline: var(--border-radius-large);
-    display: flex;
-    align-items: center;
-    color: var(--color-text-maxcontrast);
+	padding-block: 4px;
+	padding-inline: var(--border-radius-large);
+	display: flex;
+	align-items: center;
+	color: var(--color-text-maxcontrast);
+}
+</style>
+
+<style scoped>
+.codeMirrorContainer {
+	margin-block-start: 20px;
+	text-align: left;
+}
+
+.codeMirrorContainer :deep(.cm-content) {
+	border-radius: 0 !important;
+	border: none !important;
+}
+.codeMirrorContainer :deep(.cm-editor) {
+	outline: none !important;
+}
+.codeMirrorContainer.light > .vue-codemirror {
+	border: 1px dotted silver;
+}
+.codeMirrorContainer.dark > .vue-codemirror {
+	border: 1px dotted grey;
+}
+
+.buttonContainer {
+	display: flex;
+	gap: 10px;
+	flex-direction: row-reverse;
+	margin-top: 15px;
 }
 </style>

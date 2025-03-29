@@ -328,7 +328,9 @@ class ImportService
 			$objectArray['created'],
 			$objectArray['updated'],
 			$objectArray['dateCreated'],
-			$objectArray['dateModified']
+			$objectArray['dateModified'],
+			$objectArray['lastRun'],
+			$objectArray['nextRun']
 		);
 
 		return $jsonLdDefault;

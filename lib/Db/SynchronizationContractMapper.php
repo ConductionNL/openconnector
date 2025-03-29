@@ -147,22 +147,31 @@ class SynchronizationContractMapper extends QBMapper
     }
 
     /**
-     * Find all target IDs of synchronization contracts by synchronization ID
+     * Find all synchronization contracts by synchronization ID and where target have the given schema id
      *
      * @param string $synchronization The synchronization ID
      *
      * @return array An array of target IDs or an empty array if none found
      */
-    public function findAllBySynchronization(string $synchronizationId): array
+    public function findAllBySynchronizationAndSchema(string $synchronizationId, string $schemaId): array
     {
         // Create query builder
         $qb = $this->db->getQueryBuilder();
 
-        // Build select query with synchronization ID filter
-        $qb->select('*')
-            ->from('openconnector_synchronization_contracts')
+        // Build select query with synchronization ID and schema filter
+        $qb->select('c.*')
+            ->from('openconnector_synchronization_contracts', 'c')
+            ->innerJoin(
+                'c',
+                'oc_openregister_objects',
+                'o',
+                $qb->expr()->eq('c.target_id', 'o.uuid')
+            )
             ->where(
-                $qb->expr()->eq('synchronization_id', $qb->createNamedParameter($synchronizationId))
+                $qb->expr()->andX(
+                    $qb->expr()->eq('c.synchronization_id', $qb->createNamedParameter($synchronizationId)),
+                    $qb->expr()->eq('o.schema', $qb->createNamedParameter($schemaId))
+                )
             );
 
         try {
@@ -171,7 +180,6 @@ class SynchronizationContractMapper extends QBMapper
             return [];
         }
     }
-
     /**
      * Find all synchronization contracts with optional filtering and pagination
      *
@@ -227,9 +235,14 @@ class SynchronizationContractMapper extends QBMapper
         $obj = new SynchronizationContract();
         $obj->hydrate(object: $object);
 
-        // Generate UUID if not provided
+        // Set uuid
         if ($obj->getUuid() === null) {
             $obj->setUuid(Uuid::v4());
+        }
+
+        // Set version
+        if (empty($obj->getVersion()) === true) {
+            $obj->setVersion('0.0.1');
         }
 
         return $this->insert(entity: $obj);
@@ -246,12 +259,20 @@ class SynchronizationContractMapper extends QBMapper
     {
         // Find and hydrate existing contract
         $obj = $this->find($id);
-        $obj->hydrate($object);
 
-        // Increment version number
-        $version = explode('.', $obj->getVersion());
-        $version[2] = (int)$version[2] + 1;
-        $obj->setVersion(implode('.', $version));
+		// Set version
+		if (empty($obj->getVersion()) === true) {
+			$object['version'] = '0.0.1';
+		} else if (empty($object['version']) === true) {
+			// Update version
+			$version = explode('.', $obj->getVersion());
+			if (isset($version[2]) === true) {
+				$version[2] = (int) $version[2] + 1;
+				$object['version'] = implode('.', $version);
+			}
+		}
+
+		$obj->hydrate($object);
 
         return $this->update($obj);
     }

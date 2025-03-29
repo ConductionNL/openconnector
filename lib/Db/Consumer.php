@@ -29,6 +29,36 @@ class Consumer extends Entity implements JsonSerializable
 	protected ?string $userId = null;
 
 	/**
+	 * Get the allowed domains
+	 *
+	 * @return array The allowed domains or empty array if null
+	 */
+	public function getDomains(): array
+	{
+		return $this->domains ?? [];
+	}
+
+	/**
+	 * Get the allowed IPs
+	 *
+	 * @return array The allowed IPs or empty array if null
+	 */
+	public function getIps(): array
+	{
+		return $this->ips ?? [];
+	}
+
+	/**
+	 * Get the authorization configuration
+	 *
+	 * @return array The authorization configuration or empty array if null
+	 */
+	public function getAuthorizationConfiguration(): array
+	{
+		return $this->authorizationConfiguration ?? [];
+	}
+
+	/**
 	 * Consumer constructor.
 	 * Initializes the field types for the Consumer entity.
 	 */
