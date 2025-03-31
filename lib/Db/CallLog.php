@@ -1,4 +1,18 @@
 <?php
+/**
+ * OpenConnector CallLog Entity
+ *
+ * This file contains the entity class for call log data in the OpenConnector
+ * application.
+ *
+ * @category  Entity
+ * @package   OpenConnector
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @version   GIT: <git-id>
+ * @link      https://OpenConnector.app
+ */
 
 namespace OCA\OpenConnector\Db;
 
@@ -6,65 +20,134 @@ use DateTime;
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
+/**
+ * Class CallLog
+ *
+ * A call log represents a record of an API call made to an external system.
+ * It contains details about the request, response, and metadata about the call.
+ *
+ * @package OCA\OpenConnector\Db
+ */
 class CallLog extends Entity implements JsonSerializable
 {
-    /** @var string|null $uuid Unique identifier for this call log entry */
+
+    /**
+     * Unique identifier for this call log entry
+     *
+     * @var string|null
+     */
     protected ?string $uuid = null;
 
-    /** @var int|null $statusCode HTTP status code returned from the API call */
+    /**
+     * HTTP status code returned from the API call
+     *
+     * @var integer|null
+     */
     protected ?int $statusCode = null;
 
-    /** @var string|null $statusMessage Status message or description returned with the response */
+    /**
+     * Status message or description returned with the response
+     *
+     * @var string|null
+     */
     protected ?string $statusMessage = null;
 
-    /** @var array|null $request Complete request data including headers, method, body, etc. */
+    /**
+     * Complete request data including headers, method, body, etc.
+     *
+     * @var array|null
+     */
     protected ?array $request = null;
 
-    /** @var array|null $response Complete response data including headers, body, and status info */
+    /**
+     * Complete response data including headers, body, and status info
+     *
+     * @var array|null
+     */
     protected ?array $response = null;
 
-    /** @var int|null $sourceId Reference to the source/endpoint that was called */
+    /**
+     * Reference to the source/endpoint that was called
+     *
+     * @var integer|null
+     */
     protected ?int $sourceId = null;
 
-    /** @var int|null $actionId Reference to the action that triggered this call */
+    /**
+     * Reference to the action that triggered this call
+     *
+     * @var integer|null
+     */
     protected ?int $actionId = null;
 
-    /** @var int|null $synchronizationId Reference to the synchronization process if this call is part of one */
+    /**
+     * Reference to the synchronization process if this call is part of one
+     *
+     * @var integer|null
+     */
     protected ?int $synchronizationId = null;
 
-    /** @var string|null $userId Identifier of the user who initiated the call */
+    /**
+     * Identifier of the user who initiated the call
+     *
+     * @var string|null
+     */
     protected ?string $userId = null;
 
-    /** @var string|null $sessionId Session identifier associated with this call */
+    /**
+     * Session identifier associated with this call
+     *
+     * @var string|null
+     */
     protected ?string $sessionId = null;
 
-    /** @var DateTime|null $expires When this log entry should expire/be deleted */
+    /**
+     * When this log entry should expire/be deleted
+     *
+     * @var DateTime|null
+     */
     protected ?DateTime $expires = null;
 
-    /** @var DateTime|null $created When this log entry was created */
+    /**
+     * When this log entry was created
+     *
+     * @var DateTime|null
+     */
     protected ?DateTime $created = null;
+
 
     /**
      * Get the request data
      *
-     * @return array The request data or null
+     * @return array|null The request data or null
      */
     public function getRequest(): ?array
     {
         return $this->request;
-    }
+
+    }//end getRequest()
+
 
     /**
      * Get the response data
      *
-     * @return array The response data or null
+     * @return array|null The response data or null
      */
     public function getResponse(): ?array
     {
         return $this->response;
-    }
 
-    public function __construct() {
+    }//end getResponse()
+
+
+    /**
+     * CallLog constructor.
+     * Initializes the field types for the CallLog entity.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
         $this->addType('uuid', 'string');
         $this->addType('statusCode', 'integer');
         $this->addType('statusMessage', 'string');
@@ -77,17 +160,36 @@ class CallLog extends Entity implements JsonSerializable
         $this->addType('sessionId', 'string');
         $this->addType('expires', 'datetime');
         $this->addType('created', 'datetime');
-    }
 
+    }//end __construct()
+
+
+    /**
+     * Get the JSON fields of the CallLog entity.
+     *
+     * @return array An array of field names that are of type 'json'
+     */
     public function getJsonFields(): array
     {
         return array_keys(
-            array_filter($this->getFieldTypes(), function ($field) {
-                return $field === 'json';
-            })
+            array_filter(
+                $this->getFieldTypes(),
+                function ($field) {
+                    return $field === 'json';
+                }
+            )
         );
-    }
 
+    }//end getJsonFields()
+
+
+    /**
+     * Hydrate the CallLog entity with data from an array.
+     *
+     * @param array $object The array containing the data to hydrate the entity
+     *
+     * @return self Returns the hydrated CallLog entity
+     */
     public function hydrate(array $object): self
     {
         $jsonFields = $this->getJsonFields();
@@ -102,30 +204,49 @@ class CallLog extends Entity implements JsonSerializable
             try {
                 $this->$method($value);
             } catch (\Exception $exception) {
-                // Handle or log the exception if needed
+                // Error writing $key.
             }
         }
 
         return $this;
-    }
 
+    }//end hydrate()
+
+
+    /**
+     * Serialize the CallLog entity to JSON.
+     *
+     * @return array An array representation of the CallLog entity for JSON serialization
+     */
     public function jsonSerialize(): array
     {
+        $expires = null;
+        if (isset($this->expires) === true) {
+            $expires = $this->expires->format('c');
+        }
+
+        $created = null;
+        if (isset($this->created) === true) {
+            $created = $this->created->format('c');
+        }
+
         return [
-            'id' => $this->id,
-            'uuid' => $this->uuid,
-            'statusCode' => $this->statusCode,
-            'statusMessage' => $this->statusMessage,
-            'request' => $this->request,
-            'response' => $this->response,
-            'sourceId' => $this->sourceId,
-            'actionId' => $this->actionId,
-            'synchronizationId' => $this->synchronizationId,            
-            'userId' => $this->userId,
-            'sessionId' => $this->sessionId,
-            'expires' => isset($this->expires) ? $this->expires->format('c') : null,
-            'created' => isset($this->created) ? $this->created->format('c') : null,
-            
+            'id'                => $this->id,
+            'uuid'              => $this->uuid,
+            'statusCode'        => $this->statusCode,
+            'statusMessage'     => $this->statusMessage,
+            'request'           => $this->request,
+            'response'          => $this->response,
+            'sourceId'          => $this->sourceId,
+            'actionId'          => $this->actionId,
+            'synchronizationId' => $this->synchronizationId,
+            'userId'            => $this->userId,
+            'sessionId'         => $this->sessionId,
+            'expires'           => $expires,
+            'created'           => $created,
         ];
-    }
-}
+
+    }//end jsonSerialize()
+
+
+}//end class

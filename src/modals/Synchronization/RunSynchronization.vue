@@ -122,22 +122,6 @@ import { synchronizationStore, navigationStore } from '../../store/store.js'
 							<td>{{ responseBody?.result?.objects?.invalid }}</td>
 						</tr>
 						<tr>
-							<td><b>Contracts:</b></td>
-							<td>
-								<div v-for="(contract, index) in responseBody?.result?.contracts" :key="index">
-									{{ contract }}
-								</div>
-							</td>
-						</tr>
-						<tr>
-							<td><b>Logs:</b></td>
-							<td>
-								<div v-for="(log, index) in responseBody?.result?.logs" :key="index">
-									{{ log }}
-								</div>
-							</td>
-						</tr>
-						<tr>
 							<td><b>User ID:</b></td>
 							<td>{{ responseBody?.userId }}</td>
 						</tr>
@@ -160,6 +144,22 @@ import { synchronizationStore, navigationStore } from '../../store/store.js'
 						<tr>
 							<td><b>Expires:</b></td>
 							<td>{{ responseBody?.expires }}</td>
+						</tr>
+						<tr>
+							<td><b>Contracts:</b></td>
+							<td>
+								<div v-for="(contract, index) in responseBody?.result?.contracts" :key="index">
+									{{ contract }}
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<td><b>Logs:</b></td>
+							<td>
+								<div v-for="(log, index) in responseBody?.result?.logs" :key="index">
+									{{ log }}
+								</div>
+							</td>
 						</tr>
 					</table>
 				</div>

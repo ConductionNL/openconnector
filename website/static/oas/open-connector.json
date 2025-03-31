@@ -1,0 +1,3077 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Open Connector API",
+    "version": "1.0",
+    "summary": "API for managing connections between systems and data sources",
+    "contact": {
+      "name": "Conduction",
+      "url": "https://conduction.nl",
+      "email": "info@conduction.nl"
+    },
+    "description": "The Open Connector API provides endpoints for managing connections between systems, \nmapping data between different formats, and synchronizing data between sources.\n",
+    "license": {
+      "name": "EUPL 1.2",
+      "url": "https://opensource.org/licenses/EUPL-1.2"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://example.org/apps/openconnector/api",
+      "description": "Production server"
+    },
+    {
+      "url": "https://example.org/apps/openconnector/api",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Endpoints",
+      "description": "Manage API endpoints"
+    },
+    {
+      "name": "Sources",
+      "description": "Manage data sources"
+    },
+    {
+      "name": "Mappings",
+      "description": "Manage data mappings"
+    },
+    {
+      "name": "Jobs",
+      "description": "Manage scheduled jobs"
+    },
+    {
+      "name": "Synchronizations",
+      "description": "Manage data synchronizations"
+    },
+    {
+      "name": "Consumers",
+      "description": "Manage API consumers"
+    },
+    {
+      "name": "Rules",
+      "description": "Manage business rules"
+    },
+    {
+      "name": "Events",
+      "description": "Manage events and event subscriptions"
+    },
+    {
+      "name": "Import/Export",
+      "description": "Import and export configuration"
+    }
+  ],
+  "paths": {
+    "/endpoints": {
+      "get": {
+        "summary": "List all endpoints",
+        "tags": [
+          "Endpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of endpoints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Endpoint"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new endpoint",
+        "tags": [
+          "Endpoints"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Endpoint"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Endpoint created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Endpoint"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/endpoints/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Endpoint ID"
+        }
+      ],
+      "get": {
+        "summary": "Get endpoint details",
+        "tags": [
+          "Endpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "Endpoint details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Endpoint"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update an endpoint",
+        "tags": [
+          "Endpoints"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Endpoint"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Endpoint updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Endpoint"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an endpoint",
+        "tags": [
+          "Endpoints"
+        ],
+        "responses": {
+          "204": {
+            "description": "Endpoint deleted"
+          }
+        }
+      }
+    },
+    "/endpoints-test/{id}": {
+      "post": {
+        "summary": "Test an endpoint",
+        "tags": [
+          "Endpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Endpoint ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/endpoints-logs/{id}": {
+      "get": {
+        "summary": "Get endpoint logs",
+        "tags": [
+          "Endpoints"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Endpoint ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Endpoint logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Log"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sources": {
+      "get": {
+        "summary": "List all sources",
+        "tags": [
+          "Sources"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of sources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Source"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new source",
+        "tags": [
+          "Sources"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Source"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Source created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Source"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sources/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Source ID"
+        }
+      ],
+      "get": {
+        "summary": "Get source details",
+        "tags": [
+          "Sources"
+        ],
+        "responses": {
+          "200": {
+            "description": "Source details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Source"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a source",
+        "tags": [
+          "Sources"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Source"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Source updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Source"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a source",
+        "tags": [
+          "Sources"
+        ],
+        "responses": {
+          "204": {
+            "description": "Source deleted"
+          }
+        }
+      }
+    },
+    "/source-test/{id}": {
+      "post": {
+        "summary": "Test a source connection",
+        "tags": [
+          "Sources"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Source ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sources-logs/{id}": {
+      "get": {
+        "summary": "Get source logs",
+        "tags": [
+          "Sources"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Source ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Source logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CallLog"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mappings": {
+      "get": {
+        "summary": "List all mappings",
+        "tags": [
+          "Mappings"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of mappings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Mapping"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new mapping",
+        "tags": [
+          "Mappings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Mapping"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Mapping created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Mapping"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mappings/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Mapping ID"
+        }
+      ],
+      "get": {
+        "summary": "Get mapping details",
+        "tags": [
+          "Mappings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Mapping details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Mapping"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a mapping",
+        "tags": [
+          "Mappings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Mapping"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mapping updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Mapping"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a mapping",
+        "tags": [
+          "Mappings"
+        ],
+        "responses": {
+          "204": {
+            "description": "Mapping deleted"
+          }
+        }
+      }
+    },
+    "/mappings/test": {
+      "post": {
+        "summary": "Test a mapping",
+        "tags": [
+          "Mappings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mapping": {
+                    "$ref": "#/components/schemas/Mapping"
+                  },
+                  "data": {
+                    "type": "object",
+                    "description": "Data to test the mapping with"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mappings/objects": {
+      "get": {
+        "summary": "Get mapping objects",
+        "tags": [
+          "Mappings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Mapping objects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Save mapping object",
+        "tags": [
+          "Mappings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Object saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs": {
+      "get": {
+        "summary": "List all jobs",
+        "tags": [
+          "Jobs"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Job"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new job",
+        "tags": [
+          "Jobs"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Job"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Job created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Job ID"
+        }
+      ],
+      "get": {
+        "summary": "Get job details",
+        "tags": [
+          "Jobs"
+        ],
+        "responses": {
+          "200": {
+            "description": "Job details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a job",
+        "tags": [
+          "Jobs"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Job"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a job",
+        "tags": [
+          "Jobs"
+        ],
+        "responses": {
+          "204": {
+            "description": "Job deleted"
+          }
+        }
+      }
+    },
+    "/jobs-test/{id}": {
+      "post": {
+        "summary": "Test a job",
+        "tags": [
+          "Jobs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Job ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs-logs/{id}": {
+      "get": {
+        "summary": "Get job logs",
+        "tags": [
+          "Jobs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Job ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JobLog"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/synchronizations": {
+      "get": {
+        "summary": "List all synchronizations",
+        "tags": [
+          "Synchronizations"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of synchronizations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Synchronization"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new synchronization",
+        "tags": [
+          "Synchronizations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Synchronization"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Synchronization created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Synchronization"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/synchronizations/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Synchronization ID"
+        }
+      ],
+      "get": {
+        "summary": "Get synchronization details",
+        "tags": [
+          "Synchronizations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Synchronization details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Synchronization"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a synchronization",
+        "tags": [
+          "Synchronizations"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Synchronization"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Synchronization updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Synchronization"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a synchronization",
+        "tags": [
+          "Synchronizations"
+        ],
+        "responses": {
+          "204": {
+            "description": "Synchronization deleted"
+          }
+        }
+      }
+    },
+    "/synchronizations-contracts/{id}": {
+      "get": {
+        "summary": "Get synchronization contracts",
+        "tags": [
+          "Synchronizations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Synchronization ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Synchronization contracts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/synchronizations-logs/{uuid}": {
+      "get": {
+        "summary": "Get synchronization logs",
+        "tags": [
+          "Synchronizations"
+        ],
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Synchronization UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Synchronization logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/synchronizations-test/{id}": {
+      "post": {
+        "summary": "Test a synchronization",
+        "tags": [
+          "Synchronizations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Synchronization ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/synchronizations-run/{id}": {
+      "post": {
+        "summary": "Run a synchronization",
+        "tags": [
+          "Synchronizations"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Synchronization ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Run results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/consumers": {
+      "get": {
+        "summary": "List all consumers",
+        "tags": [
+          "Consumers"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of consumers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Consumer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new consumer",
+        "tags": [
+          "Consumers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Consumer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Consumer created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consumer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/consumers/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Consumer ID"
+        }
+      ],
+      "get": {
+        "summary": "Get consumer details",
+        "tags": [
+          "Consumers"
+        ],
+        "responses": {
+          "200": {
+            "description": "Consumer details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consumer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a consumer",
+        "tags": [
+          "Consumers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Consumer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Consumer updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Consumer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a consumer",
+        "tags": [
+          "Consumers"
+        ],
+        "responses": {
+          "204": {
+            "description": "Consumer deleted"
+          }
+        }
+      }
+    },
+    "/rules": {
+      "get": {
+        "summary": "List all rules",
+        "tags": [
+          "Rules"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Rule"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new rule",
+        "tags": [
+          "Rules"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Rule"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Rule created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rule"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rules/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Rule ID"
+        }
+      ],
+      "get": {
+        "summary": "Get rule details",
+        "tags": [
+          "Rules"
+        ],
+        "responses": {
+          "200": {
+            "description": "Rule details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rule"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a rule",
+        "tags": [
+          "Rules"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Rule"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rule updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rule"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a rule",
+        "tags": [
+          "Rules"
+        ],
+        "responses": {
+          "204": {
+            "description": "Rule deleted"
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "summary": "List all events",
+        "tags": [
+          "Events"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Event"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new event",
+        "tags": [
+          "Events"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Event"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Event"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Event ID"
+        }
+      ],
+      "get": {
+        "summary": "Get event details",
+        "tags": [
+          "Events"
+        ],
+        "responses": {
+          "200": {
+            "description": "Event details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Event"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update an event",
+        "tags": [
+          "Events"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Event"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Event"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an event",
+        "tags": [
+          "Events"
+        ],
+        "responses": {
+          "204": {
+            "description": "Event deleted"
+          }
+        }
+      }
+    },
+    "/events/{id}/messages": {
+      "get": {
+        "summary": "Get event messages",
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Event ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/subscriptions": {
+      "get": {
+        "summary": "List all event subscriptions",
+        "tags": [
+          "Events"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of event subscriptions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new event subscription",
+        "tags": [
+          "Events"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "description": "ID of the event to subscribe to"
+                  },
+                  "callbackUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to call when the event is triggered"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/subscriptions/{subscriptionId}": {
+      "parameters": [
+        {
+          "name": "subscriptionId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Subscription ID"
+        }
+      ],
+      "put": {
+        "summary": "Update an event subscription",
+        "tags": [
+          "Events"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an event subscription",
+        "tags": [
+          "Events"
+        ],
+        "responses": {
+          "204": {
+            "description": "Subscription deleted"
+          }
+        }
+      }
+    },
+    "/events/subscriptions/{subscriptionId}/messages": {
+      "get": {
+        "summary": "Get subscription messages",
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Subscription ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/subscriptions/{subscriptionId}/pull": {
+      "get": {
+        "summary": "Pull messages for a subscription",
+        "tags": [
+          "Events"
+        ],
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Subscription ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pulled messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/import": {
+      "post": {
+        "summary": "Import configuration",
+        "tags": [
+          "Import/Export"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/export/{type}/{id}": {
+      "get": {
+        "summary": "Export configuration",
+        "tags": [
+          "Import/Export"
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["endpoint", "source", "mapping", "job", "synchronization", "consumer", "rule", "event"]
+            },
+            "description": "Type of configuration to export"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the configuration to export"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exported configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/endpoint/{_path}": {
+      "parameters": [
+        {
+          "name": "_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Path to the endpoint"
+        }
+      ],
+      "get": {
+        "summary": "Handle GET request to an endpoint",
+        "tags": [
+          "Endpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "Response from the endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Handle POST request to an endpoint",
+        "tags": [
+          "Endpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response from the endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Handle PUT request to an endpoint",
+        "tags": [
+          "Endpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response from the endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Handle PATCH request to an endpoint",
+        "tags": [
+          "Endpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response from the endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Handle DELETE request to an endpoint",
+        "tags": [
+          "Endpoints"
+        ],
+        "responses": {
+          "200": {
+            "description": "Response from the endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Endpoint": {
+        "type": "object",
+        "description": "Represents an API endpoint configuration",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Numeric identifier for the endpoint",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Universally unique identifier for the endpoint"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the endpoint"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the endpoint"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Reference identifier for the endpoint"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the endpoint"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "URL path of the endpoint"
+          },
+          "endpointArray": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of endpoint path segments"
+          },
+          "endpointRegex": {
+            "type": "string",
+            "description": "Regular expression pattern for the endpoint"
+          },
+          "method": {
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+            "description": "HTTP method for the endpoint"
+          },
+          "targetType": {
+            "type": "string",
+            "description": "Type of target for the endpoint"
+          },
+          "targetId": {
+            "type": "string",
+            "description": "ID of the target for the endpoint"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of rule IDs associated with this endpoint"
+          }
+        },
+        "required": [
+          "name",
+          "method",
+          "endpoint"
+        ]
+      },
+      "Source": {
+        "type": "object",
+        "description": "Represents a data source configuration",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the source",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Universally unique identifier for the source"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the source"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the source"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Reference identifier for the source"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the source"
+          },
+          "location": {
+            "type": "string",
+            "description": "URL or location of the source"
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "description": "Whether the source is enabled"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["json", "xml", "soap", "ftp", "sftp", "api", "database", "file"],
+            "description": "Type of the source"
+          },
+          "authorizationHeader": {
+            "type": "string",
+            "description": "Authorization header for the source"
+          },
+          "auth": {
+            "type": "string",
+            "enum": ["apikey", "jwt", "username-password", "none", "jwt-HS256", "vrijbrp-jwt", "pink-jwt", "oauth"],
+            "description": "Authentication method for the source"
+          },
+          "authenticationConfig": {
+            "type": "object",
+            "description": "Authentication configuration for the source"
+          },
+          "authorizationPassthroughMethod": {
+            "type": "string",
+            "enum": ["header", "query", "form_params", "json", "base_auth"],
+            "description": "Method for passing through authorization"
+          },
+          "locale": {
+            "type": "string",
+            "description": "Locale for the source"
+          },
+          "accept": {
+            "type": "string",
+            "description": "Accept header for the source"
+          },
+          "jwt": {
+            "type": "string",
+            "description": "JWT token for the source"
+          },
+          "jwtId": {
+            "type": "string",
+            "description": "JWT ID for the source"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Secret for the source"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username for the source"
+          },
+          "password": {
+            "type": "string",
+            "description": "Password for the source"
+          },
+          "apikey": {
+            "type": "string",
+            "description": "API key for the source"
+          },
+          "documentation": {
+            "type": "string",
+            "description": "Documentation for the source"
+          },
+          "loggingConfig": {
+            "type": "object",
+            "description": "Logging configuration for the source"
+          },
+          "oas": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "OpenAPI specification for the source"
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Paths for the source"
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Headers for the source"
+          },
+          "translationConfig": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Translation configuration for the source"
+          },
+          "configuration": {
+            "type": "object",
+            "description": "General configuration for the source"
+          },
+          "endpointsConfig": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      },
+      "Mapping": {
+        "type": "object",
+        "description": "Represents a data mapping configuration",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Numeric identifier for the mapping",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Universally unique identifier for the mapping"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Reference identifier for the mapping"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the mapping"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the mapping"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the mapping"
+          },
+          "mapping": {
+            "type": "object",
+            "description": "The actual mapping configuration"
+          },
+          "unset": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Fields to unset during mapping"
+          },
+          "cast": {
+            "type": "object",
+            "description": "Type casting configuration"
+          },
+          "passThrough": {
+            "type": "boolean",
+            "description": "Whether to pass through unmapped fields"
+          },
+          "dateCreated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "dateModified": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last modification timestamp"
+          }
+        },
+        "required": [
+          "name",
+          "mapping"
+        ]
+      },
+      "Job": {
+        "type": "object",
+        "description": "Represents a scheduled job",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the job"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the job"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the job"
+          },
+          "jobClass": {
+            "type": "string",
+            "description": "Class that implements the job"
+          },
+          "arguments": {
+            "type": "object",
+            "description": "Arguments for the job"
+          },
+          "interval": {
+            "type": "integer",
+            "description": "Interval in seconds between job runs"
+          },
+          "executionTime": {
+            "type": "integer",
+            "description": "Maximum execution time in seconds"
+          },
+          "timeSensitive": {
+            "type": "boolean",
+            "description": "Whether the job is time-sensitive"
+          },
+          "allowParallelRuns": {
+            "type": "boolean",
+            "description": "Whether parallel runs are allowed"
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "description": "Whether the job is enabled"
+          },
+          "singleRun": {
+            "type": "boolean",
+            "description": "Whether the job should run only once"
+          },
+          "scheduleAfter": {
+            "type": "string",
+            "description": "When to schedule the job after"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID associated with the job"
+          },
+          "jobListId": {
+            "type": "string",
+            "description": "Job list ID"
+          },
+          "logRetention": {
+            "type": "integer",
+            "description": "Log retention period in seconds"
+          },
+          "errorRetention": {
+            "type": "integer",
+            "description": "Error retention period in seconds"
+          },
+          "lastRun": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last run timestamp"
+          },
+          "nextRun": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Next run timestamp"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the job"
+          }
+        },
+        "required": [
+          "name",
+          "jobClass"
+        ]
+      },
+      "JobLog": {
+        "type": "object",
+        "description": "Represents a job execution log",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the log"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Universally unique identifier for the log"
+          },
+          "level": {
+            "type": "string",
+            "description": "Log level"
+          },
+          "message": {
+            "type": "string",
+            "description": "Log message"
+          },
+          "jobId": {
+            "type": "string",
+            "description": "ID of the job"
+          },
+          "jobListId": {
+            "type": "string",
+            "description": "ID of the job list"
+          },
+          "jobClass": {
+            "type": "string",
+            "description": "Class of the job"
+          },
+          "arguments": {
+            "type": "object",
+            "description": "Arguments used for the job"
+          },
+          "executionTime": {
+            "type": "number",
+            "description": "Execution time in seconds"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID associated with the job"
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Session ID"
+          },
+          "stackTrace": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Stack trace if an error occurred"
+          },
+          "expires": {
+            "type": "string",
+            "description": "Expiration timestamp"
+          },
+          "lastRun": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last run timestamp"
+          },
+          "nextRun": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Next run timestamp"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "jobId",
+          "message"
+        ]
+      },
+      "Synchronization": {
+        "type": "object",
+        "description": "Represents a data synchronization configuration",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Numeric identifier for the synchronization",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Universally unique identifier for the synchronization"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the synchronization"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the synchronization"
+          },
+          "conditions": {
+            "type": "string",
+            "description": "Conditions for synchronization"
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "ID of the source"
+          },
+          "sourceType": {
+            "type": "string",
+            "description": "Type of the source"
+          },
+          "sourceHash": {
+            "type": "string",
+            "description": "Hash of the source data"
+          },
+          "sourceHashMapping": {
+            "type": "string",
+            "description": "Mapping for source hash"
+          },
+          "sourceTargetMapping": {
+            "type": "string",
+            "description": "Mapping from source to target"
+          },
+          "sourceConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Source configuration"
+          },
+          "sourceLastChanged": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the source was last changed"
+          },
+          "sourceLastChecked": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the source was last checked"
+          },
+          "sourceLastSynced": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the source was last synced"
+          },
+          "targetId": {
+            "type": "string",
+            "description": "ID of the target"
+          },
+          "targetType": {
+            "type": "string",
+            "description": "Type of the target"
+          },
+          "targetHash": {
+            "type": "string",
+            "description": "Hash of the target data"
+          },
+          "targetSourceMapping": {
+            "type": "string",
+            "description": "Mapping from target to source"
+          },
+          "targetConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Target configuration"
+          },
+          "targetLastChanged": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the target was last changed"
+          },
+          "targetLastChecked": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the target was last checked"
+          },
+          "targetLastSynced": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the target was last synced"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the synchronization"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Actions to perform during synchronization"
+          }
+        },
+        "required": [
+          "name",
+          "sourceId",
+          "targetId"
+        ]
+      },
+      "Consumer": {
+        "type": "object",
+        "description": "Represents an API consumer",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Numeric identifier for the consumer",
+            "nullable": true
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Universally unique identifier for the consumer"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the consumer"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the consumer"
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Allowed domains for the consumer"
+          },
+          "ips": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Allowed IP addresses for the consumer"
+          },
+          "authorizationType": {
+            "type": "string",
+            "enum": ["none", "basic", "bearer", "apiKey", "oauth2", "jwt"],
+            "description": "Type of authorization for the consumer"
+          },
+          "authorizationConfiguration": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Authorization configuration"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": [
+          "name",
+          "authorizationType"
+        ]
+      },
+      "Rule": {
+        "type": "object",
+        "description": "Represents a business rule",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the rule"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Universally unique identifier for the rule"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the rule"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the rule"
+          },
+          "action": {
+            "type": "string",
+            "enum": ["create", "read", "update", "delete"],
+            "description": "Action the rule applies to"
+          },
+          "timing": {
+            "type": "string",
+            "enum": ["before", "after"],
+            "description": "When the rule should be applied"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Conditions for the rule in JSON Logic format"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["mapping", "error", "script", "synchronization"],
+            "description": "Type of the rule"
+          },
+          "configuration": {
+            "type": "object",
+            "description": "Configuration for the rule"
+          },
+          "order": {
+            "type": "integer",
+            "description": "Order in which the rule should be applied"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": [
+          "name",
+          "action",
+          "timing",
+          "type"
+        ]
+      },
+      "Event": {
+        "type": "object",
+        "description": "Represents an event",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the event"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the event"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the event"
+          },
+          "eventType": {
+            "type": "string",
+            "description": "Type of the event"
+          },
+          "payload": {
+            "type": "object",
+            "description": "Payload for the event"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Priority of the event"
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "Timeout in seconds"
+          },
+          "isAsync": {
+            "type": "boolean",
+            "description": "Whether the event is asynchronous"
+          },
+          "allowDuplicates": {
+            "type": "boolean",
+            "description": "Whether duplicate events are allowed"
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "description": "Whether the event is enabled"
+          },
+          "oneTime": {
+            "type": "boolean",
+            "description": "Whether the event should only be triggered once"
+          },
+          "scheduleAfter": {
+            "type": "string",
+            "description": "When to schedule the event after"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID associated with the event"
+          },
+          "eventGroupId": {
+            "type": "string",
+            "description": "Event group ID"
+          },
+          "retentionPeriod": {
+            "type": "integer",
+            "description": "Retention period in seconds"
+          },
+          "errorRetention": {
+            "type": "integer",
+            "description": "Error retention period in seconds"
+          },
+          "lastTriggered": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the event was last triggered"
+          },
+          "nextTrigger": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the event will next be triggered"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": [
+          "name",
+          "eventType"
+        ]
+      },
+      "Log": {
+        "type": "object",
+        "description": "Represents a system log entry",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier for the log"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["in", "out"],
+            "description": "Type of log (incoming or outgoing)"
+          },
+          "callId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Call ID"
+          },
+          "requestMethod": {
+            "type": "string",
+            "description": "HTTP method of the request"
+          },
+          "requestHeaders": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Headers of the request"
+          },
+          "requestQuery": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Query parameters of the request"
+          },
+          "requestPathInfo": {
+            "type": "string",
+            "description": "Path info of the request"
+          },
+          "requestLanguages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Languages of the request"
+          },
+          "requestServer": {
+            "type": "object",
+            "description": "Server information"
+          },
+          "requestContent": {
+            "type": "string",
+            "description": "Content of the request"
+          },
+          "responseStatus": {
+            "type": "string",
+            "description": "Status of the response"
+          },
+          "responseStatusCode": {
+            "type": "integer",
+            "description": "Status code of the response"
+          },
+          "responseHeaders": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Headers of the response"
+          },
+          "responseContent": {
+            "type": "string",
+            "description": "Content of the response"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID associated with the log"
+          },
+          "session": {
+            "type": "string",
+            "description": "Session ID"
+          },
+          "sessionValues": {
+            "type": "object",
+            "description": "Session values"
+          },
+          "responseTime": {
+            "type": "integer",
+            "description": "Response time in milliseconds"
+          },
+          "routeName": {
+            "type": "string",
+            "description": "Name of the route"
+          },
+          "routeParameters": {
+            "type": "object",
+            "description": "Parameters of the route"
+          },
+          "entity": {
+            "type": "object",
+            "description": "Entity information"
+          },
+          "endpoint": {
+            "type": "object",
+            "description": "Endpoint information"
+          },
+          "gateway": {
+            "type": "object",
+            "description": "Gateway information"
+          },
+          "handler": {
+            "type": "object",
+            "description": "Handler information"
+          },
+          "objectId": {
+            "type": "string",
+            "description": "Object ID"
+          },
+          "dateCreated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "dateModified": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last modification timestamp"
+          }
+        },
+        "required": [
+          "type",
+          "callId"
+        ]
+      },
+      "CallLog": {
+        "type": "object",
+        "description": "Represents a call log",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Numeric identifier for the call log"
+          },
+          "sourceId": {
+            "type": "string",
+            "description": "ID of the source"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Endpoint that was called"
+          },
+          "method": {
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+            "description": "HTTP method used"
+          },
+          "statusCode": {
+            "type": "integer",
+            "description": "HTTP status code"
+          },
+          "requestHeaders": {
+            "type": "object",
+            "description": "Headers of the request"
+          },
+          "requestBody": {
+            "type": "object",
+            "description": "Body of the request"
+          },
+          "responseHeaders": {
+            "type": "object",
+            "description": "Headers of the response"
+          },
+          "responseBody": {
+            "type": "object",
+            "description": "Body of the response"
+          },
+          "duration": {
+            "type": "number",
+            "description": "Duration of the call in milliseconds"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message if any"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Last update timestamp"
+          }
+        },
+        "required": [
+          "sourceId",
+          "endpoint",
+          "method"
+        ]
+      },
+      "Webhook": {
+        "type": "object",
+        "description": "Represents a webhook configuration",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Numeric identifier for the webhook"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the webhook"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the webhook"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the webhook"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to call"
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "description": "Whether the webhook is enabled"
+          },
+          "dateCreated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "dateModified": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last modification timestamp"
+          },
+          "headers": {
+            "type": "object",
+            "description": "Headers to send with the webhook"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Events that trigger the webhook"
+          },
+          "retryPolicy": {
+            "type": "object",
+            "description": "Retry policy for the webhook"
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "Timeout in seconds"
+          },
+          "lastTriggered": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the webhook was last triggered"
+          },
+          "lastResponse": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "integer",
+                "description": "Status code of the last response"
+              },
+              "body": {
+                "type": "string",
+                "description": "Body of the last response"
+              }
+            },
+            "description": "Last response from the webhook"
+          },
+          "secretKey": {
+            "type": "string",
+            "description": "Secret key for the webhook"
+          },
+          "payloadFormat": {
+            "type": "string",
+            "enum": ["json", "xml", "form-data"],
+            "description": "Format of the payload"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Whether the webhook is active"
+          }
+        },
+        "required": [
+          "name",
+          "url",
+          "events"
+        ]
+      }
+    }
+  }
+}

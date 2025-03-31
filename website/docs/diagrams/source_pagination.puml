@@ -1,0 +1,118 @@
+@startuml
+title Pagination Detection and Handling
+footer: Open Connector
+header: Open Connector
+
+participant "Application" as App
+participant "CallService" as CS
+participant "PaginationHandler" as PH
+participant "Source" as S
+participant "External API" as API
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+note over App, API
+  Open Connector automatically detects pagination through:
+  1. Configuration-based detection
+  2. Response pattern detection
+  3. Result count analysis
+endnote
+
+App -> CS: call(source, endpoint, method, config)
+activate CS
+
+CS -> S: validate()
+note right of S
+  Validates source configuration:
+  - Enabled status
+  - API location
+  - Authentication
+endnote
+
+CS -> API: Initial HTTP Request
+API --> CS: First Page Response
+
+CS -> PH: detectPagination(response)
+activate PH
+
+note right of PH
+  Checks for pagination indicators:
+  1. Looks for common result properties:
+     - results, items, result, data
+  2. Checks pagination paths:
+     - next, next_page, next_cursor
+     - total, totalResults, total_items
+     - totalPages, total_pages, pages
+  3. Analyzes result counts
+endnote
+
+alt Property Detection
+    PH -> PH: checkResultProperties()
+    note right
+      Checks for result wrapper properties:
+      - results
+      - items
+      - result 
+      - data
+    endnote
+else Next Page Detection
+    PH -> PH: checkNextPageIndicators()
+    note right
+      Checks for next page indicators:
+      - next/next_page/next_cursor URLs
+      - nextPage/nextCursor integers
+      - _links.next paths
+    endnote
+else Total Count Detection
+    PH -> PH: checkTotalCounts()
+    note right
+      Compares counts:
+      - total vs current results
+      - current page vs total pages
+      - Collection size vs limits
+    endnote
+end
+
+PH --> CS: PaginationInfo
+deactivate PH
+
+alt Pagination Detected
+    loop Until All Pages Retrieved or Max Pages Reached
+        CS -> API: Request Next Page
+        note right
+          Follows pagination:
+          - Uses next page URL if available
+          - Increments page counters
+          - Respects max_pages limit (1000)
+        endnote
+        API --> CS: Page Response
+        CS -> CS: mergeResults()
+    end
+end
+
+CS -> CS: processResults()
+note right
+  - Combines all pages
+  - Removes duplicates
+  - Orders results
+  - Handles errors
+endnote
+
+CS --> App: Complete Result Set
+deactivate CS
+
+note over App, API
+  Pagination Detection Details:
+  1. Result Properties:
+     - results, items, result, data
+  2. Next Page Indicators:
+     - next, next_page, next_cursor URLs
+     - nextPage, nextCursor integers
+  3. Count Analysis:
+     - total vs current results
+     - current page vs total pages
+     - max_pages limit (1000)
+endnote
+
+@enduml

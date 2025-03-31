@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Pre-commit hook to run code quality checks on PHP files
+# To install: cp scripts/pre-commit.sample .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+# Exit on error
+set -e
+
+echo "Running code quality checks on staged PHP files..."
+
+# Get all staged PHP files
+STAGED_PHP_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(php)$')
+
+# If there are no PHP files, exit successfully
+if [ -z "$STAGED_PHP_FILES" ]; then
+    echo "No PHP files to check."
+    exit 0
+fi
+
+# Check if required tools are available
+if ! command -v phpcs &> /dev/null; then
+    echo "Error: phpcs is not installed. Please install PHP_CodeSniffer."
+    exit 1
+fi
+
+# Check if vendor directory exists
+if [ ! -d "vendor" ]; then
+    echo "Error: vendor directory not found. Please run 'composer install'."
+    exit 1
+fi
+
+# Create temporary directory for results
+RESULTS_DIR="build/quality-reports"
+mkdir -p $RESULTS_DIR
+
+# Run PHP_CodeSniffer
+echo "Running PHP_CodeSniffer..."
+ERROR_COUNT=0
+
+for FILE in $STAGED_PHP_FILES; do
+    if [ -f "$FILE" ]; then
+        echo "Checking $FILE"
+        if ! phpcs --standard=PSR12 "$FILE" > "$RESULTS_DIR/phpcs-$(basename "$FILE").txt" 2>&1; then
+            ERROR_COUNT=$((ERROR_COUNT + 1))
+            echo "❌ PHP_CodeSniffer found issues in $FILE"
+            cat "$RESULTS_DIR/phpcs-$(basename "$FILE").txt"
+            echo ""
+            echo "💡 You can fix some issues automatically with: phpcbf --standard=PSR12 $FILE"
+        fi
+    fi
+done
+
+# Run PHPStan if available
+if [ -f "vendor/bin/phpstan" ]; then
+    echo "Running PHPStan..."
+    for FILE in $STAGED_PHP_FILES; do
+        if [ -f "$FILE" ]; then
+            if ! vendor/bin/phpstan analyse "$FILE" > "$RESULTS_DIR/phpstan-$(basename "$FILE").txt" 2>&1; then
+                ERROR_COUNT=$((ERROR_COUNT + 1))
+                echo "❌ PHPStan found issues in $FILE"
+                cat "$RESULTS_DIR/phpstan-$(basename "$FILE").txt"
+                echo ""
+            fi
+        fi
+    done
+else
+    echo "Warning: PHPStan not found in vendor directory. Skipping PHPStan check."
+fi
+
+# Run Psalm if available
+if [ -f "vendor/bin/psalm" ]; then
+    echo "Running Psalm..."
+    for FILE in $STAGED_PHP_FILES; do
+        if [ -f "$FILE" ]; then
+            if ! vendor/bin/psalm --no-cache "$FILE" > "$RESULTS_DIR/psalm-$(basename "$FILE").txt" 2>&1; then
+                ERROR_COUNT=$((ERROR_COUNT + 1))
+                echo "❌ Psalm found issues in $FILE"
+                cat "$RESULTS_DIR/psalm-$(basename "$FILE").txt"
+                echo ""
+            fi
+        fi
+    done
+else
+    echo "Warning: Psalm not found in vendor directory. Skipping Psalm check."
+fi
+
+if [ $ERROR_COUNT -gt 0 ]; then
+    echo "❌ Found $ERROR_COUNT issue(s) in code quality checks."
+    echo "Please fix these issues before committing or use 'git commit --no-verify' to bypass this check."
+    exit 1
+else
+    echo "✅ All code quality checks passed successfully!"
+fi
+
+exit 0 

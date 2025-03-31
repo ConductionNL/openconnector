@@ -1,4 +1,18 @@
 <?php
+/**
+ * OpenConnector Rules Controller
+ *
+ * This file contains the controller for handling rule related operations
+ * in the OpenConnector application.
+ *
+ * @category  Controller
+ * @package   OpenConnector
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @version   GIT: <git-id>
+ * @link      https://OpenConnector.app
+ */
 
 namespace OCA\OpenConnector\Controller;
 
@@ -15,31 +29,32 @@ use OCP\IRequest;
 use OCP\AppFramework\Db\DoesNotExistException;
 
 /**
- * Class RuleController
- * 
- * Controller for managing rules in the OpenConnector app
- *
- * @package OCA\OpenConnector\Controller
+ * Controller for handling rule related operations
  */
 class RulesController extends Controller
 {
+
+
     /**
      * Constructor for the RuleController
      *
-     * @param string $appName The name of the app
-     * @param IRequest $request The request object
-     * @param IAppConfig $config The app configuration object
+     * @param string     $appName    The name of the app
+     * @param IRequest   $request    The request object
+     * @param IAppConfig $config     The app configuration object
      * @param RuleMapper $ruleMapper The rule mapper object
+     *
+     * @return void
      */
     public function __construct(
         $appName,
         IRequest $request,
         private IAppConfig $config,
         private RuleMapper $ruleMapper
-    )
-    {
+    ) {
         parent::__construct($appName, $request);
-    }
+
+    }//end __construct()
+
 
     /**
      * Returns the template of the main app's page
@@ -54,16 +69,21 @@ class RulesController extends Controller
     public function page(): TemplateResponse
     {
         return new TemplateResponse(
-            'openconnector',
-            'index',
-            []
+                'openconnector',
+                'index',
+                []
         );
-    }
+
+    }//end page()
+
 
     /**
      * Retrieves a list of all rules
      *
      * This method returns a JSON response containing an array of all rules in the system.
+     *
+     * @param ObjectService $objectService Service for object operations
+     * @param SearchService $searchService Service for search operations
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -72,25 +92,41 @@ class RulesController extends Controller
      */
     public function index(ObjectService $objectService, SearchService $searchService): JSONResponse
     {
-        $filters = $this->request->getParams();
-        $fieldsToSearch = ['name', 'description'];
+        $filters        = $this->request->getParams();
+        $fieldsToSearch = [
+            'name',
+            'description',
+        ];
 
-        $searchParams = $searchService->createMySQLSearchParams(filters: $filters);
+        $searchParams     = $searchService->createMySQLSearchParams(filters: $filters);
         $searchConditions = $searchService->createMySQLSearchConditions(filters: $filters, fieldsToSearch: $fieldsToSearch);
-        $filters = $searchService->unsetSpecialQueryParams(filters: $filters);
+        $filters          = $searchService->unsetSpecialQueryParams(filters: $filters);
 
-        return new JSONResponse(['results' => $this->ruleMapper->findAll(limit: null, offset: null, filters: $filters, searchConditions: $searchConditions, searchParams: $searchParams)]);
-    }
+        return new JSONResponse(
+                [
+                    'results' => $this->ruleMapper->findAll(
+                        limit: null,
+                        offset: null,
+                        filters: $filters,
+                        searchConditions: $searchConditions,
+                        searchParams: $searchParams
+                ),
+                ]
+        );
+
+    }//end index()
+
 
     /**
      * Retrieves a single rule by its ID
      *
      * This method returns a JSON response containing the details of a specific rule.
      *
+     * @param string $id The ID of the rule to retrieve
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the rule to retrieve
      * @return JSONResponse A JSON response containing the rule details
      */
     public function show(string $id): JSONResponse
@@ -100,7 +136,9 @@ class RulesController extends Controller
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(data: ['error' => 'Not Found'], statusCode: 404);
         }
-    }
+
+    }//end show()
+
 
     /**
      * Creates a new rule
@@ -117,30 +155,33 @@ class RulesController extends Controller
         $data = $this->request->getParams();
 
         foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
+            if (str_starts_with($key, '_') === true) {
                 unset($data[$key]);
             }
         }
 
-        if (isset($data['id'])) {
+        if (isset($data['id']) === true) {
             unset($data['id']);
         }
 
-        // Create the rule
+        // Create the rule.
         $rule = $this->ruleMapper->createFromArray(object: $data);
 
         return new JSONResponse($rule);
-    }
+
+    }//end create()
+
 
     /**
      * Updates an existing rule
      *
      * This method updates an existing rule based on its ID.
      *
+     * @param int $id The ID of the rule to update
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the rule to update
      * @return JSONResponse A JSON response containing the updated rule details
      */
     public function update(int $id): JSONResponse
@@ -148,29 +189,33 @@ class RulesController extends Controller
         $data = $this->request->getParams();
 
         foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
+            if (str_starts_with($key, '_') === true) {
                 unset($data[$key]);
             }
         }
-        if (isset($data['id'])) {
+
+        if (isset($data['id']) === true) {
             unset($data['id']);
         }
 
-        // Update the rule
+        // Update the rule.
         $rule = $this->ruleMapper->updateFromArray(id: (int) $id, object: $data);
 
         return new JSONResponse($rule);
-    }
+
+    }//end update()
+
 
     /**
      * Deletes a rule
      *
      * This method deletes a rule based on its ID.
      *
+     * @param int $id The ID of the rule to delete
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the rule to delete
      * @return JSONResponse An empty JSON response
      */
     public function destroy(int $id): JSONResponse
@@ -178,5 +223,8 @@ class RulesController extends Controller
         $this->ruleMapper->delete($this->ruleMapper->find((int) $id));
 
         return new JSONResponse([]);
-    }
-}
+
+    }//end destroy()
+
+
+}//end class

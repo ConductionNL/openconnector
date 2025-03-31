@@ -1,4 +1,18 @@
 <?php
+/**
+ * OpenConnector Mappings Controller
+ *
+ * This file contains the controller for handling mapping related operations
+ * in the OpenConnector application.
+ *
+ * @category  Controller
+ * @package   OpenConnector
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @version   GIT: <git-id>
+ * @link      https://OpenConnector.app
+ */
 
 namespace OCA\OpenConnector\Controller;
 
@@ -19,14 +33,24 @@ use OCP\IURLGenerator;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
+/**
+ * Controller for handling mapping related operations
+ */
 class MappingsController extends Controller
 {
+
+
     /**
      * Constructor for the MappingsController
      *
-     * @param string $appName The name of the app
-     * @param IRequest $request The request object
-     * @param IAppConfig $config The app configuration object
+     * @param string         $appName        The name of the app
+     * @param IRequest       $request        The request object
+     * @param IAppConfig     $config         The app configuration object
+     * @param MappingMapper  $mappingMapper  Mapper for mapping operations
+     * @param MappingService $mappingService Service for mapping operations
+     * @param ObjectService  $objectService  Service for object operations
+     *
+     * @return void
      */
     public function __construct(
         $appName,
@@ -35,10 +59,11 @@ class MappingsController extends Controller
         private readonly MappingMapper $mappingMapper,
         private readonly MappingService $mappingService,
         private readonly ObjectService $objectService
-    )
-    {
+    ) {
         parent::__construct($appName, $request);
-    }
+
+    }//end __construct()
+
 
     /**
      * Returns the template of the main app's page
@@ -53,16 +78,21 @@ class MappingsController extends Controller
     public function page(): TemplateResponse
     {
         return new TemplateResponse(
-            'openconnector',
-            'index',
-            []
+                'openconnector',
+                'index',
+                []
         );
-    }
+
+    }//end page()
+
 
     /**
      * Retrieves a list of all mappings
      *
      * This method returns a JSON response containing an array of all mappings in the system.
+     *
+     * @param ObjectService $objectService Service for object operations
+     * @param SearchService $searchService Service for search operations
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -71,25 +101,44 @@ class MappingsController extends Controller
      */
     public function index(ObjectService $objectService, SearchService $searchService): JSONResponse
     {
-        $filters = $this->request->getParams();
-        $fieldsToSearch = ['name', 'description'];
+        $filters        = $this->request->getParams();
+        $fieldsToSearch = [
+            'name',
+            'description',
+        ];
 
-        $searchParams = $searchService->createMySQLSearchParams(filters: $filters);
-        $searchConditions = $searchService->createMySQLSearchConditions(filters: $filters, fieldsToSearch:  $fieldsToSearch);
-        $filters = $searchService->unsetSpecialQueryParams(filters: $filters);
+        $searchParams     = $searchService->createMySQLSearchParams(filters: $filters);
+        $searchConditions = $searchService->createMySQLSearchConditions(
+                filters: $filters,
+                fieldsToSearch: $fieldsToSearch
+        );
+        $filters          = $searchService->unsetSpecialQueryParams(filters: $filters);
 
-        return new JSONResponse(['results' => $this->mappingMapper->findAll(limit: null, offset: null, filters: $filters, searchConditions: $searchConditions, searchParams: $searchParams)]);
-    }
+        return new JSONResponse(
+                [
+                    'results' => $this->mappingMapper->findAll(
+                            limit: null,
+                            offset: null,
+                            filters: $filters,
+                            searchConditions: $searchConditions,
+                            searchParams: $searchParams
+                    ),
+                ]
+        );
+
+    }//end index()
+
 
     /**
      * Retrieves a single mapping by its ID
      *
      * This method returns a JSON response containing the details of a specific mapping.
      *
+     * @param string $id The ID of the mapping to retrieve
+     *
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the mapping to retrieve
      * @return JSONResponse A JSON response containing the mapping details
      */
     public function show(string $id): JSONResponse
@@ -99,7 +148,9 @@ class MappingsController extends Controller
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(data: ['error' => 'Not Found'], statusCode: 404);
         }
-    }
+
+    }//end show()
+
 
     /**
      * Creates a new mapping
@@ -116,241 +167,269 @@ class MappingsController extends Controller
         $data = $this->request->getParams();
 
         foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
+            if (str_starts_with($key, '_') === true) {
                 unset($data[$key]);
             }
         }
 
-        if (isset($data['id'])) {
+        if (isset($data['id']) === true) {
             unset($data['id']);
         }
 
         return new JSONResponse($this->mappingMapper->createFromArray(object: $data));
-    }
 
-	/**
-	 * Updates an existing mapping
-	 *
-	 * This method updates an existing mapping based on its ID.
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @param int $id The ID of the mapping to update
-	 * @return JSONResponse A JSON response containing the updated mapping details
-	 */
+    }//end create()
+
+
+    /**
+     * Updates an existing mapping
+     *
+     * This method updates an existing mapping based on its ID.
+     *
+     * @param int $id The ID of the mapping to update
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @return JSONResponse A JSON response containing the updated mapping details
+     */
     public function update(int $id): JSONResponse
     {
         $data = $this->request->getParams();
 
         foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
+            if (str_starts_with($key, '_') === true) {
                 unset($data[$key]);
             }
         }
-        if (isset($data['id'])) {
+
+        if (isset($data['id']) === true) {
             unset($data['id']);
         }
-        return new JSONResponse($this->mappingMapper->updateFromArray(id: (int) $id, object: $data));
-    }
 
-	/**
-	 * Deletes a mapping
-	 *
-	 * This method deletes a mapping based on its ID.
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @param int $id The ID of the mapping to delete
-	 * @return JSONResponse An empty JSON response
-	 * @throws \OCP\DB\Exception
-	 */
+        return new JSONResponse($this->mappingMapper->updateFromArray(id: (int) $id, object: $data));
+
+    }//end update()
+
+
+    /**
+     * Deletes a mapping
+     *
+     * This method deletes a mapping based on its ID.
+     *
+     * @param int $id The ID of the mapping to delete
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @return JSONResponse An empty JSON response
+     * @throws \OCP\DB\Exception
+     */
     public function destroy(int $id): JSONResponse
     {
         $this->mappingMapper->delete($this->mappingMapper->find((int) $id));
 
         return new JSONResponse([]);
-    }
 
-	/**
-	 * Tests a mapping
-	 *
-	 * This method tests a mapping with provided input data and optional schema validation.
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @param ObjectService $objectService
-	 * @param IURLGenerator $urlGenerator
-	 *
-	 * @return JSONResponse A JSON response containing the test results
-	 * @throws ContainerExceptionInterface
-	 * @throws NotFoundExceptionInterface
-	 *
-	 * @example
-	 * Request:
-	 * {
-	 *     "inputObject": "{\"name\":\"John Doe\",\"age\":30,\"email\":\"john@example.com\"}",
-	 *     "mapping": {
-	 *            "mapping": {
-	 *                "fullName":"{{name}}",
-	 *                "userAge":"{{age}}",
-	 *                "contactEmail":"{{email}}"
-	 *            }
-	 *       },
-	 *     "schema": "user_schema_id",
-	 *     "validation": true
-	 * }
-	 *
-	 * Response:
-	 * {
-	 *     "resultObject": {
-	 *         "fullName": "John Doe",
-	 *         "userAge": 30,
-	 *         "contactEmail": "john@example.com"
-	 *     },
-	 *     "isValid": true,
-	 *     "validationErrors": []
-	 * }
-	 */
+    }//end destroy()
+
+
+    /**
+     * Tests a mapping
+     *
+     * This method tests a mapping with provided input data and optional schema validation.
+     *
+     * @param ObjectService $objectService Service for object operations
+     * @param IURLGenerator $urlGenerator  URL generator service
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @return JSONResponse A JSON response containing the test results
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     *
+     * @example
+     * Request:
+     * {
+     *     "inputObject": "{\"name\":\"John Doe\",\"age\":30,\"email\":\"john@example.com\"}",
+     *     "mapping": {
+     *            "mapping": {
+     *                "fullName":"{{name}}",
+     *                "userAge":"{{age}}",
+     *                "contactEmail":"{{email}}"
+     *            }
+     *       },
+     *     "schema": "user_schema_id",
+     *     "validation": true
+     * }
+     *
+     * Response:
+     * {
+     *     "resultObject": {
+     *         "fullName": "John Doe",
+     *         "userAge": 30,
+     *         "contactEmail": "john@example.com"
+     *     },
+     *     "isValid": true,
+     *     "validationErrors": []
+     * }
+     */
     public function test(ObjectService $objectService, IURLGenerator $urlGenerator): JSONResponse
     {
-		$openRegisters = $objectService->getOpenRegisters();
+        $openRegisters = $objectService->getOpenRegisters();
 
-        // Get all parameters from the request
+        // Get all parameters from the request.
         $data = $this->request->getParams();
 
-
-        // Validate that required parameters are present
+        // Validate that required parameters are present.
         if (isset($data['inputObject']) === false || isset($data['mapping']) === false) {
             throw new InvalidArgumentException('Both `inputObject` and `mapping` are required');
         }
 
-        // Decode the input object from JSON
+        // Decode the input object from JSON.
         $inputObject = $data['inputObject'];
 
-        // Decode the mapping from JSON
-		$mapping = $data['mapping'];
+        // Decode the mapping from JSON.
+        $mapping = $data['mapping'];
 
-        // Initialize schema and validation flags
-        $schema = false;
+        // Initialize schema and validation flags.
+        $schema     = false;
         $validation = false;
 
-        // If a schema is provided, retrieve it
+        // If a schema is provided, retrieve it.
         if (empty($data['schema']) === false) {
-			if ($openRegisters === null) {
-				return new JSONResponse(data: [
-					'error'   => 'Setup error',
-					'message' => 'OpenRegisters must be installed to validate schema.'
-				],statusCode: 412);
-			}
+            if ($openRegisters === null) {
+                return new JSONResponse(
+                        data: [
+                            'error'   => 'Setup error',
+                            'message' => 'OpenRegisters must be installed to validate schema.',
+                        ],
+                        statusCode: 412
+                );
+            }
 
             $schemaId = $data['schema'];
-			try {
-				$schema = $openRegisters->getMapper('schema')->find($schemaId);
-			} catch (DoesNotExistException $exception) {
-				return new JSONResponse(data: [
-					'error' => 'Not found',
-					'message' => 'The specified schema could not be found.',
-				], statusCode: 404);
-			}
-        }
+            try {
+                $schema = $openRegisters->getMapper('schema')->find($schemaId);
+            } catch (DoesNotExistException $exception) {
+                return new JSONResponse(
+                        data: [
+                            'error'   => 'Not found',
+                            'message' => 'The specified schema could not be found.',
+                        ],
+                        statusCode: 404
+                );
+            }
+        }//end if
 
-        // Check if validation is requested
+        // Check if validation is requested.
         if (empty($data['validation']) === false) {
             $validation = $data['validation'];
         }
 
-        // Create a new Mapping object and hydrate it with the provided mapping
+        // Create a new Mapping object and hydrate it with the provided mapping.
         $mappingObject = new Mapping();
         $mappingObject->hydrate($mapping);
 
-        // Perform the mapping operation
+        // Perform the mapping operation.
         try {
             $resultObject = $this->mappingService->executeMapping(mapping: $mappingObject, input: $inputObject);
         } catch (Exception $e) {
-            // If mapping fails, return an error response
-            return new JSONResponse([
-                'error' => 'Mapping error',
-                'message' => $e->getMessage()
-            ], 400);
+            // If mapping fails, return an error response.
+            return new JSONResponse(
+                [
+                    'error'   => 'Mapping error',
+                    'message' => $e->getMessage(),
+                ],
+                400
+            );
         }
 
-        // Initialize validation variables
-        $isValid = true;
+        // Initialize validation variables.
+        $isValid          = true;
         $validationErrors = [];
 
-        // Perform schema validation if both schema and validation are provided
+        // Perform schema validation if both schema and validation are provided.
         if ($schema !== false && $validation !== false && $openRegisters !== null) {
-			$result = $openRegisters->validateObject(object: $resultObject, schemaObject: $schema->getSchemaObject($urlGenerator));
+            $result = $openRegisters->validateObject(
+                object: $resultObject,
+                schemaObject: $schema->getSchemaObject($urlGenerator)
+            );
 
-			$isValid = $result->isValid();
+            $isValid = $result->isValid();
 
-			if ($result->hasError() === true) {
-				// Class imported without use because it only exists when OpenRegisters is installed.
-				$validationErrors = (new \Opis\JsonSchema\Errors\ErrorFormatter())->format(error: $result->error());
-			}
+            if ($result->hasError() === true) {
+                // Class imported without use because it only exists when OpenRegisters is installed.
+                $validationErrors = (new \Opis\JsonSchema\Errors\ErrorFormatter())->format(error: $result->error());
+            }
         }
 
-        // Return the result as a JSON response
-        return new JSONResponse([
-            'resultObject' => $resultObject,
-            'isValid' => $isValid,
-            'validationErrors' => $validationErrors
-        ]);
-    }
+        // Return the result as a JSON response.
+        return new JSONResponse(
+                [
+                    'resultObject'     => $resultObject,
+                    'isValid'          => $isValid,
+                    'validationErrors' => $validationErrors,
+                ]
+        );
 
-	/**
-	 * Saves a mapping object
-	 *
-	 * This method saves a mapping object based on POST data.
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @return JSONResponse|null
-	 * @throws ContainerExceptionInterface
-	 * @throws NotFoundExceptionInterface
-	 */
+    }//end test()
+
+
+    /**
+     * Saves a mapping object
+     *
+     * This method saves a mapping object based on POST data.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @return JSONResponse|null
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     public function saveObject(): ?JSONResponse
     {
-        // Check if the OpenRegister service is available
-		$openRegisters = $this->objectService->getOpenRegisters();
-		if ($openRegisters !== null) {
+        // Check if the OpenRegister service is available.
+        $openRegisters = $this->objectService->getOpenRegisters();
+        if ($openRegisters !== null) {
             $data = $this->request->getParams();
             return new JSONResponse($openRegisters->saveObject($data['register'], $data['schema'], $data['object']));
-		}
+        }
 
-		return null;
-    }
+        return null;
 
-	/**
-	 * Retrieves a list of objects to map to
-	 *
-	 * This method retrieves a list of objects to map to based on GET data.
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @return JSONResponse
-	 * @throws ContainerExceptionInterface
-	 * @throws NotFoundExceptionInterface
-	 */
+    }//end saveObject()
+
+
+    /**
+     * Retrieves a list of objects to map to
+     *
+     * This method retrieves a list of objects to map to based on GET data.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @return JSONResponse
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     public function getObjects(): JSONResponse
     {
-        // Check if the OpenRegister service is available
-		$openRegisters = $this->objectService->getOpenRegisters();
-        $data = [];
-		if ($openRegisters !== null) {
-			$data['openRegisters'] = true;
-			$data['availableRegisters'] = $openRegisters->getRegisters();
-		}
-        else {
+        // Check if the OpenRegister service is available.
+        $openRegisters = $this->objectService->getOpenRegisters();
+        $data          = [];
+        if ($openRegisters !== null) {
+            $data['openRegisters']      = true;
+            $data['availableRegisters'] = $openRegisters->getRegisters();
+        } else {
             $data['openRegisters'] = false;
         }
 
         return new JSONResponse($data);
 
-    }
-}
+    }//end getObjects()
+
+
+}//end class

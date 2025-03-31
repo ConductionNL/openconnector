@@ -1,0 +1,164 @@
+@startuml
+title Call Service Process Flow
+footer: Open Connector
+header: Open Connector
+
+participant "Application" as App
+participant "CallService" as CS
+participant "Source" as S
+participant "CallLogMapper" as CLM
+participant "SourceMapper" as SM
+participant "GuzzleClient" as GC
+participant "External API" as API
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+note over App, CS
+  The call function is the main entry point for making API calls
+  Parameters:
+  - source: Source object containing connection details
+  - endpoint: Specific API endpoint to call
+  - method: HTTP method (GET, POST, etc.)
+  - config: Additional configuration options
+endnote
+
+App -> CS: call(source, endpoint, method, config)
+activate CS
+
+note right of CS
+  Initial validation phase:
+  Checks if the source is properly configured
+  and available for use
+endnote
+
+' Check if source is enabled
+CS -> S: getIsEnabled()
+alt source not enabled
+    CS -> CLM: insert(callLog)
+    note right of CLM
+      Log failed attempts to prevent
+      debugging issues and maintain
+      audit trail
+    endnote
+    CS --> App: return callLog
+end
+
+' Check if source has location
+CS -> S: getLocation()
+alt no location
+    CS -> CLM: insert(callLog)
+    note right of CLM
+      A source without location cannot
+      be called - log error for tracking
+    endnote
+    CS --> App: return callLog
+end
+
+note over CS
+  Rate limiting phase:
+  Prevents overwhelming external APIs
+  and respects usage limits
+endnote
+
+' Rate limit checks
+CS -> S: getRateLimitReset()
+CS -> S: getRateLimitRemaining()
+alt rate limit exceeded
+    CS -> CLM: insert(callLog)
+    note right of CLM
+      Rate limits can be:
+      1. Set by external API
+      2. Configured manually
+      3. Dynamically adjusted
+    endnote
+    CS --> App: return callLog
+end
+
+note over CS
+  Configuration processing phase:
+  Prepares the request with proper
+  settings and authentication
+endnote
+
+' Configuration processing
+CS -> CS: renderConfiguration()
+note right
+  Processes template variables in config
+  using Twig templating engine
+endnote
+
+CS -> CS: applyConfigDot()
+note right
+  Transforms dot notation in config
+  into nested array structure
+endnote
+
+CS -> CS: decideMethod()
+note right
+  Determines final HTTP method based on:
+  - Default method
+  - Configuration overrides
+  - Operation type (list/read)
+endnote
+
+note over CS, API
+  Execution phase:
+  Makes the actual API call and
+  handles the response
+endnote
+
+' Making the actual call
+CS -> S: setLastCall()
+CS -> GC: request(method, url, config)
+activate GC
+note over GC
+  Guzzle handles:
+  - HTTP transport
+  - SSL/TLS
+  - Timeout handling
+  - Redirects
+endnote
+
+GC -> API: HTTP Request
+API --> GC: HTTP Response
+deactivate GC
+
+note over CS
+  Post-processing phase:
+  Updates rate limits and logs results
+endnote
+
+' Rate limit handling
+CS -> CS: sourceRateLimit()
+note right
+  Updates rate limit tracking based on:
+  - Response headers
+  - Configured limits
+  - Time windows
+endnote
+
+CS -> SM: update(source)
+
+' Logging the call
+CS -> CLM: insert(callLog)
+note right
+  Logs contain:
+  - Request details
+  - Response data
+  - Timing information
+  - Error states
+endnote
+
+CS --> App: return callLog
+deactivate CS
+
+note over App, API
+  The entire process is designed to be:
+  1. Fault-tolerant
+  2. Self-documenting
+  3. Rate-limit aware
+  4. Fully logged
+endnote
+
+@enduml

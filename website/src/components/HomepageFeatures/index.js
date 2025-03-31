@@ -1,54 +1,61 @@
+import React from 'react';
 import clsx from 'clsx';
-import Heading from '@theme/Heading';
 import styles from './styles.module.css';
 
+/**
+ * List of features displayed on the homepage
+ * Each feature has a title and description highlighting key capabilities
+ * of the Zaakafhandelapp case management system
+ */
 const FeatureList = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    title: 'Efficient Case Management',
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Streamline your municipal case handling with an intuitive interface that helps track, process and manage cases efficiently while ensuring compliance with Dutch administrative law.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    title: 'Standards-Based Architecture',
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Built on Dutch government standards like ZGW APIs and Common Ground principles, ensuring interoperability and future-proof case management for municipalities.
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    title: 'Complete Process Control',
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Manage the entire case lifecycle from intake to archiving, with built-in support for documents, tasks, and communications while maintaining full audit trails.
       </>
     ),
   },
 ];
 
-function Feature({Svg, title, description}) {
+/**
+ * Component to render a single feature
+ * @param {string} title - The title of the feature
+ * @param {JSX.Element} description - The description of the feature
+ * @returns {JSX.Element} Feature component
+ */
+function Feature({title, description}) {
   return (
     <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
-      </div>
       <div className="text--center padding-horiz--md">
-        <Heading as="h3">{title}</Heading>
+        <h3>{title}</h3>
         <p>{description}</p>
       </div>
     </div>
   );
 }
 
+/**
+ * Main component that displays all features on the homepage
+ * Renders the features in a responsive grid layout
+ * @returns {JSX.Element} HomepageFeatures component
+ */
 export default function HomepageFeatures() {
   return (
     <section className={styles.features}>

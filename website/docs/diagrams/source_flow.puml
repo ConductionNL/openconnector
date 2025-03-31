@@ -1,0 +1,44 @@
+@startuml
+title Simple Call Service Flow
+footer: Open Connector
+header: Open Connector
+
+participant "Application" as App
+participant "CallService" as CS
+participant "Source" as S
+participant "External API" as API
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+note over App, CS
+  Application requests data from an external API
+  through the CallService using a configured Source
+endnote
+
+App -> CS: call(source, endpoint, method, config)
+activate CS
+
+CS -> S: validate()
+note right of S
+  Validates source configuration:
+  - Enabled status
+  - API location
+  - Authentication
+endnote
+
+CS -> API: HTTP Request
+API --> CS: HTTP Response with array of objects
+
+CS --> App: return array of objects
+deactivate CS
+
+note over App, API
+  Simple flow for retrieving data:
+  1. App provides source config
+  2. CallService validates source
+  3. Makes API call
+  4. Returns array of objects
+endnote
+
+@enduml

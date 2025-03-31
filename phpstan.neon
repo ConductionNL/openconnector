@@ -1,0 +1,15 @@
+parameters:
+    level: 5
+    paths:
+        - lib
+    excludePaths:
+        analyse:
+            - vendor
+    tmpDir: build/phpstan
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        # We often need to ignore errors related to NextCloud-specific classes
+        - '#Call to an undefined method OCP\\#'
+        - '#Call to an undefined method OCA\\#'
+        - '#Instantiated class OCP\\#'
+        - '#Instantiated class OCA\\#' 
