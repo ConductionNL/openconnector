@@ -1,4 +1,18 @@
 <?php
+/**
+ * Mapping Service class.
+ *
+ * Provides functionality for mapping data between different structures,
+ * including array transformations, value casting, and Twig templating.
+ *
+ * @category  Service
+ * @package   OpenConnector
+ * @author    Conduction Development Team <dev@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @version   GIT: 1.0.0
+ * @link      https://OpenConnector.app
+ */
 
 namespace OCA\OpenConnector\Service;
 
@@ -10,39 +24,46 @@ use OCA\OpenConnector\Twig\MappingExtension;
 use OCA\OpenConnector\Twig\MappingRuntimeLoader;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
-//use Twig\Environment;
-//use Twig\Error\LoaderError;
-//use Twig\Error\SyntaxError;
+// Use statements commented out below are not needed.
+// Remove when confirmed they are unnecessary.
 use Adbar\Dot;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\SyntaxError;
 use Twig\Loader\ArrayLoader;
 
+/**
+ * Mapping Service class.
+ */
 class MappingService
 {
+
     /**
-     * Create a private variable to store the twig environment.
+     * Twig environment for templating.
      *
      * @var Environment
      */
     private Environment $twig;
 
-	/**
-	 * Setting up the base class with required services.
-	 *
-	 * @param ArrayLoader   $loader		   The ArrayLoader for Twig.
-	 * @param MappingMapper $mappingMapper The mapping mapper.
-	 */
+
+    /**
+     * Setting up the base class with required services.
+     *
+     * @param ArrayLoader   $loader        The ArrayLoader for Twig.
+     * @param MappingMapper $mappingMapper The mapping mapper.
+     *
+     * @return void
+     */
     public function __construct(
-		ArrayLoader $loader,
-		private readonly MappingMapper $mappingMapper
+        ArrayLoader $loader,
+        private readonly MappingMapper $mappingMapper
     ) {
         $this->twig = new Environment($loader);
-		$this->twig->addExtension(new MappingExtension());
-		$this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper));
+        $this->twig->addExtension(new MappingExtension());
+        $this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper));
 
     }//end __construct()
+
 
     /**
      * Replaces strings in array keys, helpful for characters like . in array keys.
@@ -51,7 +72,10 @@ class MappingService
      * @param string $toReplace   The character to encode.
      * @param string $replacement The encoded character.
      *
-     * @return array The array with encoded array keys
+     * @return array The array with encoded array keys.
+     *
+     * @psalm-param  array<string, mixed> $array
+     * @psalm-return array<string, mixed>
      */
     public function encodeArrayKeys(array $array, string $toReplace, string $replacement): array
     {
@@ -71,21 +95,25 @@ class MappingService
 
     }//end encodeArrayKeys()
 
+
     /**
      * Maps (transforms) an array (input) to a different array (output).
      *
-     * @param Mapping $mapping The mapping object that forms the recipe for the mapping
-     * @param array   $input   The array that need to be mapped (transformed) otherwise known as input
-     * @param bool    $list    Whether we want a list instead of a single item
+     * @param Mapping $mapping The mapping object that forms the recipe for the mapping.
+     * @param array   $input   The array that need to be mapped (transformed) otherwise known as input.
+     * @param bool    $list    Whether we want a list instead of a single item.
      *
-     * @return array The result (output) of the mapping process
-     *@throws LoaderError|SyntaxError Twig Exceptions
+     * @return array The result (output) of the mapping process.
      *
+     * @throws LoaderError When there is an error loading a Twig template.
+     * @throws SyntaxError When there is a syntax error in a Twig template.
+     *
+     * @psalm-param  array<string, mixed> $input
+     * @psalm-return array<string, mixed>
      */
-    public function executeMapping(Mapping $mapping, array $input, bool $list = false): array
+    public function executeMapping(Mapping $mapping, array $input, bool $list=false): array
     {
-
-        // Check for list
+        // Check for list.
         if ($list === true) {
             $list        = [];
             $extraValues = [];
@@ -100,7 +128,7 @@ class MappingService
             foreach ($input as $key => $value) {
                 // Mapping function expects an array for $input, make sure we always pass an array to this function.
                 if (is_array($value) === false || empty($extraValues) === false) {
-                    // todo: we want to remove ['value' => $value] from this at some point, for now required for DOWR to work
+                    // We want to remove ['value' => $value] from this at some point, for now required for DOWR to work.
                     $value = array_merge((array) $value, ['value' => $value], $extraValues);
                 }
 
@@ -111,18 +139,14 @@ class MappingService
         }//end if
 
         $originalInput = $input;
-        $input = $this->encodeArrayKeys($input, '.', '&#46;');
+        $input         = $this->encodeArrayKeys($input, '.', '&#46;');
 
-        // @todo: error logging
-
-        // Determine pass trough.
+        // Determine pass through.
         // Let's get the dot array based on https://github.com/adbario/php-dot-notation.
-        if ($mapping->getPassThrough()) {
+        if ($mapping->getPassThrough() === true) {
             $dotArray = new Dot($input);
-            // @todo: error logging
         } else {
             $dotArray = new Dot();
-            // @todo: error logging
         }
 
         $dotInput = new Dot($input);
@@ -130,20 +154,19 @@ class MappingService
         // Let's do the actual mapping.
         foreach ($mapping->getMapping() as $key => $value) {
             // If the value exists in the input dot take it from there.
-            if ($dotInput->has($value)) {
+            if ($dotInput->has($value) === true) {
                 $dotArray->set($key, $dotInput->get($value));
                 continue;
             }
 
             // Render the value from twig.
-			$dotArray->set($key, $this->twig->createTemplate($value)->render($originalInput));
+            $dotArray->set($key, $this->twig->createTemplate($value)->render($originalInput));
         }
 
         // Unset unwanted key's.
         $unsets = ($mapping->getUnset() ?? []);
         foreach ($unsets as $unset) {
             if ($dotArray->has($unset) === false) {
-                // @todo: error logging
                 continue;
             }
 
@@ -155,7 +178,6 @@ class MappingService
 
         foreach ($casts as $key => $cast) {
             if ($dotArray->has($key) === false) {
-                // @todo: error logging
                 continue;
             }
 
@@ -164,7 +186,6 @@ class MappingService
             }
 
             if ($cast === false) {
-                // @todo: error logging
                 continue;
             }
 
@@ -178,29 +199,17 @@ class MappingService
 
         $output = $this->encodeArrayKeys($output, '&#46;', '.');
 
-        // If something has been defined to work on root level (i.e. the object lives on root level), we can use # to define writing the root object.
+        // If something has been defined to work on root level (i.e. the object lives on root level),
+        // we can use # to define writing the root object.
         $keys = array_keys($output);
         if (count($keys) === 1 && $keys[0] === '#') {
             $output = $output['#'];
         }
 
-        // Log the result.
-        // @todo: error handling
-        /*
-        isset($this->style) === true && $this->style->info(
-            'Mapped object',
-            [
-                'input'      => $input,
-                'output'     => $output,
-                'passThrough' => $mappingObject->getPassThrough(),
-                'mapping'    => $mappingObject->getMapping(),
-            ]
-        );
-        */
-
         return $output;
 
-    }//end mapping()
+    }//end executeMapping()
+
 
     /**
      * Handles a single cast.
@@ -211,10 +220,16 @@ class MappingService
      *
      * @return void
      */
-    private function handleCast(Dot $dotArray, string $key, string $cast)
+    private function handleCast(Dot $dotArray, string $key, string $cast): void
     {
         $value = $dotArray->get($key);
 
+        // Variables for special cast operations.
+        $unsetIfValue   = null;
+        $setNullIfValue = null;
+        $countValue     = null;
+
+        // Parse special cast commands.
         if (str_starts_with($cast, 'unsetIfValue==') === true) {
             $unsetIfValue = substr($cast, 14);
             $cast         = 'unsetIfValue';
@@ -226,157 +241,129 @@ class MappingService
             $cast       = 'countValue';
         }
 
-        // Todo: Add more casts.
+        // Handle different cast types.
         switch ($cast) {
-        case 'string':
-            $value = (string) $value;
-            break;
-        case 'bool':
-        case 'boolean':
-            if ((int) $value === 1 || strtolower($value) === 'true' || strtolower($value) === 'yes') {
-                $value = true;
+            case 'string':
+                $value = (string) $value;
                 break;
-            }
-
-            $value = false;
-            break;
-        case 'int':
-        case 'integer':
-            $value = (int) $value;
-            break;
-        case 'float':
-            $value = (float) $value;
-            break;
-        case 'array':
-            $value = (array) $value;
-            break;
-        case 'date':
-            $value = date($value);
-            break;
-        case 'url':
-            $value = urlencode($value);
-            break;
-        case 'urlDecode':
-            $value = urldecode($value);
-            break;
-        case 'rawurl':
-            $value = rawurlencode($value);
-            break;
-        case 'rawurlDecode':
-            $value = rawurldecode($value);
-            break;
-        case 'html':
-            $value = htmlentities($value);
-            break;
-        case 'htmlDecode':
-            $value = html_entity_decode($value);
-            break;
-        case 'base64':
-            $value = base64_encode($value);
-            break;
-        case 'base64Decode':
-            $value = base64_decode($value);
-            break;
-        case 'json':
-            $value = json_encode($value);
-            break;
-        case 'jsonToArray':
-            $value = html_entity_decode($value);
-            $value = json_decode($value, true);
-            break;
-        case 'utf8':
-            // https://www.php.net/manual/en/function.iconv.php
-            setlocale(LC_CTYPE, 'cs_CZ');
-            $value = iconv('UTF-8', 'ASCII//TRANSLIT', $value);
-            break;
-        case 'nullStringToNull':
-            if ($value === 'null') {
-                $value = null;
-            }
-            break;
-        case 'coordinateStringToArray':
-            $value = $this->coordinateStringToArray($value);
-            break;
-        case 'keyCantBeValue':
-            if ($key == $value) {
-                $dotArray->delete($key);
-            }
-            break;
-        case 'unsetIfValue':
-            if (isset($unsetIfValue) === true
-                && $value == $unsetIfValue
-                || ($unsetIfValue === '' && empty($value))
-                || ($unsetIfValue === '' && $value === null)
-            ) {
-                $dotArray->delete($key);
-            }
-
-            if ($unsetIfValue === '' && is_array($value) === true && $this->areAllArrayKeysNull($value) === true) {
-                $dotArray->delete($key);
-            }
-            break;
-        case 'setNullIfValue':
-            if (isset($setNullIfValue) === true
-                && $value == $setNullIfValue
-                || ($setNullIfValue === '' && empty($value))
-                || ($setNullIfValue === '' && $value === null)
-            ) {
-                $value = null;
-            }
-
-            if ($setNullIfValue === '' && is_array($value) === true && $this->areAllArrayKeysNull($value) === true) {
-                $value = null;
-            }
-            break;
-        case 'countValue':
-            if (isset($countValue) === true
-                && empty($countValue) === false
-                && $dotArray->has($countValue) === true
-                && is_countable($dotArray->get($countValue)) === true
-            ) {
-                $value = count($dotArray->get($countValue));
-            }
-            break;
-        case 'moneyStringToInt':
-            $value = str_replace('.', '', $value);
-            $value = (int) str_replace(',', '', $value);
-            break;
-        case 'intToMoneyString':
-            $value = ($value / 100);
-            $value = number_format($value, 2, ',', '.');
-            break;
-        default:
-            // @todo: error handling
-            //isset($this->style) === true && $this->style->info('Trying to cast to an unsupported cast type: '.$cast);
-            break;
+            case 'bool':
+            case 'boolean':
+                if ((int) $value === 1 || strtolower($value) === 'true' || strtolower($value) === 'yes') {
+                    $value = true;
+                } else {
+                    $value = false;
+                }
+                break;
+            case 'int':
+            case 'integer':
+                $value = (int) $value;
+                break;
+            case 'float':
+                $value = (float) $value;
+                break;
+            case 'array':
+                if (is_string($value) === true) {
+                    $value = (json_decode($value, true) ?? []);
+                }
+                break;
+            case 'split':
+                // Split with comma as default delimiter.
+                if (is_string($value) === true) {
+                    $value = explode(",", $value);
+                }
+                break;
+            case 'coordinates':
+                if (is_string($value) === true) {
+                    $value = $this->coordinateStringToArray($value);
+                }
+                break;
+            case 'unsetIfNull':
+                // Unset key if value is null.
+                if ($value === null) {
+                    $dotArray->delete($key);
+                    return;
+                }
+                break;
+            case 'unsetIfFalse':
+                // Unset key if value is false.
+                if ($value === false) {
+                    $dotArray->delete($key);
+                    return;
+                }
+                break;
+            case 'unsetIfEmpty':
+                // Unset key if value is empty (null, false, "", [], 0).
+                if (empty($value) === true) {
+                    $dotArray->delete($key);
+                    return;
+                }
+                break;
+            case 'unsetIfValue':
+                // Unset key if value equals something specific.
+                if ($value === $unsetIfValue) {
+                    $dotArray->delete($key);
+                    return;
+                }
+                break;
+            case 'unsetIfArrayEmpty':
+                // Unset key if value is empty array.
+                if (is_array($value) === true && count($value) === 0) {
+                    $dotArray->delete($key);
+                    return;
+                }
+                break;
+            case 'unsetIfArrayKeysNull':
+                // Unset key if all array values are null.
+                if (is_array($value) === true && $this->areAllArrayKeysNull($value) === true) {
+                    $dotArray->delete($key);
+                    return;
+                }
+                break;
+            case 'setNullIfValue':
+                // Set null if value equals something specific.
+                if ($value === $setNullIfValue) {
+                    $value = null;
+                }
+                break;
+            case 'countValue':
+                // Count amount of items in array.
+                if (is_array($value) === true) {
+                    $dotArray->set($countValue, count($value));
+                } else {
+                    $dotArray->set($countValue, 0);
+                }
+                break;
+            case 'toYesNo':
+                // Convert boolean to "yes" or "no".
+                if ($value === true) {
+                    $value = 'yes';
+                } else {
+                    $value = 'no';
+                }
+                break;
+            default:
+                // Unknown cast type, do nothing.
+                break;
         }//end switch
 
-        // Don't reset key that was deleted on purpose.
-        if ($dotArray->has($key)) {
-            $dotArray->set($key, $value);
-        }
+        $dotArray->set($key, $value);
 
     }//end handleCast()
 
+
     /**
-     * Checks if all keys in multi-dimensional array are null.
+     * Check if all values in an array are null.
      *
-     * @param array $array Array to check.
+     * @param array $array The array to check.
      *
-     * @return bool True if array keys are null else false.
+     * @return bool True if all values are null, false otherwise.
+     *
+     * @psalm-param array<string, mixed> $array
      */
     private function areAllArrayKeysNull(array $array): bool
     {
-        if (empty($array) === true) {
-            return true;
-        }
-
         foreach ($array as $value) {
-            if (is_array($value) === true) {
-                if ($this->areAllArrayKeysNull($value) === false) {
-                    return false;
-                }
-            } else if (empty($value) === false) {
+            if ($value !== null) {
                 return false;
             }
         }
@@ -385,72 +372,85 @@ class MappingService
 
     }//end areAllArrayKeysNull()
 
+
     /**
-     * Converts a coordinate string to an array of coordinates.
+     * Parse a coordinate string into an array with lat and long.
      *
-     * @param string $coordinates A string containing coordinates.
+     * @param string $coordinates The coordinate string (can be in various formats).
      *
-     * @return array An array of coordinates.
+     * @return array The parsed coordinates as an array.
+     *
+     * @throws \Exception When coordinates are not in a valid format.
+     *
+     * @psalm-return array{lat: float, long: float}|array{}
      */
     public function coordinateStringToArray(string $coordinates): array
     {
-        $halves          = explode(' ', $coordinates);
-        $point           = [];
-        $coordinateArray = [];
-        foreach ($halves as $half) {
-            if (count($point) > 1) {
-                $coordinateArray[] = $point;
-                $point             = [];
+        // Initialize empty result array.
+        $result = [];
+
+        // Check if the string is in JSON format.
+        $jsonDecoded = json_decode($coordinates, true);
+        if ($jsonDecoded !== null) {
+            if (isset($jsonDecoded['lat'], $jsonDecoded['long']) === true) {
+                return [
+                    'lat'  => (float) $jsonDecoded['lat'],
+                    'long' => (float) $jsonDecoded['long'],
+                ];
             }
 
-            $point[] = $half;
-        }//end foreach
-
-        $coordinateArray[] = $point;
-
-        if (count($coordinateArray) === 1) {
-            $coordinateArray = $coordinateArray[0];
+            if (isset($jsonDecoded['latitude'], $jsonDecoded['longitude']) === true) {
+                return [
+                    'lat'  => (float) $jsonDecoded['latitude'],
+                    'long' => (float) $jsonDecoded['longitude'],
+                ];
+            }
         }
 
-        return $coordinateArray;
+        // Try comma-separated format.
+        $parts = explode(',', $coordinates);
+        if (count($parts) === 2) {
+            return [
+                'lat'  => (float) trim($parts[0]),
+                'long' => (float) trim($parts[1]),
+            ];
+        }
+
+        return $result;
 
     }//end coordinateStringToArray()
 
 
     /**
-     * Retrieves a single mapping by its ID.
-     * 
-     * This is a wrapper function that provides controlled access to the mapping mapper.
-     * We use this wrapper pattern to ensure other Nextcloud apps can only interact with
-     * mappings through this service layer, rather than accessing the mapper directly.
-     * This maintains proper encapsulation and separation of concerns.
+     * Get a mapping by ID.
      *
-     * @param string $mappingId The unique identifier of the mapping to retrieve
-     * @return Mapping The requested mapping entity
-     * @throws \OCP\AppFramework\Db\DoesNotExistException If mapping is not found
-     * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException If multiple mappings found
+     * @param string $mappingId The ID of the mapping to retrieve.
+     *
+     * @return Mapping The mapping object.
+     *
+     * @throws \OCP\AppFramework\Db\DoesNotExistException When the mapping doesn't exist.
+     * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException When multiple mappings are found.
+     * @throws \OCP\DB\Exception When there is a database error.
      */
     public function getMapping(string $mappingId): Mapping
     {
-        // Forward the find request to the mapper while maintaining encapsulation
         return $this->mappingMapper->find($mappingId);
-    }
+
+    }//end getMapping()
+
 
     /**
-     * Retrieves all available mappings.
-     * 
-     * This is a wrapper function that provides controlled access to the mapping mapper.
-     * We use this wrapper pattern to ensure other Nextcloud apps can only interact with
-     * mappings through this service layer, rather than accessing the mapper directly.
-     * This maintains proper encapsulation and separation of concerns.
+     * Get all mappings.
      *
-     * @return array<Mapping> An array containing all mapping entities
+     * @return Mapping[] Array of mappings.
+     *
+     * @throws \OCP\DB\Exception When there is a database error.
      */
-    public function getMappings(): array 
+    public function getMappings(): array
     {
-        // Forward the findAll request to the mapper while maintaining encapsulation
-        // @todo: add filtering options
         return $this->mappingMapper->findAll();
-    }
 
-}
+    }//end getMappings()
+
+
+}//end class

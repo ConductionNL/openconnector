@@ -1,4 +1,18 @@
 <?php
+/**
+ * OpenConnector EventSubscription Mapper
+ *
+ * This file contains the mapper class for event subscription data in the OpenConnector
+ * application.
+ *
+ * @category  Mapper
+ * @package   OpenConnector
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @version   GIT: <git-id>
+ * @link      https://OpenConnector.app
+ */
 
 namespace OCA\OpenConnector\Db;
 
@@ -10,27 +24,34 @@ use Symfony\Component\Uid\Uuid;
 /**
  * Class EventSubscriptionMapper
  *
- * Handles database operations for event subscriptions
- *
- * @package OCA\OpenConnector\Db
+ * Handles database operations for event subscriptions.
  */
 class EventSubscriptionMapper extends QBMapper
 {
+
+
     /**
      * Constructor
      *
      * @param IDBConnection $db Database connection
+     *
+     * @return void
      */
     public function __construct(IDBConnection $db)
     {
         parent::__construct($db, 'openconnector_event_subscriptions');
-    }
+
+    }//end __construct()
+
 
     /**
-     * Find a subscription by ID
+     * Find a subscription by ID.
      *
-     * @param int $id The subscription ID
-     * @return EventSubscription
+     * @param integer $id The subscription ID
+     *
+     * @return EventSubscription The found event subscription
+     * @throws \OCP\AppFramework\Db\DoesNotExistException If the subscription is not found
+     * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException If more than one subscription is found
      */
     public function find(int $id): EventSubscription
     {
@@ -43,37 +64,46 @@ class EventSubscriptionMapper extends QBMapper
             );
 
         return $this->findEntity($qb);
-    }
 
-	/**
-	 * Find a subscription by reference
-	 *
-	 * @param int $id The subscription ID
-	 * @return EventSubscription
-	 */
-	public function findByRef(string $reference): array
-	{
-		$qb = $this->db->getQueryBuilder();
+    }//end find()
 
-		$qb->select('*')
-			->from('openconnector_event_subscriptions')
-			->where(
-				$qb->expr()->eq('reference', $qb->createNamedParameter($reference))
-			);
-
-		return $this->findEntities(query: $qb);
-	}
 
     /**
-     * Find all subscriptions matching the given criteria
+     * Find a subscription by reference.
      *
-     * @param int|null $limit Maximum number of results
-     * @param int|null $offset Number of records to skip
-     * @param array|null $filters Key-value pairs for filtering
-     * @return EventSubscription[]
+     * @param string $reference The subscription reference
+     *
+     * @return array An array of event subscriptions matching the reference
      */
-    public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = []): array
+    public function findByRef(string $reference): array
     {
+        $qb = $this->db->getQueryBuilder();
+
+        $qb->select('*')
+            ->from('openconnector_event_subscriptions')
+            ->where(
+                $qb->expr()->eq('reference', $qb->createNamedParameter($reference))
+            );
+
+        return $this->findEntities(query: $qb);
+
+    }//end findByRef()
+
+
+    /**
+     * Find all subscriptions matching the given criteria.
+     *
+     * @param integer|null $limit   Maximum number of results
+     * @param integer|null $offset  Number of records to skip
+     * @param array|null   $filters Key-value pairs for filtering
+     *
+     * @return array An array of EventSubscription objects
+     */
+    public function findAll(
+        ?int $limit=null,
+        ?int $offset=null,
+        ?array $filters=[]
+    ): array {
         $qb = $this->db->getQueryBuilder();
 
         $qb->select('*')
@@ -84,7 +114,7 @@ class EventSubscriptionMapper extends QBMapper
         foreach ($filters as $filter => $value) {
             if ($value === 'IS NOT NULL') {
                 $qb->andWhere($qb->expr()->isNotNull($filter));
-            } elseif ($value === 'IS NULL') {
+            } else if ($value === 'IS NULL') {
                 $qb->andWhere($qb->expr()->isNull($filter));
             } else {
                 $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
@@ -92,33 +122,50 @@ class EventSubscriptionMapper extends QBMapper
         }
 
         return $this->findEntities($qb);
-    }
+
+    }//end findAll()
+
 
     /**
-     * Create a new subscription from array data
+     * Create a new subscription from array data.
      *
      * @param array $data Subscription data
-     * @return EventSubscription
+     *
+     * @return EventSubscription The newly created event subscription
      */
     public function createFromArray(array $data): EventSubscription
     {
-        $subscription = new EventSubscription();
-        $subscription->setUuid(Uuid::v4()->toString());
-        $subscription->hydrate($data);
-        return $this->insert($subscription);
-    }
+        $obj = new EventSubscription();
+        $obj->hydrate($data);
+
+        // Set uuid.
+        if ($obj->getUuid() === null) {
+            $obj->setUuid(Uuid::v4());
+        }
+
+        return $this->insert(entity: $obj);
+
+    }//end createFromArray()
+
 
     /**
-     * Update an existing subscription
+     * Update an existing subscription.
      *
-     * @param int $id Subscription ID
-     * @param array $data Updated subscription data
-     * @return EventSubscription
+     * @param integer $id   Subscription ID
+     * @param array   $data Updated subscription data
+     *
+     * @return EventSubscription The updated event subscription
+     * @throws \OCP\AppFramework\Db\DoesNotExistException If the subscription is not found
+     * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException If more than one subscription is found
      */
     public function updateFromArray(int $id, array $data): EventSubscription
     {
-        $subscription = $this->find($id);
-        $subscription->hydrate($data);
-        return $this->update($subscription);
-    }
-}
+        $obj = $this->find($id);
+        $obj->hydrate($data);
+
+        return $this->update($obj);
+
+    }//end updateFromArray()
+
+
+}//end class

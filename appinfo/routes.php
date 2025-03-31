@@ -36,6 +36,7 @@ return [
 		['name' => 'mappings#getObjects', 'url' => '/api/mappings/objects', 'verb' => 'GET'],
 
 		// Running endpoints - allow any path after /api/endpoints/
+        ['name' => 'endpoints#preflighted_cors', 'url' => '/api/endpoint/{_path}', 'verb' => 'OPTIONS', 'requirements' => ['path' => '.+']],
 		['name' => 'endpoints#handlePath', 'postfix' => 'read', 'url' => '/api/endpoint/{_path}', 'verb' => 'GET', 'requirements' => ['_path' => '.+']],
 		['name' => 'endpoints#handlePath', 'postfix' => 'update', 'url' => '/api/endpoint/{_path}', 'verb' => 'PUT', 'requirements' => ['_path' => '.+']],
 		['name' => 'endpoints#handlePath', 'postfix' => 'partialupdate', 'url' => '/api/endpoint/{_path}', 'verb' => 'PATCH', 'requirements' => ['_path' => '.+']],

@@ -26,7 +26,7 @@ export class Consumer extends ReadonlyBaseClass implements TConsumer {
 			domains: consumer.domains || [],
 			ips: consumer.ips || [],
 			authorizationType: consumer.authorizationType || 'basic',
-			authorizationConfiguration: consumer.authorizationConfiguration || [],
+			authorizationConfiguration: consumer.authorizationConfiguration || null,
 			created: getValidISOstring(consumer.created) ?? '',
 			updated: getValidISOstring(consumer.updated) ?? '',
 		}

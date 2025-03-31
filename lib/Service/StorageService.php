@@ -1,4 +1,19 @@
 <?php
+/**
+ * Service for handling file storage operations.
+ *
+ * This service provides functionality for managing file storage operations,
+ * including uploading files, creating and managing file parts, and handling
+ * temporary storage for uploads.
+ *
+ * @category  Service
+ * @package   OpenConnector
+ * @author    Conduction Development Team <dev@conduction.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @version   GIT: 1.0.0
+ * @link      https://OpenConnector.app
+ */
 
 namespace OCA\OpenConnector\Service;
 
@@ -26,49 +41,95 @@ use OCP\IUserSession;
 use OCP\Lock\LockedException;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * Service for handling file storage operations.
+ */
 class StorageService
 {
-	private ICache $cache;
 
-	public const CACHE_KEY = 'openconnector-upload';
-	public const UPLOAD_TARGET_PATH = 'upload-target-path';
-	public const UPLOAD_TARGET_ID = 'upload-target-id';
+    /**
+     * Cache implementation used for storing upload data.
+     *
+     * @var ICache
+     */
+    private ICache $cache;
 
+    /**
+     * Cache key for storing upload-related data.
+     *
+     * @var string
+     */
+    public const CACHE_KEY = 'openconnector-upload';
+
+    /**
+     * Key for storing upload target path in cache.
+     *
+     * @var string
+     */
+    public const UPLOAD_TARGET_PATH = 'upload-target-path';
+
+    /**
+     * Key for storing upload target ID in cache.
+     *
+     * @var string
+     */
+    public const UPLOAD_TARGET_ID = 'upload-target-id';
+
+    /**
+     * Key for storing the number of parts in a multi-part upload.
+     *
+     * @var string
+     */
     public const NUMBER_OF_PARTS = 'number-of-parts';
 
 
     /**
      * Class constructor
      *
-     * @param IRootFolder $rootFolder The Nextcloud rootfolder
-     * @param IAppConfig $config The configuration of the openconnector application.
+     * @param IRootFolder   $rootFolder   The Nextcloud rootfolder.
+     * @param IAppConfig    $config       The configuration of the openconnector application.
      * @param ICacheFactory $cacheFactory The cache factory.
-     * @param IUserSession $userSession The user session.
+     * @param IUserSession  $userSession  The user session.
+     *
+     * @return void
      */
-	public function __construct(
-		private readonly IRootFolder $rootFolder,
-		private readonly IAppConfig $config,
-		ICacheFactory $cacheFactory,
+    public function __construct(
+        private readonly IRootFolder $rootFolder,
+        private readonly IAppConfig $config,
+        ICacheFactory $cacheFactory,
         private readonly IUserSession $userSession,
-	) {
-		$this->cache = $cacheFactory->createDistributed(self::CACHE_KEY);
-	}
+    ) {
+        $this->cache = $cacheFactory->createDistributed(self::CACHE_KEY);
+
+    }//end __construct()
+
 
     /**
      * Create partial file upload. This will create the empty target file and a folder for the temporary files.
      *
-     * @param string $path The path the target file will be written in.
+     * @param string $path     The path the target file will be written in.
      * @param string $fileName The filename of the target file.
-     * @param int $size The total size of the file once all parts have been uploaded.
+     * @param int    $size     The total size of the file once all parts have been uploaded.
      *
      * @return array The file part objects containing order number, size and id.
-     * @throws NotFoundException
-     * @throws InvalidPathException|NotPermittedException
-	 */
-	public function createUpload(string $path, string $fileName, int $size): array
-	{
+     *
+     * @throws NotFoundException If the path or folder cannot be found.
+     * @throws InvalidPathException If the path is invalid.
+     * @throws NotPermittedException If the user doesn't have permission to create files.
+     *
+     * @psalm-return array<int, array<string, mixed>>
+     */
+    public function createUpload(string $path, string $fileName, int $size): array
+    {
         $currentUser = $this->userSession->getUser();
-        $userFolder = $this->rootFolder->getUserFolder(userId: $currentUser ? $currentUser->getUID() : 'Guest');
+
+        // Set userId to 'Guest' if no current user.
+        $userId = 'Guest';
+        if ($currentUser !== null) {
+            $userId = $currentUser->getUID();
+        }
+
+        $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
 
         $uploadFolder = $userFolder->get($path);
 
@@ -77,56 +138,79 @@ class StorageService
         $numParts = ceil($size / $partSize);
 
         $remainingSize = $size;
-        $parts = [];
+        $parts         = [];
 
         $target = $uploadFolder->newFile($fileName);
 
         $partsFolder = $uploadFolder->newFolder("{$fileName}_parts");
 
-
         for ($i = 0; $i < $numParts; $i++) {
-            $partNumber = $i + 1;
+            $partNumber = ($i + 1);
             $partUuid   = Uuid::v4();
 
-            $this->cache->set("upload_$partUuid", [
-                self::UPLOAD_TARGET_ID => $target->getId(),
-                self::UPLOAD_TARGET_PATH => $partsFolder->getPath(),
-                self::NUMBER_OF_PARTS => $numParts,
-            ]);
+            $this->cache->set(
+                "upload_$partUuid",
+                [
+                    self::UPLOAD_TARGET_ID   => $target->getId(),
+                    self::UPLOAD_TARGET_PATH => $partsFolder->getPath(),
+                    self::NUMBER_OF_PARTS    => $numParts,
+                ]
+            );
 
-            $parts[] = [
+            // Determine the part size based on remaining size.
+            $currentPartSize = $partSize;
+            if ($partSize > $remainingSize) {
+                $currentPartSize = $remainingSize;
+            }
+
+            $parts[]        = [
                 'id'    => $partUuid,
-                'size'  => $partSize < $remainingSize ? $partSize : $remainingSize,
+                'size'  => $currentPartSize,
                 'order' => $partNumber,
             ];
             $remainingSize -= $partSize;
-        }
+        }//end for
 
         return $parts;
-	}
 
-	/**
-	 * Write a file to a specified path.
-	 *
-	 * @param string $path The path to write the file to.
-	 * @param string $fileName The filename of the file to write.
-	 * @param string $content The content of the file.
-	 *
-	 * @return File The resulting file.
-	 * @throws GenericFileException
-	 * @throws LockedException
-	 * @throws NotFoundException
-	 * @throws NotPermittedException
-	 */
+    }//end createUpload()
+
+
+    /**
+     * Write a file to a specified path.
+     *
+     * @param string $path     The path to write the file to.
+     * @param string $fileName The filename of the file to write.
+     * @param string $content  The content of the file.
+     *
+     * @return File The resulting file.
+     *
+     * @throws GenericFileException If there is a generic file error.
+     * @throws LockedException If the file is locked.
+     * @throws NotFoundException If the path cannot be found.
+     * @throws NotPermittedException If the user doesn't have permission to write.
+     *
+     * @psalm-return File
+     */
     public function writeFile(string $path, string $fileName, string $content): File
     {
         $currentUser = $this->userSession->getUser();
-        $userFolder = $this->rootFolder->getUserFolder(userId: $currentUser ? $currentUser->getUID() : 'Guest');
+
+        // Set userId to 'Guest' if no current user.
+        $userId = 'Guest';
+        if ($currentUser !== null) {
+            $userId = $currentUser->getUID();
+        }
+
+        $userFolder = $this->rootFolder->getUserFolder(userId: $userId);
 
         $uploadFolder = $userFolder->get($path);
 
         try {
-            /** @var File $target */
+            /*
+             * @var File $target
+             */
+
             $target = $uploadFolder->get($fileName);
             $target->putContent($content);
         } catch (NotFoundException $e) {
@@ -134,35 +218,44 @@ class StorageService
         }
 
         return $target;
-    }
 
-	/**
-	 * Reconcile partial files into one file if all parts of a file are present.
-	 *
-	 * @param Node[] $folderContents The contents of the folder containing the partial files.
-	 * @param File $target The file to write the contents to.
-	 * @param int $numParts
-	 *
-	 * @return bool Whether reconciling the file has been successful.
-	 * @throws GenericFileException
-	 * @throws LockedException
-	 * @throws NotFoundException
-	 * @throws NotPermittedException
-	 * @throws InvalidPathException
-	 */
+    }//end writeFile()
+
+
+    /**
+     * Reconcile partial files into one file if all parts of a file are present.
+     *
+     * @param Node[] $folderContents The contents of the folder containing the partial files.
+     * @param File   $target         The file to write the contents to.
+     * @param int    $numParts       The total number of parts expected.
+     *
+     * @return bool Whether reconciling the file has been successful.
+     *
+     * @throws GenericFileException If there is a generic file error.
+     * @throws LockedException If the file is locked.
+     * @throws NotFoundException If the file cannot be found.
+     * @throws NotPermittedException If the user doesn't have permission.
+     * @throws InvalidPathException If a path is invalid.
+     *
+     * @psalm-param array<int, Node> $folderContents
+     */
     private function attemptCloseUpload(array $folderContents, File $target, int $numParts): bool
     {
-        $contentFilenames = array_map(function ($node) {
-            return $node->getName();
-        }, $folderContents);
+        $contentFilenames = array_map(
+            function ($node) {
+                return $node->getName();
+            },
+            $folderContents
+        );
 
         $folder = $folderContents[0]->getParent();
 
         $files = array_combine($contentFilenames, $folderContents);
         ksort($files);
 
-        $contentFilenames = array_filter($contentFilenames,
-            function($string) use ($target) {
+        $contentFilenames = array_filter(
+            $contentFilenames,
+            function ($string) use ($target) {
                 $result = preg_match("#^[0-9]+\.part\.{$target->getExtension()}$#", $string);
                 return $result !== false && $result > 0;
             }
@@ -170,10 +263,12 @@ class StorageService
         asort($contentFilenames);
         $sortedFilenames = array_values($contentFilenames);
 
-        $contentFilenamesWithoutExtensions = array_map(function($filename) use ($target) {
-            return intval(str_replace(search: ".part.{$target->getExtension()}", replace: '', subject: $filename));
-
-        }, $contentFilenames);
+        $contentFilenamesWithoutExtensions = array_map(
+            function ($filename) use ($target) {
+                return intval(str_replace(search: ".part.{$target->getExtension()}", replace: '', subject: $filename));
+            },
+            $contentFilenames
+        );
 
         if ($contentFilenamesWithoutExtensions !== range(start: 1, end: $numParts)) {
             return false;
@@ -184,8 +279,8 @@ class StorageService
             if ($filePart instanceof File === false) {
                 continue;
             }
-            $totalContent .= $filePart->getContent();
 
+            $totalContent .= $filePart->getContent();
 
             $filePart->delete();
         }
@@ -197,24 +292,29 @@ class StorageService
         $target->putContent($totalContent);
 
         return true;
-    }
 
-	/**
-	 * Write a partial file to a temporary file and try to reconcile them if all file parts are uploaded.
-	 *
-	 * @param int $partId
-	 * @param string $partUuid
-	 * @param string $data
-	 *
-	 * @return bool
-	 * @throws GenericFileException
-	 * @throws InvalidPathException
-	 * @throws LockedException
-	 * @throws NotFoundException
-	 * @throws NotPermittedException
-	 */
-	public function writePart(int $partId, string $partUuid, string $data): bool
-	{
+    }//end attemptCloseUpload()
+
+
+    /**
+     * Write a partial file to a temporary file and try to reconcile them if all file parts are uploaded.
+     *
+     * @param int    $partId   The ID of the part being written.
+     * @param string $partUuid The UUID of the part being written.
+     * @param string $data     The data to write to the part.
+     *
+     * @return bool Whether the part was written successfully.
+     *
+     * @throws GenericFileException If there is a generic file error.
+     * @throws InvalidPathException If a path is invalid.
+     * @throws LockedException If a file is locked.
+     * @throws NotFoundException If a file cannot be found.
+     * @throws NotPermittedException If the user doesn't have permission.
+     *
+     * @psalm-return bool
+     */
+    public function writePart(int $partId, string $partUuid, string $data): bool
+    {
         $partData = $this->cache->get("upload_$partUuid");
 
         $targetFile  = $this->rootFolder->getById($partData[self::UPLOAD_TARGET_ID])[0];
@@ -225,9 +325,10 @@ class StorageService
             throw new NotFoundException('target folder is not a folder');
         }
 
-        if ($targetFile instanceof  File === false) {
+        if ($targetFile instanceof File === false) {
             throw new NotFoundException('target file is not a file');
         }
+
         $partsFolder->newFile("$partId.part.{$targetFile->getExtension()}", $data);
 
         $this->rootFolder->get($partsFolder->getPath());
@@ -238,6 +339,9 @@ class StorageService
             $this->attemptCloseUpload($folderContents, $targetFile, $numParts);
         }
 
-		return true;
-	}
-}
+        return true;
+
+    }//end writePart()
+
+
+}//end class

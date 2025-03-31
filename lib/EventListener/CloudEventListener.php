@@ -1,4 +1,18 @@
 <?php
+/**
+ * OpenConnector Cloud Event Listener
+ *
+ * This file contains the event listener for forwarding object events to the
+ * EventService in the OpenConnector application.
+ *
+ * @category  EventListener
+ * @package   OpenConnector
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ * @version   GIT: <git-id>
+ * @link      https://OpenConnector.app
+ */
 
 namespace OCA\OpenConnector\EventListener;
 
@@ -15,19 +29,29 @@ use Psr\Log\LoggerInterface;
  */
 class CloudEventListener implements IEventListener
 {
+
+
     /**
-     * @param EventService $eventService Service for managing CloudEvents
-     * @param LoggerInterface $logger Logger instance
+     * Constructor for CloudEventListener
+     *
+     * @param EventService    $eventService Service for managing CloudEvents
+     * @param LoggerInterface $logger       Logger instance
+     *
+     * @return void
      */
     public function __construct(
         private readonly EventService $eventService,
         private readonly LoggerInterface $logger
-    ) {}
+    ) {
+
+    }//end __construct()
+
 
     /**
      * Handle incoming events by forwarding them to the EventService
      *
      * @param Event $event The incoming event
+     *
      * @return void
      */
     public function handle(Event $event): void
@@ -42,16 +66,22 @@ class CloudEventListener implements IEventListener
         try {
             if ($event instanceof ObjectCreatedEvent) {
                 $this->eventService->handleObjectCreated($event->getObject());
-            } elseif ($event instanceof ObjectUpdatedEvent) {
+            } else if ($event instanceof ObjectUpdatedEvent) {
                 $this->eventService->handleObjectUpdated($event->getOldObject(), $event->getNewObject());
             } else {
                 $this->eventService->handleObjectDeleted($event->getObject());
             }
         } catch (\Exception $e) {
-            $this->logger->error('Failed to process object event: ' . $e->getMessage(), [
-                'exception' => $e,
-                'event' => get_class($event)
-            ]);
+            $this->logger->error(
+                'Failed to process object event: '.$e->getMessage(),
+                [
+                    'exception' => $e,
+                    'event'     => get_class($event),
+                ]
+            );
         }
-    }
-} 
+
+    }//end handle()
+
+
+}//end class

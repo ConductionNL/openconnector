@@ -1,5 +1,5 @@
 <script setup>
-import { synchronizationStore, navigationStore, logStore } from '../../store/store.js'
+import { synchronizationStore, navigationStore, logStore, ruleStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -64,6 +64,10 @@ import { synchronizationStore, navigationStore, logStore } from '../../store/sto
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
 						<b>id:</b>
+						<p>{{ synchronizationStore.synchronizationItem.id }}</p>
+					</div>
+					<div class="gridContent gridFullWidth">
+						<b>uuid:</b>
 						<p>{{ synchronizationStore.synchronizationItem.uuid }}</p>
 					</div>
 					<div class="gridContent">
@@ -259,6 +263,43 @@ import { synchronizationStore, navigationStore, logStore } from '../../store/sto
 								No target configs found
 							</div>
 						</BTab>
+						<BTab title="Rules">
+							<div v-if="filteredRuleList.length">
+								<NcListItem v-for="(rule, i) in filteredRuleList"
+									:key="`${rule.id}${i}`"
+									:name="rule.name"
+									:bold="false"
+									:force-display-actions="true"
+									:details="rule.version"
+									:active="false">
+									<template #icon>
+										<FileImportOutline
+											disable-menu
+											:size="44" />
+									</template>
+									<template #subname>
+										{{ rule.description }}
+									</template>
+									<template #actions>
+										<NcActionButton @click="ruleStore.setRuleItem(rule); navigationStore.setSelected('rules')">
+											<template #icon>
+												<EyeOutline :size="20" />
+											</template>
+											View
+										</NcActionButton>
+										<NcActionButton @click="ruleStore.setRuleItem(rule); navigationStore.setModal('editRule')">
+											<template #icon>
+												<Pencil :size="20" />
+											</template>
+											Edit
+										</NcActionButton>
+									</template>
+								</NcListItem>
+							</div>
+							<div v-if="!filteredRuleList.length" class="tabPanel">
+								No rules found
+							</div>
+						</BTab>
 						<BTab title="Logs">
 							<div v-if="synchronizationStore.synchronizationLogs?.length">
 								<NcListItem v-for="(log, i) in [...synchronizationStore.synchronizationLogs].reverse()"
@@ -309,6 +350,7 @@ import DatabaseSettingsOutline from 'vue-material-design-icons/DatabaseSettingsO
 import CardBulletedSettingsOutline from 'vue-material-design-icons/CardBulletedSettingsOutline.vue'
 import Play from 'vue-material-design-icons/Play.vue'
 import FileExportOutline from 'vue-material-design-icons/FileExportOutline.vue'
+import FileImportOutline from 'vue-material-design-icons/FileImportOutline.vue'
 
 import getValidISOstring from '../../services/getValidISOstring.js'
 
@@ -326,9 +368,22 @@ export default {
 			contracts: [],
 		}
 	},
+	computed: {
+		filteredRuleList() {
+			return ruleStore.ruleList.filter((rule) => synchronizationStore.synchronizationItem?.actions?.includes(rule.id))
+		},
+		synchronizationId: () => synchronizationStore.synchronizationItem.id,
+	},
+	watch: {
+		synchronizationId() {
+			synchronizationStore.refreshSynchronizationLogs(synchronizationStore.synchronizationItem.id)
+			synchronizationStore.refreshSynchronizationContracts(synchronizationStore.synchronizationItem.id)
+		},
+	},
 	mounted() {
 		synchronizationStore.refreshSynchronizationLogs(synchronizationStore.synchronizationItem.id)
 		synchronizationStore.refreshSynchronizationContracts(synchronizationStore.synchronizationItem.id)
+		ruleStore.refreshRuleList()
 	},
 	methods: {
 		viewLog(log) {

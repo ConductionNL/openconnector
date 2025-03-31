@@ -16,17 +16,5 @@
     "currentPage": 1,
     "targetId": "1/1",
     "targetType": "register/schema",
-    "conditions": {
-        "and": [
-            {
-                "var": "values['attribute.woo_categorie']"
-            },
-            {
-                "var": "values['case.subject']"
-            },
-            {
-                "var": "values['attribute.woo_publicatiedatum']"
-            }
-        ]
-    }
+    "conditions": {"and":[{"!!":{"var":"values.attribute&#46;woo_categorie"}},{"!!":{"var":"values.case&#46;subject"}},{"!!":{"var":"values.attribute&#46;woo_publicatiedatum"}}]}
 }
