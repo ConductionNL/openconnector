@@ -708,7 +708,7 @@ class SynchronizationService
 	 * @return SynchronizationContract The updated synchronization contract with the modified target ID.
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface If an error occurs while interacting with the object service or processing the data.
 	 */
-	private function updateTargetOpenRegister(SynchronizationContract $synchronizationContract, Synchronization $synchronization, ?array $targetObject = [], ?string $action = 'save'): SynchronizationContract
+	private function updateTargetOpenRegister(SynchronizationContract $synchronizationContract, Synchronization $synchronization, ?array &$targetObject = [], ?string $action = 'save'): SynchronizationContract
 	{
 		// Setup the object service
 		$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
@@ -953,7 +953,7 @@ class SynchronizationService
 	 * @throws \OCP\DB\Exception
 	 * @throws Exception
 	 */
-	public function updateTarget(SynchronizationContract $synchronizationContract, ?array $targetObject = [], ?string $action = 'save'): SynchronizationContract
+	public function updateTarget(SynchronizationContract $synchronizationContract, ?array &$targetObject = [], ?string $action = 'save'): SynchronizationContract
 	{
 		// The function can be called solo set let's make sure we have the full synchronization object
 		if (isset($synchronization) === false) {
@@ -1665,6 +1665,10 @@ class SynchronizationService
             $filename = $this->getFilenameFromHeaders(response: $response, result: $result);
         }
 
+		if ($filename === null) {
+            throw new Exception('Could not write file: no filename could be determined');
+        }
+
 		// Write file with OpenRegister ObjectService.
 		$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
 		$file = $objectService->addFile(object: $objectId, fileName: $filename, base64Content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false);
@@ -1709,6 +1713,84 @@ class SynchronizationService
     }
 
 	/**
+	 * Extracts an endpoint from the given data and optionally retrieves a filename and tags.
+	 *
+	 * This function checks if a sub-object file path exists in the configuration and retrieves
+	 * the relevant endpoint using dot notation. It also extracts filename and tag information
+	 * if available.
+	 *
+	 * @param array  $config   The configuration array, which may include 'subObjectFilepath' and 'tags'.
+	 * @param mixed  $endpoint The data containing the endpoint, which can be a string or an array.
+	 * @param string|null &$filename A reference to the filename (if available) that will be updated.
+	 * @param array|null  &$tags     A reference to an array of tags (if available) that will be updated.
+	 * @param string|null  &$objectId     A reference to the object id (if available) that the file will be attached to.
+	 *
+	 * @return string The extracted endpoint from the data.
+	 */
+	private function getFileContext(array $config, mixed $endpoint, ?string &$filename = null, ?array &$tags = [], ?string &$objectId = null)
+	{
+		$dataDot = new Dot($endpoint);
+
+		if (isset($config['objectIdPath']) === true) {
+			$objectId = $dataDot->get($config['objectIdPath']);
+		}
+
+		if (isset($config['subObjectFilepath']) === true) {
+			$endpoint = $dataDot->get($config['subObjectFilepath']);
+		}
+
+		if (is_array($endpoint) === true) {
+			if (isset($endpoint['label']) === true && isset($config['tags']) === true &&
+				in_array(needle: $endpoint['label'], haystack: $config['tags']) === true) {
+				$tags = [$endpoint['label']];
+			}
+			if (isset($endpoint['filename']) === true) {
+				$filename = $endpoint['filename'];
+			}
+
+			return $endpoint['endpoint'];
+		}
+
+		return $endpoint;
+	}
+
+	/**
+	 * Determines the type of a given array.
+	 *
+	 * This function identifies whether the given input is:
+	 * - Not an array
+	 * - An associative array (keys are not sequential numeric values)
+	 * - A multidimensional array (contains nested arrays)
+	 * - A simple indexed array (sequential numeric keys)
+	 *
+	 * @param mixed $array The input to be checked.
+	 *
+	 * @return string A string indicating the type of the array:
+	 *                "Not array", "Associative array", "Multidimensional array", or "Indexed array".
+	 */
+	private function getArrayType(mixed $array): string
+	{
+		// Check if not array
+		if (is_array($array) === false) {
+			return "Not array";
+		}
+
+		// Check for an associative array
+		if (array_keys($array) !== range(0, count($array) - 1)) {
+			return "Associative array";
+		}
+
+		// Check for a multidimensional array
+		if (count($array) !== count($array, COUNT_RECURSIVE)) {
+			return "Multidimensional array";
+		}
+
+		// Otherwise, it's an indexed array
+		return "Indexed array";
+	}
+
+
+	/**
 	 * Process a rule to fetch a file from an external source.
 	 *0
 	 * @param Rule $rule The rule to process.
@@ -1736,37 +1818,52 @@ class SynchronizationService
 
 		$source = $this->sourceMapper->find($config['source']);
 		$dataDot = new Dot($data);
-		$endpoint = $dataDot[$config['filePath']];
+		$endpoint = $dataDot->get($config['filePath']);
 
 		if ($endpoint === null) {
 			return $dataDot->jsonSerialize();
 		}
 
-		// If we get one endpoint, fetch that file, otherwise fetch all files from endpoint array.
-		if (is_array($endpoint) === true) {
-			$result = [];
-			foreach ($endpoint as $key => $value) {
-
-                // Check for tags
-                $tags = [];
-                if (is_array($value) === true) {
-                    $endpoint = $value['endpoint'];
-                    if (isset($value['label']) === true && isset($config['tags']) === true &&
-                        in_array(needle: $value['label'], haystack: $config['tags']) === true) {
-                        $tags = [$value['label']];
-                    }
-                    if (isset($value['filename']) === true) {
-                        $filename = $value['filename'];
-                    }
-                } else {
-                    $endpoint = $value;
-                }
-
-				$result[$key] = $this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, filename: $filename);
-			}
-			$dataDot[$config['filePath']] = $result;
-		} else {
-			$dataDot[$config['filePath']] = $this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId);
+		$filename = null;
+		$tags = [];
+		switch ($this->getArrayType($endpoint)) {
+			// Single file endpoint
+			case 'Not array':
+				$dataDot[$config['filePath']] = $this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId);
+				break;
+			// Array of object that has file(s)
+			case 'Associative array':
+				$endpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId);
+				if ($endpoint === null) {
+					throw new Exception('Could not get endpoint for fetch file rule' . $rule->getId());
+				}
+				$dataDot[$config['filePath']] = $this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, filename: $filename);
+				break;
+			// Array of object(s) that has file(s)
+			case "Multidimensional array":
+				$result = [];
+				foreach ($endpoint as $object) {
+					$filename = null;
+					$tags = [];
+					$objectId = null;
+					$endpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId);
+					if ($endpoint === null) {
+						throw new Exception('Could not get endpoint for fetch file rule' . $rule->getId());
+					}
+					$result[] = $this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, filename: $filename);
+				}
+				$dataDot[$config['filePath']] = $result;
+				break;
+			// Array of just endpoints
+			case "Indexed array":
+				$result = [];
+				foreach ($endpoint as $key => $childEndpoint) {
+					$filename = null;
+					$tags = [];
+					$result[] = $this->fetchFile(source: $source, endpoint: $childEndpoint, config: $config, objectId: $objectId);
+				}
+				$dataDot[$config['filePath']] = $result;
+				break;
 		}
 
 		return $dataDot->jsonSerialize();
