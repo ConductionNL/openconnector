@@ -15,6 +15,9 @@ bin/console text eol=lf
 *.ico binary
 *.png binary
 
+# Keep info.xml from main branch during merges and hide in pull requests
+info.xml merge=ours linguist-generated=true
+
 .github export-ignore
 .travis.yml export-ignore
 LICENSE export-ignore
