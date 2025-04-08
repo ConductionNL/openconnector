@@ -15,7 +15,7 @@ bin/console text eol=lf
 *.ico binary
 *.png binary
 
-info.xml merge=ours
+/appinfo/info.xml merge=ours
 
 .github export-ignore
 .travis.yml export-ignore
