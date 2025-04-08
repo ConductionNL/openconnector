@@ -420,6 +420,8 @@ class EndpointService
         int                                              &$status = 200
     ): Entity|array
     {
+        $extend = $requestParams['extend'] ?? $requestParams['_extend'] ?? null;
+
         if (isset($pathParams['id']) === true && $pathParams['id'] === end($pathParams)) {
             return $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id']));
 
@@ -477,7 +479,9 @@ class EndpointService
 
         $result = $mapper->findAllPaginated(requestParams: $parameters);
 
-        $result['results'] = array_map(function ($object) use ($mapper) {
+        $result['results'] = array_map(function ($object) use ($mapper, $extend) {
+            $object = is_array($object) ? $object : $object->jsonSerialize();
+            $object = $mapper->renderEntity(entity: $object, extend: $extend);
             return $this->replaceInternalReferences(mapper: $mapper, serializedObject: $object);
         }, $result['results']);
 
