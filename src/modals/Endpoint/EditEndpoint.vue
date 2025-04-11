@@ -42,33 +42,22 @@ import { Endpoint } from '../../entities/index.js'
 						label="Endpoint Regex"
 						:value.sync="endpointItem.endpointRegex" />
 
-					<div>
-						<NcSelect v-bind="methodOptions"
-							v-model="methodOptions.value" />
-					</div>
+					<NcSelect v-bind="methodOptions"
+						v-model="methodOptions.value" />
 
-					<div>
-						<NcSelect v-bind="targetTypeOptions"
-							v-model="targetTypeOptions.value" />
-					</div>
+					<NcTextField
+						label="Target Type"
+						:value.sync="endpointItem.targetType" />
 
-					<div>
-						<NcSelect v-bind="registerOptions"
-							v-model="registerOptions.value"
-							input-label="Register"
-							:disabled="registersLoading" />
-
-						<NcSelect v-bind="schemaOptions"
-							v-model="schemaOptions.value"
-							:disabled="!registerOptions.value || schemasLoading"
-							input-label="Schema" />
-					</div>
+					<NcTextField
+						label="Target Id"
+						:value.sync="endpointItem.targetId" />
 				</div>
 			</form>
 
 			<NcButton
 				v-if="success === null"
-				:disabled="loading || !endpointItem.name || !registerOptions.value || !schemaOptions.value"
+				:disabled="loading || !endpointItem.name"
 				type="primary"
 				@click="editEndpoint()">
 				<template #icon>
@@ -92,7 +81,6 @@ import {
 	NcTextArea,
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
-import _ from 'lodash'
 
 export default {
 	name: 'EditEndpoint',
@@ -133,48 +121,16 @@ export default {
 					label: 'GET',
 				},
 			},
-			targetTypeOptions: {
-				inputLabel: 'Target Type',
-				options: [
-					{ label: 'register/schema' },
-				],
-				value: {
-					label: 'register/schema',
-				},
-			},
-			registerOptions: {
-				options: [],
-				value: null,
-			},
-			schemaOptions: {
-				options: [],
-				value: null,
-			},
-			schemas: [],
 			hasUpdated: false,
 			closeTimeoutFunc: null,
-			registersLoading: false,
-			schemasLoading: false,
-			initialSchemaSet: false,
 		}
-	},
-	watch: {
-		'registerOptions.value'(newVal) {
-			if (this.initialSchemaSet) {
-				this.schemaOptions.value = null
-			}
-			this.setSchemaOptions(newVal)
-		},
 	},
 	mounted() {
 		this.initializeEndpointItem()
-		this.fetchRegisters()
-		this.fetchSchemas()
 	},
 	updated() {
 		if (navigationStore.modal === 'editEndpoint' && !this.hasUpdated) {
 			this.initializeEndpointItem()
-			this.fetchRegisters()
 			this.hasUpdated = true
 		}
 	},
@@ -189,7 +145,7 @@ export default {
 					endpointArray: endpointStore.endpointItem.endpointArray.join(', '),
 					endpointRegex: endpointStore.endpointItem.endpointRegex,
 					method: endpointStore.endpointItem.method,
-					targetType: this.targetTypeOptions.options.find(i => i.label === endpointStore.endpointItem.targetType),
+					targetType: endpointStore.endpointItem.targetType,
 					targetId: endpointStore.endpointItem.targetId,
 				}
 
@@ -218,123 +174,7 @@ export default {
 				targetId: '',
 			}
 			this.methodOptions.value = { label: 'GET' }
-			this.targetTypeOptions.value = { label: 'register/schema' }
-			this.initialSchemaSet = false
 		},
-		async fetchRegisters() {
-			this.registersLoading = true
-
-			// checking if OpenRegister is installed
-			console.info('Fetching registers from Open Register')
-			const response = await fetch('/index.php/apps/openregister/api/registers', {
-				headers: {
-					accept: '*/*',
-					'accept-language': 'en-US,en;q=0.9,nl;q=0.8',
-					'cache-control': 'no-cache',
-					pragma: 'no-cache',
-					'x-requested-with': 'XMLHttpRequest',
-				},
-				referrerPolicy: 'no-referrer',
-				body: null,
-				method: 'GET',
-				mode: 'cors',
-				credentials: 'include',
-			})
-
-			if (!response.ok) {
-				console.info('Open Register is not installed')
-				this.schemasLoading = false
-				this.$emit('open-register', {
-					isInstalled: false,
-				})
-				return
-			}
-
-			const responseData = (await response.json()).results
-
-			const registerId = endpointStore.endpointItem?.targetId?.split('/')[0]
-
-			const selectedRegister = responseData.find(register => _.toString(register.id) === registerId)
-
-			this.registerOptions = {
-				options: responseData.map((register) => ({
-					id: register.id,
-					label: register.title,
-					schemas: register.schemas,
-				})),
-				value: selectedRegister
-					? {
-						label: selectedRegister.title,
-						id: selectedRegister.id,
-						schemas: selectedRegister.schemas,
-					}
-					: null,
-			}
-
-			this.registersLoading = false
-		},
-		async fetchSchemas() {
-			this.schemasLoading = true
-
-			// checking if OpenRegister is installed
-			console.info('Fetching schemas from Open Register')
-			const response = await fetch('/index.php/apps/openregister/api/schemas', {
-				headers: {
-					accept: '*/*',
-					'accept-language': 'en-US,en;q=0.9,nl;q=0.8',
-					'cache-control': 'no-cache',
-					pragma: 'no-cache',
-					'x-requested-with': 'XMLHttpRequest',
-				},
-				referrerPolicy: 'no-referrer',
-				body: null,
-				method: 'GET',
-				mode: 'cors',
-				credentials: 'include',
-			})
-
-			if (!response.ok) {
-				console.info('Open Register is not installed')
-				this.schemasLoading = false
-				this.$emit('open-register', {
-					isInstalled: false,
-				})
-				return
-			}
-
-			const responseData = (await response.json()).results
-
-			this.schemas = responseData
-
-			this.schemasLoading = false
-		},
-
-		setSchemaOptions(register) {
-			const schemaId = endpointStore.endpointItem?.targetId.split('/')[1]
-
-			const selectedSchema = this.schemas.find(schema => _.toString(schema.id) === schemaId)
-
-			const selectableSchemas = this.schemas.filter(schema => register?.schemas?.includes(schema.id))
-
-			const isSchemaInSelectableSchemas = selectableSchemas.includes(selectedSchema)
-
-			this.schemaOptions = {
-				options: selectableSchemas.map((schema) => ({
-					id: schema.id,
-					label: schema.title,
-				})),
-				value: !this.initialSchemaSet && isSchemaInSelectableSchemas && selectedSchema
-					? {
-						label: selectedSchema.title,
-						id: selectedSchema.id,
-					}
-					: null,
-			}
-
-			this.initialSchemaSet = true
-
-		},
-
 		async editEndpoint() {
 			this.loading = true
 
@@ -342,8 +182,6 @@ export default {
 				...this.endpointItem,
 				endpointArray: this.endpointItem.endpointArray.split(/ *, */g), // split on comma's, also take any spaces into consideration
 				method: this.methodOptions.value.label,
-				targetType: this.targetTypeOptions.value.label,
-				targetId: `${this.registerOptions.value.id}/${this.schemaOptions.value.id}`,
 			})
 
 			await endpointStore.saveEndpoint(endpointItem)
