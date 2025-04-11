@@ -8,21 +8,37 @@ use OCP\AppFramework\Db\Entity;
 
 class JobLog extends Entity implements JsonSerializable
 {
+
     protected ?string $uuid = null;
+
     protected string $level = 'INFO';
+
     protected string $message = 'success';
+
     protected ?string $jobId = null;
+
     protected ?string $jobListId = null;
+
     protected ?string $jobClass = 'OCA\OpenConnector\Action\PingAction';
+
     protected ?array $arguments = [];
-    protected ?int $executionTime = 3600;
+
+    protected ?int $executionTime = 0;
+
     protected ?string $userId = null;
+
     protected ?string $sessionId = null;
+
     protected ?array $stackTrace = [];
+
     protected ?DateTime $expires = null;
+
     protected ?DateTime $lastRun = null;
+
     protected ?DateTime $nextRun = null;
+
     protected ?DateTime $created = null;
+
 
     /**
      * Get the job arguments
@@ -31,8 +47,10 @@ class JobLog extends Entity implements JsonSerializable
      */
     public function getArguments(): array
     {
-        return $this->arguments ?? [];
-    }
+        return ($this->arguments ?? []);
+
+    }//end getArguments()
+
 
     /**
      * Get the stack trace
@@ -41,10 +59,13 @@ class JobLog extends Entity implements JsonSerializable
      */
     public function getStackTrace(): array
     {
-        return $this->stackTrace ?? [];
-    }
+        return ($this->stackTrace ?? []);
 
-    public function __construct() {
+    }//end getStackTrace()
+
+
+    public function __construct()
+    {
         $this->addType('uuid', 'string');
         $this->addType('level', 'string');
         $this->addType('message', 'string');
@@ -60,16 +81,23 @@ class JobLog extends Entity implements JsonSerializable
         $this->addType('lastRun', 'datetime');
         $this->addType('nextRun', 'datetime');
         $this->addType('created', 'datetime');
-    }
+
+    }//end __construct()
+
 
     public function getJsonFields(): array
     {
         return array_keys(
-            array_filter($this->getFieldTypes(), function ($field) {
-                return $field === 'json';
-            })
+            array_filter(
+                $this->getFieldTypes(),
+                function ($field) {
+                    return $field === 'json';
+                }
+            )
         );
-    }
+
+    }//end getJsonFields()
+
 
     public function hydrate(array $object): self
     {
@@ -90,28 +118,33 @@ class JobLog extends Entity implements JsonSerializable
         }
 
         return $this;
-    }
+
+    }//end hydrate()
+
 
     public function jsonSerialize(): array
     {
         return [
-            'id' => $this->id,
-            'uuid' => $this->uuid,
-            'level' => $this->level,
-            'message' => $this->message,
-            'jobId' => $this->jobId,
-            'jobListId' => $this->jobListId,
-            'jobClass' => $this->jobClass,
-            'arguments' => $this->arguments,
+            'id'            => $this->id,
+            'uuid'          => $this->uuid,
+            'level'         => $this->level,
+            'message'       => $this->message,
+            'jobId'         => $this->jobId,
+            'jobListId'     => $this->jobListId,
+            'jobClass'      => $this->jobClass,
+            'arguments'     => $this->arguments,
             'executionTime' => $this->executionTime,
-            'userId' => $this->userId,
-            'sessionId' => $this->sessionId,
-            'stackTrace' => $this->stackTrace,
-            'expires' => isset($this->expires) ? $this->expires->format('c') : null,
-            'lastRun' => isset($this->lastRun) ? $this->lastRun->format('c') : null,
-            'nextRun' => isset($this->nextRun) ? $this->nextRun->format('c') : null,
-            'created' => isset($this->created) ? $this->created->format('c') : null,
-            
+            'userId'        => $this->userId,
+            'sessionId'     => $this->sessionId,
+            'stackTrace'    => $this->stackTrace,
+            'expires'       => isset($this->expires) ? $this->expires->format('c') : null,
+            'lastRun'       => isset($this->lastRun) ? $this->lastRun->format('c') : null,
+            'nextRun'       => isset($this->nextRun) ? $this->nextRun->format('c') : null,
+            'created'       => isset($this->created) ? $this->created->format('c') : null,
+
         ];
-    }
-}
+
+    }//end jsonSerialize()
+
+
+}//end class

@@ -8,41 +8,67 @@ use OCP\AppFramework\Db\Entity;
 
 class CallLog extends Entity implements JsonSerializable
 {
-    /** @var string|null $uuid Unique identifier for this call log entry */
+
+    /**
+     * @var string|null $uuid Unique identifier for this call log entry
+     */
     protected ?string $uuid = null;
 
-    /** @var int|null $statusCode HTTP status code returned from the API call */
+    /**
+     * @var integer|null $statusCode HTTP status code returned from the API call
+     */
     protected ?int $statusCode = null;
 
-    /** @var string|null $statusMessage Status message or description returned with the response */
+    /**
+     * @var string|null $statusMessage Status message or description returned with the response
+     */
     protected ?string $statusMessage = null;
 
-    /** @var array|null $request Complete request data including headers, method, body, etc. */
+    /**
+     * @var array|null $request Complete request data including headers, method, body, etc.
+     */
     protected ?array $request = null;
 
-    /** @var array|null $response Complete response data including headers, body, and status info */
+    /**
+     * @var array|null $response Complete response data including headers, body, and status info
+     */
     protected ?array $response = null;
 
-    /** @var int|null $sourceId Reference to the source/endpoint that was called */
+    /**
+     * @var integer|null $sourceId Reference to the source/endpoint that was called
+     */
     protected ?int $sourceId = null;
 
-    /** @var int|null $actionId Reference to the action that triggered this call */
+    /**
+     * @var integer|null $actionId Reference to the action that triggered this call
+     */
     protected ?int $actionId = null;
 
-    /** @var int|null $synchronizationId Reference to the synchronization process if this call is part of one */
+    /**
+     * @var integer|null $synchronizationId Reference to the synchronization process if this call is part of one
+     */
     protected ?int $synchronizationId = null;
 
-    /** @var string|null $userId Identifier of the user who initiated the call */
+    /**
+     * @var string|null $userId Identifier of the user who initiated the call
+     */
     protected ?string $userId = null;
 
-    /** @var string|null $sessionId Session identifier associated with this call */
+    /**
+     * @var string|null $sessionId Session identifier associated with this call
+     */
     protected ?string $sessionId = null;
 
-    /** @var DateTime|null $expires When this log entry should expire/be deleted */
+    /**
+     * @var DateTime|null $expires When this log entry should expire/be deleted
+     */
     protected ?DateTime $expires = null;
 
-    /** @var DateTime|null $created When this log entry was created */
+    /**
+     * @var DateTime|null $created When this log entry was created
+     */
     protected ?DateTime $created = null;
+
 
     /**
      * Get the request data
@@ -52,7 +78,9 @@ class CallLog extends Entity implements JsonSerializable
     public function getRequest(): ?array
     {
         return $this->request;
-    }
+
+    }//end getRequest()
+
 
     /**
      * Get the response data
@@ -62,9 +90,12 @@ class CallLog extends Entity implements JsonSerializable
     public function getResponse(): ?array
     {
         return $this->response;
-    }
 
-    public function __construct() {
+    }//end getResponse()
+
+
+    public function __construct()
+    {
         $this->addType('uuid', 'string');
         $this->addType('statusCode', 'integer');
         $this->addType('statusMessage', 'string');
@@ -77,16 +108,23 @@ class CallLog extends Entity implements JsonSerializable
         $this->addType('sessionId', 'string');
         $this->addType('expires', 'datetime');
         $this->addType('created', 'datetime');
-    }
+
+    }//end __construct()
+
 
     public function getJsonFields(): array
     {
         return array_keys(
-            array_filter($this->getFieldTypes(), function ($field) {
-                return $field === 'json';
-            })
+            array_filter(
+                $this->getFieldTypes(),
+                function ($field) {
+                    return $field === 'json';
+                }
+            )
         );
-    }
+
+    }//end getJsonFields()
+
 
     public function hydrate(array $object): self
     {
@@ -107,25 +145,30 @@ class CallLog extends Entity implements JsonSerializable
         }
 
         return $this;
-    }
+
+    }//end hydrate()
+
 
     public function jsonSerialize(): array
     {
         return [
-            'id' => $this->id,
-            'uuid' => $this->uuid,
-            'statusCode' => $this->statusCode,
-            'statusMessage' => $this->statusMessage,
-            'request' => $this->request,
-            'response' => $this->response,
-            'sourceId' => $this->sourceId,
-            'actionId' => $this->actionId,
-            'synchronizationId' => $this->synchronizationId,            
-            'userId' => $this->userId,
-            'sessionId' => $this->sessionId,
-            'expires' => isset($this->expires) ? $this->expires->format('c') : null,
-            'created' => isset($this->created) ? $this->created->format('c') : null,
-            
+            'id'                => $this->id,
+            'uuid'              => $this->uuid,
+            'statusCode'        => $this->statusCode,
+            'statusMessage'     => $this->statusMessage,
+            'request'           => $this->request,
+            'response'          => $this->response,
+            'sourceId'          => $this->sourceId,
+            'actionId'          => $this->actionId,
+            'synchronizationId' => $this->synchronizationId,
+            'userId'            => $this->userId,
+            'sessionId'         => $this->sessionId,
+            'expires'           => isset($this->expires) ? $this->expires->format('c') : null,
+            'created'           => isset($this->created) ? $this->created->format('c') : null,
+
         ];
-    }
-}
+
+    }//end jsonSerialize()
+
+
+}//end class

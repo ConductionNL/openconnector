@@ -2,7 +2,7 @@
 
 namespace OCA\OpenConnector\Db;
 
-use OCP\AppFramework\Db\QBMapper;
+use OCP\AppFramework\Db\Entity;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use Symfony\Component\Uid\Uuid;
@@ -14,8 +14,14 @@ use Symfony\Component\Uid\Uuid;
  *
  * @package OCA\OpenConnector\Db
  */
-class EventSubscriptionMapper extends QBMapper
+class EventSubscriptionMapper extends \OCA\OpenConnector\Db\BaseMapper
 {
+    /**
+     * The name of the database table for event subscriptions
+     */
+    private const TABLE_NAME = 'openconnector_event_subscriptions';
+
+
     /**
      * Constructor
      *
@@ -23,108 +29,48 @@ class EventSubscriptionMapper extends QBMapper
      */
     public function __construct(IDBConnection $db)
     {
-        parent::__construct($db, 'openconnector_event_subscriptions');
+        parent::__construct($db, self::TABLE_NAME);
     }
-
+    
     /**
-     * Find a subscription by ID
+     * Get the name of the database table
      *
-     * @param int $id The subscription ID
-     * @return EventSubscription
+     * @return string The table name
      */
-    public function find(int $id): EventSubscription
+    public function getTableName(): string
     {
-        $qb = $this->db->getQueryBuilder();
-
-        $qb->select('*')
-            ->from('openconnector_event_subscriptions')
-            ->where(
-                $qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
-            );
-
-        return $this->findEntity($qb);
+        return self::TABLE_NAME;
     }
-
-	/**
-	 * Find a subscription by reference
-	 *
-	 * @param int $id The subscription ID
-	 * @return EventSubscription
-	 */
-	public function findByRef(string $reference): array
-	{
-		$qb = $this->db->getQueryBuilder();
-
-		$qb->select('*')
-			->from('openconnector_event_subscriptions')
-			->where(
-				$qb->expr()->eq('reference', $qb->createNamedParameter($reference))
-			);
-
-		return $this->findEntities(query: $qb);
-	}
-
+    
     /**
-     * Find all subscriptions matching the given criteria
+     * Create a new EventSubscription entity instance
      *
-     * @param int|null $limit Maximum number of results
-     * @param int|null $offset Number of records to skip
-     * @param array|null $filters Key-value pairs for filtering
-     * @return EventSubscription[]
+     * @return EventSubscription A new EventSubscription instance
      */
-    public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = []): array
+    protected function createEntity(): Entity
     {
-        $qb = $this->db->getQueryBuilder();
-
-        $qb->select('*')
-            ->from('openconnector_event_subscriptions')
-            ->setMaxResults($limit)
-            ->setFirstResult($offset);
-
-        foreach ($filters as $filter => $value) {
-            if ($value === 'IS NOT NULL') {
-                $qb->andWhere($qb->expr()->isNotNull($filter));
-            } elseif ($value === 'IS NULL') {
-                $qb->andWhere($qb->expr()->isNull($filter));
-            } else {
-                $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
-            }
-        }
-
-        return $this->findEntities($qb);
+        return new EventSubscription();
     }
-
+    
     /**
-     * Create a new subscription from array data
+     * Find all event subscriptions with optional filtering and pagination
      *
-     * @param array $data Subscription data
-     * @return EventSubscription
+     * @param int|null $limit Maximum number of results to return
+     * @param int|null $offset Number of results to skip
+     * @param array|null $filters Associative array of filter conditions (column => value)
+     * @param array|null $searchConditions Search conditions for the query
+     * @param array|null $searchParams Parameters for the search conditions
+     * @param array|null $ids List of IDs or UUIDs to search for
+     * @return array<EventSubscription> Array of matching event subscription entities
      */
-    public function createFromArray(array $data): EventSubscription
-    {
-        $obj = new EventSubscription();
-        $obj->hydrate($data);
-        
-        // Set uuid
-        if ($obj->getUuid() === null) {
-            $obj->setUuid(Uuid::v4());
-        }
-
-        return $this->insert(entity: $obj);
-    }
-
-    /**
-     * Update an existing subscription
-     *
-     * @param int $id Subscription ID
-     * @param array $data Updated subscription data
-     * @return EventSubscription
-     */
-    public function updateFromArray(int $id, array $data): EventSubscription
-    {
-        $obj = $this->find($id);
-        $obj->hydrate($data);
-
-        return $this->update($obj);
+    public function findAll(
+        ?int $limit=null,
+        ?int $offset=null,
+        ?array $filters=[],
+        ?array $searchConditions=[],
+        ?array $searchParams=[],
+        ?array $ids=null
+    ): array {
+        return parent::findAll($limit, $offset, $filters, $searchConditions, $searchParams, $ids);
     }
 }

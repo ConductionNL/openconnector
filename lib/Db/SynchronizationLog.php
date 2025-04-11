@@ -11,17 +11,29 @@ use OCP\AppFramework\Db\Entity;
  */
 class SynchronizationLog extends Entity implements JsonSerializable
 {
+
     protected ?string $uuid = null;
+
     protected ?string $message = null;
+
     protected ?string $synchronizationId = null;
+
     protected ?array $result = [];
+
     protected ?string $userId = null;
+
     protected ?string $sessionId = null;
+
     protected bool $test = false;
+
     protected bool $force = false;
+
     protected int $executionTime = 0;
+
     protected ?DateTime $created = null;
+
     protected ?DateTime $expires = null;
+
 
     /**
      * Get the synchronization result
@@ -30,10 +42,13 @@ class SynchronizationLog extends Entity implements JsonSerializable
      */
     public function getResult(): array
     {
-        return $this->result ?? [];
-    }
+        return ($this->result ?? []);
 
-    public function __construct() {
+    }//end getResult()
+
+
+    public function __construct()
+    {
         $this->addType('uuid', 'string');
         $this->addType('message', 'string');
         $this->addType('synchronizationId', 'string');
@@ -45,16 +60,23 @@ class SynchronizationLog extends Entity implements JsonSerializable
         $this->addType('executionTime', 'integer');
         $this->addType('created', 'datetime');
         $this->addType('expires', 'datetime');
-    }
+
+    }//end __construct()
+
 
     public function getJsonFields(): array
     {
         return array_keys(
-            array_filter($this->getFieldTypes(), function ($field) {
-                return $field === 'json';
-            })
+            array_filter(
+                $this->getFieldTypes(),
+                function ($field) {
+                    return $field === 'json';
+                }
+            )
         );
-    }
+
+    }//end getJsonFields()
+
 
     public function hydrate(array $object): self
     {
@@ -75,23 +97,28 @@ class SynchronizationLog extends Entity implements JsonSerializable
         }
 
         return $this;
-    }
+
+    }//end hydrate()
+
 
     public function jsonSerialize(): array
     {
         return [
-            'id' => $this->id,
-            'uuid' => $this->uuid,
-            'message' => $this->message,
+            'id'                => $this->id,
+            'uuid'              => $this->uuid,
+            'message'           => $this->message,
             'synchronizationId' => $this->synchronizationId,
-            'result' => $this->result,
-            'userId' => $this->userId,
-            'sessionId' => $this->sessionId,
-            'test' => $this->test,
-            'force' => $this->force,
-            'executionTime' => $this->executionTime,
-            'created' => isset($this->created) ? $this->created->format('c') : null,
-            'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+            'result'            => $this->result,
+            'userId'            => $this->userId,
+            'sessionId'         => $this->sessionId,
+            'test'              => $this->test,
+            'force'             => $this->force,
+            'executionTime'     => $this->executionTime,
+            'created'           => isset($this->created) ? $this->created->format('c') : null,
+            'expires'           => isset($this->expires) ? $this->expires->format('c') : null,
         ];
-    }
-}
+
+    }//end jsonSerialize()
+
+
+}//end class

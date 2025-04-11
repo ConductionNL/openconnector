@@ -15,21 +15,39 @@ use OCP\AppFramework\Db\Entity;
  */
 class Rule extends Entity implements JsonSerializable
 {
-    protected ?string $uuid = null;
-    protected ?string $name = null;
-    protected ?string $description = null;
-	protected ?string $reference = null;
-	protected ?string $version = '0.0.0';
-    protected ?string $action = null; // create, read, update, delete
-    protected ?string $timing = 'before'; // before or after
-    protected ?array $conditions = []; // JSON Logic format conditions
-    protected ?string $type = null; // mapping, error, script, synchronization
-    protected ?array $configuration = []; // Type-specific configuration
-    protected int $order = 0; // Order in which the rule should be applied
 
-    // Additional tracking fields
+    protected ?string $uuid = null;
+
+    protected ?string $name = null;
+
+    protected ?string $description = null;
+
+    protected ?string $reference = null;
+
+    protected ?string $version = '0.0.0';
+
+    // create, read, update, delete
+    protected ?string $action = null;
+
+    // before or after
+    protected ?string $timing = 'before';
+
+    // JSON Logic format conditions
+    protected ?array $conditions = [];
+
+    // mapping, error, script, synchronization
+    protected ?string $type = null;
+
+    // Type-specific configuration
+    protected ?array $configuration = [];
+
+    // Order in which the rule should be applied
+    protected int $order = 0;
+
     protected ?DateTime $created = null;
+
     protected ?DateTime $updated = null;
+
 
     /**
      * Get the conditions array
@@ -38,8 +56,10 @@ class Rule extends Entity implements JsonSerializable
      */
     public function getConditions(): array
     {
-        return $this->conditions ?? [];
-    }
+        return ($this->conditions ?? []);
+
+    }//end getConditions()
+
 
     /**
      * Get the configuration array
@@ -48,15 +68,18 @@ class Rule extends Entity implements JsonSerializable
      */
     public function getConfiguration(): array
     {
-        return $this->configuration ?? [];
-    }
+        return ($this->configuration ?? []);
 
-    public function __construct() {
+    }//end getConfiguration()
+
+
+    public function __construct()
+    {
         $this->addType('uuid', 'string');
         $this->addType('name', 'string');
         $this->addType('description', 'string');
-		$this->addType(fieldName:'reference', type: 'string');
-		$this->addType(fieldName:'version', type: 'string');
+        $this->addType(fieldName:'reference', type: 'string');
+        $this->addType(fieldName:'version', type: 'string');
         $this->addType('action', 'string');
         $this->addType('timing', 'string');
         $this->addType('conditions', 'json');
@@ -65,7 +88,9 @@ class Rule extends Entity implements JsonSerializable
         $this->addType('order', 'integer');
         $this->addType('created', 'datetime');
         $this->addType('updated', 'datetime');
-    }
+
+    }//end __construct()
+
 
     /**
      * Get fields that should be JSON encoded
@@ -75,16 +100,21 @@ class Rule extends Entity implements JsonSerializable
     public function getJsonFields(): array
     {
         return array_keys(
-            array_filter($this->getFieldTypes(), function ($field) {
-                return $field === 'json';
-            })
+            array_filter(
+                $this->getFieldTypes(),
+                function ($field) {
+                    return $field === 'json';
+                }
+            )
         );
-    }
+
+    }//end getJsonFields()
+
 
     /**
      * Hydrate the entity from an array of data
      *
-     * @param array<string,mixed> $object Data to hydrate from
+     * @param  array<string,mixed> $object Data to hydrate from
      * @return self Returns the hydrated entity
      */
     public function hydrate(array $object): self
@@ -106,25 +136,30 @@ class Rule extends Entity implements JsonSerializable
         }
 
         return $this;
-    }
+
+    }//end hydrate()
+
 
     public function jsonSerialize(): array
     {
         return [
-            'id' => $this->id,
-            'uuid' => $this->uuid,
-            'name' => $this->name,
-            'description' => $this->description,
-			'reference' => $this->reference,
-			'version' => $this->version,
-            'action' => $this->action,
-            'timing' => $this->timing,
-            'conditions' => $this->conditions,
-            'type' => $this->type,
+            'id'            => $this->id,
+            'uuid'          => $this->uuid,
+            'name'          => $this->name,
+            'description'   => $this->description,
+            'reference'     => $this->reference,
+            'version'       => $this->version,
+            'action'        => $this->action,
+            'timing'        => $this->timing,
+            'conditions'    => $this->conditions,
+            'type'          => $this->type,
             'configuration' => $this->configuration,
-            'order' => $this->order,
-            'created' => isset($this->created) ? $this->created->format('c') : null,
-            'updated' => isset($this->updated) ? $this->updated->format('c') : null
+            'order'         => $this->order,
+            'created'       => isset($this->created) ? $this->created->format('c') : null,
+            'updated'       => isset($this->updated) ? $this->updated->format('c') : null,
         ];
-    }
-}
+
+    }//end jsonSerialize()
+
+
+}//end class

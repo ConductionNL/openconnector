@@ -3,72 +3,60 @@
 namespace OCA\OpenConnector\Db;
 
 use DateTime;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\Entity;
-use OCP\AppFramework\Db\QBMapper;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use OCP\ISession;
 use OCP\IUserSession;
-use Symfony\Component\Uid\Uuid;
 use OCP\Session\Exceptions\SessionNotAvailableException;
+use Symfony\Component\Uid\Uuid;
 
-class SynchronizationLogMapper extends QBMapper
+/**
+ * Class SynchronizationLogMapper
+ *
+ * This class is responsible for mapping SynchronizationLog entities to the database.
+ * It provides methods for finding, creating, and updating SynchronizationLog objects.
+ *
+ * @package OCA\OpenConnector\Db
+ * @extends BaseMapper<SynchronizationLog>
+ */
+class SynchronizationLogMapper extends \OCA\OpenConnector\Db\BaseMapper
 {
+	/**
+	 * The name of the database table for synchronization logs
+	 */
+	private const TABLE_NAME = 'openconnector_synchronization_logs';
+
 	public function __construct(
 		IDBConnection $db,
 		private readonly IUserSession $userSession,
 		private readonly ISession $session
 	) {
-		parent::__construct($db, 'openconnector_synchronization_logs');
+		parent::__construct($db, self::TABLE_NAME);
 	}
 
-	public function find(int $id): SynchronizationLog
+	/**
+	 * Get the name of the database table
+	 *
+	 * @return string The table name
+	 */
+	public function getTableName(): string
 	{
-		$qb = $this->db->getQueryBuilder();
-
-		$qb->select('*')
-			->from('openconnector_synchronization_logs')
-			->where(
-				$qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
-			);
-
-		return $this->findEntity($qb);
+		return self::TABLE_NAME;
 	}
 
-	public function findAll(
-		?int $limit = null, 
-		?int $offset = null, 
-		?array $filters = [], 
-		?array $searchConditions = [], 
-		?array $searchParams = []
-	): array {
-		$qb = $this->db->getQueryBuilder();
-
-		$qb->select('*')
-			->from('openconnector_synchronization_logs')
-			->orderBy('created', 'DESC')
-			->setMaxResults($limit)
-			->setFirstResult($offset);
-
-		foreach ($filters as $filter => $value) {
-			if ($value === 'IS NOT NULL') {
-				$qb->andWhere($qb->expr()->isNotNull($filter));
-			} elseif ($value === 'IS NULL') {
-				$qb->andWhere($qb->expr()->isNull($filter));
-			} else {
-				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
-			}
-		}
-
-		if (empty($searchConditions) === false) {
-			$qb->andWhere('(' . implode(' OR ', $searchConditions) . ')');
-			foreach ($searchParams as $param => $value) {
-				$qb->setParameter($param, $value);
-			}
-		}
-
-		return $this->findEntities($qb);
+	/**
+	 * Create a new SynchronizationLog entity instance
+	 *
+	 * @return SynchronizationLog A new SynchronizationLog instance
+	 */
+	protected function createEntity(): Entity
+	{
+		return new SynchronizationLog();
 	}
+
 
 	/**
 	 * Process contracts array to ensure it only contains valid UUIDs
@@ -158,38 +146,9 @@ class SynchronizationLogMapper extends QBMapper
 		return $this->update($obj);
 	}
 
-	/**
-	 * Get the total count of synchronization logs
-	 *
-	 * @param array $filters Optional filters to apply
-	 * @return int The total number of logs
-	 */
-	public function getTotalCount(array $filters = []): int
-	{
-		$qb = $this->db->getQueryBuilder();
-
-		$qb->select($qb->createFunction('COUNT(*) as count'))
-			->from('openconnector_synchronization_logs');
-
-		foreach ($filters as $filter => $value) {
-			if ($value === 'IS NOT NULL') {
-				$qb->andWhere($qb->expr()->isNotNull($filter));
-			} elseif ($value === 'IS NULL') {
-				$qb->andWhere($qb->expr()->isNull($filter));
-			} else {
-				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
-			}
-		}
-
-		$result = $qb->executeQuery();
-		$row = $result->fetch();
-		$result->closeCursor();
-
-		return (int)$row['count'];
-	}
 
 	/**
-	 * Cleans up expired log entries
+	 * Clean up expired synchronization logs
 	 *
 	 * @return int Number of deleted entries
 	 */
@@ -197,9 +156,30 @@ class SynchronizationLogMapper extends QBMapper
 	{
 		$qb = $this->db->getQueryBuilder();
 
-		$qb->delete('openconnector_synchronization_logs')
+		$qb->delete($this->getTableName())
 			->where($qb->expr()->lt('expires', $qb->createNamedParameter(new DateTime(), IQueryBuilder::PARAM_DATE)));
 
 		return $qb->executeStatement();
+	}
+
+	/**
+	 * Find a synchronization log by ID
+	 *
+	 * @param int $id The ID of the synchronization log to find
+	 * @return SynchronizationLog The found synchronization log entity
+	 * @throws DoesNotExistException If the log doesn't exist
+	 * @throws MultipleObjectsReturnedException If multiple logs match the criteria
+	 */
+	public function find(int $id): SynchronizationLog
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select('*')
+			->from($this->getTableName())
+			->where(
+				$qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
+			);
+
+		return $this->findEntity($qb);
 	}
 }

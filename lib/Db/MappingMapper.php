@@ -4,129 +4,78 @@ namespace OCA\OpenConnector\Db;
 
 use OCA\OpenConnector\Db\Mapping;
 use OCP\AppFramework\Db\Entity;
-use OCP\AppFramework\Db\QBMapper;
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use Symfony\Component\Uid\Uuid;
 
-class MappingMapper extends QBMapper
+/**
+ * Class MappingMapper
+ *
+ * This class is responsible for mapping Mapping entities to the database.
+ * It provides methods for finding, creating, and updating Mapping objects.
+ *
+ * @package OCA\OpenConnector\Db
+ * @extends BaseMapper<Mapping>
+ */
+class MappingMapper extends \OCA\OpenConnector\Db\BaseMapper
 {
-	public function __construct(IDBConnection $db)
-	{
-		parent::__construct($db, 'openconnector_mappings');
-	}
+    /**
+     * The name of the database table for mappings
+     */
+    private const TABLE_NAME = 'openconnector_mappings';
 
-	public function find(int $id): Mapping
-	{
-		$qb = $this->db->getQueryBuilder();
 
-		$qb->select('*')
-			->from('openconnector_mappings')
-			->where(
-				$qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
-			);
+    public function __construct(IDBConnection $db)
+    {
+        parent::__construct($db, self::TABLE_NAME);
 
-		return $this->findEntity(query: $qb);
-	}
+    }//end __construct()
 
-	public function findByRef(string $reference): array
-	{
-		$qb = $this->db->getQueryBuilder();
-
-		$qb->select('*')
-			->from('openconnector_mappings')
-			->where(
-				$qb->expr()->eq('reference', $qb->createNamedParameter($reference))
-			);
-
-		return $this->findEntities(query: $qb);
-	}
-
-	public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = []): array
-	{
-		$qb = $this->db->getQueryBuilder();
-
-		$qb->select('*')
-			->from('openconnector_mappings')
-			->setMaxResults($limit)
-			->setFirstResult($offset);
-
-        foreach ($filters as $filter => $value) {
-			if ($value === 'IS NOT NULL') {
-				$qb->andWhere($qb->expr()->isNotNull($filter));
-			} elseif ($value === 'IS NULL') {
-				$qb->andWhere($qb->expr()->isNull($filter));
-			} else {
-				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
-			}
-        }
-
-		if (empty($searchConditions) === false) {
-            $qb->andWhere('(' . implode(' OR ', $searchConditions) . ')');
-            foreach ($searchParams as $param => $value) {
-                $qb->setParameter($param, $value);
-            }
-        }
-
-		return $this->findEntities(query: $qb);
-	}
-
-	public function createFromArray(array $object): Mapping
-	{
-		$obj = new Mapping();
-		$obj->hydrate($object);
-
-		// Set uuid
-		if ($obj->getUuid() === null) {
-			$obj->setUuid(Uuid::v4());
-		}
-
-		// Set version
-		if (empty($obj->getVersion()) === true) {
-			$obj->setVersion('0.0.1');
-		}
-
-		return $this->insert(entity: $obj);
-	}
-
-	public function updateFromArray(int $id, array $object): Mapping
-	{
-		$obj = $this->find($id);
-
-		// Set version
-		if (empty($obj->getVersion()) === true) {
-			$object['version'] = '0.0.1';
-		} else if (empty($object['version']) === true) {
-			// Update version
-			$version = explode('.', $obj->getVersion());
-			if (isset($version[2]) === true) {
-				$version[2] = (int) $version[2] + 1;
-				$object['version'] = implode('.', $version);
-			}
-		}
-
-		$obj->hydrate($object);
-
-		return $this->update($obj);
-	}
 
     /**
-     * Get the total count of all call logs.
+     * Get the name of the database table
      *
-     * @return int The total number of call logs in the database.
+     * @return string The table name
      */
-    public function getTotalCallCount(): int
+    public function getTableName(): string
+    {
+        return self::TABLE_NAME;
+
+    }//end getTableName()
+
+
+    /**
+     * Create a new Mapping entity instance
+     *
+     * @return Mapping A new Mapping instance
+     */
+    protected function createEntity(): Entity
+    {
+        return new Mapping();
+
+    }//end createEntity()
+
+    /**
+     * Find a mapping by ID
+     *
+     * @param int $id The ID of the mapping to find
+     * @return Mapping The found mapping entity
+     * @throws DoesNotExistException If the mapping doesn't exist
+     * @throws MultipleObjectsReturnedException If multiple mappings match the criteria
+     */
+    public function find(int $id): Mapping
     {
         $qb = $this->db->getQueryBuilder();
 
-        // Select count of all logs
-        $qb->select($qb->createFunction('COUNT(*) as count'))
-           ->from('openconnector_mappings');
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where(
+                $qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
+            );
 
-        $result = $qb->execute();
-        $row = $result->fetch();
+        return $this->findEntity($qb);
+    }//end find()
 
-        // Return the total count
-        return (int)$row['count'];
-    }
-}
+}//end class

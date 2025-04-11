@@ -3,130 +3,123 @@
 namespace OCA\OpenConnector\Db;
 
 use OCA\OpenConnector\Db\Job;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\Entity;
-use OCP\AppFramework\Db\QBMapper;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use Symfony\Component\Uid\Uuid;
 
-class JobMapper extends QBMapper
+/**
+ * Class JobMapper
+ *
+ * This class is responsible for mapping Job entities to the database.
+ * It provides methods for finding, creating, and updating Job objects.
+ *
+ * @package OCA\OpenConnector\Db
+ * @extends BaseMapper<Job>
+ */
+class JobMapper extends \OCA\OpenConnector\Db\BaseMapper
 {
-	public function __construct(IDBConnection $db)
-	{
-		parent::__construct($db, 'openconnector_jobs');
-	}
+    /**
+     * The name of the database table for jobs
+     */
+    private const TABLE_NAME = 'openconnector_jobs';
 
-	public function find(int $id): Job
-	{
-		$qb = $this->db->getQueryBuilder();
 
-		$qb->select('*')
-			->from('openconnector_jobs')
-			->where(
-				$qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
-			);
+    public function __construct(IDBConnection $db)
+    {
+        parent::__construct($db, self::TABLE_NAME);
 
-		return $this->findEntity(query: $qb);
-	}
+    }//end __construct()
 
-	public function findByRef(string $reference): array
-	{
-		$qb = $this->db->getQueryBuilder();
-
-		$qb->select('*')
-			->from('openconnector_jobs')
-			->where(
-				$qb->expr()->eq('reference', $qb->createNamedParameter($reference))
-			);
-
-		return $this->findEntities(query: $qb);
-	}
-
-	public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = []): array
-	{
-		$qb = $this->db->getQueryBuilder();
-
-		$qb->select('*')
-			->from('openconnector_jobs')
-			->setMaxResults($limit)
-			->setFirstResult($offset);
-
-        foreach ($filters as $filter => $value) {
-			if ($value === 'IS NOT NULL') {
-				$qb->andWhere($qb->expr()->isNotNull($filter));
-			} elseif ($value === 'IS NULL') {
-				$qb->andWhere($qb->expr()->isNull($filter));
-			} else {
-				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
-			}
-        }
-
-		if (empty($searchConditions) === false) {
-            $qb->andWhere('(' . implode(' OR ', $searchConditions) . ')');
-            foreach ($searchParams as $param => $value) {
-                $qb->setParameter($param, $value);
-            }
-        }
-
-		return $this->findEntities(query: $qb);
-	}
-
-	public function createFromArray(array $object): Job
-	{
-		$obj = new Job();
-		$obj->hydrate($object);
-
-		// Set uuid
-		if ($obj->getUuid() === null) {
-			$obj->setUuid(Uuid::v4());
-		}
-
-		// Set version
-		if (empty($obj->getVersion()) === true) {
-			$obj->setVersion('0.0.1');
-		}
-
-		return $this->insert(entity: $obj);
-	}
-
-	public function updateFromArray(int $id, array $object): Job
-	{
-		$obj = $this->find($id);
-
-		// Set version
-		if (empty($obj->getVersion()) === true) {
-			$object['version'] = '0.0.1';
-		} else if (empty($object['version']) === true) {
-			// Update version
-			$version = explode('.', $obj->getVersion());
-			if (isset($version[2]) === true) {
-				$version[2] = (int) $version[2] + 1;
-				$object['version'] = implode('.', $version);
-			}
-		}
-
-		$obj->hydrate($object);
-
-		return $this->update($obj);
-	}
 
     /**
-     * Get the total count of all call logs.
+     * Get the name of the database table
      *
-     * @return int The total number of call logs in the database.
+     * @return string The table name
      */
-    public function getTotalCallCount(): int
+    public function getTableName(): string
+    {
+        return self::TABLE_NAME;
+
+    }//end getTableName()
+
+
+    /**
+     * Create a new Job entity instance
+     *
+     * @return Job A new Job instance
+     */
+    protected function createEntity(): Entity
+    {
+        return new Job();
+
+    }//end createEntity()
+
+
+    /**
+     * Find a job by ID
+     *
+     * @param int $id Job ID
+     * @return Job The job entity
+     * @throws DoesNotExistException If the job doesn't exist
+     * @throws MultipleObjectsReturnedException If multiple jobs match the criteria
+     */
+    public function find(int $id): Job
     {
         $qb = $this->db->getQueryBuilder();
 
-        // Select count of all logs
-        $qb->select($qb->createFunction('COUNT(*) as count'))
-           ->from('openconnector_jobs');
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where(
+                $qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
+            );
 
-        $result = $qb->execute();
-        $row = $result->fetch();
-
-        // Return the total count
-        return (int)$row['count'];
+        return $this->findEntity($qb);
     }
-}
+
+    /**
+     * Find a job by UUID
+     *
+     * @param string $uuid Job UUID
+     * @return Job The job entity
+     * @throws DoesNotExistException If the job doesn't exist
+     * @throws MultipleObjectsReturnedException If multiple jobs match the criteria
+     */
+    public function findByUuid(string $uuid): Job
+    {
+        $qb = $this->db->getQueryBuilder();
+
+        $qb->select('*')
+            ->from($this->getTableName())
+            ->where(
+                $qb->expr()->eq('uuid', $qb->createNamedParameter($uuid))
+            );
+
+        return $this->findEntity($qb);
+    }
+
+    /**
+     * Find all jobs with optional filtering and pagination
+     *
+     * @param int|null $limit Maximum number of results to return
+     * @param int|null $offset Number of results to skip
+     * @param array|null $filters Associative array of filter conditions (column => value)
+     * @param array|null $searchConditions Search conditions for the query
+     * @param array|null $searchParams Parameters for the search conditions
+     * @param array|null $ids List of IDs or UUIDs to search for
+     * @return Job[] Array of matching job entities
+     */
+    public function findAll(
+        ?int $limit=null,
+        ?int $offset=null,
+        ?array $filters=[],
+        ?array $searchConditions=[],
+        ?array $searchParams=[],
+        ?array $ids=null
+    ): array {
+        return parent::findAll($limit, $offset, $filters, $searchConditions, $searchParams, $ids);
+    }
+
+}//end class

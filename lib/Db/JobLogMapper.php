@@ -6,154 +6,128 @@ use DateInterval;
 use DatePeriod;
 use DateTime;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
-use OCP\AppFramework\Db\QBMapper;
+use OCP\AppFramework\Db\Entity;
 use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use Symfony\Component\Uid\Uuid;
 
-class JobLogMapper extends QBMapper
+/**
+ * Class JobLogMapper
+ *
+ * This class is responsible for mapping JobLog entities to the database.
+ * It provides methods for finding, creating, and updating JobLog objects.
+ *
+ * @package OCA\OpenConnector\Db
+ */
+class JobLogMapper extends \OCA\OpenConnector\Db\BaseMapper
 {
+    /**
+     * The name of the database table for job logs
+     */
+    private const TABLE_NAME = 'openconnector_job_logs';
+
+
     public function __construct(IDBConnection $db)
     {
-        parent::__construct($db, 'openconnector_job_logs');
-    }
+        parent::__construct($db, self::TABLE_NAME);
 
-    public function find(int $id): JobLog
+    }//end __construct()
+
+
+    /**
+     * Get the name of the database table
+     *
+     * @return string The table name
+     */
+    public function getTableName(): string
     {
-        $qb = $this->db->getQueryBuilder();
+        return self::TABLE_NAME;
 
-        $qb->select('*')
-            ->from('openconnector_job_logs')
-            ->where(
-                $qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
-            );
+    }//end getTableName()
 
-        return $this->findEntity($qb);
-    }
 
-    public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = []): array
+    /**
+     * Create a new JobLog entity instance
+     *
+     * @return JobLog A new JobLog instance
+     */
+    protected function createEntity(): Entity
     {
-        $qb = $this->db->getQueryBuilder();
+        return new JobLog();
 
-        $qb->select('*')
-            ->from('openconnector_job_logs')
-            ->setMaxResults($limit)
-            ->setFirstResult($offset);
+    }//end createEntity()
 
-        foreach ($filters as $filter => $value) {
-            if ($value === 'IS NOT NULL') {
-                $qb->andWhere($qb->expr()->isNotNull($filter));
-            } elseif ($value === 'IS NULL') {
-                $qb->andWhere($qb->expr()->isNull($filter));
-            } else {
-                $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
-            }
-        }
 
-		if (empty($searchConditions) === false) {
-            $qb->andWhere('(' . implode(' OR ', $searchConditions) . ')');
-            foreach ($searchParams as $param => $value) {
-                $qb->setParameter($param, $value);
-            }
-        }
-
-        return $this->findEntities($qb);
-    }
-
-	public function createForJob(Job $job, array $object): JobLog
-	{
-		$jobObject = [
-			'jobId'         => $job->getId(),
-			'jobClass'      => $job->getJobClass(),
-			'jobListId'     => $job->getJobListId(),
-			'arguments'     => $job->getArguments(),
-			'lastRun'       => $job->getLastRun(),
-			'nextRun'       => $job->getNextRun(),
-		];
-
-		$object = array_merge($jobObject, $object);
-
-		return $this->createFromArray($object);
-	}
-
-    public function createFromArray(array $object): JobLog
+    public function createForJob(Job $job, array $object): JobLog
     {
-		if (isset($object['executionTime']) === false) {
-			$object['executionTime'] = 0;
-		}
-
         $obj = new JobLog();
-		$obj->hydrate($object);
-		// Set uuid
-		if ($obj->getUuid() === null) {
-			$obj->setUuid(Uuid::v4());
-		}
+        $obj->hydrate($object);
+        // Set uuid
+        if ($obj->getUuid() === null) {
+            $obj->setUuid(Uuid::v4());
+        }
+
+        // Set job_id
+        $obj->setJobId($job->getId());
         return $this->insert($obj);
-    }
 
-    public function updateFromArray(int $id, array $object): JobLog
-    {
-        $obj = $this->find($id);
-		$obj->hydrate($object);
-		if ($obj->getUuid() === null) {
-			$obj->setUuid(Uuid::v4());
-		}
+    }//end createForJob()
 
-        return $this->update($obj);
-    }
 
-	/**
-	 * Get the last call log.
-	 *
-	 * @return CallLog|null The last call log or null if no logs exist.
-	 * @throws MultipleObjectsReturnedException
-	 * @throws Exception
-	 */
+    /**
+     * Get the last call log.
+     *
+     * @return JobLog|null The last call log or null if no logs exist.
+     * @throws MultipleObjectsReturnedException
+     * @throws Exception
+     */
     public function getLastCallLog(): ?JobLog
     {
         $qb = $this->db->getQueryBuilder();
 
         $qb->select('*')
-           ->from('openconnector_job_logs')
-           ->orderBy('created', 'DESC')
-           ->setMaxResults(1);
+            ->from($this->getTableName())
+            ->orderBy('created', 'DESC')
+            ->setMaxResults(1);
 
         try {
             return $this->findEntity($qb);
         } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
             return null;
         }
-    }
 
-	/**
-	 * Get job statistics grouped by date for a specific date range
-	 *
-	 * @param DateTime $from Start date
-	 * @param DateTime $to End date
-	 *
-	 * @return array Array of daily statistics with counts per log level
-	 * @throws Exception
-	 */
+    }//end getLastCallLog()
+
+
+    /**
+     * Get job statistics grouped by date for a specific date range
+     *
+     * @param DateTime $from Start date
+     * @param DateTime $to   End date
+     *
+     * @return array Array of daily statistics with counts per log level
+     * @throws Exception
+     */
     public function getJobStatsByDateRange(DateTime $from, DateTime $to): array
     {
         $qb = $this->db->getQueryBuilder();
 
         $qb->select(
-                $qb->createFunction('DATE(created) as date'),
-                $qb->createFunction('SUM(CASE WHEN level = \'INFO\' THEN 1 ELSE 0 END) as info'),
-                $qb->createFunction('SUM(CASE WHEN level = \'WARNING\' THEN 1 ELSE 0 END) as warning'),
-                $qb->createFunction('SUM(CASE WHEN level = \'ERROR\' THEN 1 ELSE 0 END) as error'),
-                $qb->createFunction('SUM(CASE WHEN level = \'DEBUG\' THEN 1 ELSE 0 END) as debug')
-            )
-            ->from('openconnector_job_logs')
+            $qb->createFunction('DATE(created) as date'),
+            $qb->createFunction('SUM(CASE WHEN level = \'INFO\' THEN 1 ELSE 0 END) as info'),
+            $qb->createFunction('SUM(CASE WHEN level = \'WARNING\' THEN 1 ELSE 0 END) as warning'),
+            $qb->createFunction('SUM(CASE WHEN level = \'ERROR\' THEN 1 ELSE 0 END) as error'),
+            $qb->createFunction('SUM(CASE WHEN level = \'DEBUG\' THEN 1 ELSE 0 END) as debug')
+        )
+            ->from($this->getTableName())
             ->where($qb->expr()->gte('created', $qb->createNamedParameter($from->format('Y-m-d H:i:s'))))
             ->andWhere($qb->expr()->lte('created', $qb->createNamedParameter($to->format('Y-m-d H:i:s'))))
             ->groupBy('date')
             ->orderBy('date', 'ASC');
 
         $result = $qb->execute();
-        $stats = [];
+        $stats  = [];
 
         // Create DatePeriod to iterate through all dates
         $period = new DatePeriod(
@@ -164,66 +138,93 @@ class JobLogMapper extends QBMapper
 
         // Initialize all dates with zero values
         foreach ($period as $date) {
-            $dateStr = $date->format('Y-m-d');
+            $dateStr         = $date->format('Y-m-d');
             $stats[$dateStr] = [
-                'info' => 0,
+                'info'    => 0,
                 'warning' => 0,
-                'error' => 0,
-                'debug' => 0
+                'error'   => 0,
+                'debug'   => 0,
             ];
         }
 
         // Fill in actual values where they exist
         while ($row = $result->fetch()) {
             $stats[$row['date']] = [
-                'info' => (int)$row['info'],
-                'warning' => (int)$row['warning'],
-                'error' => (int)$row['error'],
-                'debug' => (int)$row['debug']
+                'info'    => (int) $row['info'],
+                'warning' => (int) $row['warning'],
+                'error'   => (int) $row['error'],
+                'debug'   => (int) $row['debug'],
             ];
         }
 
         return $stats;
-    }
 
-	/**
-	 * Get job statistics grouped by hour for a specific date range
-	 *
-	 * @param DateTime $from Start date
-	 * @param DateTime $to End date
-	 *
-	 * @return array Array of hourly statistics with counts per log level
-	 * @throws Exception
-	 */
+    }//end getJobStatsByDateRange()
+
+
+    /**
+     * Get job statistics grouped by hour for a specific date range
+     *
+     * @param DateTime $from Start date
+     * @param DateTime $to   End date
+     *
+     * @return array Array of hourly statistics with counts per log level
+     * @throws Exception
+     */
     public function getJobStatsByHourRange(DateTime $from, DateTime $to): array
     {
         $qb = $this->db->getQueryBuilder();
 
         $qb->select(
-                $qb->createFunction('HOUR(created) as hour'),
-                $qb->createFunction('SUM(CASE WHEN level = \'INFO\' THEN 1 ELSE 0 END) as info'),
-                $qb->createFunction('SUM(CASE WHEN level = \'WARNING\' THEN 1 ELSE 0 END) as warning'),
-                $qb->createFunction('SUM(CASE WHEN level = \'ERROR\' THEN 1 ELSE 0 END) as error'),
-                $qb->createFunction('SUM(CASE WHEN level = \'DEBUG\' THEN 1 ELSE 0 END) as debug')
-            )
-            ->from('openconnector_job_logs')
+            $qb->createFunction('HOUR(created) as hour'),
+            $qb->createFunction('SUM(CASE WHEN level = \'INFO\' THEN 1 ELSE 0 END) as info'),
+            $qb->createFunction('SUM(CASE WHEN level = \'WARNING\' THEN 1 ELSE 0 END) as warning'),
+            $qb->createFunction('SUM(CASE WHEN level = \'ERROR\' THEN 1 ELSE 0 END) as error'),
+            $qb->createFunction('SUM(CASE WHEN level = \'DEBUG\' THEN 1 ELSE 0 END) as debug')
+        )
+            ->from($this->getTableName())
             ->where($qb->expr()->gte('created', $qb->createNamedParameter($from->format('Y-m-d H:i:s'))))
             ->andWhere($qb->expr()->lte('created', $qb->createNamedParameter($to->format('Y-m-d H:i:s'))))
             ->groupBy('hour')
             ->orderBy('hour', 'ASC');
 
         $result = $qb->execute();
-        $stats = [];
+        $stats  = [];
 
         while ($row = $result->fetch()) {
             $stats[$row['hour']] = [
-                'info' => (int)$row['info'],
-                'warning' => (int)$row['warning'],
-                'error' => (int)$row['error'],
-                'debug' => (int)$row['debug']
+                'info'    => (int) $row['info'],
+                'warning' => (int) $row['warning'],
+                'error'   => (int) $row['error'],
+                'debug'   => (int) $row['debug'],
             ];
         }
 
         return $stats;
+
+    }//end getJobStatsByHourRange()
+
+
+    /**
+     * Find all job logs with optional filtering and pagination
+     *
+     * @param int|null $limit Maximum number of results to return
+     * @param int|null $offset Number of results to skip
+     * @param array|null $filters Associative array of filter conditions (column => value)
+     * @param array|null $searchConditions Search conditions for the query
+     * @param array|null $searchParams Parameters for the search conditions
+     * @param array|null $ids List of IDs or UUIDs to search for
+     * @return array<JobLog> Array of matching job log entities
+     */
+    public function findAll(
+        ?int $limit=null,
+        ?int $offset=null,
+        ?array $filters=[],
+        ?array $searchConditions=[],
+        ?array $searchParams=[],
+        ?array $ids=null
+    ): array {
+        return parent::findAll($limit, $offset, $filters, $searchConditions, $searchParams, $ids);
     }
-}
+
+}//end class

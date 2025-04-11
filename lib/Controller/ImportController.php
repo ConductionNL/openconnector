@@ -59,7 +59,7 @@ class ImportController extends Controller
 			}
 		}
 
-		// Get the uploaded file from the request if a single file hase been uploaded.
+		// Get the uploaded file from the request if a single file has been uploaded.
 		$uploadedFile = $this->request->getUploadedFile(key: 'file');
 		if (empty($uploadedFile) === false) {
 			$uploadedFiles[] = $uploadedFile;

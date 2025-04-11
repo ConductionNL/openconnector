@@ -3,7 +3,7 @@
 namespace OCA\OpenConnector\Db;
 
 use DateTime;
-use OCP\AppFramework\Db\QBMapper;
+use OCP\AppFramework\Db\Entity;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use Symfony\Component\Uid\Uuid;
@@ -14,9 +14,16 @@ use Symfony\Component\Uid\Uuid;
  * Handles database operations for event messages
  *
  * @package OCA\OpenConnector\Db
+ * @extends BaseMapper<EventMessage>
  */
-class EventMessageMapper extends QBMapper
+class EventMessageMapper extends \OCA\OpenConnector\Db\BaseMapper
 {
+    /**
+     * The name of the database table for event messages
+     */
+    private const TABLE_NAME = 'openconnector_event_messages';
+
+
     /**
      * Constructor
      *
@@ -24,70 +31,47 @@ class EventMessageMapper extends QBMapper
      */
     public function __construct(IDBConnection $db)
     {
-        parent::__construct($db, 'openconnector_event_messages');
-    }
+        parent::__construct($db, self::TABLE_NAME);
+
+    }//end __construct()
+
 
     /**
-     * Find a message by ID
+     * Get the name of the database table
      *
-     * @param int $id The message ID
-     * @return EventMessage
+     * @return string The table name
      */
-    public function find(int $id): EventMessage
+    public function getTableName(): string
     {
-        $qb = $this->db->getQueryBuilder();
+        return self::TABLE_NAME;
 
-        $qb->select('*')
-            ->from('openconnector_event_messages')
-            ->where(
-                $qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
-            );
+    }//end getTableName()
 
-        return $this->findEntity($qb);
-    }
 
     /**
-     * Find all messages matching the given criteria
+     * Create a new EventMessage entity instance
      *
-     * @param int|null $limit Maximum number of results
-     * @param int|null $offset Number of records to skip
-     * @param array|null $filters Key-value pairs for filtering
-     * @return EventMessage[]
+     * @return EventMessage A new EventMessage instance
      */
-    public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = []): array
+    protected function createEntity(): Entity
     {
-        $qb = $this->db->getQueryBuilder();
+        return new EventMessage();
 
-        $qb->select('*')
-            ->from('openconnector_event_messages')
-            ->setMaxResults($limit)
-            ->setFirstResult($offset);
+    }//end createEntity()
 
-        foreach ($filters as $filter => $value) {
-            if ($value === 'IS NOT NULL') {
-                $qb->andWhere($qb->expr()->isNotNull($filter));
-            } elseif ($value === 'IS NULL') {
-                $qb->andWhere($qb->expr()->isNull($filter));
-            } else {
-                $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
-            }
-        }
-
-        return $this->findEntities($qb);
-    }
 
     /**
      * Find messages that need to be retried
      *
-     * @param int $maxRetries Maximum number of retry attempts
+     * @param  int $maxRetries Maximum number of retry attempts
      * @return EventMessage[]
      */
-    public function findPendingRetries(int $maxRetries = 5): array
+    public function findPendingRetries(int $maxRetries=5): array
     {
         $qb = $this->db->getQueryBuilder();
 
         $qb->select('*')
-            ->from('openconnector_event_messages')
+            ->from($this->getTableName())
             ->where(
                 $qb->expr()->eq('status', $qb->createNamedParameter('pending')),
                 $qb->expr()->lt('retry_count', $qb->createNamedParameter($maxRetries, IQueryBuilder::PARAM_INT)),
@@ -98,84 +82,56 @@ class EventMessageMapper extends QBMapper
             );
 
         return $this->findEntities($qb);
-    }
 
-    /**
-     * Create a new message from array data
-     *
-     * @param array $data Message data
-     * @return EventMessage
-     */
-    public function createFromArray(array $data): EventMessage
-    {
-        $obj = new EventMessage();
-        $obj->hydrate($data);
-        
-        // Set uuid
-        if ($obj->getUuid() === null) {
-            $obj->setUuid(Uuid::v4());
-        }
-        
-        // Set timestamps
-        $obj->setCreated(new DateTime());
-        $obj->setUpdated(new DateTime());
+    }//end findPendingRetries()
 
-        return $this->insert(entity: $obj);
-    }
-
-    /**
-     * Update an existing message
-     *
-     * @param int $id Message ID
-     * @param array $data Updated message data
-     * @return EventMessage
-     */
-    public function updateFromArray(int $id, array $data): EventMessage
-    {
-        $obj = $this->find($id);
-        $obj->hydrate($data);
-        
-        // Update timestamp
-        $obj->setUpdated(new DateTime());
-
-        return $this->update($obj);
-    }
 
     /**
      * Mark a message as delivered
      *
-     * @param int $id Message ID
-     * @param array $response Response from the consumer
+     * @param  int   $id       Message ID
+     * @param  array $response Response from the consumer
      * @return EventMessage
      */
     public function markDelivered(int $id, array $response): EventMessage
     {
-        return $this->updateFromArray($id, [
-            'status' => 'delivered',
-            'lastResponse' => $response,
-            'lastAttempt' => new DateTime()
-        ]);
-    }
+        return $this->updateFromArray(
+            $id,
+            [
+                'status'       => 'delivered',
+                'lastResponse' => $response,
+                'lastAttempt'  => new DateTime(),
+            ]
+        );
+
+    }//end markDelivered()
+
 
     /**
      * Mark a message as failed
      *
-     * @param int $id Message ID
-     * @param array $response Error response
-     * @param int $backoffMinutes Minutes to wait before next attempt
+     * @param  int   $id             Message ID
+     * @param  array $response       Error response
+     * @param  int   $backoffMinutes Minutes to wait before next attempt
      * @return EventMessage
      */
-    public function markFailed(int $id, array $response, int $backoffMinutes = 5): EventMessage
+    public function markFailed(int $id, array $response, int $backoffMinutes=5): EventMessage
     {
         $message = $this->find($id);
         $message->incrementRetry($backoffMinutes);
-        
-        return $this->updateFromArray($id, [
-            'status' => 'failed',
-            'lastResponse' => $response,
-            'retryCount' => $message->getRetryCount(),
-            'lastAttempt' => $message->getLastAttempt(),
-            'nextAttempt' => $message->getNextAttempt()
-        ]);
-    }
-} 
+
+        return $this->updateFromArray(
+            $id,
+            [
+                'status'       => 'failed',
+                'lastResponse' => $response,
+                'retryCount'   => $message->getRetryCount(),
+                'lastAttempt'  => $message->getLastAttempt(),
+                'nextAttempt'  => $message->getNextAttempt(),
+            ]
+        );
+
+    }//end markFailed()
+
+
+}//end class
