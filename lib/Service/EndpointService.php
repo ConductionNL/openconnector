@@ -324,6 +324,10 @@ class EndpointService
                 continue;
             }
 
+            if (empty($use) === true) {
+                continue;
+            }
+
             if (Uuid::isValid(uuid: $use) === true) {
                 $useId = $use;
             } else if (
