@@ -1,3 +1,8 @@
+# Version: 0.1.42
+
+* [#212](https://github.com/ConductionNL/openconnector/pull/212): Hotfix: Use correct variable name for target last action
+
+
 # Changelog
 
 ## [Unreleased]
