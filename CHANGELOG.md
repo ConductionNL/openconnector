@@ -1,3 +1,9 @@
+# Version: 0.1.48
+
+* [#244](https://github.com/ConductionNL/openconnector/pull/244): Default array value for $synchronizedTargetIds
+* [#245](https://github.com/ConductionNL/openconnector/pull/245): Dev to main
+
+
 # Changelog
 
 ## [Unreleased]
