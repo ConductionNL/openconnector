@@ -1,3 +1,9 @@
+# Version: 0.1.31
+
+* [#143](https://github.com/ConductionNL/openconnector/pull/143): copy to clipboard
+* [#144](https://github.com/ConductionNL/openconnector/pull/144): Development
+
+
 # Changelog
 
 ## [Unreleased]
