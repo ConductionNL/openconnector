@@ -1,3 +1,9 @@
+# Version: 0.1.28
+
+* [#132](https://github.com/ConductionNL/openconnector/pull/132): Fixes for test running jobs and jobLogs
+* [#133](https://github.com/ConductionNL/openconnector/pull/133): Update main with job test run and job log fixes
+
+
 # Changelog
 
 ## [Unreleased]
