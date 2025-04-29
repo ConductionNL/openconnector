@@ -1,3 +1,12 @@
+# Version: 0.1.30
+
+* [#137](https://github.com/ConductionNL/openconnector/pull/137): Add dynamic endpoints
+* [#138](https://github.com/ConductionNL/openconnector/pull/138): Add jsonlogic conditions on endpoints
+* [#139](https://github.com/ConductionNL/openconnector/pull/139): Dev to main
+* [#140](https://github.com/ConductionNL/openconnector/pull/140): merge main to dev (fix merge conflicts)
+* [#141](https://github.com/ConductionNL/openconnector/pull/141): ZGW mappings and extra fetch fix
+
+
 # Changelog
 
 ## [Unreleased]
