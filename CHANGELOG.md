@@ -1,3 +1,9 @@
+# Version: 0.1.35
+
+* [#173](https://github.com/ConductionNL/openconnector/pull/173): feature/CONNECTOR-52/rule-export
+* [#175](https://github.com/ConductionNL/openconnector/pull/175): Development to main
+
+
 # Changelog
 
 ## [Unreleased]
