@@ -1,3 +1,8 @@
+# Version: 0.1.36
+
+* [#177](https://github.com/ConductionNL/openconnector/pull/177): Hotfix for mapping issue
+
+
 # Changelog
 
 ## [Unreleased]
