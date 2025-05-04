@@ -1,3 +1,11 @@
+# Version: 0.1.58
+
+* [#275](https://github.com/ConductionNL/openconnector/pull/275): Only set response if error
+* [#293](https://github.com/ConductionNL/openconnector/pull/293): Multiple fixes for uri links
+* [#294](https://github.com/ConductionNL/openconnector/pull/294): Dev to main
+* [#295](https://github.com/ConductionNL/openconnector/pull/295): Fix mapping for collection endpoints
+
+
 # Changelog
 
 ## [Unreleased]
