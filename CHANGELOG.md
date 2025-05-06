@@ -1,3 +1,9 @@
+# Version: 0.1.50
+
+* [#254](https://github.com/ConductionNL/openconnector/pull/254): Fix uses pagination isset
+* [#255](https://github.com/ConductionNL/openconnector/pull/255): Dev to main
+
+
 # Changelog
 
 ## [Unreleased]
