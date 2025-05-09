@@ -1,3 +1,8 @@
+# Version: 0.1.29
+
+* [#135](https://github.com/ConductionNL/openconnector/pull/135): hotfix/GW-1763/workflows
+
+
 # Changelog
 
 ## [Unreleased]
