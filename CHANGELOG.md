@@ -1,3 +1,10 @@
+# Version: 0.1.55
+
+* [#276](https://github.com/ConductionNL/openconnector/pull/276): Added support for Endpoints to return XML Response
+* [#281](https://github.com/ConductionNL/openconnector/pull/281): Prevent deletion of sub objects each time the sync ran
+* [#282](https://github.com/ConductionNL/openconnector/pull/282): Dev to main
+
+
 # Changelog
 
 ## [Unreleased]
