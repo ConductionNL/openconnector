@@ -1,3 +1,10 @@
+# Version: 0.1.59
+
+* [#297](https://github.com/ConductionNL/openconnector/pull/297): all data is shown on detail pages
+* [#298](https://github.com/ConductionNL/openconnector/pull/298): Keep 'before' & 'after' similair
+* [#299](https://github.com/ConductionNL/openconnector/pull/299): Development to main
+
+
 # Changelog
 
 ## [Unreleased]
