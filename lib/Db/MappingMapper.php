@@ -129,4 +129,16 @@ class MappingMapper extends QBMapper
         // Return the total count
         return (int)$row['count'];
     }
+
+    /**
+     * Find all mappings that belong to a specific configuration.
+     *
+     * @param string $configurationId The ID of the configuration to find mappings for
+     * @return array<Mapping> Array of Mapping entities
+     */
+    public function findByConfiguration(string $configurationId): array
+    {
+        $sql = 'SELECT * FROM `' . $this->getTableName() . '` WHERE JSON_CONTAINS(configurations, ?)';
+        return $this->findEntities($sql, [$configurationId]);
+    }
 }

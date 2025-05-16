@@ -170,4 +170,16 @@ class SourceMapper extends QBMapper
             return $this->createFromArray($sourceData);
         }
     }
+
+    /**
+     * Find all sources that belong to a specific configuration.
+     *
+     * @param string $configurationId The ID of the configuration to find sources for
+     * @return array<Source> Array of Source entities
+     */
+    public function findByConfiguration(string $configurationId): array
+    {
+        $sql = 'SELECT * FROM `' . $this->getTableName() . '` WHERE JSON_CONTAINS(configurations, ?)';
+        return $this->findEntities($sql, [$configurationId]);
+    }
 }

@@ -192,4 +192,16 @@ class EndpointMapper extends QBMapper
                    $endpoint->getMethod() === $method;
         });
     }
+
+    /**
+     * Find all endpoints that belong to a specific configuration.
+     *
+     * @param string $configurationId The ID of the configuration to find endpoints for
+     * @return array<Endpoint> Array of Endpoint entities
+     */
+    public function findByConfiguration(string $configurationId): array
+    {
+        $sql = 'SELECT * FROM `' . $this->getTableName() . '` WHERE JSON_CONTAINS(configurations, ?)';
+        return $this->findEntities($sql, [$configurationId]);
+    }
 }

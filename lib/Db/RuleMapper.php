@@ -214,4 +214,16 @@ class RuleMapper extends QBMapper
 			   ->execute();
 		}
 	}
+
+	/**
+	 * Find all rules that belong to a specific configuration.
+	 *
+	 * @param string $configurationId The ID of the configuration to find rules for
+	 * @return array<Rule> Array of Rule entities
+	 */
+	public function findByConfiguration(string $configurationId): array
+	{
+		$sql = 'SELECT * FROM `' . $this->getTableName() . '` WHERE JSON_CONTAINS(configurations, ?)';
+		return $this->findEntities($sql, [$configurationId]);
+	}
 }

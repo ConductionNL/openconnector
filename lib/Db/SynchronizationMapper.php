@@ -148,4 +148,16 @@ class SynchronizationMapper extends QBMapper
         // Return the total count
         return (int)$row['count'];
     }
+
+    /**
+     * Find all synchronizations that belong to a specific configuration.
+     *
+     * @param string $configurationId The ID of the configuration to find synchronizations for
+     * @return array<Synchronization> Array of Synchronization entities
+     */
+    public function findByConfiguration(string $configurationId): array
+    {
+        $sql = 'SELECT * FROM `' . $this->getTableName() . '` WHERE JSON_CONTAINS(configurations, ?)';
+        return $this->findEntities($sql, [$configurationId]);
+    }
 }

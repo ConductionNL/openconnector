@@ -129,4 +129,16 @@ class JobMapper extends QBMapper
         // Return the total count
         return (int)$row['count'];
     }
+
+    /**
+     * Find all jobs that belong to a specific configuration.
+     *
+     * @param string $configurationId The ID of the configuration to find jobs for
+     * @return array<Job> Array of Job entities
+     */
+    public function findByConfiguration(string $configurationId): array
+    {
+        $sql = 'SELECT * FROM `' . $this->getTableName() . '` WHERE JSON_CONTAINS(configurations, ?)';
+        return $this->findEntities($sql, [$configurationId]);
+    }
 }
