@@ -20,13 +20,13 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Ververs
+						Refresh
 					</NcActionButton>
 					<NcActionButton @click="consumerStore.setConsumerItem(null); navigationStore.setModal('editConsumer')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Consumer toevoegen
+						Add consumer
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -50,13 +50,13 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 							<template #icon>
 								<Pencil />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
 						<NcActionButton @click="consumerStore.setConsumerItem(consumer); navigationStore.setDialog('deleteConsumer')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -67,10 +67,10 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Consumers aan het laden" />
+			name="Loading consumers" />
 
 		<div v-if="!consumerStore.consumerList.length" class="emptyListHeader">
-			Er zijn nog geen consumers gedefinieerd.
+			No consumers defined
 		</div>
 	</NcAppContentList>
 </template>

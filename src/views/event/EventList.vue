@@ -70,7 +70,7 @@ import { eventStore, navigationStore, searchStore } from '../../store/store.js'
 			name="Loading events" />
 
 		<div v-if="!eventStore.eventList.length" class="emptyListHeader">
-			No events defined.
+			No events defined
 		</div>
 	</NcAppContentList>
 </template>

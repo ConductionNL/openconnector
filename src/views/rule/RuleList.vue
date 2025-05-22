@@ -82,7 +82,7 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 			name="Loading rules" />
 
 		<div v-if="!ruleStore.ruleList.length" class="emptyListHeader">
-			No rules defined.
+			No rules defined
 		</div>
 	</NcAppContentList>
 </template>

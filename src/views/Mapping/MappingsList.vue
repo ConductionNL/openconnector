@@ -56,7 +56,7 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 							<template #icon>
 								<Pencil />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
 						<NcActionButton @click="mappingStore.setMappingItem(mapping); navigationStore.setModal('testMapping')">
 							<template #icon>
@@ -74,7 +74,7 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -85,10 +85,10 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Mappings aan het laden" />
+			name="Loading mappings" />
 
 		<div v-if="!mappingStore.mappingList.length" class="emptyListHeader">
-			Er zijn nog geen mappings gedefinieerd.
+			No mappings defined
 		</div>
 	</NcAppContentList>
 </template>

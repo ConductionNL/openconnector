@@ -20,13 +20,13 @@ import { webhookStore, navigationStore, searchStore } from '../../store/store.js
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Ververs
+						Refresh
 					</NcActionButton>
 					<NcActionButton @click="webhookStore.setWebhookItem({}); navigationStore.setModal('editWebhook')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Webhook toevoegen
+						Add webhook
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -50,13 +50,13 @@ import { webhookStore, navigationStore, searchStore } from '../../store/store.js
 							<template #icon>
 								<Pencil />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
 						<NcActionButton @click="webhookStore.setWebhookItem(webhook); navigationStore.setDialog('deleteWebhook')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -67,10 +67,10 @@ import { webhookStore, navigationStore, searchStore } from '../../store/store.js
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Webhooks aan het laden" />
+			name="Loading webhooks" />
 
 		<div v-if="!webhookStore.webhookList.length" class="emptyListHeader">
-			Er zijn nog geen webhooks gedefinieerd.
+			No webhooks defined
 		</div>
 	</NcAppContentList>
 </template>

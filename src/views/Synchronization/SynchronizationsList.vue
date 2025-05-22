@@ -66,7 +66,7 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 							<template #icon>
 								<DatabaseSettingsOutline :size="20" />
 							</template>
-							Add Source Config
+							Add source config
 						</NcActionButton>
 						<NcActionButton @click="() => {
 							synchronizationStore.setSynchronizationItem(synchronization)
@@ -76,7 +76,7 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 							<template #icon>
 								<CardBulletedSettingsOutline :size="20" />
 							</template>
-							Add Target Config
+							Add target config
 						</NcActionButton>
 						<NcActionButton @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('testSynchronization')">
 							<template #icon>
@@ -111,10 +111,10 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Synchronisaties aan het laden" />
+			name="Loading syncronizations" />
 
 		<div v-if="!synchronizationStore.synchronizationList.length" class="emptyListHeader">
-			No synchronizations defined.
+			No synchronizations defined
 		</div>
 	</NcAppContentList>
 </template>

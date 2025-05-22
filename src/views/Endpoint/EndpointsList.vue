@@ -57,7 +57,7 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 							<template #icon>
 								<Pencil />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
 						<NcActionButton @click="endpointStore.exportEndpoint(endpoint.id)">
 							<template #icon>
@@ -69,7 +69,7 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 						<NcActionButton @click="endpointStore.setEndpointItem(endpoint); navigationStore.setModal('addEndpointRule')">
 							<template #icon>
@@ -86,10 +86,10 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Endpoints aan het laden" />
+			name="Loading endpoints" />
 
 		<div v-if="!endpointStore.endpointList.length" class="emptyListHeader">
-			Er zijn nog geen endpoints gedefinieerd.
+			No endpoints defined
 		</div>
 	</NcAppContentList>
 </template>
