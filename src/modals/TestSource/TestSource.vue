@@ -1,5 +1,6 @@
 <script setup>
 import { sourceStore, navigationStore } from '../../store/store.js'
+import { getTheme } from '../../services/getTheme.js'
 </script>
 
 <template>
@@ -34,17 +35,18 @@ import { sourceStore, navigationStore } from '../../store/store.js'
 						:value.sync="testSourceItem.body" />
 				</div>
 			</form>
-
-			<NcButton
-				:disabled="loading"
-				type="primary"
-				@click="testSource()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<Sync v-if="!loading" :size="20" />
-				</template>
-				Test connection
-			</NcButton>
+			<div class="modalActionButton">
+				<NcButton
+					:disabled="loading"
+					type="primary"
+					@click="testSource()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<Sync v-if="!loading" :size="20" />
+					</template>
+					Test connection
+				</NcButton>
+			</div>
 
 			<NcNoteCard v-if="sourceStore.sourceTest && sourceStore.sourceTest.response.statusCode.toString().startsWith('2')" type="success">
 				<p>The connection to the source was successful.</p>
@@ -54,13 +56,50 @@ import { sourceStore, navigationStore } from '../../store/store.js'
 			</NcNoteCard>
 
 			<div v-if="sourceStore.sourceTest">
-				<p><b>Status:</b> {{ sourceStore.sourceTest.response.statusMessage }} ({{ sourceStore.sourceTest.response.statusCode }})</p>
-				<p><b>Response time:</b> {{ sourceStore.sourceTest.response.responseTime }} (Milliseconds)</p>
-				<p><b>Size:</b> {{ sourceStore.sourceTest.response.size }} (Bytes)</p>
-				<p><b>Remote IP:</b> {{ sourceStore.sourceTest.response.remoteIp }}</p>
-				<p><b>Headers:</b> {{ sourceStore.sourceTest.response.headers }}</p>
-				<div class="responseBody">
-					<b>Body:</b> <pre>{{ prettifyJson(sourceStore.sourceTest.response.body) }}</pre>
+				<div class="response-grid">
+					<div class="response-item">
+						<span class="response-label">Status:</span>
+						<span class="response-value">{{ sourceStore.sourceTest.response.statusMessage }} ({{ sourceStore.sourceTest.response.statusCode }})</span>
+					</div>
+					<div class="response-item">
+						<span class="response-label">Response time:</span>
+						<span class="response-value">{{ sourceStore.sourceTest.response.responseTime }} ms</span>
+					</div>
+					<div class="response-item">
+						<span class="response-label">Size:</span>
+						<span class="response-value">{{ sourceStore.sourceTest.response.size }} bytes</span>
+					</div>
+					<div class="response-item">
+						<span class="response-label">Remote IP:</span>
+						<span class="response-value">{{ sourceStore.sourceTest.response.remoteIp || "-" }}</span>
+					</div>
+				</div>
+
+				<div class="response-section">
+					<h3 class="section-title">
+						Headers
+					</h3>
+					<div :class="`codeMirrorContainer ${getTheme()}`">
+						<CodeMirror
+							v-model="responseHeaders"
+							:extensions="editorExtensions"
+							:basic="true"
+							:read-only="true"
+							:dark="getTheme() === 'dark'" />
+					</div>
+				</div>
+				<div class="response-section">
+					<h3 class="section-title">
+						Body
+					</h3>
+					<div :class="`codeMirrorContainer ${getTheme()}`">
+						<CodeMirror
+							v-model="responseBody"
+							:extensions="editorExtensions"
+							:basic="true"
+							:read-only="true"
+							:dark="getTheme() === 'dark'" />
+					</div>
 				</div>
 			</div>
 		</div>
@@ -77,6 +116,9 @@ import {
 	NcTextArea,
 	NcNoteCard,
 } from '@nextcloud/vue'
+import CodeMirror from 'vue-codemirror6'
+import { json } from '@codemirror/lang-json'
+import { EditorView } from '@codemirror/view'
 import Sync from 'vue-material-design-icons/Sync.vue'
 
 export default {
@@ -89,6 +131,7 @@ export default {
 		NcTextField,
 		NcTextArea,
 		NcNoteCard,
+		CodeMirror,
 	},
 	data() {
 		return {
@@ -121,6 +164,20 @@ export default {
 				value: { id: 'GET', label: 'GET' },
 			},
 		}
+	},
+	computed: {
+		editorExtensions() {
+			return [
+				json(),
+				EditorView.lineWrapping,
+			]
+		},
+		responseBody() {
+			return JSON.stringify(JSON.parse(sourceStore.sourceTest.response.body), null, 2)
+		},
+		responseHeaders() {
+			return JSON.stringify(sourceStore.sourceTest.response.headers, null, 2)
+		},
 	},
 	methods: {
 		closeModal() {
@@ -167,15 +224,48 @@ export default {
 }
 </script>
 <style>
-.detailGrid {
+.detail-grid {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 5px;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 16px;
+}
+
+.response-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 16px;
+	margin-block-end: 24px;
+}
+
+.response-item {
+	display: flex;
+	background: var(--color-background-dark);
+	border-radius: 8px;
+	flex-direction: column;
+	padding-block: 5px;
+	gap: 4px;
+}
+
+.response-label {
+	font-weight: 600;
+	color: var(--color-text-light);
+	font-size: 14px;
+}
+
+.response-value {
+	color: var(--color-text);
+	font-family: var(--font-mono);
+}
+
+.response-section {
+	margin-block-start: 24px;
+	text-align: left;
 }
 </style>
 
 <style scoped>
-.responseBody {
-	text-align: left;
+.modalActionButton {
+	display: flex;
+	justify-content: end;
 }
 </style>
