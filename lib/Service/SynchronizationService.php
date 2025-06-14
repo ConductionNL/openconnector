@@ -2539,7 +2539,10 @@ class SynchronizationService
         $this->startAsyncFileFetching($source, $config, $endpoint, $objectId, $rule->getId());
 
         // Return data immediately with placeholder values
-        $dataDot[$config['filePath']] = $this->generatePlaceholderValues($endpoint);
+        if (isset($config['setPlaceholder']) === false || (isset($config['setPlaceholder']) === true && $config['setPlaceholder'] != false)) {
+            $dataDot[$config['filePath']] = $this->generatePlaceholderValues($endpoint); 
+        }
+
 		return $dataDot->jsonSerialize();
 	}
 

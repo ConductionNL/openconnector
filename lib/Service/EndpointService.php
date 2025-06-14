@@ -459,7 +459,7 @@ class EndpointService
                 continue;
             }
 
-			if (is_array($value) === true && array_is_list($value) === true) {
+			if (is_array($value) === true && array_is_list($value) === true && isset($extend[$key]) === true) {
 				$extend[$key] = array_fill(0, count($value), $extend[$key]);
 			}
 
