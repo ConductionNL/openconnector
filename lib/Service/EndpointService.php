@@ -1615,8 +1615,6 @@ class EndpointService
             $mappedData = $this->mappingService->executeMapping(mapping: $mapping, input: $mappedData);
         }
 
-		var_dump($mappedData);
-
         $mappedData['successful'] = $this->storageService->writePart(partId: $mappedData['order'], partUuid: $mappedData['id'], data: $mappedData['data']);
 
         unset($data['data']);
@@ -1624,8 +1622,6 @@ class EndpointService
         if (isset($config['mappingOutId']) === true) {
             $mappedData = $this->mappingService->executeMapping(mapping: $this->mappingService->getMapping(mappingId: $config['mappingOutId']), input: $mappedData);
         }
-
-		var_dump($mappedData);
 
         $object = $this->objectService->getOpenRegisters()->getMapper('objectEntity')->find($objectId);
         $object->setObject($mappedData);
