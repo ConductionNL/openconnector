@@ -1210,7 +1210,6 @@ class SynchronizationService
 
 		return $subObject;
 	}
-
 	/**
 	 * Write the data to the target
 	 *
@@ -2083,7 +2082,7 @@ class SynchronizationService
             } catch (DoesNotExistException $exception) {
                 continue;
             }
-            $extendedParameters->add($property, $this->objectService->getOpenRegisters()->renderEntity($object->jsonSerialize()));
+            $extendedParameters->add($property, $object->jsonSerialize());
 
         }
 
