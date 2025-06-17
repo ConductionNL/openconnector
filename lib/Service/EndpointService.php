@@ -498,7 +498,7 @@ class EndpointService
         foreach($rewriteParameters as $rewriteParameter) {
             if (
                 filter_var($parameters[$rewriteParameter], FILTER_VALIDATE_URL) === false
-				&& in_array(parse_url($parameters[$rewriteParameter], PHP_URL_HOST), $this->containerInterface->getParameter('kernel.trusted_hosts')) === false
+				&& in_array(parse_url($parameters[$rewriteParameter], PHP_URL_HOST), $this->config->getSystemValue('trusted_domains')) === false
             ) {
                 continue;
             }
