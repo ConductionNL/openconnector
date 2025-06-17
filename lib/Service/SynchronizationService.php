@@ -1018,7 +1018,7 @@ class SynchronizationService
 
 				// Handle sub-objects synchronization if sourceConfig is defined
 				if (isset($sourceConfig['subObjects']) === true) {
-					$targetObject = $objectService->renderEntity($target->jsonSerialize(), ['all']);
+					$targetObject = $objectService->renderEntity($target, ['all']);
 					$this->updateContractsForSubObjects(subObjectsConfig: $sourceConfig['subObjects'], synchronizationId: $synchronization->getId(), targetObject: $targetObject);
 				}
 
