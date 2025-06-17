@@ -21,6 +21,7 @@
   ],
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/view": "^6.36.8",
     "@fortawesome/fontawesome-svg-core": "^6.5.2",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@mdi/js": "^7.4.47",
