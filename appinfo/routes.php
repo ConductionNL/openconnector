@@ -79,5 +79,10 @@ return [
 		['name' => 'synchronizationContracts#activate', 'url' => '/api/synchronization-contracts/{id}/activate', 'verb' => 'POST'],
 		['name' => 'synchronizationContracts#deactivate', 'url' => '/api/synchronization-contracts/{id}/deactivate', 'verb' => 'POST'],
 		['name' => 'synchronizationContracts#execute', 'url' => '/api/synchronization-contracts/{id}/execute', 'verb' => 'POST'],
+
+		// User endpoints
+		['name' => 'user#me', 'url' => '/api/user/me', 'verb' => 'GET'],
+		['name' => 'user#updateMe', 'url' => '/api/user/me', 'verb' => 'PUT'],
+		['name' => 'user#login', 'url' => '/api/user/login', 'verb' => 'POST'],
 	],
 ];

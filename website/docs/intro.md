@@ -50,6 +50,13 @@ Manage your synchronization processes and schedules.
 ### 📋 Rules
 Define business rules and conditions for data synchronization.
 
+### 👤 User API
+Secure JSON-based API endpoints for user management and authentication:
+- Get current user information
+- Update user profiles  
+- Secure user authentication with comprehensive protection
+- See [User API Documentation](user-api.md) for complete reference
+
 ### ⚙️ Settings
 Configure global settings for OpenConnector.
 
