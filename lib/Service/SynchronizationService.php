@@ -1018,7 +1018,7 @@ class SynchronizationService
 
 				// Handle sub-objects synchronization if sourceConfig is defined
 				if (isset($sourceConfig['subObjects']) === true) {
-					$targetObject = $objectService->renderEntity($target->jsonSerialize(), ['all']);
+					$targetObject = $objectService->renderEntity($target, ['all']);
 					$this->updateContractsForSubObjects(subObjectsConfig: $sourceConfig['subObjects'], synchronizationId: $synchronization->getId(), targetObject: $targetObject);
 				}
 
@@ -1157,37 +1157,30 @@ class SynchronizationService
 	 *
 	 * @return array The updated target object with IDs updated on subObjects.
 	 */
-	private function updateIdsOnSubObjects(array $subObjectsConfig, string $synchronizationId, array $targetObject, ?bool $parentIsNumericArray = false): array
+	private function updateIdsOnSubObjects(array $subObjectsConfig, string $synchronizationId, array $targetObject): array
 	{
-		foreach ($subObjectsConfig as $propertyName => $subObjectConfig) {
-			if (isset($targetObject[$propertyName]) === false) {
-				continue;
-			}
+        $targetObject = $this->updateIdOnSubObject(synchronizationId: $synchronizationId, subObject: $targetObject);
 
-			// If property data is an array of sub-objects, iterate and process
-			if (is_array($targetObject[$propertyName]) === true) {
-				if (isset($targetObject[$propertyName]['originId']) === true) {
-					$targetObject[$propertyName] = $this->updateIdOnSubObject($synchronizationId, $targetObject[$propertyName]);
-				}
+        foreach ($targetObject as $propertyName => $value) {
+            if (is_array($value) === false) {
+                continue;
+            }
 
-				// Recursively process any nested sub-objects within the associative array
-				foreach ($targetObject[$propertyName] as $key => $value) {
-					if (is_array($value) === true && isset($subObjectConfig['subObjects'][$key]) === true) {
-						if ($this->isAssociativeArray($value) === true) {
-							$targetObject[$propertyName][$key] = $this->updateIdsOnSubObjects($subObjectConfig['subObjects'], $synchronizationId, [$key => $value]);
-						} elseif (is_array($value) === true && $this->isAssociativeArray(reset($value)) === true) {
-							foreach ($value as $iterativeSubArrayKey => $iterativeSubArray) {
-								$targetObject[$propertyName][$key][$iterativeSubArrayKey] = $this->updateIdsOnSubObjects($subObjectConfig['subObjects'], $synchronizationId, [$key => $iterativeSubArray], true);
-							}
-						}
-					}
-				}
-			}
-		}
+            if ($this->isAssociativeArray($value) === true) {
+                $targetObject[$propertyName] = $this->updateIdsOnSubObjects(subObjectsConfig: $subObjectsConfig, synchronizationId: $synchronizationId, targetObject: $value);
+                continue;
+            }
 
-		if ($parentIsNumericArray === true) {
-			return reset($targetObject);
-		}
+            if (is_array(reset($value)) === true && $this->isAssociativeArray(reset($value)) === true) { 
+                foreach ($value as $key => $subValue) {
+                    if (is_array($subValue) === false) {
+                        continue;
+                    }
+
+                    $targetObject[$propertyName][$key] = $this->updateIdsOnSubObjects(subObjectsConfig: $subObjectsConfig, synchronizationId: $synchronizationId, targetObject: $subValue);
+                }
+            }
+        }
 
 		return $targetObject;
 	}
@@ -1217,7 +1210,6 @@ class SynchronizationService
 
 		return $subObject;
 	}
-
 	/**
 	 * Write the data to the target
 	 *
@@ -2090,7 +2082,7 @@ class SynchronizationService
             } catch (DoesNotExistException $exception) {
                 continue;
             }
-            $extendedParameters->add($property, $this->objectService->getOpenRegisters()->renderEntity($object->jsonSerialize()));
+            $extendedParameters->add($property, $object->jsonSerialize());
 
         }
 
