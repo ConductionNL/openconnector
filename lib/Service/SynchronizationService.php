@@ -1326,6 +1326,10 @@ class SynchronizationService
             $usesPagination = filter_var($sourceConfig['usesPagination'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         }
 
+        if ($sourceConfig['resultsPosition'] === '_object') {
+            $usesPagination = false;
+        }
+
 		$config = [];
 		if (empty($headers) === false) {
 			$config['headers'] = $headers;
@@ -1353,9 +1357,9 @@ class SynchronizationService
 		);
 
 		// Merge additional data into each object if $data is provided
-		if ($data !== null) {
-			foreach ($objects as &$object) {
-				$object = array_merge($object, $data);
+		if ($data !== null && empty($data) === false) {
+;			foreach ($objects as &$object) {
+                $object = array_merge($object, $data);
 			}
 		}
 
