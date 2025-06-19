@@ -1011,6 +1011,7 @@ class SynchronizationService
 					$synchronizationContract->setTargetId($targetObject['id']);
 				}
 
+                $targetObject = $this->replaceRelatedOriginIds(object: $targetObject, config: $sourceConfig['originIdsToReplace'] ?? []);
 
 				$target = $objectService->saveObject(register: $register, schema: $schema, object: $targetObject, uuid: $synchronizationContract->getTargetId());
 				// Get the id form the target object
@@ -1034,6 +1035,52 @@ class SynchronizationService
 
 		return $synchronizationContract;
 	}
+
+    /**
+     * Recursively replaces 'originId' values with corresponding target IDs in the given object,
+     * according to the provided config array. The config array defines which keys to traverse and replace with ObjectEntity uuids.
+     *
+     * The object can contain nested associative arrays (sub objects) or indexed arrays of associative arrays (array of multiple subobjects).
+     * Only keys present in the config array are processed.
+     * Beforehand the $object must be mapped so properties that are relations to other objects set as a 'originId' which are equal to existing originIds on SynchronizationContracts, so that we can take the targetId of
+     * those found contracts so objects can be linked from earlier synchronizations.
+     *
+     * @param array $object The object array to process (can be nested)
+     * @param array $config A nested config tree indicating which keys to process and replace.
+     *
+     * @return array The processed data with 'originId' replaced with actual ObjectEntities their uuids where applicable.
+     */
+    public function replaceRelatedOriginIds(array $object, array $config): array
+    {
+        foreach ($config as $key => $subConfig) {
+            if (isset($object[$key]) === false) {
+                continue;
+            }
+    
+            if (
+                is_array($object[$key]) === true &&
+                $this->isAssociativeArray(reset($object[$key])) === true &&
+                is_array($subConfig) === true
+            ) {
+                // It's a list of associative objects
+                foreach ($object[$key] as $i => $item) {
+                    if (is_array($item) === true) {
+                        $object[$key][$i] = $this->replaceRelatedOriginIds($item, $subConfig);
+                    }
+                }
+    
+            } elseif ($this->isAssociativeArray($object[$key]) === true && is_array($subConfig) === true) {
+                // Single nested associative object
+                $object[$key] = $this->replaceRelatedOriginIds($object[$key], $subConfig);
+    
+            } elseif ($subConfig === 'true' && is_string($object[$key]) === true) {
+                // Leaf: value is a string, marked for replacement
+                $object[$key] = $this->synchronizationContractMapper->findTargetIdByOriginId($object[$key]);
+            }
+        }
+    
+        return $object;
+    }
 
 	/**
 	 * Handles the synchronization of subObjects based on source configuration.
@@ -1137,14 +1184,14 @@ class SynchronizationService
 	/**
 	 * Checks if an array is associative.
 	 *
-	 * @param array $array The array to check.
+	 * @param mixed $array The array to check.
 	 *
 	 * @return bool True if the array is associative, false otherwise.
 	 */
-	private function isAssociativeArray(array $array): bool
+	private function isAssociativeArray(mixed $array): bool
 	{
 		// Check if the array is associative
-		return count(array_filter(array_keys($array), 'is_string')) > 0;
+		return (is_array($array) && count(array_filter(array_keys($array), 'is_string')) > 0);
 	}
 
 	/**
@@ -1326,6 +1373,10 @@ class SynchronizationService
             $usesPagination = filter_var($sourceConfig['usesPagination'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         }
 
+        if ($sourceConfig['resultsPosition'] === '_object') {
+            $usesPagination = false;
+        }
+
 		$config = [];
 		if (empty($headers) === false) {
 			$config['headers'] = $headers;
@@ -1353,9 +1404,9 @@ class SynchronizationService
 		);
 
 		// Merge additional data into each object if $data is provided
-		if ($data !== null) {
-			foreach ($objects as &$object) {
-				$object = array_merge($object, $data);
+		if ($data !== null && empty($data) === false) {
+;			foreach ($objects as &$object) {
+                $object = array_merge($object, $data);
 			}
 		}
 

@@ -542,10 +542,7 @@ class EndpointService
     ): Entity|array
     {
         if (isset($pathParams['id']) === true && $pathParams['id'] === end($pathParams)) {
-			$serializedObject = $this->objectService->getOpenRegisters()->renderEntity(
-				entity: $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize(),
-				extend: $parameters['_extend'] ?? $parameters['extend'] ?? null
-			);
+			$serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
             $result = $this->replaceInternalReferences(
 				mapper: $mapper,
 				serializedObject: $serializedObject,

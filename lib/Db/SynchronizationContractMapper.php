@@ -89,6 +89,35 @@ class SynchronizationContractMapper extends QBMapper
     }
 
     /**
+     * Find the target_id for a given origin_id in the synchronization contracts table
+     *
+     * @param string $originId The origin ID to search for
+     *
+     * @return string|null The target_id if found, or null if not found
+     * @throws Exception
+     */
+    public function findTargetIdByOriginId(string $originId): ?string
+    {
+        // Create query builder
+        $qb = $this->db->getQueryBuilder();
+
+        $qb->select('target_id')
+            ->from('openconnector_synchronization_contracts')
+            ->where(
+                $qb->expr()->eq('origin_id', $qb->createNamedParameter($originId))
+            )
+            ->setMaxResults(1); // Just in case
+
+        try {
+            $stmt = $qb->executeQuery();
+            $result = $stmt->fetchOne();
+            return $result !== false ? $result : null;
+        } catch (\Throwable $e) {
+            throw new \Exception("Error fetching target_id for origin_id {$originId}: " . $e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
      * Find a synchronization contract by synchronization ID and target ID
      *
      * @param string $synchronization The synchronization ID
