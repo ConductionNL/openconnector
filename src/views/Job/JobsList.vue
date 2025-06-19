@@ -12,23 +12,23 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 					label="Search"
 					class="searchField"
 					trailing-button-icon="close"
-					@trailing-button-click="jobStore.refreshJobList()">
+					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionButton @click="jobStore.refreshJobList()">
+					<NcActionButton close-after-click @click="jobStore.refreshJobList()">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
 						Refresh
 					</NcActionButton>
-					<NcActionButton @click="jobStore.setJobItem(null); navigationStore.setModal('editJob')">
+					<NcActionButton close-after-click @click="jobStore.setJobItem(null); navigationStore.setModal('editJob')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
 						Add job
 					</NcActionButton>
-					<NcActionButton @click="navigationStore.setModal('importFile')">
+					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
@@ -37,7 +37,7 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 				</NcActions>
 			</div>
 			<div v-if="jobStore.jobList && jobStore.jobList.length > 0">
-				<NcListItem v-for="(job, i) in jobStore.jobList"
+				<NcListItem v-for="(job, i) in jobStore.jobList.filter(job => searchStore.search === '' || job.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${job}${i}`"
 					:name="job.name"
 					:active="jobStore.jobItem?.id === job?.id"
@@ -52,47 +52,48 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 						{{ job?.description }}
 					</template>
 					<template #actions>
-						<NcActionButton @click="jobStore.setJobItem(job); navigationStore.setModal('editJob')">
+						<NcActionButton close-after-click @click="jobStore.setJobItem(job); navigationStore.setModal('editJob')">
 							<template #icon>
 								<Pencil />
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton @click="() => {
-							jobStore.setJobItem(job)
-							jobStore.setJobArgumentKey(null)
-							navigationStore.setModal('editJobArgument')
-						}">
+						<NcActionButton close-after-click
+							@click="() => {
+								jobStore.setJobItem(job)
+								jobStore.setJobArgumentKey(null)
+								navigationStore.setModal('editJobArgument')
+							}">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Add Argument
+							Add argument
 						</NcActionButton>
-						<NcActionButton @click="jobStore.setJobItem(job); navigationStore.setModal('testJob')">
+						<NcActionButton close-after-click @click="jobStore.setJobItem(job); navigationStore.setModal('testJob')">
 							<template #icon>
 								<Update :size="20" />
 							</template>
 							Test
 						</NcActionButton>
-						<NcActionButton @click="jobStore.setJobItem(job); navigationStore.setModal('runJob')">
+						<NcActionButton close-after-click @click="jobStore.setJobItem(job); navigationStore.setModal('runJob')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
 							Run
 						</NcActionButton>
-						<NcActionButton @click="jobStore.setJobItem(job); jobStore.refreshJobLogs(job.id)">
+						<NcActionButton close-after-click @click="jobStore.setJobItem(job); jobStore.refreshJobLogs(job.id)">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
-							Refresh Logs
+							Refresh logs
 						</NcActionButton>
-						<NcActionButton @click="jobStore.exportJob(job.id)">
+						<NcActionButton close-after-click @click="jobStore.exportJob(job.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export job
 						</NcActionButton>
-						<NcActionButton @click="jobStore.setJobItem(job); navigationStore.setDialog('deleteJob')">
+						<NcActionButton close-after-click @click="jobStore.setJobItem(job); navigationStore.setDialog('deleteJob')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
@@ -107,10 +108,10 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Taken aan het laden" />
+			name="Loading jobs" />
 
 		<div v-if="!jobStore.jobList.length" class="emptyListHeader">
-			No jobs defined.
+			No jobs defined
 		</div>
 	</NcAppContentList>
 </template>
@@ -145,6 +146,7 @@ export default {
 		TrashCanOutline,
 	},
 	mounted() {
+		searchStore.clearSearch()
 		jobStore.refreshJobList()
 	},
 }

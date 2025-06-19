@@ -12,23 +12,23 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 					label="Search"
 					class="searchField"
 					trailing-button-icon="close"
-					@trailing-button-click="mappingStore.refreshMappingList()">
+					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionButton @click="mappingStore.refreshMappingList()">
+					<NcActionButton close-after-click @click="mappingStore.refreshMappingList()">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
 						Refresh
 					</NcActionButton>
-					<NcActionButton @click="mappingStore.setMappingItem({}); navigationStore.setModal('editMapping')">
+					<NcActionButton close-after-click @click="mappingStore.setMappingItem({}); navigationStore.setModal('editMapping')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
 						Add mapping
 					</NcActionButton>
-					<NcActionButton @click="navigationStore.setModal('importFile')">
+					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
@@ -37,7 +37,7 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 				</NcActions>
 			</div>
 			<div v-if="mappingStore.mappingList && mappingStore.mappingList.length > 0">
-				<NcListItem v-for="(mapping, i) in mappingStore.mappingList"
+				<NcListItem v-for="(mapping, i) in mappingStore.mappingList.filter(mapping => searchStore.search === '' || mapping.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${mapping}${i}`"
 					:name="mapping.name"
 					:active="mappingStore.mappingItem?.id === mapping?.id"
@@ -52,29 +52,29 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 						{{ mapping?.description }}
 					</template>
 					<template #actions>
-						<NcActionButton @click="mappingStore.setMappingItem(mapping); navigationStore.setModal('editMapping')">
+						<NcActionButton close-after-click @click="mappingStore.setMappingItem(mapping); navigationStore.setModal('editMapping')">
 							<template #icon>
 								<Pencil />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
-						<NcActionButton @click="mappingStore.setMappingItem(mapping); navigationStore.setModal('testMapping')">
+						<NcActionButton close-after-click @click="mappingStore.setMappingItem(mapping); navigationStore.setModal('testMapping')">
 							<template #icon>
 								<TestTube :size="20" />
 							</template>
 							Test
 						</NcActionButton>
-						<NcActionButton @click="mappingStore.exportMapping(mapping.id)">
+						<NcActionButton close-after-click @click="mappingStore.exportMapping(mapping.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export mapping
 						</NcActionButton>
-						<NcActionButton @click="mappingStore.setMappingItem(mapping); navigationStore.setDialog('deleteMapping')">
+						<NcActionButton close-after-click @click="mappingStore.setMappingItem(mapping); navigationStore.setDialog('deleteMapping')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -85,10 +85,10 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Mappings aan het laden" />
+			name="Loading mappings" />
 
 		<div v-if="!mappingStore.mappingList.length" class="emptyListHeader">
-			Er zijn nog geen mappings gedefinieerd.
+			No mappings defined
 		</div>
 	</NcAppContentList>
 </template>
@@ -122,6 +122,7 @@ export default {
 		TrashCanOutline,
 	},
 	mounted() {
+		searchStore.clearSearch()
 		mappingStore.refreshMappingList()
 	},
 }

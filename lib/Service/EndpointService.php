@@ -208,6 +208,10 @@ class EndpointService
                     return $ruleResult;
                 }
 
+				if ($result->getStatus() !== 200 && $result->getStatus() !== 201) {
+					return new JSONResponse(data: $ruleResult['body'], statusCode: $result->getStatus(), headers: $ruleResult['headers']);
+				}
+
                 // Set the proper status code for the method.
                 //@TODO: we might want an override from rule processing.
                 switch ($incomingMethod) {
@@ -299,11 +303,10 @@ class EndpointService
     private function replaceInternalReferences(
         QBMapper|\OCA\OpenRegister\Service\ObjectService $mapper,
         ?ObjectEntity $object = null,
-        array $serializedObject = []
+        array $serializedObject = [],
+		array $extend = []
     ): array
     {
-
-
         if ($serializedObject === [] && $object !== null) {
             $serializedObject = $object->jsonSerialize();
         } else if ($serializedObject === null) {
@@ -381,10 +384,42 @@ class EndpointService
         $uuidToUrlMap[$object->getUri(). '/download'] = $this->generateEndpointUrl(id: $object->getUuid(), schemaMapper: $schemaMapper). '/download';
 
         // Replace UUIDs in serializedObject recursively
-        $serializedObject = $this->replaceUuidsInArray($serializedObject, $uuidToUrlMap);
+        $serializedObject = $this->replaceUuidsInArray($serializedObject, $uuidToUrlMap, extend: $this->reduceExtendKeys($extend));
 
         return $serializedObject;
     }
+
+	/**
+	 * Create a reduced list of extend keys and extends for checking purposes
+	 *
+	 * @param array $extend The original extend array
+	 * @return array The reduced extend array
+	 */
+	private function reduceExtendKeys(array $extend): array
+	{
+		$reducedKeys = [];
+
+		foreach($extend as $key => $value) {
+			if(str_contains(haystack: $value, needle: '.') === false) {
+				$reducedKeys[] = $key;
+				continue;
+			}
+
+
+			[$prefix, $newKey] = explode('.', $value, 2);
+
+			if(($newPrefix = array_search(needle: $prefix, haystack: $extend)) !== false) {
+				$reducedKeys[] = $newPrefix .'.'. $newKey;
+				continue;
+			}
+			$reducedKeys[] = $value;
+		}
+
+		$reducedExtend = array_combine($reducedKeys, $reducedKeys);
+
+		$serialized = (new Dot($reducedExtend, parse: true))->jsonSerialize();
+		return $serialized;
+	} //end reduceExtendKeys()
 
     /**
      * Recursively replaces UUIDs in an array with their corresponding URLs.
@@ -399,7 +434,7 @@ class EndpointService
      *
      * @return array The modified array with UUIDs replaced by URLs.
      */
-    private function replaceUuidsInArray(array $data, array $uuidToUrlMap, ?bool $isRelatedObject = false): array {
+    private function replaceUuidsInArray(array $data, array $uuidToUrlMap, ?bool $isRelatedObject = false, array $extend = []): array {
         foreach ($data as $key => $value) {
 
             // Don't check @self
@@ -408,13 +443,13 @@ class EndpointService
             }
 
             // If in array of multiple objects and has id
-            if (is_array($value) === true && isset($value['id']) === true && isset($uuidToUrlMap[$value['id']]) === true) {
+            if (is_array($value) === true && isset($value['id']) === true && isset($uuidToUrlMap[$value['id']]) === true && key_exists(key: $key, array: $extend) === false) {
                 $data[$key] = $uuidToUrlMap[$value['id']];
                 continue;
             }
 
             // If related object and has id
-            if ($isRelatedObject === true && $key === 'id' && isset($uuidToUrlMap[$value]) === true) {
+            if ($isRelatedObject === true && $key === 'id' && isset($uuidToUrlMap[$value]) === true && key_exists(key: $key, array: $extend) === false) {
                 $data[$key] = $uuidToUrlMap[$value];
                 continue;
             }
@@ -424,12 +459,22 @@ class EndpointService
                 continue;
             }
 
+			if (is_array($value) === true && array_is_list($value) === true && isset($extend[$key]) === true) {
+				$extend[$key] = array_fill(0, count($value), $extend[$key]);
+			}
+
+
             if (is_array($value) === true && empty($value) === false) {
-                $data[$key] = $this->replaceUuidsInArray(data: $value, uuidToUrlMap: $uuidToUrlMap, isRelatedObject: true);
+                $data[$key] = $this->replaceUuidsInArray(
+					data: $value, uuidToUrlMap: $uuidToUrlMap,
+					isRelatedObject: true,
+					extend: isset($extend[$key]) === true && is_array($extend[$key]) === true ? $extend[$key] : $extend
+				);
             } elseif (is_string($value) === true && isset($uuidToUrlMap[$value]) === true) {
                 $data[$key] = $uuidToUrlMap[$value];
             }
         }
+
         return $data;
     }
 
@@ -452,11 +497,8 @@ class EndpointService
 
         foreach($rewriteParameters as $rewriteParameter) {
             if (
-                ((isset($schema->getProperties()[$rewriteParameter]['$ref']) === false
-                        || empty($schema->getProperties()[$rewriteParameter]['$ref']) === true)
-                    && (isset($schema->getProperties()[$rewriteParameter]['items']['$ref']) === false
-                        || empty($schema->getProperties()[$rewriteParameter]['items']['$ref']) === true))
-                || filter_var($parameters[$rewriteParameter], FILTER_VALIDATE_URL) === false
+                filter_var($parameters[$rewriteParameter], FILTER_VALIDATE_URL) === false
+				&& in_array(parse_url($parameters[$rewriteParameter], PHP_URL_HOST), $this->config->getSystemValue('trusted_domains')) === false
             ) {
                 continue;
             }
@@ -500,11 +542,14 @@ class EndpointService
     ): Entity|array
     {
         if (isset($pathParams['id']) === true && $pathParams['id'] === end($pathParams)) {
-            return $this->replaceInternalReferences(mapper: $mapper, serializedObject: $this->objectService->getOpenRegisters()->renderEntity(
-                entity: $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize(),
-                extend: $parameters['_extend'] ?? $parameters['extend'] ?? null),
+			$serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
+            $result = $this->replaceInternalReferences(
+				mapper: $mapper,
+				serializedObject: $serializedObject,
+				extend: $parameters['extend'] ?? $parameters['_extend'] ?? []
             );
 
+			return $result;
 
         } else if (isset($pathParams['id']) === true) {
 
@@ -562,7 +607,7 @@ class EndpointService
         $result = $mapper->findAllPaginated(requestParams: $parameters);
 
         $result['results'] = array_map(function ($object) use ($mapper) {
-            return $this->replaceInternalReferences(mapper: $mapper, serializedObject: $this->objectService->getOpenRegisters()->renderEntity(entity: $object->jsonSerialize()));
+            return $this->replaceInternalReferences(mapper: $mapper, serializedObject: $object->jsonSerialize());
         }, $result['results']);
 
         $returnArray = [
@@ -622,17 +667,17 @@ class EndpointService
 
         $parameters = $request->getParams();
 
-
         if ($endpoint->getInputMapping() !== null) {
             $inputMapping = $this->mappingService->getMapping($endpoint->getInputMapping());
             $parameters = $this->mappingService->executeMapping(mapping: $inputMapping, input: $parameters);
         }
-        $pathParams = $this->getPathParameters($endpoint->getEndpointArray(), $path);
 
-        if (isset($pathParams['id']) === true) {
-            $parameters['id'] = $pathParams['id'];
-        }
-        foreach ($this::UNSET_PARAMETERS as $parameter) {
+		$pathParams = $this->getPathParameters($endpoint->getEndpointArray(), $path);
+
+		if (isset($pathParams['id']) === true) {
+			$parameters['id'] = $pathParams['id'];
+		}
+		foreach ($this::UNSET_PARAMETERS as $parameter) {
             unset($parameters[$parameter]);
         }
 
@@ -957,6 +1002,7 @@ class EndpointService
                     'filepart_upload' => $this->processFilePartUploadRule(rule: $rule, data: $data, request: $request, objectId: $objectId),
                     'download' => $this->processDownloadRule(rule: $rule, data: $data, objectId: $objectId),
                     'extend_input' => $this->processExtendInputRule(rule: $rule, data: $data),
+					'extend_external_input' => $this->ruleService->extendExternalUrl(rule: $rule, data: $data),
                     'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
                     'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
                     'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
@@ -965,13 +1011,15 @@ class EndpointService
                 };
 
                 // If result is JSONResponse, return error immediately
-                if ($result instanceof JSONResponse === true) {
+                if ($result instanceof JSONResponse === true || $result instanceof DataDownloadResponse === true ) {
                     return $result;
                 }
 
                 // Update data with rule result
                 $data = $result;
 			}
+
+			unset($data['body']['_extendedInput']);
 
 			return $data;
         } catch (Exception $e) {
@@ -1169,7 +1217,13 @@ class EndpointService
 
         }
 
-        $data['extendedParameters'] = $extendedParameters->all();
+		if (isset($data['extendedParameters']) === true) {
+			$data['extendedParameters'] = array_merge($extendedParameters->all(), $data['extendedParameters']);
+		} else {
+            $data['extendedParameters'] = $extendedParameters->all();
+        }
+
+		$data['body']['_extendedInput'] = $data['extendedParameters'];
 
         return $data;
     }
@@ -1558,8 +1612,6 @@ class EndpointService
             $mappedData = $this->mappingService->executeMapping(mapping: $mapping, input: $mappedData);
         }
 
-		var_dump($mappedData);
-
         $mappedData['successful'] = $this->storageService->writePart(partId: $mappedData['order'], partUuid: $mappedData['id'], data: $mappedData['data']);
 
         unset($data['data']);
@@ -1567,8 +1619,6 @@ class EndpointService
         if (isset($config['mappingOutId']) === true) {
             $mappedData = $this->mappingService->executeMapping(mapping: $this->mappingService->getMapping(mappingId: $config['mappingOutId']), input: $mappedData);
         }
-
-		var_dump($mappedData);
 
         $object = $this->objectService->getOpenRegisters()->getMapper('objectEntity')->find($objectId);
         $object->setObject($mappedData);
@@ -1628,14 +1678,22 @@ class EndpointService
             $filename = $dot->get($config['filenamePosition']);
         }
 
+		$fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
+        $files = $fileService->getFiles(object: $object, sharedFilesOnly: false);
+
+        // Try to get filename from object its files (only works when object has 1 file)
         if (isset($filename) === false && count($object->getFiles()) === 1) {
             $filename = $object->getFiles()[0]['title'];
-        } else if (isset($filename) === false) {
-            throw new Exception('File could not be determined');
         }
 
-
-		$fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
+        // Try to get filename from files found with fileservice (only works when object has 1 file)
+        if (isset($filename) === false && count($files) === 1) {
+            $filename = $files[0]->getName();
+        }
+        
+        if (isset($filename) === false) {
+            throw new Exception('File could not be determined');
+        }
 
         if(isset($data['parameters']['version']) === true) {
             $file = $fileService->getFile(object: $object, filePath: $filename, version: $data['parameters']['version']);

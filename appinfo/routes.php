@@ -10,6 +10,8 @@ return [
 		'Consumers' => ['url' => 'api/consumers'],
 		'Rules' => ['url' => 'api/rules'],
 		'Events' => ['url' => 'api/events'],
+		'Logs' => ['url' => 'api/logs'],
+		'SynchronizationContracts' => ['url' => 'api/synchronization-contracts'],
 	],
 	'routes' => [
 		['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
@@ -59,5 +61,17 @@ return [
 
 		// Pull-based delivery
 		['name' => 'events#pull', 'url' => '/api/events/subscriptions/{subscriptionId}/pull', 'verb' => 'GET'],
+
+		// Logs endpoints
+		['name' => 'logs#statistics', 'url' => '/api/logs/statistics', 'verb' => 'GET'],
+		['name' => 'logs#export', 'url' => '/api/logs/export', 'verb' => 'GET'],
+
+		// Synchronization Contracts endpoints  
+		['name' => 'synchronizationContracts#statistics', 'url' => '/api/synchronization-contracts/statistics', 'verb' => 'GET'],
+		['name' => 'synchronizationContracts#performance', 'url' => '/api/synchronization-contracts/performance', 'verb' => 'GET'],
+		['name' => 'synchronizationContracts#export', 'url' => '/api/synchronization-contracts/export', 'verb' => 'GET'],
+		['name' => 'synchronizationContracts#activate', 'url' => '/api/synchronization-contracts/{id}/activate', 'verb' => 'POST'],
+		['name' => 'synchronizationContracts#deactivate', 'url' => '/api/synchronization-contracts/{id}/deactivate', 'verb' => 'POST'],
+		['name' => 'synchronizationContracts#execute', 'url' => '/api/synchronization-contracts/{id}/execute', 'verb' => 'POST'],
 	],
 ];

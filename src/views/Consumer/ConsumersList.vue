@@ -12,26 +12,26 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 					label="Search"
 					class="searchField"
 					trailing-button-icon="close"
-					@trailing-button-click="consumerStore.refreshConsumerList()">
+					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionButton @click="consumerStore.refreshConsumerList()">
+					<NcActionButton close-after-click @click="consumerStore.refreshConsumerList()">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Ververs
+						Refresh
 					</NcActionButton>
-					<NcActionButton @click="consumerStore.setConsumerItem(null); navigationStore.setModal('editConsumer')">
+					<NcActionButton close-after-click @click="consumerStore.setConsumerItem(null); navigationStore.setModal('editConsumer')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Consumer toevoegen
+						Add consumer
 					</NcActionButton>
 				</NcActions>
 			</div>
 			<div v-if="consumerStore.consumerList && consumerStore.consumerList.length > 0">
-				<NcListItem v-for="(consumer, i) in consumerStore.consumerList"
+				<NcListItem v-for="(consumer, i) in consumerStore.consumerList.filter(consumer => searchStore.search === '' || consumer.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${consumer}${i}`"
 					:name="consumer.name"
 					:active="consumerStore.consumerItem?.id === consumer?.id"
@@ -46,17 +46,17 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 						{{ consumer?.description }}
 					</template>
 					<template #actions>
-						<NcActionButton @click="consumerStore.setConsumerItem(consumer); navigationStore.setModal('editConsumer')">
+						<NcActionButton close-after-click @click="consumerStore.setConsumerItem(consumer); navigationStore.setModal('editConsumer')">
 							<template #icon>
 								<Pencil />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
-						<NcActionButton @click="consumerStore.setConsumerItem(consumer); navigationStore.setDialog('deleteConsumer')">
+						<NcActionButton close-after-click @click="consumerStore.setConsumerItem(consumer); navigationStore.setDialog('deleteConsumer')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -67,10 +67,10 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Consumers aan het laden" />
+			name="Loading consumers" />
 
 		<div v-if="!consumerStore.consumerList.length" class="emptyListHeader">
-			Er zijn nog geen consumers gedefinieerd.
+			No consumers defined
 		</div>
 	</NcAppContentList>
 </template>
@@ -102,6 +102,7 @@ export default {
 		TrashCanOutline,
 	},
 	mounted() {
+		searchStore.clearSearch()
 		consumerStore.refreshConsumerList()
 	},
 }

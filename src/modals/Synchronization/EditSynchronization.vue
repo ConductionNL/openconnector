@@ -48,7 +48,7 @@ import { Synchronization } from '../../entities/index.js'
 					</div>
 					<div class="close-button">
 						<NcActions>
-							<NcActionButton @click="openRegisterCloseAlert = true">
+							<NcActionButton close-after-click @click="openRegisterCloseAlert = true">
 								<template #icon>
 									<Close :size="20" />
 								</template>
@@ -120,7 +120,7 @@ import { Synchronization } from '../../entities/index.js'
 								:disabled="!openRegisterInstalled"
 								input-label="Register" />
 							<p>/</p>
-							<NcSelect v-bind="schemaOptions"
+							<NcSelect v-bind="selectedRegisterSourceValueSchemas"
 								v-model="schemaOptions.sourceValue"
 								:disabled="!openRegisterInstalled"
 								input-label="Schema" />
@@ -170,7 +170,7 @@ import { Synchronization } from '../../entities/index.js'
 								:disabled="!openRegisterInstalled"
 								input-label="Register" />
 							<p>/</p>
-							<NcSelect v-bind="schemaOptions"
+							<NcSelect v-bind="selectedRegisterValueSchemas"
 								v-model="schemaOptions.value"
 								:disabled="!openRegisterInstalled"
 								input-label="Schema" />
@@ -336,6 +336,28 @@ export default {
 			closeTimeoutFunc: null, // Function to close the modal after a timeout
 		}
 	},
+	computed: {
+		selectedRegisterSourceValueSchemas() {
+			return this.registerOptions?.sourceValue?.schemas || []
+		},
+		selectedRegisterValueSchemas() {
+			return this.registerOptions?.value?.schemas || []
+		},
+	},
+	watch: {
+		'registerOptions.value': {
+			handler() {
+				this.schemaOptions.value = null
+			},
+			deep: true,
+		},
+		'registerOptions.sourceValue': {
+			handler() {
+				this.schemaOptions.sourceValue = null
+			},
+			deep: true,
+		},
+	},
 	mounted() {
 		if (this.IS_EDIT) {
 			// If there is a synchronization item in the store, use it
@@ -352,8 +374,7 @@ export default {
 		// Fetch sources, mappings, register, and schema
 		this.getSources()
 		this.getSourceTargetMappings()
-		this.getRegister()
-		this.getSchema()
+		this.getRegisterWithSchemas()
 		this.getRules()
 	},
 	methods: {
@@ -446,8 +467,11 @@ export default {
 		 * Sets the loading state to true while fetching and updates the register options with the fetched data.
 		 * If a register is already selected, it sets it as the active register.
 		 * If OpenRegister is not installed, it updates the state accordingly.
+		 *
+		 * additionally it adds the schemas of a register to its options data,
+		 * which'll be used to populate the schema options when you select a register.
 		 */
-		getRegister() {
+		getRegisterWithSchemas() {
 			this.registerLoading = true
 
 			mappingStore.getMappingObjects()
@@ -458,6 +482,7 @@ export default {
 						return
 					}
 
+					// registers
 					const registers = data.availableRegisters
 
 					let activeRegister = null
@@ -472,21 +497,72 @@ export default {
 						activeSourceRegister = registers.find(object => object.id.toString() === registerId.toString())
 					}
 
+					// schemas
+					const schemas = registers.map(register => register.schemas).flat()
+						.filter(schema => typeof schema === 'object')
+
+					let activeSchema = null
+					if (this.IS_EDIT && this.synchronizationItem.targetType === 'register/schema') {
+						const schemaId = this.synchronizationItem.targetId.split('/')[1]
+						activeSchema = schemas.find(schema => schema.id.toString() === schemaId.toString())
+					}
+
+					let activeSourceSchema = null
+					if (this.IS_EDIT && this.synchronizationItem.sourceType === 'register/schema') {
+						const schemaId = this.synchronizationItem.sourceId.split('/')[1]
+						activeSourceSchema = schemas.find(schema => schema.id.toString() === schemaId.toString())
+					}
+
+					// load registers (with schema's in options)
 					this.registerOptions = {
 						options: registers.map(object => ({
 							label: object.title || object.name,
 							id: object.id,
+							schemas: {
+								options: object.schemas.filter(schema => typeof schema === 'object').map(schema => ({
+									label: schema.title || schema.name,
+									id: schema.id,
+								})),
+							},
 						})),
 						value: activeRegister
 							? {
 								label: activeRegister.title || activeRegister.name,
 								id: activeRegister.id,
+								schemas: {
+									options: activeRegister.schemas.filter(schema => typeof schema === 'object').map(schema => ({
+										label: schema.title || schema.name,
+										id: schema.id,
+									})),
+								},
 							}
 							: null,
 						sourceValue: activeSourceRegister
 							? {
 								label: activeSourceRegister.title || activeSourceRegister.name,
 								id: activeSourceRegister.id,
+								schemas: {
+									options: activeSourceRegister.schemas.filter(schema => typeof schema === 'object').map(schema => ({
+										label: schema.title || schema.name,
+										id: schema.id,
+									})),
+								},
+							}
+							: null,
+					}
+
+					// set active schema
+					this.schemaOptions = {
+						value: activeSchema
+							? {
+								label: activeSchema.title || activeSchema.name,
+								id: activeSchema.id,
+							}
+							: null,
+						sourceValue: activeSourceSchema
+							? {
+								label: activeSourceSchema.title || activeSourceSchema.name,
+								id: activeSourceSchema.id,
 							}
 							: null,
 					}
@@ -494,73 +570,6 @@ export default {
 				.finally(() => {
 					this.registerLoading = false
 				})
-		},
-		/**
-		 * Fetches the list of schemas from OpenRegister and updates the schema options.
-		 * Sets the loading state to true while fetching and updates the schema options with the fetched data.
-		 * If OpenRegister is not installed, it updates the state accordingly.
-		 * If a schema is already selected, it sets it as the active schema.
-		 */
-		async getSchema() {
-			this.schemaLoading = true
-
-			console.info('Fetching schemas from Open Register')
-			const response = await fetch('/index.php/apps/openregister/api/schemas', {
-				headers: {
-					accept: '*/*',
-					'accept-language': 'en-US,en;q=0.9,nl;q=0.8',
-					'cache-control': 'no-cache',
-					pragma: 'no-cache',
-					'x-requested-with': 'XMLHttpRequest',
-				},
-				referrerPolicy: 'no-referrer',
-				body: null,
-				method: 'GET',
-				mode: 'cors',
-				credentials: 'include',
-			})
-
-			if (!response.ok) {
-				console.info('Open Register is not installed')
-				this.schemaLoading = false
-				this.openRegisterInstalled = false
-				return
-			}
-
-			const responseData = (await response.json()).results
-
-			let activeSchema = null
-			if (this.IS_EDIT && this.synchronizationItem.targetType === 'register/schema') {
-				const schemaId = this.synchronizationItem.targetId.split('/')[1]
-				activeSchema = responseData.find(schema => schema.id.toString() === schemaId.toString())
-			}
-
-			let activeSourceSchema = null
-			if (this.IS_EDIT && this.synchronizationItem.sourceType === 'register/schema') {
-				const schemaId = this.synchronizationItem.sourceId.split('/')[1]
-				activeSourceSchema = responseData.find(schema => schema.id.toString() === schemaId.toString())
-			}
-
-			this.schemaOptions = {
-				options: responseData.map((schema) => ({
-					id: schema.id,
-					label: schema.title || schema.name,
-				})),
-				value: activeSchema
-					? {
-						id: activeSchema.id,
-						label: activeSchema.title || activeSchema.name,
-					}
-					: null,
-				sourceValue: activeSourceSchema
-					? {
-						id: activeSourceSchema.id,
-						label: activeSourceSchema.title || activeSourceSchema.name,
-					}
-					: null,
-			}
-
-			this.schemaLoading = false
 		},
 		/**
 		 * Fetches the list of available rules from the rules store and updates the rules options.

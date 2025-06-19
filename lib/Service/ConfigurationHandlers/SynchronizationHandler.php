@@ -5,6 +5,7 @@ namespace OCA\OpenConnector\Service\ConfigurationHandlers;
 use OCA\OpenConnector\Db\Synchronization;
 use OCA\OpenConnector\Db\SynchronizationMapper;
 use OCP\AppFramework\Db\Entity;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Class SynchronizationHandler
@@ -40,6 +41,11 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
 
         $syncArray = $entity->jsonSerialize();
         unset($syncArray['id'], $syncArray['uuid']);
+        
+        // Ensure slug is set
+        if (empty($syncArray['slug'])) {
+            $syncArray['slug'] = $entity->getSlug();
+        }
 
         // Handle sourceId based on sourceType.
         if (isset($syncArray['sourceId']) && isset($syncArray['sourceType'])) {
@@ -116,11 +122,11 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
         }
 
         // Handle mapping IDs
-        if (isset($syncArray['sourceTargetMapping']) && isset($mappings['mapping']['idToSlug'][$syncArray['sourceTargetMapping']])) {
-            $syncArray['sourceTargetMapping'] = $mappings['mapping']['idToSlug'][$syncArray['sourceTargetMapping']];
+        if (isset($syncArray['sourceTargetMapping']) && isset($mappings['mapping']['idToSlug'][(int) $syncArray['sourceTargetMapping']])) {
+            $syncArray['sourceTargetMapping'] = $mappings['mapping']['idToSlug'][(int) $syncArray['sourceTargetMapping']];
         }
-        if (isset($syncArray['targetSourceMapping']) && isset($mappings['mapping']['idToSlug'][$syncArray['targetSourceMapping']])) {
-            $syncArray['targetSourceMapping'] = $mappings['mapping']['idToSlug'][$syncArray['targetSourceMapping']];
+        if (isset($syncArray['targetSourceMapping']) && isset($mappings['mapping']['idToSlug'][(int) $syncArray['targetSourceMapping']])) {
+            $syncArray['targetSourceMapping'] = $mappings['mapping']['idToSlug'][(int) $syncArray['targetSourceMapping']];
         }
 
         // Handle arrays of IDs that need to be converted to slugs
@@ -128,6 +134,11 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
         foreach ($idArrays as $arrayKey) {
             if (isset($syncArray[$arrayKey]) && is_array($syncArray[$arrayKey])) {
                 $syncArray[$arrayKey] = array_map(function($id) use ($mappings, $arrayKey) {
+                    // Check for valid id, must be numeric or uuid
+                    if (is_scalar($id) === false || (is_numeric($id) === false && Uuid::isValid($id) === false)) {
+                        return $id;
+                    }
+
                     // For actions, use rule mapping
                     if ($arrayKey === 'actions' && isset($mappings['rule']['idToSlug'][$id])) {
                         return $mappings['rule']['idToSlug'][$id];

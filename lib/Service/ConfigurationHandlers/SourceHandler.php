@@ -39,7 +39,12 @@ class SourceHandler implements ConfigurationHandlerInterface
         }
 
         $sourceArray = $entity->jsonSerialize();
-
+        
+        // Ensure slug is set
+        if (empty($sourceArray['slug'])) {
+            $sourceArray['slug'] = $entity->getSlug();
+        }
+        
         // Remove sensitive data
         unset(
             $sourceArray['id'],

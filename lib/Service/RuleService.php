@@ -2,11 +2,14 @@
 
 namespace OCA\OpenConnector\Service;
 
+use Adbar\Dot;
 use Exception;
 use OCA\OpenConnector\Db\Rule;
+use OCA\OpenConnector\Db\SourceMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Db\RegisterMapper;
 use OCA\OpenRegister\Db\SchemaMapper;
+use OCA\OpenRegister\Exception\ValidationException;
 use OCP\AppFramework\Http\JSONResponse;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
@@ -131,6 +134,8 @@ class RuleService
         private readonly SoftwareCatalogueService $catalogueService,
         private readonly RegisterMapper $registerMapper,
         private readonly SchemaMapper $schemaMapper,
+		private readonly CallService $callService,
+		private readonly SourceMapper $sourceMapper,
     )
     {
     }
@@ -790,4 +795,102 @@ class RuleService
             return new JSONResponse(['message' => 'model id was not provided'], 200);
         }
     }
+
+	/**
+	 * Fetches an external object and if requested, validate it.
+	 *
+	 * @param string $url The url to retrieve the object from.
+	 * @param array $configuration Configuration of the rule
+	 * @param string|int $schemaId The schema to validate against
+	 *
+	 * @return array The object found on $url
+	 *
+	 * @throws ValidationException
+	 * @throws \GuzzleHttp\Exception\GuzzleException
+	 * @throws \OCP\AppFramework\Db\DoesNotExistException
+	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
+	 * @throws \OCP\DB\Exception
+	 * @throws \Psr\Container\ContainerExceptionInterface
+	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 * @throws \Twig\Error\LoaderError
+	 * @throws \Twig\Error\SyntaxError
+	 */
+	private function getExternalObject(string $url, array $configuration, string|int $schemaId): array
+	{
+		$source = $this->sourceMapper->findOrCreateByLocation($url);
+
+		//@TODO The previous line returns an incomplete source, by fetching it again from the database we receive a working source
+		$source = $this->sourceMapper->find($source->getId());
+
+		$result = $this->callService->call($source);
+
+		if($result->getStatusCode() !== 200) {
+			throw new Exception(message: "The object on $url could not be fetched");
+		}
+
+
+		$object = json_decode(json: $result->getResponse()['body'], associative: true, flags: JSON_THROW_ON_ERROR);
+
+		if ($configuration['extend_external_input']['validate'] === false) {
+			return $object;
+		}
+
+		$validationHandler = $this->objectService->getOpenRegisters()->getValidateHandler();
+
+		$validatedResult = $validationHandler->validateObject($object, $schemaId);
+
+		if($validatedResult->isValid() === true) {
+			return $object;
+		}
+
+		throw new ValidationException(message: 'Fetched object cannot be validated', code: 400, errors: $validatedResult->error());
+
+	}
+
+	/**
+	 * Extend an object with an external url
+	 *
+	 * @param Rule $rule The rule to execute.
+	 * @param array $data The data to extend.
+	 * @return array|JSONResponse
+	 * @throws \GuzzleHttp\Exception\GuzzleException
+	 * @throws \Psr\Container\ContainerExceptionInterface
+	 * @throws \Psr\Container\NotFoundExceptionInterface
+	 */
+	public function extendExternalUrl(Rule $rule, array $data): array|JSONResponse
+	{
+		$config = $rule->getConfiguration();
+
+		$dataDot = new Dot($data);
+		$extendedParameters = new Dot();
+
+		foreach ($config['extend_external_input']['properties'] as $property) {
+			$url = $dataDot->get($property['property']);
+			try {
+				if (is_array($url) === true) {
+					$extendedParameters->add($property, array_map(function (string $url) use ($property, $config) {
+						return $this->getExternalObject($url, $config, $property['schema']);
+					}, $url));
+				}
+
+				$extendedParameters->add($property, $this->getExternalObject($url, $config, $property['schema']));
+			} catch (ValidationException $exception) {
+				return new JSONResponse(data: ['error' => 'The object referenced in field '. $property['property'] . ' is not valid'], statusCode: 400);
+			} catch (Exception $exception) {
+				return new JSONResponse(data: ['error' => $exception->getMessage()], statusCode: 400);
+			}
+		}
+
+		if (isset($data['extendedParameters']) === true) {
+			$data['extendedParameters'] = array_merge($extendedParameters->all(), $data['extendedParameters']);
+		} else {
+			$data['extendedParameters'] = $extendedParameters->all();
+		}
+
+		$data['body']['_extendedInput'] = $data['extendedParameters'];
+
+		return $data;
+
+
+	}
 }

@@ -12,23 +12,23 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 					label="Search"
 					class="searchField"
 					trailing-button-icon="close"
-					@trailing-button-click="synchronizationStore.refreshSynchronizationList()">
+					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionButton @click="synchronizationStore.refreshSynchronizationList()">
+					<NcActionButton close-after-click @click="synchronizationStore.refreshSynchronizationList()">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
 						Refresh
 					</NcActionButton>
-					<NcActionButton @click="synchronizationStore.setSynchronizationItem(null); navigationStore.setModal('editSynchronization')">
+					<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(null); navigationStore.setModal('editSynchronization')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
 						Add synchronization
 					</NcActionButton>
-					<NcActionButton @click="navigationStore.setModal('importFile')">
+					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
@@ -37,7 +37,7 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 				</NcActions>
 			</div>
 			<div v-if="synchronizationStore.synchronizationList && synchronizationStore.synchronizationList.length > 0">
-				<NcListItem v-for="(synchronization, i) in synchronizationStore.synchronizationList"
+				<NcListItem v-for="(synchronization, i) in synchronizationStore.synchronizationList.filter(synchronization => searchStore.search === '' || synchronization.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${synchronization}${i}`"
 					:name="synchronization.name"
 					:active="synchronizationStore.synchronizationItem?.id === synchronization?.id"
@@ -52,51 +52,53 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 						{{ synchronization?.description }}
 					</template>
 					<template #actions>
-						<NcActionButton @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('editSynchronization')">
+						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('editSynchronization')">
 							<template #icon>
 								<Pencil />
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton @click="() => {
-							synchronizationStore.setSynchronizationItem(synchronization)
-							synchronizationStore.setSynchronizationSourceConfigKey(null)
-							navigationStore.setModal('editSynchronizationSourceConfig')
-						}">
+						<NcActionButton close-after-click
+							@click="() => {
+								synchronizationStore.setSynchronizationItem(synchronization)
+								synchronizationStore.setSynchronizationSourceConfigKey(null)
+								navigationStore.setModal('editSynchronizationSourceConfig')
+							}">
 							<template #icon>
 								<DatabaseSettingsOutline :size="20" />
 							</template>
-							Add Source Config
+							Add source config
 						</NcActionButton>
-						<NcActionButton @click="() => {
-							synchronizationStore.setSynchronizationItem(synchronization)
-							synchronizationStore.setSynchronizationTargetConfigKey(null)
-							navigationStore.setModal('editSynchronizationTargetConfig')
-						}">
+						<NcActionButton close-after-click
+							@click="() => {
+								synchronizationStore.setSynchronizationItem(synchronization)
+								synchronizationStore.setSynchronizationTargetConfigKey(null)
+								navigationStore.setModal('editSynchronizationTargetConfig')
+							}">
 							<template #icon>
 								<CardBulletedSettingsOutline :size="20" />
 							</template>
-							Add Target Config
+							Add target config
 						</NcActionButton>
-						<NcActionButton @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('testSynchronization')">
+						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('testSynchronization')">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
 							Test
 						</NcActionButton>
-						<NcActionButton @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('runSynchronization')">
+						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('runSynchronization')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
 							Run
 						</NcActionButton>
-						<NcActionButton @click="synchronizationStore.exportSynchronization(synchronization.id)">
+						<NcActionButton close-after-click @click="synchronizationStore.exportSynchronization(synchronization.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export synchronization
 						</NcActionButton>
-						<NcActionButton @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setDialog('deleteSynchronization')">
+						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setDialog('deleteSynchronization')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
@@ -111,10 +113,10 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Synchronisaties aan het laden" />
+			name="Loading syncronizations" />
 
 		<div v-if="!synchronizationStore.synchronizationList.length" class="emptyListHeader">
-			No synchronizations defined.
+			No synchronizations defined
 		</div>
 	</NcAppContentList>
 </template>
@@ -151,6 +153,7 @@ export default {
 		TrashCanOutline,
 	},
 	mounted() {
+		searchStore.clearSearch()
 		synchronizationStore.refreshSynchronizationList()
 	},
 }

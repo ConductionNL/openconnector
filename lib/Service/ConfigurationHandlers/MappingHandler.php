@@ -40,6 +40,11 @@ class MappingHandler implements ConfigurationHandlerInterface
 
         $mappingArray = $entity->jsonSerialize();
         unset($mappingArray['id'], $mappingArray['uuid']);
+        
+        // Ensure slug is set
+        if (empty($mappingArray['slug'])) {
+            $mappingArray['slug'] = $entity->getSlug();
+        }
 
         // Replace IDs with slugs where applicable.
         if (isset($mappingArray['source_id']) && isset($mappings['source']['idToSlug'][$mappingArray['source_id']])) {
@@ -48,6 +53,35 @@ class MappingHandler implements ConfigurationHandlerInterface
         if (isset($mappingArray['target_id']) && isset($mappings['source']['idToSlug'][$mappingArray['target_id']])) {
             $mappingArray['target_id'] = $mappings['source']['idToSlug'][$mappingArray['target_id']];
         }
+
+
+		if (isset($mappingArray['mapping']) === false) {
+			return $mappingArray;
+		}
+
+		$matchedMappings = array_map(function (string $field) use ($mappings) {
+
+			$regex = '$executeMapping\(([^)]+)\)$';
+			preg_match_all($regex, $field, $matches);
+			[$fullMatches, $subMatches] = $matches;
+
+			return array_map(callback: function (string $match) use ($mappings) {
+				[$mapping, $data] = explode(separator: ',', string: $match, limit: 2);
+				$mappingIdentifier = trim($mapping, '\' ');
+
+				if(isset($mappings['mapping']['slugToId'][$mappingIdentifier]) === true) {
+					return $mappings['mapping']['slugToId'][$mappingIdentifier];
+				}
+
+				return $mappingIdentifier;
+
+			}, array: $subMatches);
+		}, $mappingArray['mapping']);
+
+
+		$addingMappingIds = array_merge(...array_values($matchedMappings));
+
+		$mappingIds = array_merge($mappingIds, $addingMappingIds);
 
         return $mappingArray;
     }

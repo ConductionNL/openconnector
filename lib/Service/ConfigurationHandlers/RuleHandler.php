@@ -40,6 +40,11 @@ class RuleHandler implements ConfigurationHandlerInterface
 
         $ruleArray = $entity->jsonSerialize();
         unset($ruleArray['id'], $ruleArray['uuid']);
+        
+        // Ensure slug is set
+        if (empty($ruleArray['slug'])) {
+            $ruleArray['slug'] = $entity->getSlug();
+        }
 
         // Handle nested configuration structures
         if (isset($ruleArray['configuration']) && is_array($ruleArray['configuration'])) {

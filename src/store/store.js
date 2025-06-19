@@ -13,6 +13,7 @@ import { useConsumerStore } from './modules/consumer.ts'
 import { useImportExportStore } from './modules/importExport.js'
 import { useEventStore } from './modules/event.ts'
 import { useRuleStore } from './modules/rule.ts'
+import { useContractStore } from './modules/contract.ts'
 
 const navigationStore = useNavigationStore(pinia)
 const searchStore = useSearchStore(pinia)
@@ -27,6 +28,7 @@ const consumerStore = useConsumerStore(pinia)
 const importExportStore = useImportExportStore(pinia)
 const eventStore = useEventStore(pinia)
 const ruleStore = useRuleStore(pinia)
+const contractStore = useContractStore(pinia)
 
 export {
 	// generic
@@ -44,4 +46,5 @@ export {
 	importExportStore,
 	eventStore,
 	ruleStore,
+	contractStore,
 }

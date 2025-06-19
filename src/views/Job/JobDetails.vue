@@ -15,43 +15,43 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
-						<NcActionButton @click="navigationStore.setModal('editJob')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('editJob')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton @click="addJobArgument()">
+						<NcActionButton close-after-click @click="addJobArgument()">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
 							Add Argument
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setModal('testJob')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('testJob')">
 							<template #icon>
 								<Update :size="20" />
 							</template>
 							Test
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setModal('runJob')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('runJob')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
 							Run
 						</NcActionButton>
-						<NcActionButton @click="refreshJobLogs()">
+						<NcActionButton close-after-click @click="refreshJobLogs()">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
 							Refresh Logs
 						</NcActionButton>
-						<NcActionButton @click="jobStore.exportJob(jobStore.jobItem.id)">
+						<NcActionButton close-after-click @click="jobStore.exportJob(jobStore.jobItem.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export job
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setDialog('deleteJob')">
+						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteJob')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
@@ -137,13 +137,13 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 										{{ value }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="editJobArgument(key)">
+										<NcActionButton close-after-click @click="editJobArgument(key)">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Edit
 										</NcActionButton>
-										<NcActionButton @click="deleteJobArgument(key)">
+										<NcActionButton close-after-click @click="deleteJobArgument(key)">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -176,7 +176,7 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 										{{ new Date(log.created).toLocaleString() }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="viewLog(log)">
+										<NcActionButton close-after-click @click="viewLog(log)">
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>

@@ -12,23 +12,23 @@ import { sourceStore, navigationStore, searchStore } from '../../store/store.js'
 					label="Search"
 					class="searchField"
 					trailing-button-icon="close"
-					@trailing-button-click="sourceStore.refreshSourceList()">
+					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionButton @click="sourceStore.refreshSourceList()">
+					<NcActionButton close-after-click @click="sourceStore.refreshSourceList()">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
 						Refresh
 					</NcActionButton>
-					<NcActionButton @click="sourceStore.setSourceItem({}); navigationStore.setModal('editSource')">
+					<NcActionButton close-after-click @click="sourceStore.setSourceItem({}); navigationStore.setModal('editSource')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
 						Add source
 					</NcActionButton>
-					<NcActionButton @click="navigationStore.setModal('importFile')">
+					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
@@ -37,7 +37,7 @@ import { sourceStore, navigationStore, searchStore } from '../../store/store.js'
 				</NcActions>
 			</div>
 			<div v-if="sourceStore.sourceList && sourceStore.sourceList.length > 0">
-				<NcListItem v-for="(source, i) in sourceStore.sourceList"
+				<NcListItem v-for="(source, i) in sourceStore.sourceList.filter(source => searchStore.search === '' || source.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${source}${i}`"
 					:name="source.name"
 					:active="sourceStore.sourceItem?.id === source?.id"
@@ -52,45 +52,47 @@ import { sourceStore, navigationStore, searchStore } from '../../store/store.js'
 						{{ source?.description }}
 					</template>
 					<template #actions>
-						<NcActionButton @click="sourceStore.setSourceItem(source); navigationStore.setModal('editSource')">
+						<NcActionButton close-after-click @click="sourceStore.setSourceItem(source); navigationStore.setModal('editSource')">
 							<template #icon>
 								<Pencil />
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton @click="sourceStore.setSourceItem(source); navigationStore.setModal('testSource')">
+						<NcActionButton close-after-click @click="sourceStore.setSourceItem(source); navigationStore.setModal('testSource')">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
 							Test
 						</NcActionButton>
-						<NcActionButton @click="() => {
-							sourceStore.setSourceItem(source)
-							sourceStore.setSourceConfigurationKey(null)
-							navigationStore.setModal('editSourceConfiguration')
-						}">
+						<NcActionButton close-after-click
+							@click="() => {
+								sourceStore.setSourceItem(source)
+								sourceStore.setSourceConfigurationKey(null)
+								navigationStore.setModal('editSourceConfiguration')
+							}">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Add Configuration
+							Add configuration
 						</NcActionButton>
-						<NcActionButton @click="() => {
-							sourceStore.setSourceItem(source)
-							sourceStore.setSourceConfigurationKey(null)
-							navigationStore.setModal('editSourceConfigurationAuthentication')
-						}">
+						<NcActionButton close-after-click
+							@click="() => {
+								sourceStore.setSourceItem(source)
+								sourceStore.setSourceConfigurationKey(null)
+								navigationStore.setModal('editSourceConfigurationAuthentication')
+							}">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Add Authentication
+							Add authentication
 						</NcActionButton>
-						<NcActionButton @click="sourceStore.exportSource(source.id)">
+						<NcActionButton close-after-click @click="sourceStore.exportSource(source.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export source
 						</NcActionButton>
-						<NcActionButton @click="sourceStore.setSourceItem(source); navigationStore.setDialog('deleteSource')">
+						<NcActionButton close-after-click @click="sourceStore.setSourceItem(source); navigationStore.setDialog('deleteSource')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
@@ -105,10 +107,10 @@ import { sourceStore, navigationStore, searchStore } from '../../store/store.js'
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Bronnen aan het laden" />
+			name="Loading sources" />
 
 		<div v-if="!sourceStore.sourceList.length" class="emptyListHeader">
-			No sources defined.
+			No sources defined
 		</div>
 	</NcAppContentList>
 </template>
@@ -147,6 +149,7 @@ export default {
 		TrashCanOutline,
 	},
 	mounted() {
+		searchStore.clearSearch()
 		sourceStore.refreshSourceList()
 	},
 }

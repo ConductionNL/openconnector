@@ -15,43 +15,43 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
-						<NcActionButton @click="navigationStore.setModal('editMapping')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('editMapping')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton @click="addMappingMapping()">
+						<NcActionButton close-after-click @click="addMappingMapping()">
 							<template #icon>
 								<MapPlus :size="20" />
 							</template>
 							Add Mapping
 						</NcActionButton>
-						<NcActionButton @click="addMappingCast()">
+						<NcActionButton close-after-click @click="addMappingCast()">
 							<template #icon>
 								<SwapHorizontal :size="20" />
 							</template>
 							Add Cast
 						</NcActionButton>
-						<NcActionButton @click="mappingStore.setMappingUnsetKey(null); navigationStore.setModal('editMappingUnset')">
+						<NcActionButton close-after-click @click="mappingStore.setMappingUnsetKey(null); navigationStore.setModal('editMappingUnset')">
 							<template #icon>
 								<Eraser :size="20" />
 							</template>
 							Add Unset
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setModal('testMapping')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('testMapping')">
 							<template #icon>
 								<TestTube :size="20" />
 							</template>
 							Test
 						</NcActionButton>
-						<NcActionButton @click="mappingStore.exportMapping(mappingStore.mappingItem.id)">
+						<NcActionButton close-after-click @click="mappingStore.exportMapping(mappingStore.mappingItem.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export mapping
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setDialog('deleteMapping')">
+						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteMapping')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
@@ -100,13 +100,13 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 										{{ value }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="editMappingMapping(key)">
+										<NcActionButton close-after-click @click="editMappingMapping(key)">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Edit
 										</NcActionButton>
-										<NcActionButton @click="deleteMappingMapping(key)">
+										<NcActionButton close-after-click @click="deleteMappingMapping(key)">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -138,13 +138,13 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 										{{ value }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="editMappingCast(key)">
+										<NcActionButton close-after-click @click="editMappingCast(key)">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Edit
 										</NcActionButton>
-										<NcActionButton @click="deleteMappingCast(key)">
+										<NcActionButton close-after-click @click="deleteMappingCast(key)">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -171,13 +171,13 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 											:size="44" />
 									</template>
 									<template #actions>
-										<NcActionButton @click="mappingStore.setMappingUnsetKey(value); navigationStore.setModal('editMappingUnset')">
+										<NcActionButton close-after-click @click="mappingStore.setMappingUnsetKey(value); navigationStore.setModal('editMappingUnset')">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Edit
 										</NcActionButton>
-										<NcActionButton @click="mappingStore.setMappingUnsetKey(value); navigationStore.setModal('deleteMappingUnset')">
+										<NcActionButton close-after-click @click="mappingStore.setMappingUnsetKey(value); navigationStore.setModal('deleteMappingUnset')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>

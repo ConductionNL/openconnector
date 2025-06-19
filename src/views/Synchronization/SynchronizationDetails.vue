@@ -15,43 +15,43 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
-						<NcActionButton @click="navigationStore.setModal('editSynchronization')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('editSynchronization')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton @click="synchronizationStore.setSynchronizationSourceConfigKey(null); navigationStore.setModal('editSynchronizationSourceConfig')">
+						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationSourceConfigKey(null); navigationStore.setModal('editSynchronizationSourceConfig')">
 							<template #icon>
 								<DatabaseSettingsOutline :size="20" />
 							</template>
 							Add Source Config
 						</NcActionButton>
-						<NcActionButton @click="synchronizationStore.setSynchronizationTargetConfigKey(null); navigationStore.setModal('editSynchronizationTargetConfig')">
+						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationTargetConfigKey(null); navigationStore.setModal('editSynchronizationTargetConfig')">
 							<template #icon>
 								<CardBulletedSettingsOutline :size="20" />
 							</template>
 							Add Target Config
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setModal('testSynchronization')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('testSynchronization')">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
 							Test
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setModal('runSynchronization')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('runSynchronization')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
 							Run
 						</NcActionButton>
-						<NcActionButton @click="synchronizationStore.exportSynchronization(synchronizationStore.synchronizationItem.id)">
+						<NcActionButton close-after-click @click="synchronizationStore.exportSynchronization(synchronizationStore.synchronizationItem.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export synchronization
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setDialog('deleteSynchronization')">
+						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteSynchronization')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
@@ -178,7 +178,7 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 										{{ new Date(contract.created).toLocaleString() }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="viewContract(contract)">
+										<NcActionButton close-after-click @click="viewContract(contract)">
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>
@@ -208,13 +208,13 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 										{{ value }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="synchronizationStore.setSynchronizationSourceConfigKey(key); navigationStore.setModal('editSynchronizationSourceConfig')">
+										<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationSourceConfigKey(key); navigationStore.setModal('editSynchronizationSourceConfig')">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Edit
 										</NcActionButton>
-										<NcActionButton @click="synchronizationStore.setSynchronizationSourceConfigKey(key); navigationStore.setModal('deleteSynchronizationSourceConfig')">
+										<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationSourceConfigKey(key); navigationStore.setModal('deleteSynchronizationSourceConfig')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -244,13 +244,13 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 										{{ value }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="synchronizationStore.setSynchronizationTargetConfigKey(key); navigationStore.setModal('editSynchronizationTargetConfig')">
+										<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationTargetConfigKey(key); navigationStore.setModal('editSynchronizationTargetConfig')">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Edit
 										</NcActionButton>
-										<NcActionButton @click="synchronizationStore.setSynchronizationTargetConfigKey(key); navigationStore.setModal('deleteSynchronizationTargetConfig')">
+										<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationTargetConfigKey(key); navigationStore.setModal('deleteSynchronizationTargetConfig')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -281,13 +281,13 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 										{{ rule.description }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="ruleStore.setRuleItem(rule); navigationStore.setSelected('rules')">
+										<NcActionButton close-after-click @click="ruleStore.setRuleItem(rule); navigationStore.setSelected('rules')">
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>
 											View
 										</NcActionButton>
-										<NcActionButton @click="ruleStore.setRuleItem(rule); navigationStore.setModal('editRule')">
+										<NcActionButton close-after-click @click="ruleStore.setRuleItem(rule); navigationStore.setModal('editRule')">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
@@ -315,7 +315,7 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 										{{ new Date(log.created).toLocaleString() }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="viewLog(log)">
+										<NcActionButton close-after-click @click="viewLog(log)">
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>

@@ -45,7 +45,7 @@ import { Rule } from '../../entities/index.js'
 					</div>
 					<div class="close-button">
 						<NcActions>
-							<NcActionButton @click="closeAlert = true">
+							<NcActionButton close-after-click @click="closeAlert = true">
 								<template #icon>
 									<Close :size="20" />
 								</template>

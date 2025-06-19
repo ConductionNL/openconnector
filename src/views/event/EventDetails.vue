@@ -15,38 +15,38 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
-						<NcActionButton @click="navigationStore.setModal('editEvent')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('editEvent')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton @click="addEventArgument()">
+						<NcActionButton close-after-click @click="addEventArgument()">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
 							Add Argument
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setModal('testEvent')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('testEvent')">
 							<template #icon>
 								<Update :size="20" />
 							</template>
 							Test
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setModal('runEvent')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('runEvent')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
 							Run
 						</NcActionButton>
 
-						<NcActionButton @click="refreshEventLogs()">
+						<NcActionButton close-after-click @click="refreshEventLogs()">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
 							Refresh Logs
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setDialog('deleteEvent')">
+						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteEvent')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
@@ -128,13 +128,13 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 										{{ value }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="editEventArgument(key)">
+										<NcActionButton close-after-click @click="editEventArgument(key)">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Edit
 										</NcActionButton>
-										<NcActionButton @click="deleteEventArgument(key)">
+										<NcActionButton close-after-click @click="deleteEventArgument(key)">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -167,7 +167,7 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 										{{ new Date(log.created).toLocaleString() }}
 									</template>
 									<template #actions>
-										<NcActionButton @click="viewLog(log)">
+										<NcActionButton close-after-click @click="viewLog(log)">
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>

@@ -12,23 +12,23 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 					label="Search"
 					class="searchField"
 					trailing-button-icon="close"
-					@trailing-button-click="ruleStore.refreshRuleList()">
+					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionButton @click="ruleStore.refreshRuleList()">
+					<NcActionButton close-after-click @click="ruleStore.refreshRuleList()">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
 						Refresh
 					</NcActionButton>
-					<NcActionButton @click="ruleStore.setRuleItem(null); navigationStore.setModal('editRule')">
+					<NcActionButton close-after-click @click="ruleStore.setRuleItem(null); navigationStore.setModal('editRule')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
 						Add rule
 					</NcActionButton>
-					<NcActionButton @click="navigationStore.setModal('importFile')">
+					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
@@ -37,7 +37,7 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 				</NcActions>
 			</div>
 			<div v-if="ruleStore.ruleList && ruleStore.ruleList.length > 0">
-				<NcListItem v-for="(rule, i) in ruleStore.ruleList"
+				<NcListItem v-for="(rule, i) in ruleStore.ruleList.filter(rule => searchStore.search === '' || rule.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${rule}${i}`"
 					:name="rule.name"
 					:active="ruleStore.ruleItem?.id === rule?.id"
@@ -52,19 +52,19 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 						{{ rule?.description }}
 					</template>
 					<template #actions>
-						<NcActionButton @click="ruleStore.setRuleItem(rule); navigationStore.setModal('editRule')">
+						<NcActionButton close-after-click @click="ruleStore.setRuleItem(rule); navigationStore.setModal('editRule')">
 							<template #icon>
 								<Pencil />
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton @click="ruleStore.exportRule(rule.id)">
+						<NcActionButton close-after-click @click="ruleStore.exportRule(rule.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export rule
 						</NcActionButton>
-						<NcActionButton @click="ruleStore.setRuleItem(rule); navigationStore.setDialog('deleteRule')">
+						<NcActionButton close-after-click @click="ruleStore.setRuleItem(rule); navigationStore.setDialog('deleteRule')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
@@ -82,7 +82,7 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 			name="Loading rules" />
 
 		<div v-if="!ruleStore.ruleList.length" class="emptyListHeader">
-			No rules defined.
+			No rules defined
 		</div>
 	</NcAppContentList>
 </template>
@@ -116,6 +116,7 @@ export default {
 		FileImportOutline,
 	},
 	mounted() {
+		searchStore.clearSearch()
 		ruleStore.refreshRuleList()
 	},
 }

@@ -53,9 +53,27 @@ import { navigationStore } from '../store/store.js'
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'synchronizations'" name="Synchronization" @click="navigationStore.setSelected('synchronizations')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'synchronizations'"
+				name="Synchronization"
+				:allow-collapse="true"
+				:open="true"
+				@click="navigationStore.setSelected('synchronizations')">
 				<template #icon>
 					<VectorPolylinePlus :size="20" />
+				</template>
+				<!-- This is correct according to the documentation, thats why there is a disable comment -->
+				<!-- eslint-disable-next-line vue/no-lone-template -->
+				<template>
+					<NcAppNavigationItem :active="navigationStore.selected === 'contracts'" name="Contracts" @click="navigationStore.setSelected('contracts')">
+						<template #icon>
+							<FileDocumentOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
+					<NcAppNavigationItem :active="navigationStore.selected === 'logs'" name="Logs" @click="navigationStore.setSelected('logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
 			<NcAppNavigationItem :active="navigationStore.selected === 'rules'" name="Rules" @click="navigationStore.setSelected('rules')">
@@ -93,6 +111,8 @@ import VectorPolylinePlus from 'vue-material-design-icons/VectorPolylinePlus.vue
 import CloudUploadOutline from 'vue-material-design-icons/CloudUploadOutline.vue'
 import MessageTextFastOutline from 'vue-material-design-icons/MessageTextFastOutline.vue'
 import FileImportOutline from 'vue-material-design-icons/FileImportOutline.vue'
+import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
+import TextBoxOutline from 'vue-material-design-icons/TextBoxOutline.vue'
 
 export default {
 	name: 'MainMenu',
@@ -101,6 +121,7 @@ export default {
 		NcAppNavigation,
 		NcAppNavigationList,
 		NcAppNavigationItem,
+		NcAppNavigationSettings,
 		// icons
 		Finance,
 		DatabaseArrowLeftOutline,
@@ -112,6 +133,8 @@ export default {
 		CloudUploadOutline,
 		MessageTextFastOutline,
 		FileImportOutline,
+		FileDocumentOutline,
+		TextBoxOutline,
 	},
 	methods: {
 		openLink(url, type = '') {
