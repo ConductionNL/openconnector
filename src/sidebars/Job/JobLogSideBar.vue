@@ -25,10 +25,9 @@ import { logStore, navigationStore, jobStore } from '../../store/store.js'
 						id="jobSelect"
 						v-model="selectedJob"
 						:options="jobOptions"
-						@update:modelValue="onJobSelected"
 						label="Job"
 						placeholder="Select a job"
-					/>
+						@update:modelValue="onJobSelected" />
 				</div>
 				<div class="filterGroup">
 					<label for="levelSelect">{{ t('openconnector', 'Log Levels') }}</label>
@@ -74,10 +73,10 @@ import { logStore, navigationStore, jobStore } from '../../store/store.js'
 					<NcCheckboxRadioSwitch
 						v-model="filters.showOnlyErrors"
 						:checked="filters.showOnlyErrors"
-						@update:checked="(val) => { filters.showOnlyErrors = val; applyFilters() }"
 						:button-variant="true"
 						name="show_only_errors"
-						type="checkbox">
+						type="checkbox"
+						@update:checked="(val) => { filters.showOnlyErrors = val; applyFilters() }">
 						{{ t('openconnector', 'Show only errors') }}
 					</NcCheckboxRadioSwitch>
 				</div>
@@ -85,10 +84,10 @@ import { logStore, navigationStore, jobStore } from '../../store/store.js'
 					<NcCheckboxRadioSwitch
 						v-model="filters.showOnlySlow"
 						:checked="filters.showOnlySlow"
-						@update:checked="(val) => { filters.showOnlySlow = val; applyFilters() }"
 						:button-variant="true"
 						name="show_only_slow"
-						type="checkbox">
+						type="checkbox"
+						@update:checked="(val) => { filters.showOnlySlow = val; applyFilters() }">
 						{{ t('openconnector', 'Show only slow executions') }}
 					</NcCheckboxRadioSwitch>
 				</div>
@@ -359,7 +358,7 @@ export default {
 		},
 		/**
 		 * Handle message filter change with debouncing
-		 * @param value
+		 * @param {string} value - The message filter value
 		 */
 		handleMessageFilterChange(value) {
 			this.messageFilter = value
@@ -432,7 +431,7 @@ export default {
 			this.totalLogs = logs.length
 			this.successCount = logs.filter(log => log.level === 'SUCCESS').length
 			this.errorCount = logs.filter(log => ['ERROR', 'CRITICAL', 'ALERT', 'EMERGENCY'].includes(log.level)).length
-			
+
 			// Calculate average execution time
 			const executionTimes = logs
 				.filter(log => log.executionTime)
@@ -505,7 +504,7 @@ export default {
 		},
 		/**
 		 * Handle job change
-		 * @param jobOption
+		 * @param {object} job - The selected job object
 		 */
 		onJobSelected(job) {
 			this.selectedJob = job
@@ -609,4 +608,4 @@ export default {
 :deep(.v-select) {
 	margin-bottom: 8px;
 }
-</style> 
+</style>

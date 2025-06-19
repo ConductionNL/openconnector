@@ -385,4 +385,4 @@ export default {
 .selectedIcon {
 	color: var(--color-primary);
 }
-</style> 
+</style>

@@ -368,7 +368,7 @@ export default {
 		},
 		/**
 		 * Handle endpoint filter change with debouncing
-		 * @param value
+		 * @param {string} value - The endpoint filter value
 		 */
 		handleEndpointFilterChange(value) {
 			this.endpointFilter = value
@@ -511,8 +511,7 @@ export default {
 		},
 		/**
 		 * Handle source change
-		 * @param source
-		 * @param sourceOption
+		 * @param {object} sourceOption - The selected source option object
 		 */
 		handleSourceChange(sourceOption) {
 			const source = sourceOption && sourceOption.value ? sourceOption.value : null

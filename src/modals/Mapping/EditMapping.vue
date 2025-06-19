@@ -423,8 +423,8 @@ import { Mapping } from '../../entities/index.js'
 									input-label="Schema (Optional)"
 									:loading="schemasLoading"
 									:disabled="!openRegisterInstalled">
-									<template #no-options="{ loading }">
-										<p v-if="loading">
+									<template #no-options="{ loading: isLoading }">
+										<p v-if="isLoading">
 											Loading...
 										</p>
 										<p v-else-if="!schemaOptions.options?.length">
@@ -484,8 +484,8 @@ import { Mapping } from '../../entities/index.js'
 										<td>{{ field }}</td>
 										<td>
 											<ul>
-												<li v-for="error in errors" :key="error">
-													{{ error }}
+												<li v-for="errorMessage in errors" :key="errorMessage">
+													{{ errorMessage }}
 												</li>
 											</ul>
 										</td>
@@ -511,8 +511,8 @@ import { Mapping } from '../../entities/index.js'
 									input-label="Register"
 									:loading="registersLoading"
 									:disabled="!openRegisterInstalled || saveObjectLoading">
-									<template #no-options="{ loading }">
-										<p v-if="loading">
+									<template #no-options="{ loading: isLoading }">
+										<p v-if="isLoading">
 											Loading...
 										</p>
 										<p v-else-if="!registerOptions.options?.length">
@@ -945,7 +945,7 @@ export default {
 
 		/**
 		 * Update input object validation status
-		 * @param event
+		 * @param {Event} event - The input event object
 		 */
 		updateInputObject(event) {
 			this.inputObject = {

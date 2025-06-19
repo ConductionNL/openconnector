@@ -470,7 +470,7 @@ export const useJobStore = defineStore('job', () => {
 		try {
 			// Convert all filter values to strings for URLSearchParams
 			const stringFilters = Object.fromEntries(
-				Object.entries(filters).map(([k, v]) => [k, v != null ? String(v) : ''])
+				Object.entries(filters).map(([k, v]) => [k, v != null ? String(v) : '']),
 			)
 			const params = new URLSearchParams(stringFilters)
 			if (id) {

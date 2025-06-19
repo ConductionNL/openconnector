@@ -1,5 +1,5 @@
 <script setup>
-import { synchronizationStore, navigationStore, logStore, ruleStore } from '../../store/store.js'
+import { synchronizationStore, navigationStore, ruleStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -50,15 +50,21 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 						</tr>
 						<tr>
 							<td>{{ t('openconnector', 'Version') }}</td>
-							<td colspan="2">{{ synchronizationStore.synchronizationItem?.version || '-' }}</td>
+							<td colspan="2">
+								{{ synchronizationStore.synchronizationItem?.version || '-' }}
+							</td>
 						</tr>
 						<tr>
 							<td>{{ t('openconnector', 'Created') }}</td>
-							<td colspan="2">{{ synchronizationStore.synchronizationItem?.created ? new Date(synchronizationStore.synchronizationItem.created).toLocaleDateString() : '-' }}</td>
+							<td colspan="2">
+								{{ synchronizationStore.synchronizationItem?.created ? new Date(synchronizationStore.synchronizationItem.created).toLocaleDateString() : '-' }}
+							</td>
 						</tr>
 						<tr>
 							<td>{{ t('openconnector', 'Updated') }}</td>
-							<td colspan="2">{{ synchronizationStore.synchronizationItem?.updated ? new Date(synchronizationStore.synchronizationItem.updated).toLocaleDateString() : '-' }}</td>
+							<td colspan="2">
+								{{ synchronizationStore.synchronizationItem?.updated ? new Date(synchronizationStore.synchronizationItem.updated).toLocaleDateString() : '-' }}
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -242,7 +248,6 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import TimelineQuestionOutline from 'vue-material-design-icons/TimelineQuestionOutline.vue'
-import Sync from 'vue-material-design-icons/Sync.vue'
 import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import DatabaseSettingsOutline from 'vue-material-design-icons/DatabaseSettingsOutline.vue'
 import CardBulletedSettingsOutline from 'vue-material-design-icons/CardBulletedSettingsOutline.vue'
@@ -266,7 +271,6 @@ export default {
 		Delete,
 		TrashCanOutline,
 		TimelineQuestionOutline,
-		Sync,
 		EyeOutline,
 		DatabaseSettingsOutline,
 		CardBulletedSettingsOutline,
@@ -426,4 +430,4 @@ export default {
 .selectedIcon {
 	color: var(--color-primary);
 }
-</style> 
+</style>

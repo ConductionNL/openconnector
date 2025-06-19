@@ -1,5 +1,5 @@
 <script setup>
-import { jobStore, navigationStore, logStore } from '../../store/store.js'
+import { jobStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -287,4 +287,4 @@ export default {
 .selectedIcon {
 	color: var(--color-primary);
 }
-</style> 
+</style>

@@ -1,133 +1,126 @@
 <template>
-  <div class="job-logs">
-    <div v-if="logStore.loading" class="loading">
-      <span class="icon icon-loading"></span>
-      {{ t('openconnector', 'Loading job logs...') }}
-    </div>
-    <div v-else-if="logStore.error" class="error">
-      {{ logStore.error }}
-    </div>
-    <div v-else>
-      <div v-if="logs.length === 0" class="empty">
-        {{ t('openconnector', 'No logs found') }}
-      </div>
-      <div v-else>
-        <div :class="['table-container', { 'loading': logStore.loading }]">
-          <table class="job-logs-table">
-            <thead>
-              <tr>
-                <th>{{ t('openconnector', 'Created') }}</th>
-                <th>{{ t('openconnector', 'Status') }}</th>
-                <th>{{ t('openconnector', 'Message') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="log in logs" :key="log.id">
-                <td>{{ formatDate(log.created_at) }}</td>
-                <td>
-                  <span :class="['status-badge', log.status.toLowerCase()]">
-                    {{ log.status }}
-                  </span>
-                </td>
-                <td>{{ log.message }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div v-if="logStore.loading" class="table-loading-overlay">
-            <span class="icon icon-loading"></span>
-          </div>
-        </div>
+	<div class="job-logs">
+		<div v-if="logStore.loading" class="loading">
+			<span class="icon icon-loading" />
+			{{ t('openconnector', 'Loading job logs...') }}
+		</div>
+		<div v-else-if="logStore.error" class="error">
+			{{ logStore.error }}
+		</div>
+		<div v-else>
+			<div v-if="logs.length === 0" class="empty">
+				{{ t('openconnector', 'No logs found') }}
+			</div>
+			<div v-else>
+				<div :class="['table-container', { 'loading': logStore.loading }]">
+					<table class="job-logs-table">
+						<thead>
+							<tr>
+								<th>{{ t('openconnector', 'Created') }}</th>
+								<th>{{ t('openconnector', 'Status') }}</th>
+								<th>{{ t('openconnector', 'Message') }}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="log in logs" :key="log.id">
+								<td>{{ new Date(log.created_at).toLocaleString() }}</td>
+								<td>
+									<span :class="['status-badge', log.status.toLowerCase()]">
+										{{ log.status }}
+									</span>
+								</td>
+								<td>{{ log.message }}</td>
+							</tr>
+						</tbody>
+					</table>
+					<div v-if="logStore.loading" class="table-loading-overlay">
+						<span class="icon icon-loading" />
+					</div>
+				</div>
 
-        <!-- Pagination Controls -->
-        <div class="pagination" v-if="pagination.pages > 1">
-          <button 
-            :disabled="pagination.currentPage === 1 || logStore.loading"
-            @click="changePage(pagination.currentPage - 1)"
-            class="pagination-button"
-          >
-            {{ t('openconnector', 'Previous') }}
-          </button>
-          
-          <span class="pagination-info">
-            {{ t('openconnector', 'Page {current} of {total}', {
-              current: pagination.currentPage,
-              total: pagination.pages
-            }) }}
-          </span>
-          
-          <button 
-            :disabled="pagination.currentPage === pagination.pages || logStore.loading"
-            @click="changePage(pagination.currentPage + 1)"
-            class="pagination-button"
-          >
-            {{ t('openconnector', 'Next') }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+				<!-- Pagination Controls -->
+				<div v-if="pagination.pages > 1" class="pagination">
+					<button
+						:disabled="pagination.currentPage === 1 || logStore.loading"
+						class="pagination-button"
+						@click="changePage(pagination.currentPage - 1)">
+						{{ t('openconnector', 'Previous') }}
+					</button>
+
+					<span class="pagination-info">
+						{{ t('openconnector', 'Page {current} of {total}', {
+							current: pagination.currentPage,
+							total: pagination.pages
+						}) }}
+					</span>
+
+					<button
+						:disabled="pagination.currentPage === pagination.pages || logStore.loading"
+						class="pagination-button"
+						@click="changePage(pagination.currentPage + 1)">
+						{{ t('openconnector', 'Next') }}
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script>
 import { defineComponent } from 'vue'
 import { showError } from '@nextcloud/dialogs'
-import { formatDate } from '@nextcloud/dialogs'
 import { logStore } from '../../store/store.js'
 
 export default defineComponent({
-  name: 'JobLogIndex',
-  
-  props: {
-    jobId: {
-      type: Number,
-      required: true
-    }
-  },
+	name: 'JobLogIndex',
 
-  data() {
-    return {
-      logs: [],
-      pagination: {
-        total: 0,
-        pages: 0,
-        currentPage: 1,
-        perPage: 10
-      }
-    }
-  },
+	props: {
+		jobId: {
+			type: Number,
+			required: true,
+		},
+	},
 
-  methods: {
-    async fetchLogs() {
-      try {
-        const response = await fetch(`/index.php/apps/openconnector/api/jobs/${this.jobId}/logs?page=${this.pagination.currentPage}&limit=${this.pagination.perPage}`)
-        const data = await response.json()
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to fetch job logs')
-        }
-        
-        this.logs = data.data
-        this.pagination = data.pagination
-      } catch (error) {
-        showError(t('openconnector', 'Failed to load job logs'))
-      }
-    },
+	data() {
+		return {
+			logs: [],
+			pagination: {
+				total: 0,
+				pages: 0,
+				currentPage: 1,
+				perPage: 10,
+			},
+		}
+	},
 
-    async changePage(page) {
-      if (logStore.loading) return
-      
-      this.pagination.currentPage = page
-      await this.fetchLogs()
-    },
+	mounted() {
+		this.fetchLogs()
+	},
 
-    formatDate(date) {
-      return formatDate(new Date(date))
-    }
-  },
+	methods: {
+		async fetchLogs() {
+			try {
+				const response = await fetch(`/index.php/apps/openconnector/api/jobs/${this.jobId}/logs?page=${this.pagination.currentPage}&limit=${this.pagination.perPage}`)
+				const data = await response.json()
 
-  mounted() {
-    this.fetchLogs()
-  }
+				if (!response.ok) {
+					throw new Error(data.error || 'Failed to fetch job logs')
+				}
+
+				this.logs = data.data
+				this.pagination = data.pagination
+			} catch (error) {
+				showError(t('openconnector', 'Failed to load job logs'))
+			}
+		},
+
+		async changePage(page) {
+			if (logStore.loading) return
+
+			this.pagination.currentPage = page
+			await this.fetchLogs()
+		},
+	},
 })
 </script>
 
@@ -222,4 +215,4 @@ export default defineComponent({
 .pagination-info {
   color: var(--color-text-lighter);
 }
-</style> 
+</style>

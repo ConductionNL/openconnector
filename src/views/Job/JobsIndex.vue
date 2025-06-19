@@ -185,7 +185,9 @@ import { jobStore, navigationStore } from '../../store/store.js'
 										</tr>
 										<tr v-if="job.jobClass">
 											<td>{{ t('openconnector', 'Job Class') }}</td>
-											<td class="truncatedText">{{ job.jobClass }}</td>
+											<td class="truncatedText">
+												{{ job.jobClass }}
+											</td>
 										</tr>
 										<tr v-if="job.interval">
 											<td>{{ t('openconnector', 'Interval') }}</td>
@@ -362,7 +364,6 @@ import FileExportOutline from 'vue-material-design-icons/FileExportOutline.vue'
 import FileImportOutline from 'vue-material-design-icons/FileImportOutline.vue'
 
 import PaginationComponent from '../../components/PaginationComponent.vue'
-import { jobStore, navigationStore } from '../../store/store.js'
 
 export default {
 	name: 'JobsIndex',

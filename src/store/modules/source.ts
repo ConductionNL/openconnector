@@ -382,7 +382,7 @@ export const useSourceStore = defineStore('source', () => {
 	const refreshSourceLogs = async (filters: object = {}) => {
 		const logStore = useLogStore()
 		logStore.setLogsLoading(true)
-		
+
 		try {
 			// Build query parameters
 			const queryParams = new URLSearchParams()

@@ -1,5 +1,5 @@
 <script setup>
-import { logStore, eventStore } from '../../store/store.js'
+import { eventStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -348,4 +348,4 @@ export default {
 .statisticValue.error {
 	color: var(--color-error);
 }
-</style> 
+</style>

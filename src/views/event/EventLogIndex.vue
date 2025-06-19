@@ -420,4 +420,4 @@ export default {
 
 <style scoped>
 /* All CSS is provided by main.css */
-</style> 
+</style>
