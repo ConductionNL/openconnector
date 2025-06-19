@@ -9,6 +9,7 @@ export const useConsumerStore = defineStore('consumer', () => {
 	// state
 	const consumerItem = ref<Consumer | null>(null)
 	const consumerList = ref<Consumer[]>([])
+	const viewMode = ref<string>('cards')
 
 	// ################################
 	// ||    Setters and Getters     ||
@@ -73,6 +74,35 @@ export const useConsumerStore = defineStore('consumer', () => {
 	 * @return {Consumer[]} The consumer list
 	 */
 	const getConsumerList = (): Consumer[] => consumerList.value as Consumer[]
+
+	/**
+	 * Set the view mode.
+	 * @param mode - The view mode to set
+	 */
+	const setViewMode = (mode: string) => {
+		viewMode.value = mode
+		console.info('Consumer view mode set to ' + mode)
+	}
+
+	/**
+	 * Get the view mode.
+	 *
+	 * @description
+	 * Returns the currently active view mode. Note that the return value is non-reactive.
+	 *
+	 * For reactive usage, either:
+	 * 1. Reference the `viewMode` state directly:
+	 * ```js
+	 * const viewMode = useConsumerStore().viewMode // reactive state
+	 * ```
+	 * 2. Or wrap in a `computed` property:
+	 * ```js
+	 * const viewMode = computed(() => useConsumerStore().getViewMode())
+	 * ```
+	 *
+	 * @return {string} The active view mode
+	 */
+	const getViewMode = (): string => viewMode.value as string
 
 	// ################################
 	// ||          Actions           ||
@@ -215,11 +245,14 @@ export const useConsumerStore = defineStore('consumer', () => {
 		// state
 		consumerItem,
 		consumerList,
+		viewMode,
 		// setter / getter
 		setConsumerItem,
 		getConsumerItem,
 		setConsumerList,
 		getConsumerList,
+		setViewMode,
+		getViewMode,
 		// actions
 		refreshConsumerList,
 		fetchConsumer,

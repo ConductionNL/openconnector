@@ -2449,7 +2449,13 @@ class SynchronizationService
 				$filename = $endpoint['filename'];
 			}
 
-			return $endpoint['endpoint'];
+			// Check if endpoint exists before returning it
+			if (isset($endpoint['endpoint']) === true) {
+				return $endpoint['endpoint'];
+			}
+
+			// If no endpoint is found, return null
+			return null;
 		}
 
 		return $endpoint;

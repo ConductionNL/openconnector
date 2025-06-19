@@ -372,4 +372,188 @@ class SoftwareCatalogueService
         // Return the array of found relations.
         return $relations;
     }//end findRelationsForElement.
+
+    /**
+     * Handles a new organization in the software catalog
+     *
+     * @param ObjectEntity $organization The organization object
+     * @return void
+     * @throws \Exception If the operation fails
+     */
+    public function handleNewOrganization(ObjectEntity $organization): void
+    {
+        // Send welcome email to the organization
+        $this->sendWelcomeEmail($organization);
+
+        // Send notification to VNG about new organization
+        $this->sendVngNotification($organization);
+
+        // Create security group for the organization
+        $this->createSecurityGroup($organization);
+    }
+
+    /**
+     * Handles a new contact in the software catalog
+     *
+     * @param ObjectEntity $contact The contact object
+     * @return void
+     * @throws \Exception If the operation fails
+     */
+    public function handleNewContact(ObjectEntity $contact): void
+    {
+        // Create or enable user for the contact
+        $this->createOrEnableUser($contact);
+
+        // Send welcome email to the contact
+        $this->sendContactWelcomeEmail($contact);
+    }
+
+    /**
+     * Handles contact updates in the software catalog
+     *
+     * @param ObjectEntity $contact The updated contact object
+     * @return void
+     * @throws \Exception If the operation fails
+     */
+    public function handleContactUpdate(ObjectEntity $contact): void
+    {
+        // Update user information
+        $this->updateUser($contact);
+
+        // Send update notification email
+        $this->sendContactUpdateEmail($contact);
+    }
+
+    /**
+     * Handles contact deletion in the software catalog
+     *
+     * @param ObjectEntity $contact The deleted contact object
+     * @return void
+     * @throws \Exception If the operation fails
+     */
+    public function handleContactDeletion(ObjectEntity $contact): void
+    {
+        // Disable user account
+        $this->disableUser($contact);
+
+        // Send deletion notification email
+        $this->sendContactDeletionEmail($contact);
+    }
+
+    /**
+     * Sends a welcome email to a new organization
+     *
+     * @param ObjectEntity $organization The organization object
+     * @return void
+     * @throws \Exception If the email sending fails
+     */
+    private function sendWelcomeEmail(ObjectEntity $organization): void
+    {
+        // TODO: Implement email sending logic
+        $this->logger->info('Sending welcome email to organization', ['organization' => $organization]);
+    }
+
+    /**
+     * Sends a notification to VNG about a new organization
+     *
+     * @param ObjectEntity $organization The organization object
+     * @return void
+     * @throws \Exception If the notification sending fails
+     */
+    private function sendVngNotification(ObjectEntity $organization): void
+    {
+        // TODO: Implement VNG notification logic
+        $this->logger->info('Sending VNG notification about new organization', ['organization' => $organization]);
+    }
+
+    /**
+     * Creates a security group for an organization
+     *
+     * @param ObjectEntity $organization The organization object
+     * @return void
+     * @throws \Exception If the security group creation fails
+     */
+    private function createSecurityGroup(ObjectEntity $organization): void
+    {
+        // TODO: Implement security group creation logic
+        $this->logger->info('Creating security group for organization', ['organization' => $organization]);
+    }
+
+    /**
+     * Creates or enables a user for a contact
+     *
+     * @param ObjectEntity $contact The contact object
+     * @return void
+     * @throws \Exception If the user creation/enabling fails
+     */
+    private function createOrEnableUser(ObjectEntity $contact): void
+    {
+        // TODO: Implement user creation/enabling logic
+        $this->logger->info('Creating or enabling user for contact', ['contact' => $contact]);
+    }
+
+    /**
+     * Updates user information for a contact
+     *
+     * @param ObjectEntity $contact The contact object
+     * @return void
+     * @throws \Exception If the user update fails
+     */
+    private function updateUser(ObjectEntity $contact): void
+    {
+        // TODO: Implement user update logic
+        $this->logger->info('Updating user for contact', ['contact' => $contact]);
+    }
+
+    /**
+     * Disables a user account for a deleted contact
+     *
+     * @param ObjectEntity $contact The contact object
+     * @return void
+     * @throws \Exception If the user disabling fails
+     */
+    private function disableUser(ObjectEntity $contact): void
+    {
+        // TODO: Implement user disabling logic
+        $this->logger->info('Disabling user for contact', ['contact' => $contact]);
+    }
+
+    /**
+     * Sends a welcome email to a new contact
+     *
+     * @param ObjectEntity $contact The contact object
+     * @return void
+     * @throws \Exception If the email sending fails
+     */
+    private function sendContactWelcomeEmail(ObjectEntity $contact): void
+    {
+        // TODO: Implement contact welcome email logic
+        $this->logger->info('Sending welcome email to contact', ['contact' => $contact]);
+    }
+
+    /**
+     * Sends an update notification email to a contact
+     *
+     * @param ObjectEntity $contact The contact object
+     * @return void
+     * @throws \Exception If the email sending fails
+     */
+    private function sendContactUpdateEmail(ObjectEntity $contact): void
+    {
+        // TODO: Implement contact update email logic
+        $this->logger->info('Sending update email to contact', ['contact' => $contact]);
+    }
+
+    /**
+     * Sends a deletion notification email to a contact
+     *
+     * @param ObjectEntity $contact The contact object
+     * @return void
+     * @throws \Exception If the email sending fails
+     */
+    private function sendContactDeletionEmail(ObjectEntity $contact): void
+    {
+        // TODO: Implement contact deletion email logic
+        $this->logger->info('Sending deletion email to contact', ['contact' => $contact]);
+    }
 }

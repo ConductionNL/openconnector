@@ -4,104 +4,155 @@ import { contractStore, synchronizationStore, navigationStore } from '../../stor
 
 <template>
 	<NcAppContent>
-		<div class="container">
+		<div class="viewContainer">
 			<!-- Header -->
-			<div class="header">
-				<h1>{{ t('openconnector', 'Synchronization Contracts') }}</h1>
+			<div class="viewHeader">
+				<h1 class="viewHeaderTitleIndented">
+					{{ t('openconnector', 'Synchronization Contracts') }}
+				</h1>
 				<p>{{ t('openconnector', 'Manage and monitor synchronization contracts') }}</p>
 			</div>
 
 			<!-- Actions Bar -->
-			<div v-if="selectedItems.length > 0" class="selection-header">
-				<h3 class="selection-title">
-					{{ t('openconnector', '{count} contracts selected', { count: selectedItems.length }) }}
-				</h3>
-			</div>
-
-			<div class="actions-bar">
-				<div class="actions">
-					<NcButton
-						v-if="selectedItems.length > 0"
-						type="error"
-						@click="bulkDelete">
-						<template #icon>
-							<Delete :size="20" />
-						</template>
-						{{ t('openconnector', 'Delete Selected') }}
-					</NcButton>
-					<NcButton @click="refreshItems">
-						<template #icon>
-							<Refresh :size="20" />
-						</template>
-						{{ t('openconnector', 'Refresh') }}
-					</NcButton>
+			<div class="viewActionsBar">
+				<div class="viewInfo">
+					<span class="viewTotalCount">
+						{{ t('openconnector', 'Showing {showing} of {total} contracts', { showing: paginatedItems.length, total: filteredItems.length }) }}
+					</span>
+					<span v-if="hasActiveFilters" class="viewIndicator">
+						({{ t('openconnector', 'Filtered') }})
+					</span>
+					<span v-if="selectedItems.length > 0" class="viewIndicator">
+						({{ t('openconnector', '{count} selected', { count: selectedItems.length }) }})
+					</span>
+				</div>
+				<div class="viewActions">
+					<NcActions
+						:force-name="true"
+						:inline="selectedItems.length > 0 ? 3 : 2"
+						menu-name="Actions">
+						<NcActionButton
+							v-if="selectedItems.length > 0"
+							type="error"
+							close-after-click
+							@click="bulkDelete">
+							<template #icon>
+								<Delete :size="20" />
+							</template>
+							{{ t('openconnector', 'Delete ({count})', { count: selectedItems.length }) }}
+						</NcActionButton>
+						<NcActionButton
+							close-after-click
+							@click="exportFiltered">
+							<template #icon>
+								<FileExportOutline :size="20" />
+							</template>
+							{{ t('openconnector', 'Export') }}
+						</NcActionButton>
+						<NcActionButton
+							close-after-click
+							@click="refreshItems">
+							<template #icon>
+								<Refresh :size="20" />
+							</template>
+							{{ t('openconnector', 'Refresh') }}
+						</NcActionButton>
+					</NcActions>
 				</div>
 			</div>
 
-			<!-- Contracts Table -->
-			<div v-if="contractStore.contractsLoading" class="loading">
+			<!-- Loading State -->
+			<div v-if="contractStore.contractsLoading" class="viewLoading">
 				<NcLoadingIcon :size="64" />
 				<p>{{ t('openconnector', 'Loading contracts...') }}</p>
 			</div>
 
+			<!-- Empty State -->
 			<NcEmptyContent v-else-if="!filteredItems.length"
-				:name="t('openconnector', 'No contracts found')"
-				:description="t('openconnector', 'There are no contracts matching your current filters.')">
+				:name="emptyContentName"
+				:description="emptyContentDescription">
 				<template #icon>
-					<FileDocumentOutline />
+					<FileDocumentOutline :size="64" />
 				</template>
 			</NcEmptyContent>
 
-			<div v-else class="table-container">
-				<table class="items-table">
+			<!-- Contracts Table -->
+			<div v-else class="viewTableContainer">
+				<table class="viewTable contractsTable">
 					<thead>
 						<tr>
-							<th class="checkbox-column">
+							<th class="tableColumnCheckbox">
 								<NcCheckboxRadioSwitch
 									:checked="allSelected"
 									:indeterminate="someSelected"
 									@update:checked="toggleSelectAll" />
 							</th>
-							<th>{{ t('openconnector', 'Contract') }}</th>
-							<th>{{ t('openconnector', 'Synchronization') }}</th>
-							<th>{{ t('openconnector', 'Sync Status') }}</th>
-							<th>{{ t('openconnector', 'Last Synced') }}</th>
-							<th>{{ t('openconnector', 'Last Action') }}</th>
-							<th>{{ t('openconnector', 'Actions') }}</th>
+							<th class="contractColumn">
+								{{ t('openconnector', 'Contract') }}
+							</th>
+							<th class="synchronizationColumn">
+								{{ t('openconnector', 'Synchronization') }}
+							</th>
+							<th class="statusColumn">
+								{{ t('openconnector', 'Sync Status') }}
+							</th>
+							<th class="timestampColumn">
+								{{ t('openconnector', 'Last Synced') }}
+							</th>
+							<th class="actionColumn">
+								{{ t('openconnector', 'Last Action') }}
+							</th>
+							<th class="tableColumnActions">
+								{{ t('openconnector', 'Actions') }}
+							</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr v-for="item in paginatedItems"
 							:key="item.id"
-							class="item-row"
-							:class="{ selected: selectedItems.includes(item.id) }">
-							<td class="checkbox-column">
+							class="viewTableRow contractRow"
+							:class="getSyncStatusClass(item)">
+							<td class="tableColumnCheckbox">
 								<NcCheckboxRadioSwitch
 									:checked="selectedItems.includes(item.id)"
 									@update:checked="(checked) => toggleItemSelection(item.id, checked)" />
 							</td>
-							<td class="title-column">
-								<div class="title-content">
-									<strong>{{ getContractName(item) }}</strong>
-									<span v-if="item.uuid" class="description">{{ item.uuid }}</span>
+							<td class="contractColumn">
+								<div class="contractInfo">
+									<span class="contractName">{{ getContractName(item) }}</span>
+									<span v-if="item.uuid" class="contractUuid" :title="item.uuid">
+										{{ item.uuid }}
+									</span>
 								</div>
 							</td>
-							<td>{{ getSynchronizationName(item.synchronizationId) }}</td>
-							<td>
-								<span :class="getSyncStatusType(item.getSyncStatus ? item.getSyncStatus() : 'unsynced')">
-									{{ getSyncStatusLabel(item.getSyncStatus ? item.getSyncStatus() : 'unsynced') }}
+							<td class="synchronizationColumn">
+								<span class="synchronizationName">{{ getSynchronizationName(item.synchronizationId) }}</span>
+							</td>
+							<td class="statusColumn">
+								<span class="statusBadge" :class="getSyncStatusClass(item)">
+									<CheckCircle v-if="item.getSyncStatus() === 'synced'" :size="16" />
+									<AlertCircle v-else-if="item.getSyncStatus() === 'stale'" :size="16" />
+									<CloseCircle v-else-if="item.getSyncStatus() === 'error'" :size="16" />
+									<InformationOutline v-else :size="16" />
+									{{ getSyncStatusLabel(item.getSyncStatus()) }}
 								</span>
 							</td>
-							<td>
-								<NcDateTime v-if="item.getLastSyncDate && item.getLastSyncDate()"
-									:timestamp="new Date(item.getLastSyncDate())"
-									:ignore-seconds="true" />
-								<span v-else>{{ t('openconnector', 'Never') }}</span>
+							<td class="timestampColumn">
+								<div class="timestampInfo">
+									<span v-if="item.getLastSyncDate()" class="lastSyncTime">
+										{{ new Date(item.getLastSyncDate()).toLocaleString() }}
+									</span>
+									<span v-else class="neverSynced">
+										{{ t('openconnector', 'Never') }}
+									</span>
+								</div>
 							</td>
-							<td>
-								<span class="action-badge">{{ getLastActionLabel(item.getLastAction ? item.getLastAction() : 'none') }}</span>
+							<td class="actionColumn">
+								<span class="actionBadge" :class="getActionClass(item.getLastAction())">
+									{{ getLastActionLabel(item.getLastAction()) }}
+								</span>
 							</td>
-							<td class="actions-column">
+							<td class="tableColumnActions">
 								<NcActions>
 									<NcActionButton close-after-click @click="enforceContract(item)">
 										<template #icon>
@@ -115,7 +166,7 @@ import { contractStore, synchronizationStore, navigationStore } from '../../stor
 										</template>
 										{{ t('openconnector', 'View Logs') }}
 									</NcActionButton>
-									<NcActionButton close-after-click @click="deleteContract(item)">
+									<NcActionButton close-after-click class="deleteAction" @click="deleteContract(item)">
 										<template #icon>
 											<Delete :size="20" />
 										</template>
@@ -129,31 +180,15 @@ import { contractStore, synchronizationStore, navigationStore } from '../../stor
 			</div>
 
 			<!-- Pagination -->
-			<div v-if="totalPages > 1" class="pagination">
-				<NcButton
-					:disabled="currentPage === 1"
-					@click="changePage(1)">
-					{{ t('openconnector', 'First') }}
-				</NcButton>
-				<NcButton
-					:disabled="currentPage === 1"
-					@click="changePage(currentPage - 1)">
-					{{ t('openconnector', 'Previous') }}
-				</NcButton>
-				<span class="page-info">
-					{{ t('openconnector', 'Page {current} of {total}', { current: currentPage, total: totalPages }) }}
-				</span>
-				<NcButton
-					:disabled="currentPage === totalPages"
-					@click="changePage(currentPage + 1)">
-					{{ t('openconnector', 'Next') }}
-				</NcButton>
-				<NcButton
-					:disabled="currentPage === totalPages"
-					@click="changePage(totalPages)">
-					{{ t('openconnector', 'Last') }}
-				</NcButton>
-			</div>
+			<PaginationComponent
+				v-if="filteredItems.length > 0"
+				:current-page="currentPage"
+				:total-pages="totalPages"
+				:total-items="filteredItems.length"
+				:current-page-size="pagination.limit || 20"
+				:min-items-to-show="10"
+				@page-changed="changePage"
+				@page-size-changed="onPageSizeChanged" />
 		</div>
 	</NcAppContent>
 </template>
@@ -162,101 +197,106 @@ import { contractStore, synchronizationStore, navigationStore } from '../../stor
 import {
 	NcAppContent,
 	NcEmptyContent,
-	NcButton,
 	NcLoadingIcon,
-	NcCheckboxRadioSwitch,
 	NcActions,
 	NcActionButton,
-	NcDateTime,
+	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import PlayCircle from 'vue-material-design-icons/PlayCircle.vue'
 import TextBoxOutline from 'vue-material-design-icons/TextBoxOutline.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
+import FileExportOutline from 'vue-material-design-icons/FileExportOutline.vue'
+import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
+import AlertCircle from 'vue-material-design-icons/AlertCircle.vue'
+import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
+import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
+import PaginationComponent from '../../components/PaginationComponent.vue'
 
 export default {
 	name: 'ContractsIndex',
 	components: {
 		NcAppContent,
 		NcEmptyContent,
-		NcButton,
 		NcLoadingIcon,
-		NcCheckboxRadioSwitch,
 		NcActions,
 		NcActionButton,
-		NcDateTime,
+		NcCheckboxRadioSwitch,
 		FileDocumentOutline,
+		Delete,
 		Refresh,
 		PlayCircle,
 		TextBoxOutline,
-		Delete,
+		FileExportOutline,
+		CheckCircle,
+		AlertCircle,
+		CloseCircle,
+		InformationOutline,
+		PaginationComponent,
 	},
 	data() {
 		return {
 			selectedItems: [],
+			pagination: {
+				page: 1,
+				limit: 20,
+			},
 		}
 	},
 	computed: {
-		/**
-		 * Get filtered contracts from store
-		 * @return {Array} Array of filtered contracts
-		 */
+		hasActiveFilters() {
+			return Object.keys(contractStore.contractsFilters || {}).some(key =>
+				contractStore.contractsFilters[key] !== null
+				&& contractStore.contractsFilters[key] !== undefined
+				&& contractStore.contractsFilters[key] !== '',
+			)
+		},
 		filteredItems() {
 			return contractStore.contractsList || []
 		},
-		/**
-		 * Get paginated contracts from store
-		 * @return {Array} Array of paginated contracts
-		 */
 		paginatedItems() {
 			return this.filteredItems
 		},
-		/**
-		 * Get total pages from store
-		 * @return {number} Total number of pages
-		 */
-		totalPages() {
-			return contractStore.contractsPagination.pages || 1
-		},
-		/**
-		 * Get current page from store
-		 * @return {number} Current page number
-		 */
-		currentPage() {
-			return contractStore.contractsPagination.page || 1
-		},
-		/**
-		 * Check if all items are selected
-		 * @return {boolean} Whether all items are selected
-		 */
 		allSelected() {
 			return this.paginatedItems.length > 0 && this.paginatedItems.every(item => this.selectedItems.includes(item.id))
 		},
-		/**
-		 * Check if some items are selected
-		 * @return {boolean} Whether some items are selected
-		 */
 		someSelected() {
 			return this.selectedItems.length > 0 && !this.allSelected
 		},
-	},
-	watch: {
-		selectedItems() {
-			this.updateCounts()
+		totalPages() {
+			return contractStore.contractsPagination.pages || 1
 		},
-		filteredItems() {
-			this.updateCounts()
+		currentPage() {
+			return contractStore.contractsPagination.page || 1
+		},
+		emptyContentName() {
+			if (contractStore.contractsLoading) {
+				return t('openconnector', 'Loading contracts...')
+			} else if (contractStore.contractsError) {
+				return contractStore.contractsError
+			} else if (!contractStore.contractsList?.length) {
+				return t('openconnector', 'No contracts found')
+			} else if (!this.filteredItems.length) {
+				return t('openconnector', 'No contracts match your filters')
+			}
+			return ''
+		},
+		emptyContentDescription() {
+			if (contractStore.contractsLoading) {
+				return t('openconnector', 'Please wait while we fetch your contracts.')
+			} else if (contractStore.contractsError) {
+				return t('openconnector', 'Please try again later.')
+			} else if (!contractStore.contractsList?.length) {
+				return t('openconnector', 'No synchronization contracts are available.')
+			} else if (!this.filteredItems.length) {
+				return t('openconnector', 'Try adjusting your filter settings in the sidebar.')
+			}
+			return ''
 		},
 	},
-	async mounted() {
-		// Load initial data
-		await this.loadItems()
-
-		// Update counts
-		this.updateCounts()
-
-		// Listen for filter changes from sidebar
+	mounted() {
+		this.loadItems()
 		this.$root.$on('contracts-filters-changed', this.handleFiltersChanged)
 		this.$root.$on('contracts-bulk-delete', this.bulkDelete)
 		this.$root.$on('contracts-export-filtered', this.exportFiltered)
@@ -267,15 +307,10 @@ export default {
 		this.$root.$off('contracts-export-filtered')
 	},
 	methods: {
-		/**
-		 * Load contracts from store
-		 * @return {Promise<void>}
-		 */
 		async loadItems() {
 			try {
 				await contractStore.fetchContracts()
 
-				// Load synchronization data if not already loaded
 				if (!synchronizationStore.synchronizationList.length) {
 					await synchronizationStore.refreshSynchronizationList()
 				}
@@ -283,70 +318,42 @@ export default {
 				console.error('Error loading contracts:', error)
 			}
 		},
-		/**
-		 * Handle filter changes from sidebar
-		 * @param {object} filters - Filter object from sidebar
-		 * @return {void}
-		 */
 		async handleFiltersChanged(filters) {
 			contractStore.setContractsFilters(filters)
 
-			// Reset pagination and fetch new data
 			try {
 				await contractStore.fetchContracts({
 					page: 1,
 					filters,
 				})
-
-				// Clear selection when filters change
 				this.selectedItems = []
 			} catch (error) {
 				console.error('Error applying filters:', error)
 			}
 		},
-		/**
-		 * Get contract name
-		 * @param {object} contract - The contract object
-		 * @return {string} The contract name
-		 */
 		getContractName(contract) {
 			return contract.getDisplayName ? contract.getDisplayName() : `Contract ${contract.id}`
 		},
-		/**
-		 * Get synchronization name by ID
-		 * @param {string|number} synchronizationId - The synchronization ID
-		 * @return {string} The synchronization name
-		 */
 		getSynchronizationName(synchronizationId) {
 			if (!synchronizationId) return t('openconnector', 'Unknown Synchronization')
 
 			const synchronization = synchronizationStore.synchronizationList.find(s => s.id === parseInt(synchronizationId))
 			return synchronization?.name || `Synchronization ${synchronizationId}`
 		},
-		/**
-		 * Get sync status type
-		 * @param {string} status - Sync status
-		 * @return {string} Sync status type
-		 */
-		getSyncStatusType(status) {
+		getSyncStatusClass(item) {
+			const status = item.getSyncStatus ? item.getSyncStatus() : 'unsynced'
 			switch (status) {
 			case 'synced':
-				return 'success'
+				return 'successStatus'
 			case 'stale':
-				return 'warning'
-			case 'unsynced':
-				return 'secondary'
+				return 'warningStatus'
 			case 'error':
-				return 'error'
+				return 'errorStatus'
+			case 'unsynced':
 			default:
-				return 'secondary'
+				return 'secondaryStatus'
 			}
 		},
-		/**
-		 * Get sync status label
-		 * @param {string} status - Sync status
-		 * @return {string} Sync status label
-		 */
 		getSyncStatusLabel(status) {
 			switch (status) {
 			case 'synced':
@@ -361,11 +368,23 @@ export default {
 				return t('openconnector', 'Unknown')
 			}
 		},
-		/**
-		 * Get last action label
-		 * @param {string} action - Last action
-		 * @return {string} Last action label
-		 */
+		getActionClass(action) {
+			switch (action) {
+			case 'create':
+			case 'created':
+				return 'createAction'
+			case 'update':
+			case 'updated':
+				return 'updateAction'
+			case 'delete':
+			case 'deleted':
+				return 'deleteAction'
+			case 'insert':
+				return 'insertAction'
+			default:
+				return 'noneAction'
+			}
+		},
 		getLastActionLabel(action) {
 			switch (action) {
 			case 'create':
@@ -383,33 +402,13 @@ export default {
 				return t('openconnector', 'None')
 			}
 		},
-		/**
-		 * Toggle selection for all items on current page
-		 * @param {boolean} checked - Whether to select or deselect all
-		 * @return {void}
-		 */
 		toggleSelectAll(checked) {
 			if (checked) {
-				this.paginatedItems.forEach(item => {
-					if (!this.selectedItems.includes(item.id)) {
-						this.selectedItems.push(item.id)
-					}
-				})
+				this.selectedItems = this.paginatedItems.map(item => item.id)
 			} else {
-				this.paginatedItems.forEach(item => {
-					const index = this.selectedItems.indexOf(item.id)
-					if (index > -1) {
-						this.selectedItems.splice(index, 1)
-					}
-				})
+				this.selectedItems = []
 			}
 		},
-		/**
-		 * Toggle selection for individual item
-		 * @param {string} itemId - ID of the item to toggle
-		 * @param {boolean} checked - Whether to select or deselect
-		 * @return {void}
-		 */
 		toggleItemSelection(itemId, checked) {
 			if (checked) {
 				if (!this.selectedItems.includes(itemId)) {
@@ -422,86 +421,63 @@ export default {
 				}
 			}
 		},
-		/**
-		 * Bulk delete selected contracts
-		 * @return {Promise<void>}
-		 */
 		async bulkDelete() {
 			if (this.selectedItems.length === 0) return
+
+			if (!confirm(this.t('openconnector', 'Are you sure you want to delete the selected contracts? This action cannot be undone.'))) {
+				return
+			}
 
 			try {
 				await contractStore.deleteMultiple(this.selectedItems)
 				this.selectedItems = []
-				// Refresh the list
 				await this.loadItems()
 			} catch (error) {
 				console.error('Error deleting contracts:', error)
 			}
 		},
-		/**
-		 * Enforce contract (equivalent to executing/running it)
-		 * @param {object} contract - Contract to enforce
-		 * @return {Promise<void>}
-		 */
 		async enforceContract(contract) {
 			try {
 				await contractStore.enforceContract(contract.id)
-				// Refresh the list
 				await this.loadItems()
 			} catch (error) {
 				console.error('Error enforcing contract:', error)
 			}
 		},
-		/**
-		 * Delete contract
-		 * @param {object} contract - Contract to delete
-		 * @return {Promise<void>}
-		 */
 		async deleteContract(contract) {
 			try {
 				await contractStore.deleteContract(contract.id)
-				// Refresh the list
 				await this.loadItems()
 			} catch (error) {
 				console.error('Error deleting contract:', error)
 			}
 		},
-		/**
-		 * View logs for contract
-		 * @param {object} contract - Contract to view logs for
-		 * @return {void}
-		 */
 		viewLogs(contract) {
-			// Navigate to logs view with contract filter
 			navigationStore.setSelected('logs')
 			this.$root.$emit('logs-filter-by-contract', contract.id)
 		},
-		/**
-		 * Change page
-		 * @param {number} page - The page number to change to
-		 * @return {Promise<void>}
-		 */
 		async changePage(page) {
 			try {
 				await contractStore.fetchContracts({ page })
-				// Clear selection when page changes
 				this.selectedItems = []
 			} catch (error) {
-				// Handle error silently
+				console.error('Error changing page:', error)
 			}
 		},
-		/**
-		 * Refresh contracts list
-		 * @return {Promise<void>}
-		 */
+		async onPageSizeChanged(pageSize) {
+			this.pagination.page = 1
+			this.pagination.limit = pageSize
+			try {
+				await contractStore.fetchContracts({ page: 1, limit: pageSize })
+				this.selectedItems = []
+			} catch (error) {
+				console.error('Error changing page size:', error)
+			}
+		},
 		async refreshItems() {
 			await this.loadItems()
 			this.selectedItems = []
 		},
-		/**
-		 * Export filtered contracts
-		 * @return {Promise<void>}
-		 */
 		async exportFiltered() {
 			try {
 				await contractStore.exportFiltered()
@@ -509,218 +485,10 @@ export default {
 				console.error('Error exporting contracts:', error)
 			}
 		},
-		/**
-		 * Update counts for sidebar
-		 * @return {void}
-		 */
-		updateCounts() {
-			this.$root.$emit('contracts-selection-count', this.selectedItems.length)
-			this.$root.$emit('contracts-filtered-count', this.filteredItems.length)
-		},
 	},
 }
 </script>
 
 <style scoped>
-.container {
-	padding: 20px;
-	max-width: 100%;
-}
-
-.header {
-	margin-bottom: 30px;
-}
-
-.header h1 {
-	margin: 0 0 10px 0;
-	font-size: 2rem;
-	font-weight: 300;
-}
-
-.header p {
-	color: var(--color-text-maxcontrast);
-	margin: 0;
-}
-
-.selection-header {
-	margin-bottom: 20px;
-	padding: 10px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius);
-}
-
-.selection-title {
-	margin: 0;
-	font-weight: 500;
-	color: var(--color-text-maxcontrast);
-}
-
-.actions-bar {
-	display: flex;
-	align-items: center;
-	margin-bottom: 20px;
-	padding: 10px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius);
-}
-
-.actions {
-	display: flex;
-	align-items: center;
-	gap: 15px;
-	margin-left: auto;
-}
-
-.loading {
-	text-align: center;
-	padding: 50px;
-}
-
-.loading p {
-	margin-top: 20px;
-	color: var(--color-text-maxcontrast);
-}
-
-.table-container {
-	background: var(--color-main-background);
-	border-radius: var(--border-radius);
-	overflow: hidden;
-	box-shadow: 0 2px 4px var(--color-box-shadow);
-}
-
-.items-table {
-	width: 100%;
-	border-collapse: collapse;
-}
-
-.items-table th,
-.items-table td {
-	padding: 12px;
-	text-align: left;
-	border-bottom: 1px solid var(--color-border);
-}
-
-.items-table th {
-	background: var(--color-background-hover);
-	font-weight: 500;
-	color: var(--color-text-maxcontrast);
-}
-
-.checkbox-column {
-	width: 50px;
-	text-align: center;
-}
-
-.title-column {
-	min-width: 200px;
-	max-width: 250px;
-}
-
-.title-content {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-}
-
-.description {
-	font-size: 0.9em;
-	color: var(--color-text-maxcontrast);
-}
-
-.actions-column {
-	width: 120px;
-	text-align: center;
-}
-
-.item-row:hover {
-	background: var(--color-background-hover);
-}
-
-.item-row.selected {
-	background: var(--color-primary-light);
-}
-
-.success-rate {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 4px;
-}
-
-.rate-bar {
-	width: 60px;
-	height: 8px;
-	background: var(--color-background-dark);
-	border-radius: 4px;
-	overflow: hidden;
-}
-
-.rate-fill {
-	height: 100%;
-	background: var(--color-success);
-	transition: width 0.3s ease;
-}
-
-.pagination {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	gap: 20px;
-	margin-top: 30px;
-	padding: 20px;
-}
-
-.page-info {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9rem;
-}
-
-/* Responsive table adjustments */
-@media (max-width: 1200px) {
-	.title-column {
-		min-width: 150px;
-		max-width: 200px;
-	}
-}
-
-/* Status badge styles */
-.success {
-	display: inline-block;
-	padding: 4px 8px;
-	background: var(--color-success);
-	color: white;
-	border-radius: 12px;
-	font-size: 0.75rem;
-	font-weight: 500;
-}
-
-.secondary {
-	display: inline-block;
-	padding: 4px 8px;
-	background: var(--color-background-dark);
-	color: var(--color-text-maxcontrast);
-	border-radius: 12px;
-	font-size: 0.75rem;
-	font-weight: 500;
-}
-
-.error {
-	display: inline-block;
-	padding: 4px 8px;
-	background: var(--color-error);
-	color: white;
-	border-radius: 12px;
-	font-size: 0.75rem;
-	font-weight: 500;
-}
-
-.action-badge {
-	display: inline-block;
-	padding: 4px 8px;
-	background: var(--color-background-dark);
-	color: var(--color-text-maxcontrast);
-	border-radius: 12px;
-	font-size: 0.75rem;
-	font-weight: 500;
-}
+/* All CSS is provided by main.css */
 </style>
