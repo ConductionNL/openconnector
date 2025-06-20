@@ -1017,6 +1017,18 @@ class SynchronizationService
 				// Get the id form the target object
 				$synchronizationContract->setTargetId($target->getUuid());
 
+				// Clean up orphaned files based on the attachments array
+				if (isset($targetObject['attachments']) && is_array($targetObject['attachments'])) {
+					try {
+						$deletedCount = $this->cleanupFilesFromAttachments($target->getUuid(), $targetObject['attachments']);
+						if ($deletedCount > 0) {
+							error_log("Cleaned up {$deletedCount} orphaned files for object {$target->getUuid()}");
+						}
+					} catch (Exception $e) {
+						error_log("Failed to cleanup orphaned files for object {$target->getUuid()}: " . $e->getMessage());
+					}
+				}
+
 				// Handle sub-objects synchronization if sourceConfig is defined
 				if (isset($sourceConfig['subObjects']) === true) {
 					$targetObject = $objectService->renderEntity($target, ['all']);
@@ -3426,6 +3438,38 @@ class SynchronizationService
 		// Always run cleanup, even if newFileNames is empty
 		// This handles the case where all files should be removed from an object
 		$this->cleanupOrphanedFiles($objectId, $newFileNames);
+	}
+
+	/**
+	 * Cleans up files for an object based on the current attachments array.
+	 *
+	 * This method compares the files currently attached to an object with the files
+	 * that should exist based on the attachments array from the synchronized data.
+	 * Files that are no longer referenced in the attachments will be removed.
+	 *
+	 * @param string $objectId The UUID of the object to clean up files for.
+	 * @param array $attachments Array of attachment objects with filename properties.
+	 *
+	 * @return int The number of files that were deleted.
+	 * @throws ContainerExceptionInterface
+	 * @throws NotFoundExceptionInterface
+	 * @throws Exception
+	 */
+	public function cleanupFilesFromAttachments(string $objectId, array $attachments): int
+	{
+		// Extract filenames from attachments array
+		$expectedFileNames = [];
+		foreach ($attachments as $attachment) {
+			if (isset($attachment['filename']) && !empty($attachment['filename'])) {
+				$expectedFileNames[] = $attachment['filename'];
+			}
+		}
+
+		// Remove duplicates in case the same file appears multiple times with different labels
+		$expectedFileNames = array_unique($expectedFileNames);
+
+		// Use the existing cleanup method
+		return $this->cleanupOrphanedFiles($objectId, $expectedFileNames);
 	}
 
 }
