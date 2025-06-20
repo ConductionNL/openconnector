@@ -868,12 +868,12 @@ class RuleService
 			$url = $dataDot->get($property['property']);
 			try {
 				if (is_array($url) === true) {
-					$extendedParameters->add($property, array_map(function (string $url) use ($property, $config) {
+					$extendedParameters->add($property['property'], array_map(function (string $url) use ($property, $config) {
 						return $this->getExternalObject($url, $config, $property['schema']);
 					}, $url));
 				}
 
-				$extendedParameters->add($property, $this->getExternalObject($url, $config, $property['schema']));
+				$extendedParameters->add($property['property'], $this->getExternalObject($url, $config, $property['schema']));
 			} catch (ValidationException $exception) {
 				return new JSONResponse(data: ['error' => 'The object referenced in field '. $property['property'] . ' is not valid'], statusCode: 400);
 			} catch (Exception $exception) {

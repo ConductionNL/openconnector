@@ -980,10 +980,10 @@ class EndpointService
             // Process each rule in order
             foreach ($ruleEntities as $rule) {
 
-                // Skip if rule action doesn't match request method
-                if (strtolower($rule->getAction()) !== strtolower($request->getMethod())) {
-                    continue;
-                }
+//                // Skip if rule action doesn't match request method
+//                if (strtolower($rule->getAction()) !== strtolower($request->getMethod())) {
+//                    continue;
+//                }
 
                 // Check rule conditions
                 if ($this->checkRuleConditions($rule, $data) === false || $rule->getTiming() !== $timing) {
@@ -1208,8 +1208,13 @@ class EndpointService
                 $value = end($exploded);
             }
 
+			$extends = [];
+			if(isset($config['extend_input']['extends']) === true && isset($config['extend_input']['extends'][$property]) === true) {
+				$extends = $config['extend_input']['extends'][$property];
+			}
+
             try {
-                $object = $this->objectService->getOpenRegisters()->getMapper('objectEntity')->find(identifier: $value);
+                $object = $this->objectService->getOpenRegisters()->find(id: $value, extend: $extends);
             } catch (DoesNotExistException $exception) {
                 continue;
             }
@@ -1690,7 +1695,7 @@ class EndpointService
         if (isset($filename) === false && count($files) === 1) {
             $filename = $files[0]->getName();
         }
-        
+
         if (isset($filename) === false) {
             throw new Exception('File could not be determined');
         }
