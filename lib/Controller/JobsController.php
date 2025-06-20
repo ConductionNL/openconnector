@@ -189,67 +189,189 @@ class JobsController extends Controller
     }
 
     /**
-     * Retrieves call logs for a job
+     * Retrieves job logs with filtering and pagination support
      *
-     * This method returns all the call logs associated with a source based on its ID.
+     * This method returns job logs based on query parameters,
+     * with support for various filtering parameters to narrow down the results.
+     *
+     * Query Parameters:
+     * - job_id: Filter logs by job ID
+     * - date_from: Filter logs created after this date
+     * - date_to: Filter logs created before this date
+     * - status: Filter logs by status
+     * - slow_executions: Filter logs with execution time > 5000ms
+     * - limit: Number of results per page (default: 20)
+     * - offset: Offset for pagination (default: 0)
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param int $id The ID of the source to retrieve logs for
-     * @return JSONResponse A JSON response containing the call logs
+     * @return JSONResponse A JSON response containing the filtered job logs and pagination
      */
-    public function logs(int $id): JSONResponse
+    public function logs(SearchService $searchService): JSONResponse
     {
         try {
-            $jobLogs = $this->jobLogMapper->findAll(null, null, ['job_id' => $id]);
-            return new JSONResponse($jobLogs);
+            // Get filters from request
+            $filters = $this->request->getParams();
+            $specialFilters = [];
+
+            // Pagination using _page and _limit
+            $limit = isset($filters['_limit']) ? (int)$filters['_limit'] : 20;
+            $page = isset($filters['_page']) ? (int)$filters['_page'] : 1;
+            $offset = ($page - 1) * $limit;
+            unset($filters['_limit'], $filters['_page']);
+
+            // Handle special filters
+            if (!empty($filters['date_from'])) {
+                $specialFilters['date_from'] = $filters['date_from'];
+            }
+            if (!empty($filters['date_to'])) {
+                $specialFilters['date_to'] = $filters['date_to'];
+            }
+            if (!empty($filters['status'])) {
+                $specialFilters['status'] = $filters['status'];
+            }
+            if (!empty($filters['slow_executions'])) {
+                $specialFilters['slow_executions'] = 5000; // 5 seconds in milliseconds
+            }
+
+            // Build search conditions and parameters
+            $searchConditions = [];
+            $searchParams = [];
+
+            if (!empty($specialFilters['date_from'])) {
+                $searchConditions[] = "created >= ?";
+                $searchParams[] = $specialFilters['date_from'];
+            }
+
+            if (!empty($specialFilters['date_to'])) {
+                $searchConditions[] = "created <= ?";
+                $searchParams[] = $specialFilters['date_to'];
+            }
+
+            if (!empty($specialFilters['status'])) {
+                $searchConditions[] = "status = ?";
+                $searchParams[] = $specialFilters['status'];
+            }
+
+            if (!empty($specialFilters['slow_executions'])) {
+                $searchConditions[] = "execution_time > ?";
+                $searchParams[] = $specialFilters['slow_executions'];
+            }
+
+            // Remove special query params from filters
+            $filters = $searchService->unsetSpecialQueryParams(filters: $filters);
+
+            // Get job logs with filters and pagination
+            $jobLogs = $this->jobLogMapper->findAll(
+                limit: $limit,
+                offset: $offset,
+                filters: $filters,
+                searchConditions: $searchConditions,
+                searchParams: $searchParams
+            );
+
+            // Get total count for pagination
+            $total = $this->jobLogMapper->getTotalCount($filters);
+            $pages = $limit > 0 ? ceil($total / $limit) : 1;
+            $currentPage = $limit > 0 ? floor($offset / $limit) + 1 : 1;
+
+            // Return flattened paginated response
+            return new JSONResponse([
+                'results' => $jobLogs,
+                'page' => $currentPage,
+                'pages' => $pages,
+                'results_count' => count($jobLogs),
+                'total' => $total
+            ]);
+        } catch (\Exception $e) {
+            return new JSONResponse(['error' => 'Failed to retrieve logs: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Executes a job
+     *
+     * This method executes a job based on its ID and returns the execution results.
+     * The job can be executed with optional parameters provided in the request body.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @param int $id The ID of the job to execute
+     * @return JSONResponse A JSON response containing the execution results
+     */
+    public function run(int $id): JSONResponse
+    {
+        try {
+            // Get the job
+            $job = $this->jobMapper->find($id);
+
+            // Get execution parameters from request
+            $parameters = $this->request->getParams();
+
+            // Remove non-parameter fields
+            foreach ($parameters as $key => $value) {
+                if (str_starts_with($key, '_')) {
+                    unset($parameters[$key]);
+                }
+            }
+
+            // Determine if forceRun is set
+            $forceRun = isset($parameters['forceRun']) ? filter_var($parameters['forceRun'], FILTER_VALIDATE_BOOLEAN) : false;
+
+            // Execute the job
+            $result = $this->jobService->executeJob($job, $forceRun);
+
+            // Return the execution results
+            return new JSONResponse($result);
         } catch (DoesNotExistException $e) {
             return new JSONResponse(['error' => 'Job not found'], 404);
+        } catch (Exception $e) {
+            return new JSONResponse(['error' => 'Failed to execute job: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Test a job
      *
-     * This method fires a test call to the job and returns the response.
+     * This method executes a job based on its ID and returns the execution results.
+     * The job can be executed with optional parameters provided in the request body.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * Endpoint: /api/job-run/{id}
-     *
-     * @param int $id The ID of the job to test
-     * @return JSONResponse A JSON response containing the test results
+     * @param int $id The ID of the job to execute
+     * @return JSONResponse A JSON response containing the execution results
      */
-    public function run(int $id): JSONResponse
+    public function test(int $id): JSONResponse
     {
         try {
-            $job = $this->jobMapper->find(id: $id);
-        } catch (DoesNotExistException $exception) {
-            return new JSONResponse(data: ['error' => 'Not Found'], statusCode: 404);
-        }
+            // Get the job
+            $job = $this->jobMapper->find($id);
 
+            // Get execution parameters from request
+            $parameters = $this->request->getParams();
 
-        if ($job->getJobListId() === false) {
-            return new JSONResponse(data: ['error' => 'Job not scheduled'], statusCode: 404);
-        }
+            // Remove non-parameter fields
+            foreach ($parameters as $key => $value) {
+                if (str_starts_with($key, '_')) {
+                    unset($parameters[$key]);
+                }
+            }
 
-        try {
-            $job = $this->jobList->getById($job->getJobListId());
-			if ($job !== null) {
-				$job->setArgument(['jobId' => $id, 'forceRun' => true]);
-				$job->start($this->jobList);
+            // Always force run for test
+            $forceRun = true;
 
-				$lastLog = $this->jobLogMapper->getLastCallLog();
-				if ($lastLog !== null && ($lastLog->getJobId() === null || (int) $lastLog->getJobId() === $id)) {
-					return new JSONResponse(data: $lastLog, statusCode: 200);
-				}
-			}
+            // Execute the job
+            $result = $this->jobService->executeJob($job, $forceRun);
 
-            return new JSONResponse(data: ['error' => 'No job log could be found, job did not go successfully or failed to log anything'], statusCode: 500);
-        } catch (Exception $exception) {
-            return new JSONResponse(data: ['error' => $exception->getMessage()], statusCode: 400);
+            // Return the execution results
+            return new JSONResponse($result);
+        } catch (DoesNotExistException $e) {
+            return new JSONResponse(['error' => 'Job not found'], 404);
+        } catch (Exception $e) {
+            return new JSONResponse(['error' => 'Failed to execute job: ' . $e->getMessage()], 500);
         }
     }
 }

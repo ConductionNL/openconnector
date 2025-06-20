@@ -80,7 +80,7 @@ class DashboardController extends Controller
                 "mappings" => $this->mappingMapper->getTotalCallCount(),
                 "synchronizations" => $this->synchronizationMapper->getTotalCallCount(),
                 "synchronizationContracts" => $this->synchronizationContractMapper->getTotalCallCount(),
-                "jobs" => $this->jobMapper->getTotalCallCount(),
+                "jobs" => $this->jobMapper->getTotalCount(),
                 "endpoints" => $this->endpointMapper->getTotalCallCount()
             ];
             return new JSONResponse($results);

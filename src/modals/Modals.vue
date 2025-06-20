@@ -10,6 +10,7 @@ import { navigationStore } from '../store/store.js'
 		<DeleteConsumer />
 		<DeleteSource />
 		<EditSource />
+		<ViewSource />
 		<TestSource />
 		<DeleteJob />
 		<TestJob />
@@ -48,6 +49,10 @@ import { navigationStore } from '../store/store.js'
 		<EditRule v-if="navigationStore.modal === 'editRule'" />
 		<DeleteRule v-if="navigationStore.dialog === 'deleteRule'" />
 		<AddEndpointRule v-if="navigationStore.modal === 'addEndpointRule'" />
+		<ViewJob v-if="navigationStore.modal === 'viewJob'" />
+		<ViewEndpoint v-if="navigationStore.modal === 'viewEndpoint'" />
+		<ViewSynchronization v-if="navigationStore.modal === 'viewSynchronization'" />
+		<ViewMapping v-if="navigationStore.modal === 'viewMapping'" />
 	</div>
 </template>
 
@@ -57,6 +62,7 @@ import DeleteEndpoint from './Endpoint/DeleteEndpoint.vue'
 import EditConsumer from './Consumer/EditConsumer.vue'
 import DeleteConsumer from './Consumer/DeleteConsumer.vue'
 import EditSource from './Source/EditSource.vue'
+import ViewSource from './Source/ViewSource.vue'
 import TestSource from './TestSource/TestSource.vue'
 import DeleteSource from './Source/DeleteSource.vue'
 import TestJob from './Job/TestJob.vue'
@@ -96,6 +102,10 @@ import ImportFile from './Import/ImportFile.vue'
 import EditRule from './Rule/EditRule.vue'
 import DeleteRule from './Rule/DeleteRule.vue'
 import AddEndpointRule from './Endpoint/AddEndpointRule.vue'
+import ViewJob from './Job/ViewJob.vue'
+import ViewEndpoint from './Endpoint/ViewEndpoint.vue'
+import ViewSynchronization from './Synchronization/ViewSynchronization.vue'
+import ViewMapping from './Mapping/ViewMapping.vue'
 
 export default {
 	name: 'Modals',
@@ -106,6 +116,7 @@ export default {
 		DeleteConsumer,
 		DeleteSource,
 		EditSource,
+		ViewSource,
 		TestSource,
 		DeleteJob,
 		EditJob,
@@ -144,6 +155,10 @@ export default {
 		EditRule,
 		DeleteRule,
 		AddEndpointRule,
+		ViewJob,
+		ViewEndpoint,
+		ViewSynchronization,
+		ViewMapping,
 	},
 	setup() {
 		return {

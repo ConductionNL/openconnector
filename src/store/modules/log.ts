@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { Log, TLog } from '../../entities/index.js'
 import { MissingParameterError } from '../../services/errors/index.js'
 
-const apiEndpoint = '/index.php/apps/openconnector/api/logs'
+const apiEndpoint = '/index.php/apps/openconnector/api/synchronizations/logs'
 
 /**
  * Log store for managing synchronization logs
@@ -34,6 +34,9 @@ export const useLogStore = defineStore('log', () => {
 
 	/** @type {import('vue').Ref<boolean>} Loading state for logs */
 	const logsLoading = ref<boolean>(false)
+
+	/** @type {import('vue').Ref<string|null>} Error state for logs */
+	const logsError = ref<string>(null)
 
 	/** @type {import('vue').Ref<object>} Pagination information */
 	const logsPagination = ref<object>({
@@ -222,6 +225,16 @@ export const useLogStore = defineStore('log', () => {
 	}
 
 	/**
+	 * Set log filters (alias for setLogsFilters for compatibility)
+	 *
+	 * @param {object} filters - The filters to set
+	 * @return {void}
+	 */
+	const setLogFilters = (filters: object): void => {
+		setLogsFilters(filters)
+	}
+
+	/**
 	 * Set logs loading state
 	 *
 	 * @param {boolean} loading - The loading state
@@ -255,6 +268,7 @@ export const useLogStore = defineStore('log', () => {
 	 */
 	const fetchLogs = async (options: { page?: number, filters?: object } = {}): Promise<{ response: Response, data: TLog[], entities: Log[] }> => {
 		setLogsLoading(true)
+		logsError.value = null
 
 		try {
 			const queryParams = new URLSearchParams()
@@ -283,6 +297,10 @@ export const useLogStore = defineStore('log', () => {
 				method: 'GET',
 			})
 
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`)
+			}
+
 			const responseData = await response.json()
 			const data = (responseData.results || responseData) as TLog[]
 			const entities = data.map(logItem => new Log(logItem))
@@ -295,6 +313,10 @@ export const useLogStore = defineStore('log', () => {
 			}
 
 			return { response, data, entities }
+		} catch (error) {
+			console.error('Error fetching logs:', error)
+			logsError.value = error.message || 'Failed to fetch logs'
+			throw error
 		} finally {
 			setLogsLoading(false)
 		}
@@ -307,8 +329,13 @@ export const useLogStore = defineStore('log', () => {
 	 * @return {Promise<{ response: Response, data: TLog[], entities: Log[] }>} The response, data, and entities
 	 */
 	const refreshLogList = async (search: string = null): Promise<{ response: Response, data: TLog[], entities: Log[] }> => {
-		const filters = search ? { search } : {}
-		return await fetchLogs({ filters })
+		try {
+			const filters = search ? { search } : {}
+			return await fetchLogs({ filters })
+		} catch (error) {
+			console.error('Error refreshing log list:', error)
+			throw error
+		}
 	}
 
 	/**
@@ -474,8 +501,12 @@ export const useLogStore = defineStore('log', () => {
 		activeLogKey,
 		viewLogItem,
 		logsLoading,
+		loading: logsLoading,
+		logsError,
+		error: logsError,
 		logsPagination,
 		logsFilters,
+		logFilters: logsFilters,
 		logsStatistics,
 
 		// setters and getters
@@ -490,6 +521,7 @@ export const useLogStore = defineStore('log', () => {
 		setViewLogItem,
 		getViewLogItem,
 		setLogsFilters,
+		setLogFilters,
 		setLogsLoading,
 		setLogsPagination,
 

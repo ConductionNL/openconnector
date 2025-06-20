@@ -10,14 +10,40 @@ import { navigationStore } from '../store/store.js'
 					<Finance :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'sources'" name="Sources" @click="navigationStore.setSelected('sources')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'sources'"
+				name="Sources"
+				:allow-collapse="true"
+				:open="true"
+				@click="navigationStore.setSelected('sources')">
 				<template #icon>
 					<DatabaseArrowLeftOutline :size="20" />
 				</template>
+				<!-- This is correct according to the documentation, thats why there is a disable comment -->
+				<!-- eslint-disable-next-line vue/no-lone-template -->
+				<template>
+					<NcAppNavigationItem :active="navigationStore.selected === 'source-logs'" name="Logs" @click="navigationStore.setSelected('source-logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
+				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'endpoints'" name="Endpoints" @click="navigationStore.setSelected('endpoints')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'endpoints'"
+				name="Endpoints"
+				:allow-collapse="true"
+				:open="true"
+				@click="navigationStore.setSelected('endpoints')">
 				<template #icon>
 					<Api :size="20" />
+				</template>
+				<!-- This is correct according to the documentation, thats why there is a disable comment -->
+				<!-- eslint-disable-next-line vue/no-lone-template -->
+				<template>
+					<NcAppNavigationItem :active="navigationStore.selected === 'endpoint-logs'" name="Logs" @click="navigationStore.setSelected('endpoint-logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
 			<NcAppNavigationItem :active="navigationStore.selected === 'consumers'" name="Consumers" @click="navigationStore.setSelected('consumers')">
@@ -38,8 +64,21 @@ import { navigationStore } from '../store/store.js'
 				<template #icon>
 					<Update :size="20" />
 				</template>
+				<!-- This is correct according to the documentation, thats why there is a disable comment -->
+				<!-- eslint-disable-next-line vue/no-lone-template -->
+				<template>
+					<NcAppNavigationItem :active="navigationStore.selected === 'job-logs'" name="Logs" @click="navigationStore.setSelected('job-logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
+				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'notifications'" name="Cloud Events" @click="navigationStore.setSelected('notifications')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'notifications'"
+				name="Cloud Events"
+				:allow-collapse="true"
+				:open="true"
+				@click="navigationStore.setSelected('notifications')">
 				<template #icon>
 					<CloudUploadOutline :size="20" />
 				</template>
@@ -49,6 +88,11 @@ import { navigationStore } from '../store/store.js'
 					<NcAppNavigationItem :active="navigationStore.selected === 'events'" name="Events" @click="navigationStore.setSelected('events')">
 						<template #icon>
 							<MessageTextFastOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
+					<NcAppNavigationItem :active="navigationStore.selected === 'event-logs'" name="Logs" @click="navigationStore.setSelected('event-logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
 				</template>
@@ -69,7 +113,7 @@ import { navigationStore } from '../store/store.js'
 							<FileDocumentOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
-					<NcAppNavigationItem :active="navigationStore.selected === 'logs'" name="Logs" @click="navigationStore.setSelected('logs')">
+					<NcAppNavigationItem :active="navigationStore.selected === 'synchronization-logs'" name="Logs" @click="navigationStore.setSelected('synchronization-logs')">
 						<template #icon>
 							<TextBoxOutline :size="20" />
 						</template>

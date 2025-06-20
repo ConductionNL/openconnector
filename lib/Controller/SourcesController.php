@@ -167,23 +167,115 @@ class SourcesController extends Controller
     }
 
     /**
-     * Retrieves call logs for a source
+     * Retrieves call logs with filtering and pagination support
      *
-     * This method returns all the call logs associated with a source based on its ID.
+     * This method returns call logs based on query parameters,
+     * with support for various filtering parameters to narrow down the results.
+     *
+     * Query Parameters:
+     * - source_id: Filter logs by source ID
+     * - date_from: Filter logs created after this date
+     * - date_to: Filter logs created before this date
+     * - endpoint: Filter logs by endpoint (partial match)
+     * - status_code: Filter logs by status code range (comma-separated min,max)
+     * - slow_requests: Filter logs with response time > 5000ms
+     * - limit: Number of results per page (default: 20)
+     * - offset: Offset for pagination (default: 0)
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param int $id The ID of the source to retrieve logs for
-     * @return JSONResponse A JSON response containing the call logs
+     * @return JSONResponse A JSON response containing the filtered call logs and pagination
      */
-    public function logs(int $id): JSONResponse
+    public function logs(SearchService $searchService): JSONResponse
     {
         try {
-            $callLogs = $this->callLogMapper->findAll(null, null, ['source_id' =>  $id]);
-            return new JSONResponse($callLogs);
-        } catch (DoesNotExistException $e) {
-            return new JSONResponse(['error' => 'Source not found'], 404);
+            // Get filters from request
+            $filters = $this->request->getParams();
+            $specialFilters = [];
+
+            // Pagination using _page and _limit
+            $limit = isset($filters['_limit']) ? (int)$filters['_limit'] : 20;
+            $page = isset($filters['_page']) ? (int)$filters['_page'] : 1;
+            $offset = ($page - 1) * $limit;
+            unset($filters['_limit'], $filters['_page']);
+
+            // Handle special filters
+            if (!empty($filters['date_from'])) {
+                $specialFilters['date_from'] = $filters['date_from'];
+            }
+            if (!empty($filters['date_to'])) {
+                $specialFilters['date_to'] = $filters['date_to'];
+            }
+            if (!empty($filters['endpoint'])) {
+                $specialFilters['endpoint_like'] = '%' . $filters['endpoint'] . '%';
+            }
+            if (!empty($filters['status_code'])) {
+                $statusCodes = explode(',', $filters['status_code']);
+                if (count($statusCodes) === 2) {
+                    $specialFilters['status_code_range'] = $statusCodes;
+                }
+            }
+            if (!empty($filters['slow_requests'])) {
+                $specialFilters['slow_requests'] = 5000; // 5 seconds in milliseconds
+            }
+
+            // Build search conditions and parameters
+            $searchConditions = [];
+            $searchParams = [];
+
+            if (!empty($specialFilters['date_from'])) {
+                $searchConditions[] = "created >= ?";
+                $searchParams[] = $specialFilters['date_from'];
+            }
+
+            if (!empty($specialFilters['date_to'])) {
+                $searchConditions[] = "created <= ?";
+                $searchParams[] = $specialFilters['date_to'];
+            }
+
+            if (!empty($specialFilters['endpoint_like'])) {
+                $searchConditions[] = "endpoint LIKE ?";
+                $searchParams[] = $specialFilters['endpoint_like'];
+            }
+
+            if (!empty($specialFilters['status_code_range'])) {
+                $searchConditions[] = "status_code >= ? AND status_code <= ?";
+                $searchParams = array_merge($searchParams, $specialFilters['status_code_range']);
+            }
+
+            if (!empty($specialFilters['slow_requests'])) {
+                $searchConditions[] = "JSON_EXTRACT(response, '$.responseTime') > ?";
+                $searchParams[] = $specialFilters['slow_requests'];
+            }
+
+            // Remove special query params from filters
+            $filters = $searchService->unsetSpecialQueryParams(filters: $filters);
+
+            // Get call logs with filters and pagination
+            $callLogs = $this->callLogMapper->findAll(
+                limit: $limit,
+                offset: $offset,
+                filters: $filters,
+                searchConditions: $searchConditions,
+                searchParams: $searchParams
+            );
+
+            // Get total count for pagination
+            $total = $this->callLogMapper->getTotalCount($filters);
+            $pages = $limit > 0 ? ceil($total / $limit) : 1;
+            $currentPage = $limit > 0 ? floor($offset / $limit) + 1 : 1;
+
+            // Return flattened paginated response
+            return new JSONResponse([
+                'results' => $callLogs,
+                'page' => $currentPage,
+                'pages' => $pages,
+                'results_count' => count($callLogs),
+                'total' => $total
+            ]);
+        } catch (\Exception $e) {
+            return new JSONResponse(['error' => 'Failed to retrieve logs: ' . $e->getMessage()], 500);
         }
     }
 

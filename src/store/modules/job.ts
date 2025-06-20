@@ -3,6 +3,7 @@ import { Job, TJob } from '../../entities/index.js'
 import { importExportStore } from '../store.js'
 import { ref } from 'vue'
 import { MissingParameterError } from '../../services/errors/index.js'
+import { useLogStore } from './log'
 
 const apiEndpoint = '/index.php/apps/openconnector/api/jobs'
 
@@ -15,6 +16,7 @@ export const useJobStore = defineStore('job', () => {
 	const jobLog = ref<object>(null)
 	const jobLogs = ref<object[]>([])
 	const jobArgumentKey = ref<string>(null)
+	const viewMode = ref<string>('cards')
 
 	// ################################
 	// ||    Setters and Getters     ||
@@ -230,6 +232,35 @@ export const useJobStore = defineStore('job', () => {
 	 */
 	const getJobArgumentKey = (): string | null => jobArgumentKey.value
 
+	/**
+	 * Set the view mode.
+	 * @param mode - The view mode to set
+	 */
+	const setViewMode = (mode: string) => {
+		viewMode.value = mode
+		console.info('Job view mode set to ' + mode)
+	}
+
+	/**
+	 * Get the view mode.
+	 *
+	 * @description
+	 * Returns the currently active view mode. Note that the return value is non-reactive.
+	 *
+	 * For reactive usage, either:
+	 * 1. Reference the `viewMode` state directly:
+	 * ```js
+	 * const viewMode = useJobStore().viewMode // reactive state
+	 * ```
+	 * 2. Or wrap in a `computed` property:
+	 * ```js
+	 * const viewMode = computed(() => useJobStore().getViewMode())
+	 * ```
+	 *
+	 * @return {string} The active view mode
+	 */
+	const getViewMode = (): string => viewMode.value as string
+
 	// ################################
 	// ||          Actions           ||
 	// ################################
@@ -381,7 +412,7 @@ export const useJobStore = defineStore('job', () => {
 
 		console.info('Testing event...')
 
-		const endpoint = `/index.php/apps/openconnector/api/jobs-test/${id}`
+		const endpoint = `/index.php/apps/openconnector/api/jobs/run/${id}?test=true`
 
 		const response = await fetch(endpoint, {
 			method: 'POST',
@@ -409,7 +440,7 @@ export const useJobStore = defineStore('job', () => {
 		}
 
 		console.info('Running job...')
-		const endpoint = `/index.php/apps/openconnector/api/jobs-test/${id}`
+		const endpoint = `/index.php/apps/openconnector/api/jobs/run/${id}`
 
 		const response = await fetch(endpoint, {
 			method: 'POST',
@@ -428,22 +459,35 @@ export const useJobStore = defineStore('job', () => {
 	/**
 	 * Refreshes job logs for the current job
 	 * @param id - The ID of the job to refresh logs for
+	 * @param filters - Optional filters object
 	 * @return {Promise<{ response: Response, data: object }>} The response and data
 	 */
-	const refreshJobLogs = async (id: string): Promise<{ response: Response, data: object }> => {
-		if (!id) {
-			throw new MissingParameterError('id')
+	const refreshJobLogs = async (id: string = null, filters: object = {}): Promise<{ response: Response, data: object }> => {
+		// Set loading state
+		const logStore = useLogStore()
+		logStore.setLogsLoading(true)
+
+		try {
+			// Convert all filter values to strings for URLSearchParams
+			const stringFilters = Object.fromEntries(
+				Object.entries(filters).map(([k, v]) => [k, v != null ? String(v) : '']),
+			)
+			const params = new URLSearchParams(stringFilters)
+			if (id) {
+				params.set('job_id', id)
+			}
+			const endpoint = `/index.php/apps/openconnector/api/jobs/logs${params.toString() ? '?' + params.toString() : ''}`
+			const response = await fetch(endpoint)
+			const data = await response.json()
+			setJobLogs(data)
+			return { response, data }
+		} catch (error) {
+			console.error('Error refreshing job logs:', error)
+			throw error
+		} finally {
+			// Reset loading state
+			logStore.setLogsLoading(false)
 		}
-
-		const endpoint = `/index.php/apps/openconnector/api/jobs-logs/${id}`
-
-		const response = await fetch(endpoint)
-
-		const data = await response.json()
-
-		setJobLogs(data)
-
-		return { response, data }
 	}
 
 	// Export a job
@@ -471,6 +515,7 @@ export const useJobStore = defineStore('job', () => {
 		jobLog,
 		jobLogs,
 		jobArgumentKey,
+		viewMode,
 
 		// setters and getters
 		setJobItem,
@@ -487,6 +532,8 @@ export const useJobStore = defineStore('job', () => {
 		getJobLogs,
 		setJobArgumentKey,
 		getJobArgumentKey,
+		setViewMode,
+		getViewMode,
 
 		// actions
 		refreshJobList,
