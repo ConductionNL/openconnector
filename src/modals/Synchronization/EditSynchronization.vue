@@ -6,9 +6,13 @@ import { Synchronization } from '../../entities/index.js'
 <template>
 	<NcModal ref="modalRef"
 		label-id="editSynchronization"
+		size="large"
+		:can-close="true"
+		:width="1000"
+		:name="synchronizationItem.id ? 'Edit Synchronization' : 'Create New Synchronization'"
 		@close="closeModal">
 		<div class="modalContent">
-			<h2>{{ synchronizationItem.id ? 'Edit' : 'Add' }} Synchronization</h2>
+			<h2>{{ synchronizationItem.id ? 'Edit Synchronization' : 'Create New Synchronization' }}</h2>
 
 			<!-- ====================== -->
 			<!-- Open Register notecard -->
@@ -48,7 +52,7 @@ import { Synchronization } from '../../entities/index.js'
 					</div>
 					<div class="close-button">
 						<NcActions>
-							<NcActionButton @click="openRegisterCloseAlert = true">
+							<NcActionButton close-after-click @click="openRegisterCloseAlert = true">
 								<template #icon>
 									<Close :size="20" />
 								</template>
@@ -64,7 +68,7 @@ import { Synchronization } from '../../entities/index.js'
 			<!-- ====================== -->
 			<div v-if="success || error">
 				<NcNoteCard v-if="success" type="success">
-					<p>Synchronization successfully added</p>
+					<p>Synchronization successfully {{ synchronizationItem.id ? 'updated' : 'created' }}</p>
 				</NcNoteCard>
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error || 'An error occurred' }}</p>
@@ -72,130 +76,233 @@ import { Synchronization } from '../../entities/index.js'
 			</div>
 
 			<!-- ====================== -->
-			<!--          Form          -->
+			<!--    Three-Column Layout  -->
 			<!-- ====================== -->
-			<form v-if="!success" @submit.prevent="handleSubmit">
-				<NcTextField :value.sync="synchronizationItem.name"
-					label="Name"
-					required />
+			<div v-if="!success" class="synchronization-layout">
+				<!-- Source Section -->
+				<div class="sync-section source-section">
+					<div class="section-header">
+						<DatabaseArrowRightOutline :size="24" />
+						<h3>Source</h3>
+					</div>
+					<div class="section-content">
+						<div class="info-card">
+							<p class="section-description">
+								Configure where data comes from
+							</p>
+						</div>
 
-				<NcTextArea :value.sync="synchronizationItem.description"
-					label="Description" />
+						<!-- Source Type -->
+						<div class="form-group">
+							<NcSelect v-bind="typeOptions"
+								v-model="typeOptions.value"
+								:selectable="(option) => {
+									return option.id === 'register/schema' ? openRegisterInstalled : true
+								}"
+								input-label="Source Type" />
+						</div>
 
-				<NcTextArea :value.sync="synchronizationItem.conditions"
-					label="Conditions (json logic)" />
+						<!-- Source ID -->
+						<div class="form-group">
+							<NcSelect v-if="typeOptions.value?.id !== 'register/schema'"
+								v-bind="sourceOptions"
+								v-model="sourceOptions.sourceValue"
+								required
+								:loading="sourcesLoading"
+								input-label="Source ID" />
 
-				<NcSelect v-bind="ruleOptions"
-					v-model="ruleOptions.value"
-					multiple
-					:loading="rulesLoading"
-					input-label="Rules" />
-				<div>
-					<NcSelect v-bind="typeOptions"
-						v-model="typeOptions.value"
-						:selectable="(option) => {
-							return option.id === 'register/schema' ? openRegisterInstalled : true
-						}"
-						input-label="Source Type" />
-				</div>
+							<div v-if="typeOptions.value?.id === 'register/schema'">
+								<NcSelect v-bind="registerOptions"
+									v-model="registerOptions.sourceValue"
+									:disabled="!openRegisterInstalled"
+									input-label="Register" />
 
-				<div>
-					<NcSelect v-if="typeOptions.value?.id !== 'register/schema'"
-						v-bind="sourceOptions"
-						v-model="sourceOptions.sourceValue"
-						required
-						:loading="sourcesLoading"
-						input-label="Source ID" />
+								<NcSelect v-bind="selectedRegisterSourceValueSchemas"
+									v-model="schemaOptions.sourceValue"
+									:disabled="!openRegisterInstalled"
+									input-label="Schema" />
+							</div>
+						</div>
 
-					<div v-if="typeOptions.value?.id === 'register/schema'">
-						<p>Source ID</p>
+						<!-- Source Configuration -->
+						<div class="subsection">
+							<h4>Source Configuration</h4>
+							<div class="form-group">
+								<NcTextField :value.sync="synchronizationItem.sourceConfig.idPosition"
+									label="ID Position"
+									placeholder="Position of id in source object" />
 
-						<div class="css-fix-reg/schema">
-							<NcSelect v-bind="registerOptions"
-								v-model="registerOptions.sourceValue"
-								:disabled="!openRegisterInstalled"
-								input-label="Register" />
-							<p>/</p>
-							<NcSelect v-bind="schemaOptions"
-								v-model="schemaOptions.sourceValue"
-								:disabled="!openRegisterInstalled"
-								input-label="Schema" />
+								<NcTextField :value.sync="synchronizationItem.sourceConfig.resultsPosition"
+									label="Results Position"
+									placeholder="Position of results in source object" />
+
+								<NcTextField :value.sync="synchronizationItem.sourceConfig.endpoint"
+									label="Endpoint"
+									placeholder="Endpoint on which to fetch data" />
+
+								<NcTextField :value.sync="synchronizationItem.sourceHashPosition"
+									label="Source Hash Position"
+									placeholder="Position of hash in source object" />
+							</div>
 						</div>
 					</div>
 				</div>
 
-				<NcSelect v-bind="sourceTargetMappingOptions"
-					v-model="sourceTargetMappingOptions.hashValue"
-					:loading="sourceTargetMappingLoading"
-					input-label="Source hash mapping" />
+				<!-- General/Center Section -->
+				<div class="sync-section general-section">
+					<!-- General Card -->
+					<div class="center-card">
+						<div class="section-header">
+							<CogOutline :size="24" />
+							<h3>General</h3>
+						</div>
+						<div class="section-content">
+							<form @submit.prevent="handleSubmit">
+								<div class="form-group">
+									<NcTextField :value.sync="synchronizationItem.name"
+										label="Name"
+										placeholder="Enter synchronization name"
+										required />
 
-				<NcSelect v-bind="sourceTargetMappingOptions"
-					v-model="sourceTargetMappingOptions.sourceValue"
-					:loading="sourceTargetMappingLoading"
-					input-label="Source target mapping" />
+									<NcTextArea
+										resize="vertical"
+										:value.sync="synchronizationItem.description"
+										label="Description"
+										placeholder="Describe what this synchronization does" />
+								</div>
+							</form>
+						</div>
+					</div>
 
-				<NcTextField :value.sync="synchronizationItem.sourceConfig.idPosition"
-					label="(optional) Position of id in source object" />
+					<!-- Data Flow Arrow -->
+					<div class="data-flow">
+						<div class="flow-step">
+							<DatabaseArrowRightOutline :size="20" />
+							<span>Source</span>
+						</div>
+						<ArrowRight :size="20" class="flow-arrow" />
+						<div class="flow-step">
+							<SwapHorizontal :size="20" />
+							<span>Transform</span>
+						</div>
+						<ArrowRight :size="20" class="flow-arrow" />
+						<div class="flow-step">
+							<DatabaseArrowLeftOutline :size="20" />
+							<span>Target</span>
+						</div>
+					</div>
 
-				<NcTextField :value.sync="synchronizationItem.sourceConfig.resultsPosition"
-					label="(optional) Position of results in source object" />
+					<!-- Transform Card -->
+					<div class="center-card">
+						<div class="section-header">
+							<SwapHorizontal :size="24" />
+							<h3>Transform</h3>
+						</div>
+						<div class="section-content">
+							<div class="form-group">
+								<NcTextArea
+									resize="vertical"
+									:value.sync="synchronizationItem.conditions"
+									label="Conditions (JSON Logic)"
+									placeholder="Enter JSON logic conditions" />
 
-				<NcTextField :value.sync="synchronizationItem.sourceConfig.endpoint"
-					label="(optional) Endpoint on which to fetch data" />
+								<NcSelect v-bind="ruleOptions"
+									v-model="ruleOptions.value"
+									multiple
+									:loading="rulesLoading"
+									input-label="Rules" />
+							</div>
 
-				<NcSelect v-bind="targetTypeOptions"
-					v-model="targetTypeOptions.value"
-					:selectable="(option) => {
-						return option.id === 'register/schema' ? openRegisterInstalled : true
-					}"
-					input-label="Target Type" />
+							<!-- Mappings -->
+							<div class="subsection">
+								<h4>Mappings</h4>
+								<div class="form-group">
+									<NcSelect v-bind="sourceTargetMappingOptions"
+										v-model="sourceTargetMappingOptions.sourceValue"
+										:loading="sourceTargetMappingLoading"
+										input-label="Source → Target Mapping" />
 
-				<div>
-					<NcSelect v-if="targetTypeOptions.value?.id === 'api'"
-						v-bind="sourceOptions"
-						v-model="sourceOptions.targetValue"
-						:loading="sourcesLoading"
-						input-label="Target ID" />
-
-					<div v-if="targetTypeOptions.value?.id === 'register/schema'">
-						<p>Target ID</p>
-
-						<div class="css-fix-reg/schema">
-							<NcSelect v-bind="registerOptions"
-								v-model="registerOptions.value"
-								:disabled="!openRegisterInstalled"
-								input-label="Register" />
-							<p>/</p>
-							<NcSelect v-bind="schemaOptions"
-								v-model="schemaOptions.value"
-								:disabled="!openRegisterInstalled"
-								input-label="Schema" />
+									<NcSelect v-bind="sourceTargetMappingOptions"
+										v-model="sourceTargetMappingOptions.targetValue"
+										:loading="sourceTargetMappingLoading"
+										input-label="Target → Source Mapping" />
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
 
-				<NcSelect v-bind="sourceTargetMappingOptions"
-					v-model="sourceTargetMappingOptions.targetValue"
-					:loading="sourceTargetMappingLoading"
-					input-label="Target source mapping" />
-			</form>
+				<!-- Target Section -->
+				<div class="sync-section target-section">
+					<div class="section-header">
+						<DatabaseArrowLeftOutline :size="24" />
+						<h3>Target</h3>
+					</div>
+					<div class="section-content">
+						<div class="info-card">
+							<p class="section-description">
+								Configure where data is written to
+							</p>
+						</div>
 
-			<NcButton v-if="!success"
-				:disabled="loading
-					|| !synchronizationItem.name
-					|| (typeOptions.value?.id !== 'register/schema' && !sourceOptions.sourceValue?.id)
-					// both register and schema need to be selected for register/schema target type
-					|| (targetTypeOptions.value?.id === 'register/schema' && (!registerOptions.value?.id || !schemaOptions.value?.id))
-					|| (typeOptions.value?.id === 'register/schema' && (!registerOptions.sourceValue?.id || !schemaOptions.sourceValue?.id))
-					|| (targetTypeOptions.value?.id === 'api' && (!sourceOptions.targetValue))"
-				type="primary"
-				@click="editSynchronization()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<ContentSaveOutline v-if="!loading" :size="20" />
-				</template>
-				Save
-			</NcButton>
+						<!-- Target Type -->
+						<div class="form-group">
+							<NcSelect v-bind="targetTypeOptions"
+								v-model="targetTypeOptions.value"
+								:selectable="(option) => {
+									return option.id === 'register/schema' ? openRegisterInstalled : true
+								}"
+								input-label="Target Type" />
+						</div>
+
+						<!-- Target ID -->
+						<div class="form-group">
+							<NcSelect v-if="targetTypeOptions.value?.id === 'api'"
+								v-bind="sourceOptions"
+								v-model="sourceOptions.targetValue"
+								:loading="sourcesLoading"
+								input-label="Target ID" />
+
+							<div v-if="targetTypeOptions.value?.id === 'register/schema'">
+								<NcSelect v-bind="registerOptions"
+									v-model="registerOptions.value"
+									:disabled="!openRegisterInstalled"
+									input-label="Register" />
+
+								<NcSelect v-bind="selectedRegisterValueSchemas"
+									v-model="schemaOptions.value"
+									:disabled="!openRegisterInstalled"
+									input-label="Schema" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Action Buttons -->
+			<div v-if="!success" class="modal-actions">
+				<NcButton type="secondary" @click="testSynchronization">
+					<template #icon>
+						<PlayCircleOutline :size="20" />
+					</template>
+					Test
+				</NcButton>
+				<NcButton :disabled="loading
+						|| !synchronizationItem.name
+						|| (typeOptions.value?.id !== 'register/schema' && !sourceOptions.sourceValue?.id)
+						// both register and schema need to be selected for register/schema target type
+						|| (targetTypeOptions.value?.id === 'register/schema' && (!registerOptions.value?.id || !schemaOptions.value?.id))
+						|| (typeOptions.value?.id === 'register/schema' && (!registerOptions.sourceValue?.id || !schemaOptions.sourceValue?.id))
+						|| (targetTypeOptions.value?.id === 'api' && (!sourceOptions.targetValue))"
+					type="primary"
+					@click="editSynchronization()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<ContentSaveOutline v-if="!loading" :size="20" />
+					</template>
+					Save
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -218,6 +325,12 @@ import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import DatabaseArrowRightOutline from 'vue-material-design-icons/DatabaseArrowRightOutline.vue'
+import CogOutline from 'vue-material-design-icons/CogOutline.vue'
+import DatabaseArrowLeftOutline from 'vue-material-design-icons/DatabaseArrowLeftOutline.vue'
+import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
+import SwapHorizontal from 'vue-material-design-icons/SwapHorizontal.vue'
+import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
 
 export default {
 	name: 'EditSynchronization',
@@ -231,6 +344,12 @@ export default {
 		NcNoteCard,
 		NcActions,
 		NcActionButton,
+		DatabaseArrowRightOutline,
+		CogOutline,
+		DatabaseArrowLeftOutline,
+		ArrowRight,
+		SwapHorizontal,
+		PlayCircleOutline,
 	},
 	data() {
 		return {
@@ -256,6 +375,7 @@ export default {
 					query: {},
 				},
 				actions: [],
+				sourceHashPosition: '',
 				sourceHashMapping: '',
 				sourceTargetMapping: '',
 				targetId: '',
@@ -332,6 +452,28 @@ export default {
 			closeTimeoutFunc: null, // Function to close the modal after a timeout
 		}
 	},
+	computed: {
+		selectedRegisterSourceValueSchemas() {
+			return this.registerOptions?.sourceValue?.schemas || []
+		},
+		selectedRegisterValueSchemas() {
+			return this.registerOptions?.value?.schemas || []
+		},
+	},
+	watch: {
+		'registerOptions.value': {
+			handler() {
+				this.schemaOptions.value = null
+			},
+			deep: true,
+		},
+		'registerOptions.sourceValue': {
+			handler() {
+				this.schemaOptions.sourceValue = null
+			},
+			deep: true,
+		},
+	},
 	mounted() {
 		if (this.IS_EDIT) {
 			// If there is a synchronization item in the store, use it
@@ -348,8 +490,7 @@ export default {
 		// Fetch sources, mappings, register, and schema
 		this.getSources()
 		this.getSourceTargetMappings()
-		this.getRegister()
-		this.getSchema()
+		this.getRegisterWithSchemas()
 		this.getRules()
 	},
 	methods: {
@@ -442,8 +583,11 @@ export default {
 		 * Sets the loading state to true while fetching and updates the register options with the fetched data.
 		 * If a register is already selected, it sets it as the active register.
 		 * If OpenRegister is not installed, it updates the state accordingly.
+		 *
+		 * additionally it adds the schemas of a register to its options data,
+		 * which'll be used to populate the schema options when you select a register.
 		 */
-		getRegister() {
+		getRegisterWithSchemas() {
 			this.registerLoading = true
 
 			mappingStore.getMappingObjects()
@@ -454,6 +598,7 @@ export default {
 						return
 					}
 
+					// registers
 					const registers = data.availableRegisters
 
 					let activeRegister = null
@@ -468,21 +613,72 @@ export default {
 						activeSourceRegister = registers.find(object => object.id.toString() === registerId.toString())
 					}
 
+					// schemas
+					const schemas = registers.map(register => register.schemas).flat()
+						.filter(schema => typeof schema === 'object')
+
+					let activeSchema = null
+					if (this.IS_EDIT && this.synchronizationItem.targetType === 'register/schema') {
+						const schemaId = this.synchronizationItem.targetId.split('/')[1]
+						activeSchema = schemas.find(schema => schema.id.toString() === schemaId.toString())
+					}
+
+					let activeSourceSchema = null
+					if (this.IS_EDIT && this.synchronizationItem.sourceType === 'register/schema') {
+						const schemaId = this.synchronizationItem.sourceId.split('/')[1]
+						activeSourceSchema = schemas.find(schema => schema.id.toString() === schemaId.toString())
+					}
+
+					// load registers (with schema's in options)
 					this.registerOptions = {
 						options: registers.map(object => ({
 							label: object.title || object.name,
 							id: object.id,
+							schemas: {
+								options: object.schemas.filter(schema => typeof schema === 'object').map(schema => ({
+									label: schema.title || schema.name,
+									id: schema.id,
+								})),
+							},
 						})),
 						value: activeRegister
 							? {
 								label: activeRegister.title || activeRegister.name,
 								id: activeRegister.id,
+								schemas: {
+									options: activeRegister.schemas.filter(schema => typeof schema === 'object').map(schema => ({
+										label: schema.title || schema.name,
+										id: schema.id,
+									})),
+								},
 							}
 							: null,
 						sourceValue: activeSourceRegister
 							? {
 								label: activeSourceRegister.title || activeSourceRegister.name,
 								id: activeSourceRegister.id,
+								schemas: {
+									options: activeSourceRegister.schemas.filter(schema => typeof schema === 'object').map(schema => ({
+										label: schema.title || schema.name,
+										id: schema.id,
+									})),
+								},
+							}
+							: null,
+					}
+
+					// set active schema
+					this.schemaOptions = {
+						value: activeSchema
+							? {
+								label: activeSchema.title || activeSchema.name,
+								id: activeSchema.id,
+							}
+							: null,
+						sourceValue: activeSourceSchema
+							? {
+								label: activeSourceSchema.title || activeSourceSchema.name,
+								id: activeSourceSchema.id,
 							}
 							: null,
 					}
@@ -490,73 +686,6 @@ export default {
 				.finally(() => {
 					this.registerLoading = false
 				})
-		},
-		/**
-		 * Fetches the list of schemas from OpenRegister and updates the schema options.
-		 * Sets the loading state to true while fetching and updates the schema options with the fetched data.
-		 * If OpenRegister is not installed, it updates the state accordingly.
-		 * If a schema is already selected, it sets it as the active schema.
-		 */
-		async getSchema() {
-			this.schemaLoading = true
-
-			console.info('Fetching schemas from Open Register')
-			const response = await fetch('/index.php/apps/openregister/api/schemas', {
-				headers: {
-					accept: '*/*',
-					'accept-language': 'en-US,en;q=0.9,nl;q=0.8',
-					'cache-control': 'no-cache',
-					pragma: 'no-cache',
-					'x-requested-with': 'XMLHttpRequest',
-				},
-				referrerPolicy: 'no-referrer',
-				body: null,
-				method: 'GET',
-				mode: 'cors',
-				credentials: 'include',
-			})
-
-			if (!response.ok) {
-				console.info('Open Register is not installed')
-				this.schemaLoading = false
-				this.openRegisterInstalled = false
-				return
-			}
-
-			const responseData = (await response.json()).results
-
-			let activeSchema = null
-			if (this.IS_EDIT && this.synchronizationItem.targetType === 'register/schema') {
-				const schemaId = this.synchronizationItem.targetId.split('/')[1]
-				activeSchema = responseData.find(schema => schema.id.toString() === schemaId.toString())
-			}
-
-			let activeSourceSchema = null
-			if (this.IS_EDIT && this.synchronizationItem.sourceType === 'register/schema') {
-				const schemaId = this.synchronizationItem.sourceId.split('/')[1]
-				activeSourceSchema = responseData.find(schema => schema.id.toString() === schemaId.toString())
-			}
-
-			this.schemaOptions = {
-				options: responseData.map((schema) => ({
-					id: schema.id,
-					label: schema.title || schema.name,
-				})),
-				value: activeSchema
-					? {
-						id: activeSchema.id,
-						label: activeSchema.title || activeSchema.name,
-					}
-					: null,
-				sourceValue: activeSourceSchema
-					? {
-						id: activeSourceSchema.id,
-						label: activeSourceSchema.title || activeSourceSchema.name,
-					}
-					: null,
-			}
-
-			this.schemaLoading = false
 		},
 		/**
 		 * Fetches the list of available rules from the rules store and updates the rules options.
@@ -660,6 +789,12 @@ export default {
 			clearTimeout(this.closeTimeoutFunc)
 		},
 		/**
+		 * Tests the synchronization configuration by running a test sync
+		 */
+		testSynchronization() {
+			// TODO: Implement test synchronization functionality
+		},
+		/**
 		 * Edits the synchronization by saving the synchronization item to the store.
 		 * Sets the loading state to true while saving and updates the state based on the success or failure of the save operation.
 		 * If the save operation is successful, it closes the modal after a timeout.
@@ -712,6 +847,21 @@ export default {
 </script>
 
 <style scoped>
+/* Modal Content */
+.modalContent {
+	margin: 15px;
+	text-align: left;
+}
+
+:deep(.modal-container) {
+	max-width: 1000px !important;
+}
+
+.modalContent h2 {
+	margin-bottom: 20px;
+	text-align: center;
+}
+
 /* Open Register notecard */
 .openregister-notecard .notecard {
     position: relative;
@@ -736,5 +886,169 @@ export default {
 .css-fix-reg\/schema p {
     align-self: end;
     margin-block-end: 10px;
+}
+
+/* Three-Column Layout */
+.synchronization-layout {
+	display: flex !important;
+	flex-direction: row !important;
+	gap: 20px;
+	margin: 15px 0;
+	min-height: 500px;
+	width: 100%;
+	align-items: stretch;
+}
+
+.sync-section {
+	flex: 1 1 33.333%;
+	min-width: 300px;
+	max-width: none;
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+/* Individual section cards */
+.sync-section:not(.general-section) {
+	border: 1px solid var(--color-border);
+	border-radius: 8px;
+	background-color: var(--color-main-background);
+}
+
+/* Center column cards */
+.center-card {
+	border: 1px solid var(--color-border);
+	border-radius: 8px;
+	background-color: var(--color-main-background);
+	display: flex;
+	flex-direction: column;
+}
+
+.section-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px;
+	background-color: var(--color-background-hover);
+	border-bottom: 1px solid var(--color-border);
+	border-radius: 8px 8px 0 0;
+}
+
+.section-header h3 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.section-content {
+	flex: 1;
+	padding: 12px;
+}
+
+.info-card {
+	padding: 12px;
+	background-color: var(--color-background-soft);
+	border-radius: 6px;
+	margin-bottom: 15px;
+}
+
+.section-description {
+	margin: 0;
+	font-size: 14px;
+	color: var(--color-text-maxcontrast);
+}
+
+.form-group {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-bottom: 15px;
+}
+
+.subsection {
+	margin-bottom: 15px;
+}
+
+.subsection h4 {
+	margin: 0 0 10px 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--color-text-light);
+}
+
+/* Source Section Styling */
+.source-section .section-header {
+	background-color: rgba(var(--color-primary-rgb), 0.1);
+}
+
+/* General Section Styling */
+.general-section .section-header {
+	background-color: rgba(var(--color-warning-rgb), 0.1);
+}
+
+/* Target Section Styling */
+.target-section .section-header {
+	background-color: rgba(var(--color-success-rgb), 0.1);
+}
+
+/* Data Flow Visualization */
+.data-flow {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin: 10px 0;
+	padding: 15px;
+	background-color: var(--color-background-soft);
+	border-radius: 6px;
+	border: 1px solid var(--color-border);
+}
+
+.flow-step {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 5px;
+	padding: 10px;
+}
+
+.flow-step span {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--color-text-maxcontrast);
+}
+
+.flow-arrow {
+	margin: 0 10px;
+	color: var(--color-text-maxcontrast);
+}
+
+/* Action Buttons */
+.modal-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 20px;
+	padding-top: 15px;
+	border-top: 1px solid var(--color-border);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+	.synchronization-layout {
+		flex-direction: column !important;
+	}
+
+	.sync-section {
+		flex: none;
+		min-width: auto;
+		max-width: none;
+	}
+}
+
+/* Install buttons styling */
+.install-buttons {
+	display: flex;
+	gap: 10px;
+	margin-top: 10px;
 }
 </style>

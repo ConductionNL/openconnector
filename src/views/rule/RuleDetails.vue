@@ -15,19 +15,19 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
-						<NcActionButton @click="navigationStore.setModal('editRule')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('editRule')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton @click="ruleStore.exportRule(ruleStore.ruleItem.id)">
+						<NcActionButton close-after-click @click="ruleStore.exportRule(ruleStore.ruleItem.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export rule
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setDialog('deleteRule')">
+						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteRule')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>

@@ -279,6 +279,7 @@ class XMLResponseTest
         $this->testSpecialCharactersHandling();
         $this->testHtmlEntityDecoding();
         $this->testCarriageReturnHandling();
+        $this->testObjectHandling();
         echo "\n";
         
         // GROUP 6: Integration tests
@@ -490,6 +491,47 @@ class XMLResponseTest
         // Check for hexadecimal entity for carriage return (without CDATA)
         $this->assertContains("carriage return&#xD; and line feed", $xml);
         $this->assertNotContains("<![CDATA[", $xml);
+        
+        echo "PASSED\n";
+    }
+    
+    /**
+     * Test handling of objects that can't be converted to string
+     * 
+     * Tests:
+     * - lib/Http/XMLResponse.php::createChildElement (object handling)
+     * 
+     * @return void
+     */
+    private function testObjectHandling(): void
+    {
+        echo "- Running testObjectHandling: ";
+        
+        // Create a simple stdClass object that doesn't have __toString
+        $mockObject = new \stdClass();
+        $mockObject->property = 'value';
+        
+        // Create an object with a __toString method
+        $stringableObject = new class {
+            public function __toString(): string {
+                return 'Custom string representation';
+            }
+        };
+        
+        $response = new XMLResponse();
+        $xml = $response->arrayToXml([
+            'data' => [
+                'object' => $mockObject,
+                'stringable' => $stringableObject,
+                'normal' => 'text'
+            ]
+        ]);
+        
+        // Verify that the object is converted to a placeholder
+        $this->assertContains('<object>[Object of class stdClass]</object>', $xml);
+        // Verify that the stringable object is converted using __toString
+        $this->assertContains('<stringable>Custom string representation</stringable>', $xml);
+        $this->assertContains('<normal>text</normal>', $xml);
         
         echo "PASSED\n";
     }

@@ -10,14 +10,40 @@ import { navigationStore } from '../store/store.js'
 					<Finance :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'sources'" name="Sources" @click="navigationStore.setSelected('sources')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'sources'"
+				name="Sources"
+				:allow-collapse="true"
+				:open="true"
+				@click="navigationStore.setSelected('sources')">
 				<template #icon>
 					<DatabaseArrowLeftOutline :size="20" />
 				</template>
+				<!-- This is correct according to the documentation, thats why there is a disable comment -->
+				<!-- eslint-disable-next-line vue/no-lone-template -->
+				<template>
+					<NcAppNavigationItem :active="navigationStore.selected === 'source-logs'" name="Logs" @click="navigationStore.setSelected('source-logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
+				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'endpoints'" name="Endpoints" @click="navigationStore.setSelected('endpoints')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'endpoints'"
+				name="Endpoints"
+				:allow-collapse="true"
+				:open="true"
+				@click="navigationStore.setSelected('endpoints')">
 				<template #icon>
 					<Api :size="20" />
+				</template>
+				<!-- This is correct according to the documentation, thats why there is a disable comment -->
+				<!-- eslint-disable-next-line vue/no-lone-template -->
+				<template>
+					<NcAppNavigationItem :active="navigationStore.selected === 'endpoint-logs'" name="Logs" @click="navigationStore.setSelected('endpoint-logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
 			<NcAppNavigationItem :active="navigationStore.selected === 'consumers'" name="Consumers" @click="navigationStore.setSelected('consumers')">
@@ -38,8 +64,21 @@ import { navigationStore } from '../store/store.js'
 				<template #icon>
 					<Update :size="20" />
 				</template>
+				<!-- This is correct according to the documentation, thats why there is a disable comment -->
+				<!-- eslint-disable-next-line vue/no-lone-template -->
+				<template>
+					<NcAppNavigationItem :active="navigationStore.selected === 'job-logs'" name="Logs" @click="navigationStore.setSelected('job-logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
+				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'notifications'" name="Cloud Events" @click="navigationStore.setSelected('notifications')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'notifications'"
+				name="Cloud Events"
+				:allow-collapse="true"
+				:open="true"
+				@click="navigationStore.setSelected('notifications')">
 				<template #icon>
 					<CloudUploadOutline :size="20" />
 				</template>
@@ -51,11 +90,34 @@ import { navigationStore } from '../store/store.js'
 							<MessageTextFastOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
+					<NcAppNavigationItem :active="navigationStore.selected === 'event-logs'" name="Logs" @click="navigationStore.setSelected('event-logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'synchronizations'" name="Synchronization" @click="navigationStore.setSelected('synchronizations')">
+			<NcAppNavigationItem :active="navigationStore.selected === 'synchronizations'"
+				name="Synchronization"
+				:allow-collapse="true"
+				:open="true"
+				@click="navigationStore.setSelected('synchronizations')">
 				<template #icon>
 					<VectorPolylinePlus :size="20" />
+				</template>
+				<!-- This is correct according to the documentation, thats why there is a disable comment -->
+				<!-- eslint-disable-next-line vue/no-lone-template -->
+				<template>
+					<NcAppNavigationItem :active="navigationStore.selected === 'contracts'" name="Contracts" @click="navigationStore.setSelected('contracts')">
+						<template #icon>
+							<FileDocumentOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
+					<NcAppNavigationItem :active="navigationStore.selected === 'synchronization-logs'" name="Logs" @click="navigationStore.setSelected('synchronization-logs')">
+						<template #icon>
+							<TextBoxOutline :size="20" />
+						</template>
+					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
 			<NcAppNavigationItem :active="navigationStore.selected === 'rules'" name="Rules" @click="navigationStore.setSelected('rules')">
@@ -93,6 +155,8 @@ import VectorPolylinePlus from 'vue-material-design-icons/VectorPolylinePlus.vue
 import CloudUploadOutline from 'vue-material-design-icons/CloudUploadOutline.vue'
 import MessageTextFastOutline from 'vue-material-design-icons/MessageTextFastOutline.vue'
 import FileImportOutline from 'vue-material-design-icons/FileImportOutline.vue'
+import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
+import TextBoxOutline from 'vue-material-design-icons/TextBoxOutline.vue'
 
 export default {
 	name: 'MainMenu',
@@ -101,6 +165,7 @@ export default {
 		NcAppNavigation,
 		NcAppNavigationList,
 		NcAppNavigationItem,
+		NcAppNavigationSettings,
 		// icons
 		Finance,
 		DatabaseArrowLeftOutline,
@@ -112,6 +177,8 @@ export default {
 		CloudUploadOutline,
 		MessageTextFastOutline,
 		FileImportOutline,
+		FileDocumentOutline,
+		TextBoxOutline,
 	},
 	methods: {
 		openLink(url, type = '') {

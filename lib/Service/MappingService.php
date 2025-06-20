@@ -18,6 +18,8 @@ use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\SyntaxError;
 use Twig\Loader\ArrayLoader;
+use Throwable;
+use Exception;
 
 class MappingService
 {
@@ -135,7 +137,16 @@ class MappingService
             }
 
             // Render the value from twig.
-			$dotArray->set($key, $this->twig->createTemplate($value)->render($originalInput));
+            if (is_array($value) === true) {
+                $dotArray->set($key, $value);
+                continue;
+            }
+
+            try {
+			    $dotArray->set($key, $this->twig->createTemplate($value)->render($originalInput));
+            } catch (Throwable $e) {
+                throw new Exception("Error for mapping: {$mapping->getName()}, key: $key, value: $value and with message thrown: {$e->getMessage()}");
+            }
         }
 
         // Unset unwanted key's.
@@ -239,6 +250,19 @@ class MappingService
 
             $value = false;
             break;
+		case '?bool':
+		case '?boolean':
+			if($value === null) {
+				break;
+			}
+			if ((int) $value === 1 || strtolower($value) === 'true' || strtolower($value) === 'yes') {
+				$value = true;
+				break;
+			}
+
+			$value = false;
+
+			break;
         case 'int':
         case 'integer':
             $value = (int) $value;
@@ -280,6 +304,9 @@ class MappingService
             $value = json_encode($value);
             break;
         case 'jsonToArray':
+            if (is_array($value) === true) {
+                break;
+            }
             $value = html_entity_decode($value);
             $value = json_decode($value, true);
             break;

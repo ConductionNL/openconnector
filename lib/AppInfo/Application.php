@@ -7,6 +7,8 @@ namespace OCA\OpenConnector\AppInfo;
 use OCA\OpenConnector\EventListener\ObjectCreatedEventListener;
 use OCA\OpenConnector\EventListener\ObjectDeletedEventListener;
 use OCA\OpenConnector\EventListener\ObjectUpdatedEventListener;
+use OCA\OpenConnector\EventListener\ViewDeletedEventListener;
+use OCA\OpenConnector\EventListener\ViewUpdatedOrCreatedEventListener; // @todo: remove this temporary listener to the software catalog application
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
@@ -31,7 +33,10 @@ class Application extends App implements IBootstrap {
 		$dispatcher = $this->getContainer()->get(IEventDispatcher::class);
 		$dispatcher->addServiceListener(eventName: ObjectCreatedEvent::class, className: ObjectCreatedEventListener::class);
 		$dispatcher->addServiceListener(eventName: ObjectUpdatedEvent::class, className: ObjectUpdatedEventListener::class);
-		$dispatcher->addServiceListener(eventName: ObjectDeletedEvent::class, className: ObjectDeletedEventListener::class);
+        $dispatcher->addServiceListener(eventName: ObjectDeletedEvent::class, className: ViewDeletedEventListener::class);
+        $dispatcher->addServiceListener(eventName: ObjectDeletedEvent::class, className: ObjectDeletedEventListener::class);
+        // @todo: remove this temporary listener to the software catalog application
+//        $dispatcher->addServiceListener(eventName: ViewUpdatedOrCreatedEventListener::class, className: ViewUpdatedOrCreatedEventListener::class);
 	}
 
 	public function boot(IBootContext $context): void {

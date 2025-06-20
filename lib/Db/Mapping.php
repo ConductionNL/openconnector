@@ -6,6 +6,19 @@ use DateTime;
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
+/**
+ * Class Mapping
+ *
+ * Represents a mapping configuration entity that defines how to transform data between different formats.
+ *
+ * @package OCA\OpenConnector\Db
+ * @category Database
+ * @author OpenConnector Team
+ * @copyright 2024 OpenConnector
+ * @license AGPL-3.0
+ * @version 1.0.0
+ * @link https://github.com/OpenConnector/openconnector
+ */
 class Mapping extends Entity implements JsonSerializable
 {
     protected ?string $uuid = null;
@@ -19,6 +32,8 @@ class Mapping extends Entity implements JsonSerializable
 	protected ?bool $passThrough = null;
 	protected ?DateTime $dateCreated = null;
 	protected ?DateTime $dateModified = null;
+	protected ?array $configurations = []; // Array of configuration IDs that this mapping belongs to
+	protected ?string $slug = null;
 
 	/**
 	 * Get the mapping configuration
@@ -62,6 +77,8 @@ class Mapping extends Entity implements JsonSerializable
 		$this->addType('passThrough', 'boolean');
 		$this->addType('dateCreated', 'datetime');
 		$this->addType('dateModified', 'datetime');
+		$this->addType('configurations', 'json');
+		$this->addType('slug', 'string');
 	}
 
 	public function getJsonFields(): array
@@ -77,6 +94,34 @@ class Mapping extends Entity implements JsonSerializable
     {
         return $this->dateModified;
     }
+
+
+	/**
+	 * Get the slug for the endpoint.
+	 * If the slug is not set, generate one from the name.
+	 *
+	 * @return string The slug for the endpoint
+	 * @phpstan-return non-empty-string
+	 * @psalm-return non-empty-string
+	 */
+	public function getSlug(): string
+	{
+		// Check if the slug is already set
+		if (!empty($this->slug)) {
+			return $this->slug;
+		}
+
+		// Generate a slug from the name if not set
+		// Convert the name to lowercase, replace spaces with hyphens, and remove non-alphanumeric characters
+		$generatedSlug = preg_replace('/[^a-z0-9]+/', '-', strtolower(trim($this->name)));
+
+		// Ensure the generated slug is not empty
+		if (empty($generatedSlug)) {
+			throw new \RuntimeException('Unable to generate a valid slug from the name.');
+		}
+
+		return $generatedSlug;
+	}
 
 	public function hydrate(array $object): self
 	{
@@ -112,8 +157,10 @@ class Mapping extends Entity implements JsonSerializable
 			'unset' => $this->unset,
 			'cast' => $this->cast,
 			'passThrough' => $this->passThrough,
+			'configurations' => $this->configurations,
 			'dateCreated' => isset($this->dateCreated) ? $this->dateCreated->format('c') : null,
 			'dateModified' => isset($this->dateModified) ? $this->dateModified->format('c') : null,
+			'slug' => $this->getSlug(),
 		];
 	}
 }

@@ -45,6 +45,7 @@ Also make sure you first map a `originId` in the mapping of a sub object so the 
 - Target type can be Register/Schema or other supported types
 - Target ID and schema selection for Register/Schema targets
 - Target source mapping for data transformations
+- `idInRequestBody` is a config option u can use when the id of the object in the target is not managed by itself but needs to be given with the request. Set the id to the required key in a mapping and configure `idInRequestBody` to that key so we set the targetId of the contract to that id. 
 
 ### Synchronization Contracts
 - Tracks the sync state for each individual object

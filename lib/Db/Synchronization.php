@@ -6,6 +6,19 @@ use DateTime;
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
+/**
+ * Class Synchronization
+ *
+ * Represents a synchronization configuration entity that defines how to sync data between sources and targets.
+ *
+ * @package OCA\OpenConnector\Db
+ * @category Database
+ * @author OpenConnector Team
+ * @copyright 2024 OpenConnector
+ * @license AGPL-3.0
+ * @version 1.0.0
+ * @link https://github.com/OpenConnector/openconnector
+ */
 class Synchronization extends Entity implements JsonSerializable
 {
     protected ?string $uuid = null;
@@ -40,6 +53,17 @@ class Synchronization extends Entity implements JsonSerializable
 	protected array $conditions = [];
 	protected array $followUps = [];
     protected array $actions = [];
+    protected ?array $configurations = []; // Array of configuration IDs that this synchronization belongs to
+
+	/**
+	 * @var string|null The status of the synchronization
+	 */
+	protected ?string $status = null;
+
+	/**
+	 * @var string|null URL-friendly identifier for the synchronization
+	 */
+	protected ?string $slug = null;
 
 	/**
 	 * Get the source configuration array
@@ -120,6 +144,9 @@ class Synchronization extends Entity implements JsonSerializable
 		$this->addType(fieldName:'conditions', type: 'json');
 		$this->addType(fieldName:'followUps', type: 'json');
         $this->addType(fieldName: 'actions', type: 'json');
+        $this->addType(fieldName: 'configurations', type: 'json');
+		$this->addType('status', 'string');
+		$this->addType('slug', 'string');
 	}
 
     /**
@@ -144,6 +171,34 @@ class Synchronization extends Entity implements JsonSerializable
 				return $field === 'json';
 			})
 		);
+	}
+
+
+	/**
+	 * Get the slug for the endpoint.
+	 * If the slug is not set, generate one from the name.
+	 *
+	 * @return string The slug for the endpoint
+	 * @phpstan-return non-empty-string
+	 * @psalm-return non-empty-string
+	 */
+	public function getSlug(): string
+	{
+		// Check if the slug is already set
+		if (!empty($this->slug)) {
+			return $this->slug;
+		}
+
+		// Generate a slug from the name if not set
+		// Convert the name to lowercase, replace spaces with hyphens, and remove non-alphanumeric characters
+		$generatedSlug = preg_replace('/[^a-z0-9]+/', '-', strtolower(trim($this->name)));
+
+		// Ensure the generated slug is not empty
+		if (empty($generatedSlug)) {
+			throw new \RuntimeException('Unable to generate a valid slug from the name.');
+		}
+
+		return $generatedSlug;
 	}
 
 	public function hydrate(array $object): self
@@ -199,6 +254,9 @@ class Synchronization extends Entity implements JsonSerializable
 			'conditions' => $this->conditions,
 			'followUps' => $this->followUps,
 			'actions' => $this->actions,
+			'configurations' => $this->configurations,
+			'status' => $this->status,
+			'slug' => $this->getSlug(),
 		];
 	}
 }

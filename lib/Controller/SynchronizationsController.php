@@ -196,24 +196,103 @@ class SynchronizationsController extends Controller
     }
 
     /**
-     * Retrieves call logs for a job
+     * Retrieves synchronization logs with filtering and pagination support
      *
-     * This method returns all the call logs associated with a source based on its ID.
+     * This method returns synchronization logs based on query parameters,
+     * with support for various filtering parameters to narrow down the results.
+     *
+     * Query Parameters:
+     * - synchronization_id: Filter logs by synchronization ID
+     * - date_from: Filter logs created after this date
+     * - date_to: Filter logs created before this date
+     * - status: Filter logs by status
+     * - slow_syncs: Filter logs with sync time > 5000ms
+     * - limit: Number of results per page (default: 20)
+     * - offset: Offset for pagination (default: 0)
      *
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $uuid The UUID of the synchronization to retrieve logs for
-     * @return JSONResponse A JSON response containing the call logs
-    */
-    public function logs(string $uuid): JSONResponse
+     * @return JSONResponse A JSON response containing the filtered synchronization logs and pagination
+     */
+    public function logs(SearchService $searchService): JSONResponse
     {
         try {
-            $synchronization = $this->synchronizationMapper->find($uuid);
-            $logs = $this->synchronizationLogMapper->findAll(null, null, ['synchronization_id' => $synchronization->getUuid()]);
-            return new JSONResponse($logs);
-        } catch (DoesNotExistException $e) {
-            return new JSONResponse(['error' => 'Logs not found'], 404);
+            // Get filters from request
+            $filters = $this->request->getParams();
+            $specialFilters = [];
+
+            // Pagination using _page and _limit
+            $limit = isset($filters['_limit']) ? (int)$filters['_limit'] : 20;
+            $page = isset($filters['_page']) ? (int)$filters['_page'] : 1;
+            $offset = ($page - 1) * $limit;
+            unset($filters['_limit'], $filters['_page']);
+
+            // Handle special filters
+            if (!empty($filters['date_from'])) {
+                $specialFilters['date_from'] = $filters['date_from'];
+            }
+            if (!empty($filters['date_to'])) {
+                $specialFilters['date_to'] = $filters['date_to'];
+            }
+            if (!empty($filters['status'])) {
+                $specialFilters['status'] = $filters['status'];
+            }
+            if (!empty($filters['slow_syncs'])) {
+                $specialFilters['slow_syncs'] = 5000; // 5 seconds in milliseconds
+            }
+
+            // Build search conditions and parameters
+            $searchConditions = [];
+            $searchParams = [];
+
+            if (!empty($specialFilters['date_from'])) {
+                $searchConditions[] = "created >= ?";
+                $searchParams[] = $specialFilters['date_from'];
+            }
+
+            if (!empty($specialFilters['date_to'])) {
+                $searchConditions[] = "created <= ?";
+                $searchParams[] = $specialFilters['date_to'];
+            }
+
+            if (!empty($specialFilters['status'])) {
+                $searchConditions[] = "status = ?";
+                $searchParams[] = $specialFilters['status'];
+            }
+
+            if (!empty($specialFilters['slow_syncs'])) {
+                $searchConditions[] = "sync_time > ?";
+                $searchParams[] = $specialFilters['slow_syncs'];
+            }
+
+            // Remove special query params from filters
+            $filters = $searchService->unsetSpecialQueryParams(filters: $filters);
+
+            // Get synchronization logs with filters and pagination
+            $syncLogs = $this->synchronizationLogMapper->findAll(
+                limit: $limit,
+                offset: $offset,
+                filters: $filters,
+                searchConditions: $searchConditions,
+                searchParams: $searchParams
+            );
+
+            // Get total count for pagination
+            $total = $this->synchronizationLogMapper->getTotalCount($filters);
+            $pages = $limit > 0 ? ceil($total / $limit) : 1;
+            $currentPage = $limit > 0 ? floor($offset / $limit) + 1 : 1;
+
+            // Return flattened paginated response
+            return new JSONResponse([
+                'results' => $syncLogs,
+                'page' => $currentPage,
+                'pages' => $pages,
+                'results_count' => count($syncLogs),
+                'total' => $total
+            ]);
+        } catch (\Exception $e) {
+            return new JSONResponse(['error' => 'Failed to retrieve logs: ' . $e->getMessage()], 500);
         }
     }
 
@@ -302,6 +381,8 @@ class SynchronizationsController extends Controller
         $parameters = $this->request->getParams();
         $test  = filter_var($parameters['test'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $force = filter_var($parameters['force'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $source = $parameters['source'] ?? null;
+        $data = $parameters['data'] ?? [];
 
         try {
             $synchronization = $this->synchronizationMapper->find(id: $id);
@@ -314,7 +395,9 @@ class SynchronizationsController extends Controller
             $logAndContractArray = $this->synchronizationService->synchronize(
                 synchronization: $synchronization,
                 isTest: $test,
-                force: $force
+                force: $force,
+                source: $source,
+                data: $data
             );
 
             // Return the result as a JSON response
@@ -334,4 +417,31 @@ class SynchronizationsController extends Controller
             );
         }
     }
+
+    /**
+     * Deletes a single synchronization log
+     *
+     * This method deletes a synchronization log based on its ID.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @param int $id The ID of the synchronization log to delete
+     * @return JSONResponse A JSON response indicating success or failure
+     */
+    public function deleteLog(int $id): JSONResponse
+    {
+        try {
+            $log = $this->synchronizationLogMapper->find($id);
+            $this->synchronizationLogMapper->delete($log);
+            
+            return new JSONResponse(['message' => 'Log deleted successfully'], 200);
+        } catch (DoesNotExistException $exception) {
+            return new JSONResponse(['error' => 'Log not found'], 404);
+        } catch (\Exception $exception) {
+            return new JSONResponse(['error' => 'Failed to delete log: ' . $exception->getMessage()], 500);
+        }
+    }
+
+
 }

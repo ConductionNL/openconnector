@@ -3,6 +3,7 @@
 namespace OCA\OpenConnector\Http;
 
 use OCP\AppFramework\Http\Response;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use DOMDocument;
 use DOMElement;
 use DOMText;
@@ -55,7 +56,7 @@ class XMLResponse extends Response
 		$this->addHeader('Content-Type', 'application/xml; charset=utf-8');
 		
 		// Only add Content-Disposition header if path ends with .xml
-		if ($path !== null && str_ends_with($path, '.xml') === true) {
+		if ($path !== null && str_ends_with($path, '.xml') === true && isset($this->getHeaders()['Content-Disposition']) === false) {
 			$this->addHeader('Content-Disposition', 'attachment; filename="export.xml"');
 		}
 	}
@@ -213,13 +214,13 @@ class XMLResponse extends Response
 	 * @param DOMDocument $dom The document
 	 * @param DOMElement $parentElement The parent element
 	 * @param string $tagName The tag name for the child element
-	 * @param array<string, mixed>|string $data The data for the child element
+	 * @param array<string, mixed>|string|object $data The data for the child element
 	 * @return void
 	 * 
 	 * @psalm-param DOMDocument $dom
 	 * @psalm-param DOMElement $parentElement
 	 * @psalm-param string $tagName
-	 * @psalm-param array<string, mixed>|string $data
+	 * @psalm-param array<string, mixed>|string|object $data
 	 */
 	private function createChildElement(DOMDocument $dom, DOMElement $parentElement, string $tagName, $data): void
 	{
@@ -233,6 +234,17 @@ class XMLResponse extends Response
 		if (is_array($data) === true) {
 			$this->buildXmlElement($dom, $childElement, $data);
 		} else {
+			// Handle objects that might not be convertible to string directly
+			if (is_object($data) === true) {
+				// For QueryBuilder objects or objects without __toString(), create a placeholder
+				if ($data instanceof IQueryBuilder || 
+					method_exists($data, '__toString') === false) {
+					$data = '[Object of class ' . get_class($data) . ']';
+				} else {
+					// For objects with __toString() method
+					$data = (string)$data;
+				}
+			}
 			$childElement->appendChild($this->createSafeTextNode($dom, (string)$data));
 		}
 	}

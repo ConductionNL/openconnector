@@ -26,6 +26,7 @@ import { Source } from '../../entities/index.js'
 
 					<NcTextArea
 						id="description"
+						resize="vertical"
 						label="Description"
 						:value.sync="sourceItem.description" />
 
@@ -96,6 +97,7 @@ export default {
 					{ label: 'Database', id: 'database' },
 					{ label: 'API', id: 'api' },
 					{ label: 'File', id: 'file' },
+					{ label: 'SOAP', id: 'soap' },
 				],
 
 			},
@@ -130,6 +132,7 @@ export default {
 						{ label: 'Database', id: 'database' },
 						{ label: 'API', id: 'api' },
 						{ label: 'File', id: 'file' },
+						{ label: 'SOAP', id: 'soap' },
 					],
 					value: selectedType
 						? {
@@ -159,6 +162,7 @@ export default {
 					{ label: 'Database', id: 'database' },
 					{ label: 'API', id: 'api' },
 					{ label: 'File', id: 'file' },
+					{ label: 'SOAP', id: 'soap' },
 				],
 
 			}

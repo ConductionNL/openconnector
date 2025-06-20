@@ -1,29 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type TLog = {
-    id: string
-    type: 'in' | 'out'
-    callId: string
-    requestMethod: string
-    requestHeaders: object[]
-    requestQuery: object[]
-    requestPathInfo: string
-    requestLanguages: string[]
-    requestServer: object
-    requestContent: string
-    responseStatus: string
-    responseStatusCode: number
-    responseHeaders: object[]
-    responseContent: string
-    userId: string
-    session: string
-    sessionValues: object
-    responseTime: number
-    routeName: string
-    routeParameters: object
-    entity: object
-    endpoint: object
-    gateway: object
-    handler: object
-    objectId: string
-    dateCreated: string
-    dateModified: string
+    id: number
+    uuid?: string
+    message?: string
+    synchronizationId?: string
+    synchronization_id?: string // API snake_case version
+    result?: any[]
+    userId?: string
+    user_id?: string // API snake_case version
+    sessionId?: string
+    session_id?: string // API snake_case version
+    test?: boolean
+    force?: boolean
+    executionTime?: number
+    execution_time?: number // API snake_case version
+    created?: string
+    expires?: string
 }

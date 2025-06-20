@@ -15,13 +15,13 @@ import { webhookStore, navigationStore } from '../../store/store.js'
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
-						<NcActionButton @click="navigationStore.setModal('editWebhook')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('editWebhook')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							Bewerken
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setDialog('deleteWebhook')">
+						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteWebhook')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>

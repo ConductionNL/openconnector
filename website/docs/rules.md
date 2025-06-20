@@ -97,6 +97,8 @@ The synchronization rules take the following configuration options:
 - synchronization (required): The synchronization to run.
 - isTest (optional): if set to true, always treat the synchronization as if it is in test mode.
 - force (optional): if set to true, always force objects to be overwritten from the synchronization.
+- mergeResultToKey (optional): if set , merges the synchronization result to a key in the synchronized object. IF `#` is configured, will the result with the synchronizaiton object. Not compatible with `overwriteObjectWithResult` config option
+- overwriteObjectWithResult (optional): if set to true, overwrites result with synchronization result instead of synchronization object. Not compatible with `mergeResultToKey` config option
 
 The isTest and force options can also be overridden from the endpoint by setting the corresponding fields on the request body.
 
@@ -155,6 +157,14 @@ The `filepart_upload` rule takes the following configuration:
 
 - `mappingId` (optional): If the file parts are in a specific format, the mapping to map the fileparts to the default format. (Usually this means that this is the inverse mapping of `mappingId` in the corresponding `fileparts_create` rule).
 
+### Save object Rules
+
+Save object rules allow saving a object on the moment of configuration of the specified Rule
+
+Will only work if `register` and `schema` are configured and if a object can be passed.
+
+Optionally a `mapping` can be configured to execute
+
 ### Locking Rules
 
 Locking rules provide exclusive access control for resources. Configuration includes:
@@ -163,6 +173,16 @@ Locking rules provide exclusive access control for resources. Configuration incl
   - lock: Lock a resource for exclusive access
   - unlock: Release a previously locked resource
 - timeout: Duration in minutes before the lock automatically expires
+
+### Audit trail rules
+
+The type `audit_trail` gives the possibility to access the audit trails of an object. If the endpoint contains the path parameter `audittrail-id`, individual audit trail lines can be accessed. These rules do not take extra configuration at this time.
+
+
+### Extend inputs
+
+The type `extend_input` can be used to access pre-existing objects in the database when business logic has to check whether or not to create a new object. The rule takes the configuration `properties` containing a dot-array containing the properties in the input that will be extended if possible.
+The extended parameters will be included in the field extendedParameters in the data array for use by other actions.
 
 ## Tags in Rules
 

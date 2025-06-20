@@ -30,6 +30,7 @@ import { sourceStore, navigationStore } from '../../store/store.js'
 					</div>
 					<NcTextArea
 						id="body"
+						resize="vertical"
 						label="Body"
 						:value.sync="testSourceItem.body" />
 				</div>

@@ -7,6 +7,8 @@ on:
       - 'master'
       - 'prod'
       - 'production'
+      - 'beta'
+      - 'development'
   pull_request:
     branches-ignore:
       - 'main'

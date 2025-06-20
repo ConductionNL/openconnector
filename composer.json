@@ -30,19 +30,22 @@
 	},
 	"require": {
 		"php": "^8.1",
+		"ext-dom": "*",
+		"ext-libxml": "*",
+		"ext-simplexml": "*",
 		"adbario/php-dot-notation": "^3.3",
 		"bamarni/composer-bin-plugin": "^1.8",
 		"elasticsearch/elasticsearch": "^v8.14.0",
 		"guzzlehttp/guzzle": "^7.0",
 		"jwadhams/json-logic-php": "^1.5",
+		"react/async": "^4.3",
+		"react/event-loop": "^1.5",
+		"react/promise": "^3.2",
 		"symfony/console": "^5.4",
 		"symfony/uid": "^6.4",
 		"symfony/yaml": "^6.4",
 		"twig/twig": "^3.14",
-		"web-token/jwt-framework": "^3",
-		"ext-simplexml": "*",
-		"ext-libxml": "*",
-	  	"ext-dom": "*"
+		"web-token/jwt-framework": "^3"
 	},
 	"require-dev": {
 		"nextcloud/ocp": "dev-stable29",

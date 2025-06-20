@@ -3,6 +3,7 @@
 		<h4>Input object</h4>
 
 		<NcTextArea :value.sync="inputObject"
+			resize="vertical"
 			class="textarea"
 			:error="!validJson(inputObject)"
 			:helper-text="!validJson(inputObject) ? 'Invalid JSON' : ''"

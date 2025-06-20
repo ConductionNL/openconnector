@@ -26,6 +26,7 @@ import { Job } from '../../entities/index.js'
 						required />
 
 					<NcTextArea
+						resize="vertical"
 						label="Description"
 						:value.sync="jobItem.description" />
 

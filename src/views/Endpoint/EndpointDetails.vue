@@ -15,25 +15,25 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
-						<NcActionButton @click="navigationStore.setModal('editEndpoint')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('editEndpoint')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							Bewerken
 						</NcActionButton>
-						<NcActionButton @click="endpointStore.exportEndpoint(endpointStore.endpointItem.id)">
+						<NcActionButton close-after-click @click="endpointStore.exportEndpoint(endpointStore.endpointItem.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export endpoint
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setDialog('deleteEndpoint')">
+						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteEndpoint')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
 							Verwijderen
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setModal('addEndpointRule')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('addEndpointRule')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
@@ -122,13 +122,13 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 										<span v-else>Loading...</span>
 									</template>
 									<template #actions>
-										<NcActionButton @click.stop="viewRule(ruleId)">
+										<NcActionButton close-after-click @click.stop="viewRule(ruleId)">
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>
 											View
 										</NcActionButton>
-										<NcActionButton @click.stop="removeRule(ruleId)">
+										<NcActionButton close-after-click @click.stop="removeRule(ruleId)">
 											<template #icon>
 												<LinkOff :size="20" />
 											</template>

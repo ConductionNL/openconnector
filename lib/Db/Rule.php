@@ -12,6 +12,12 @@ use OCP\AppFramework\Db\Entity;
  * Represents a rule that can be triggered during endpoint handling
  *
  * @package OCA\OpenConnector\Db
+ * @category Database
+ * @author OpenConnector Team
+ * @copyright 2024 OpenConnector
+ * @license AGPL-3.0
+ * @version 1.0.0
+ * @link https://github.com/OpenConnector/openconnector
  */
 class Rule extends Entity implements JsonSerializable
 {
@@ -26,10 +32,16 @@ class Rule extends Entity implements JsonSerializable
     protected ?string $type = null; // mapping, error, script, synchronization
     protected ?array $configuration = []; // Type-specific configuration
     protected int $order = 0; // Order in which the rule should be applied
+    protected ?array $configurations = []; // Array of configuration IDs that this rule belongs to
 
     // Additional tracking fields
     protected ?DateTime $created = null;
     protected ?DateTime $updated = null;
+
+    /**
+     * @var string|null URL-friendly identifier for the rule
+     */
+    protected ?string $slug = null;
 
     /**
      * Get the conditions array
@@ -63,8 +75,10 @@ class Rule extends Entity implements JsonSerializable
         $this->addType('type', 'string');
         $this->addType('configuration', 'json');
         $this->addType('order', 'integer');
+        $this->addType('configurations', 'json');
         $this->addType('created', 'datetime');
         $this->addType('updated', 'datetime');
+        $this->addType('slug', 'string');
     }
 
     /**
@@ -80,6 +94,34 @@ class Rule extends Entity implements JsonSerializable
             })
         );
     }
+
+
+	/**
+	 * Get the slug for the endpoint.
+	 * If the slug is not set, generate one from the name.
+	 *
+	 * @return string The slug for the endpoint
+	 * @phpstan-return non-empty-string
+	 * @psalm-return non-empty-string
+	 */
+	public function getSlug(): string
+	{
+		// Check if the slug is already set
+		if (!empty($this->slug)) {
+			return $this->slug;
+		}
+
+		// Generate a slug from the name if not set
+		// Convert the name to lowercase, replace spaces with hyphens, and remove non-alphanumeric characters
+		$generatedSlug = preg_replace('/[^a-z0-9]+/', '-', strtolower(trim($this->name)));
+
+		// Ensure the generated slug is not empty
+		if (empty($generatedSlug)) {
+			throw new \RuntimeException('Unable to generate a valid slug from the name.');
+		}
+
+		return $generatedSlug;
+	}
 
     /**
      * Hydrate the entity from an array of data
@@ -123,8 +165,10 @@ class Rule extends Entity implements JsonSerializable
             'type' => $this->type,
             'configuration' => $this->configuration,
             'order' => $this->order,
+            'configurations' => $this->configurations,
             'created' => isset($this->created) ? $this->created->format('c') : null,
-            'updated' => isset($this->updated) ? $this->updated->format('c') : null
+            'updated' => isset($this->updated) ? $this->updated->format('c') : null,
+            'slug' => $this->getSlug(),
         ];
     }
 }

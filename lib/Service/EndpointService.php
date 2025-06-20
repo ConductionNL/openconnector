@@ -18,13 +18,16 @@ use OCA\OpenConnector\Service\AuthenticationService;
 use OCA\OpenConnector\Service\CallService;
 use OCA\OpenConnector\Service\MappingService;
 use OCA\OpenConnector\Service\ObjectService;
+use OCA\OpenConnector\Service\RuleService;
 use OCA\OpenConnector\Db\Source;
 use OCA\OpenConnector\Db\Endpoint;
+use OCA\OpenConnector\Db\Mapping;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ServerException;
+use OCA\OpenRegister\Exception\ValidationException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCP\AppFramework\Db\Entity;
@@ -89,6 +92,7 @@ class EndpointService
         private readonly AuthorizationService $authorizationService,
         private readonly ContainerInterface $containerInterface,
         private readonly SynchronizationService $synchronizationService,
+        private readonly RuleService $ruleService,
     )
     {
     }
@@ -204,7 +208,28 @@ class EndpointService
                     return $ruleResult;
                 }
 
-                return new JSONResponse($ruleResult['body'], 200, $ruleResult['headers']);
+				if ($result->getStatus() !== 200 && $result->getStatus() !== 201) {
+					return new JSONResponse(data: $ruleResult['body'], statusCode: $result->getStatus(), headers: $ruleResult['headers']);
+				}
+
+                // Set the proper status code for the method.
+                //@TODO: we might want an override from rule processing.
+                switch ($incomingMethod) {
+                    case 'POST':
+                        $statusCode = Http::STATUS_CREATED;
+                        break;
+                    case 'DELETE':
+                        $statusCode = Http::STATUS_NO_CONTENT;
+                        break;
+                    case 'GET':
+                    case 'PUT':
+                    case 'PATCH':
+                    default:
+                        $statusCode = Http::STATUS_OK;
+                        break;
+                }
+
+                return new JSONResponse(data: $ruleResult['body'], statusCode: $statusCode, headers: $ruleResult['headers']);
             }
 
             // Check if endpoint connects to a source
@@ -278,11 +303,10 @@ class EndpointService
     private function replaceInternalReferences(
         QBMapper|\OCA\OpenRegister\Service\ObjectService $mapper,
         ?ObjectEntity $object = null,
-        array $serializedObject = []
+        array $serializedObject = [],
+		array $extend = []
     ): array
     {
-
-
         if ($serializedObject === [] && $object !== null) {
             $serializedObject = $object->jsonSerialize();
         } else if ($serializedObject === null) {
@@ -291,7 +315,12 @@ class EndpointService
             $object = $mapper->find($serializedObject['id']);
         }
 
-        $uses = $object->getRelations();
+        $uses = (new Dot($object->jsonSerialize()))->flatten();
+//
+//        if(isset($serializedObject) === true && !empty($serializedObject['@self']['relations'])) {
+//            $uses = $serializedObject['@self']['relations'];
+//        }
+
         $useUrls = [];
 
         $uuidToUrlMap = [];
@@ -315,6 +344,10 @@ class EndpointService
             $baseKey = explode('.', $key, 2)[0];
             // Skip if the key (or its base form) is not in the valid URI properties
             if (in_array(needle: $baseKey, haystack: $validUriProperties) === false) {
+                continue;
+            }
+
+            if (empty($use) === true) {
                 continue;
             }
 
@@ -351,10 +384,42 @@ class EndpointService
         $uuidToUrlMap[$object->getUri(). '/download'] = $this->generateEndpointUrl(id: $object->getUuid(), schemaMapper: $schemaMapper). '/download';
 
         // Replace UUIDs in serializedObject recursively
-        $serializedObject = $this->replaceUuidsInArray($serializedObject, $uuidToUrlMap);
+        $serializedObject = $this->replaceUuidsInArray($serializedObject, $uuidToUrlMap, extend: $this->reduceExtendKeys($extend));
 
         return $serializedObject;
     }
+
+	/**
+	 * Create a reduced list of extend keys and extends for checking purposes
+	 *
+	 * @param array $extend The original extend array
+	 * @return array The reduced extend array
+	 */
+	private function reduceExtendKeys(array $extend): array
+	{
+		$reducedKeys = [];
+
+		foreach($extend as $key => $value) {
+			if(str_contains(haystack: $value, needle: '.') === false) {
+				$reducedKeys[] = $key;
+				continue;
+			}
+
+
+			[$prefix, $newKey] = explode('.', $value, 2);
+
+			if(($newPrefix = array_search(needle: $prefix, haystack: $extend)) !== false) {
+				$reducedKeys[] = $newPrefix .'.'. $newKey;
+				continue;
+			}
+			$reducedKeys[] = $value;
+		}
+
+		$reducedExtend = array_combine($reducedKeys, $reducedKeys);
+
+		$serialized = (new Dot($reducedExtend, parse: true))->jsonSerialize();
+		return $serialized;
+	} //end reduceExtendKeys()
 
     /**
      * Recursively replaces UUIDs in an array with their corresponding URLs.
@@ -369,7 +434,7 @@ class EndpointService
      *
      * @return array The modified array with UUIDs replaced by URLs.
      */
-    private function replaceUuidsInArray(array $data, array $uuidToUrlMap, ?bool $isRelatedObject = false): array {
+    private function replaceUuidsInArray(array $data, array $uuidToUrlMap, ?bool $isRelatedObject = false, array $extend = []): array {
         foreach ($data as $key => $value) {
 
             // Don't check @self
@@ -378,13 +443,13 @@ class EndpointService
             }
 
             // If in array of multiple objects and has id
-            if (is_array($value) === true && isset($value['id']) === true && isset($uuidToUrlMap[$value['id']]) === true) {
+            if (is_array($value) === true && isset($value['id']) === true && isset($uuidToUrlMap[$value['id']]) === true && key_exists(key: $key, array: $extend) === false) {
                 $data[$key] = $uuidToUrlMap[$value['id']];
                 continue;
             }
 
             // If related object and has id
-            if ($isRelatedObject === true && $key === 'id' && isset($uuidToUrlMap[$value]) === true) {
+            if ($isRelatedObject === true && $key === 'id' && isset($uuidToUrlMap[$value]) === true && key_exists(key: $key, array: $extend) === false) {
                 $data[$key] = $uuidToUrlMap[$value];
                 continue;
             }
@@ -394,13 +459,69 @@ class EndpointService
                 continue;
             }
 
+			if (is_array($value) === true && array_is_list($value) === true && isset($extend[$key]) === true) {
+				$extend[$key] = array_fill(0, count($value), $extend[$key]);
+			}
+
+
             if (is_array($value) === true && empty($value) === false) {
-                $data[$key] = $this->replaceUuidsInArray(data: $value, uuidToUrlMap: $uuidToUrlMap, isRelatedObject: true);
+                $data[$key] = $this->replaceUuidsInArray(
+					data: $value, uuidToUrlMap: $uuidToUrlMap,
+					isRelatedObject: true,
+					extend: isset($extend[$key]) === true && is_array($extend[$key]) === true ? $extend[$key] : $extend
+				);
             } elseif (is_string($value) === true && isset($uuidToUrlMap[$value]) === true) {
                 $data[$key] = $uuidToUrlMap[$value];
             }
         }
+
         return $data;
+    }
+
+    /**
+     * Inverse of replaceInternalReferences, rewriting external references to internal references for query parameters.
+     *
+     * @param array $parameters The incoming request parameters.
+     * @param \OCA\OpenRegister\Service\ObjectService|QBMapper $mapper The ObjectService containing the request schema.
+     *
+     * @return array The updated request parameters.
+     *
+     * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+     */
+    private function rewriteExternalReferences(array $parameters, \OCA\OpenRegister\Service\ObjectService|QBMapper $mapper): array
+    {
+        $schemaMapper = $this->containerInterface->get('OCA\OpenRegister\Db\SchemaMapper');
+        $schema        = $schemaMapper->find($mapper->getSchema());
+
+        $rewriteParameters = array_intersect(array_keys($parameters), array_keys($schema->getProperties()));
+
+        foreach($rewriteParameters as $rewriteParameter) {
+            if (
+                filter_var($parameters[$rewriteParameter], FILTER_VALIDATE_URL) === false
+				&& in_array(parse_url($parameters[$rewriteParameter], PHP_URL_HOST), $this->config->getSystemValue('trusted_domains')) === false
+            ) {
+                continue;
+            }
+
+            $parsedPath = parse_url($parameters[$rewriteParameter], PHP_URL_PATH);
+            $parsedPath = substr($parsedPath, 33);
+            $endpoints = $this->endpointMapper->findByPathRegex(
+                path: $parsedPath,
+                method: 'GET'
+            );
+
+            if(count($endpoints) < 1) {
+                continue;
+            }
+
+            $endpoint = array_shift($endpoints);
+
+            $pathArray = $this->getPathParameters(endpointArray: $endpoint->getEndpointArray(), path: $parsedPath);
+            $parameters[$rewriteParameter] = end($pathArray);
+
+        }
+
+        return $parameters;
     }
 
     /**
@@ -421,8 +542,14 @@ class EndpointService
     ): Entity|array
     {
         if (isset($pathParams['id']) === true && $pathParams['id'] === end($pathParams)) {
-            return $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id']));
+			$serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
+            $result = $this->replaceInternalReferences(
+				mapper: $mapper,
+				serializedObject: $serializedObject,
+				extend: $parameters['extend'] ?? $parameters['_extend'] ?? []
+            );
 
+			return $result;
 
         } else if (isset($pathParams['id']) === true) {
 
@@ -436,11 +563,11 @@ class EndpointService
                 $id = pos($pathParams);
             }
 
-            $main = $mapper->findByUuid($pathParams['id'])->getObject();
+            $main = $this->objectService->getOpenRegisters()->renderEntity($mapper->findByUuid($pathParams['id'])->getObject());
             $ids = $main[$property];
 
-            if (isset($main[$property]) === false) {
-                return $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id']));
+            if(isset($main[$property]) === false) {
+                return $this->objectService->getOpenRegisters()->renderEntity(entity: $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id'])));
             }
 
             if ($ids === null || empty($ids) === true) {
@@ -475,10 +602,12 @@ class EndpointService
             return $returnArray;
         }
 
+        $parameters = $this->rewriteExternalReferences($parameters, $mapper);
+
         $result = $mapper->findAllPaginated(requestParams: $parameters);
 
         $result['results'] = array_map(function ($object) use ($mapper) {
-            return $this->replaceInternalReferences(mapper: $mapper, serializedObject: $object);
+            return $this->replaceInternalReferences(mapper: $mapper, serializedObject: $object->jsonSerialize());
         }, $result['results']);
 
         $returnArray = [
@@ -534,21 +663,21 @@ class EndpointService
         $schema = $target[1];
 
 
-        $mapper = $this->objectService->getMapper(schema: $schema, register: $register);
+        $mapper = $this->objectService->getMapper(schema: (int)$schema, register: (int)$register);
 
         $parameters = $request->getParams();
-
 
         if ($endpoint->getInputMapping() !== null) {
             $inputMapping = $this->mappingService->getMapping($endpoint->getInputMapping());
             $parameters = $this->mappingService->executeMapping(mapping: $inputMapping, input: $parameters);
         }
-        $pathParams = $this->getPathParameters($endpoint->getEndpointArray(), $path);
 
-        if (isset($pathParams['id']) === true) {
-            $parameters['id'] = $pathParams['id'];
-        }
-        foreach ($this::UNSET_PARAMETERS as $parameter) {
+		$pathParams = $this->getPathParameters($endpoint->getEndpointArray(), $path);
+
+		if (isset($pathParams['id']) === true) {
+			$parameters['id'] = $pathParams['id'];
+		}
+		foreach ($this::UNSET_PARAMETERS as $parameter) {
             unset($parameters[$parameter]);
         }
 
@@ -571,21 +700,21 @@ class EndpointService
                     return new JSONResponse(
                         $this->replaceInternalReferences(
                             mapper: $mapper,
-                            serializedObject: $mapper->createFromArray(object: $parameters)
+                            serializedObject: $mapper->createFromArray(object: $parameters)->jsonSerialize()
                         )
                     );
                 case 'PUT':
                     return new JSONResponse(
                         $this->replaceInternalReferences(
                             mapper: $mapper,
-                            serializedObject: $mapper->updateFromArray($parameters['id'], $request->getParams(), true, false)
+                            serializedObject: $mapper->updateFromArray($parameters['id'], $request->getParams(), true, false)->jsonSerialize()
                         )
                     );
                 case 'PATCH':
                     return new JSONResponse(
                         $this->replaceInternalReferences(
                             mapper: $mapper,
-                            serializedObject: $mapper->updateFromArray($parameters['id'], $request->getParams(), true, true)
+                            serializedObject: $mapper->updateFromArray($parameters['id'], $request->getParams(), true, true)->jsonSerialize()
                         )
                     );
                 case 'DELETE':
@@ -604,8 +733,9 @@ class EndpointService
             }
 
         } catch (Exception $exception) {
+
             if (in_array(get_class($exception), ['OCA\OpenRegister\Exception\ValidationException', 'OCA\OpenRegister\Exception\CustomValidationException']) === true) {
-                return $mapper->handleValidationException(exception: $exception);
+                return $mapper->getValidateHandler()->handleValidationException(exception: $exception);
             }
 
             throw $exception;
@@ -747,6 +877,12 @@ class EndpointService
         }
 
         $endpoint = $endpoints[0];
+        $filteredEndpoints = array_filter($endpoints, function(Endpoint $endpoint) {return in_array(needle: '{{id}}', haystack: $endpoint->getEndpointArray()) === true;});
+
+        if(count($filteredEndpoints) > 0) {
+            $endpoint = array_shift($filteredEndpoints);
+        }
+
         $location = $endpoint->getEndpointArray();
 
         // Determine schema title (lowercased)
@@ -788,6 +924,31 @@ class EndpointService
     }
 
     /**
+     * Saves object to OpenRegister
+     *
+     * @param Rule $rule
+     * @param array $data
+     *
+     * @return array $data
+     */
+    private function processSaveObjectRule(Rule $rule, array $data): array
+    {
+        $configuration = $rule->getConfiguration();
+        $register = $configuration['save_object']['register'];
+        $schema = $configuration['save_object']['schema'];
+        $mapping = $configuration['save_object']['mapping'] ?? null;
+
+        if (isset($mapping) === true) {
+            $data = $this->processMapping(rule: $rule, mapping: $mapping, data: $data);
+        }
+
+        $objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
+        $data['body'] = $objectService->saveObject(register: $register, schema: $schema, object: $data['body']);
+
+        return $data;
+    }
+
+    /**
      * Processes rules for an endpoint request
      *
      * @param Endpoint $endpoint The endpoint being processed
@@ -798,6 +959,7 @@ class EndpointService
      */
     private function processRules(Endpoint $endpoint, IRequest $request, array $data, string $timing, ?string $objectId = null): array|Response
     {
+
         $rules = $endpoint->getRules();
         if (empty($rules) === true) {
             return $data;
@@ -817,10 +979,11 @@ class EndpointService
 
             // Process each rule in order
             foreach ($ruleEntities as $rule) {
-                // Skip if rule action doesn't match request method
-                if (strtolower($rule->getAction()) !== strtolower($request->getMethod())) {
-                    continue;
-                }
+
+//                // Skip if rule action doesn't match request method
+//                if (strtolower($rule->getAction()) !== strtolower($request->getMethod())) {
+//                    continue;
+//                }
 
                 // Check rule conditions
                 if ($this->checkRuleConditions($rule, $data) === false || $rule->getTiming() !== $timing) {
@@ -829,6 +992,7 @@ class EndpointService
 
                 // Process rule based on type
                 $result = match ($rule->getType()) {
+                    'save_object' => $this->processSaveObjectRule($rule, $data),
                     'authentication' => $this->processAuthenticationRule($rule, $data),
                     'error' => $this->processErrorRule($rule),
                     'mapping' => $this->processMappingRule($rule, $data),
@@ -836,20 +1000,28 @@ class EndpointService
                     'javascript' => $this->processJavaScriptRule($rule, $data),
                     'fileparts_create' => $this->processFilePartRule($rule, $data, $endpoint, $objectId),
                     'filepart_upload' => $this->processFilePartUploadRule(rule: $rule, data: $data, request: $request, objectId: $objectId),
-                    'download' => $this->processDownloadRule($rule, $data, $objectId),
+                    'download' => $this->processDownloadRule(rule: $rule, data: $data, objectId: $objectId),
+                    'extend_input' => $this->processExtendInputRule(rule: $rule, data: $data),
+					'extend_external_input' => $this->ruleService->extendExternalUrl(rule: $rule, data: $data),
+                    'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
+                    'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
+                    'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
+                    'custom' => $this->processCustomRule(rule: $rule, data: $data),
                     default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
                 };
 
                 // If result is JSONResponse, return error immediately
-                if ($result instanceof JSONResponse === true) {
+                if ($result instanceof JSONResponse === true || $result instanceof DataDownloadResponse === true ) {
                     return $result;
                 }
 
                 // Update data with rule result
                 $data = $result;
-            }
+			}
 
-            return $data;
+			unset($data['body']['_extendedInput']);
+
+			return $data;
         } catch (Exception $e) {
             $this->logger->error('Error processing rules: ' . $e->getMessage());
             return new JSONResponse(['error' => 'Rule processing failed: ' . $e->getMessage()], 500);
@@ -963,6 +1135,34 @@ class EndpointService
     }
 
     /**
+     * Executes mapping on data from endpoint flow
+     *
+     * @param mapping $mapping
+     * @param array $data
+     *
+     * @return array $data
+     */
+    private function processMapping(Rule $rule, Mapping $mapping, array $data): array
+    {
+        $config = $rule->getConfiguration();
+        // Todo: We should just remove this if statement and use mapping to loop through results instead.
+        if (isset($data['body']['results']) === true
+            && strtolower($rule->getAction()) === 'get'
+            && (isset($config['mapResults']) === false || $config['mapResults'] === true)
+        ) {
+            foreach (($data['body']['results']) as $key => $result) {
+                $data['body']['results'][$key] = $this->mappingService->executeMapping($mapping, $result);
+            }
+
+            return $data;
+        }
+
+        $data['body'] = $this->mappingService->executeMapping($mapping, $data['body']);
+
+        return $data;
+    }
+
+    /**
      * Processes a mapping rule
      *
      * @param Rule $rule The rule object containing mapping details
@@ -979,21 +1179,224 @@ class EndpointService
         $config = $rule->getConfiguration();
         $mapping = $this->mappingService->getMapping($config['mapping']);
 
-        // Todo: We should just remove this if statement and use mapping to loop through results instead.
-        if (isset($data['body']['results']) === true
-            && strtolower($rule->getAction()) === 'get'
-            && (isset($config['mapResults']) === false || $config['mapResults'] === true)
-        ) {
-            foreach (($data['body']['results']) as $key => $result) {
-                $data['body']['results'][$key] = $this->mappingService->executeMapping($mapping, $result);
-            }
-
-            return $data;
-        }
-
-        $data['body'] = $this->mappingService->executeMapping($mapping, $data['body']);
+        $data = $this->processMapping(rule: $rule, mapping: $mapping, data: $data);
 
         return $data;
+    }
+
+    /**
+     * Extends input for performing business logic
+     *
+     * @param Rule $rule The rule containing the configuration which parameters could be extended
+     * @param array $data The data array containing the input parameters.
+     *
+     * @return array The data array with the extended parameters in the 'extendedParameters' key.
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    private function processExtendInputRule(Rule $rule, array $data): array
+    {
+        $parameters = new Dot($data['parameters']);
+        $config = $rule->getConfiguration();
+        $extendedParameters = new Dot();
+
+        foreach ($config['extend_input']['properties'] as $property) {
+            $value = $parameters->get($property);
+
+            if(filter_var($value, FILTER_VALIDATE_URL) !== false) {
+                $exploded = explode(separator: '/', string: $value);
+                $value = end($exploded);
+            }
+
+			$extends = [];
+			if(isset($config['extend_input']['extends']) === true && isset($config['extend_input']['extends'][$property]) === true) {
+				$extends = $config['extend_input']['extends'][$property];
+			}
+
+            try {
+                $object = $this->objectService->getOpenRegisters()->find(id: $value, extend: $extends);
+            } catch (DoesNotExistException $exception) {
+                continue;
+            }
+            $extendedParameters->add($property, $this->objectService->getOpenRegisters()->renderEntity($object->jsonSerialize()));
+
+        }
+
+		if (isset($data['extendedParameters']) === true) {
+			$data['extendedParameters'] = array_merge($extendedParameters->all(), $data['extendedParameters']);
+		} else {
+            $data['extendedParameters'] = $extendedParameters->all();
+        }
+
+		$data['body']['_extendedInput'] = $data['extendedParameters'];
+
+        return $data;
+    }
+
+    /**
+     * Fetches the audit trail for an object, returns a specific audit rule if the path parameter audittrail-id is specified.
+     *
+     * @param Rule $rule The rule to execute
+     * @param Endpoint $endpoint The endpoint on which the rule is executed
+     * @param array $data The data from the request.
+     * @param string $objectId The object id for which the request was done.
+     *
+     * @return array|Response The updated data array, or a json response with a not found error.
+     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    private function processAuditTrailRule(Rule $rule, Endpoint $endpoint, array $data, string $objectId): array|Response
+    {
+
+        $pathParameters = $this->getPathParameters(endpointArray: $endpoint->getEndpointArray(), path: $data['path']);
+
+        if(isset($pathParameters['audittrail-id']) === true) {
+            $auditrule = $this->objectService->getOpenRegisters()->getLogs($objectId, filters: ['uuid' => $pathParameters['audittrail-id']]);
+
+            if(count($auditrule) === 1) {
+                $data['body'] = $auditrule[0];
+                return $data;
+            }
+
+            return new JSONResponse(data: ['error' => 'Not found', 'reason' => 'The resource you are looking for does not exist'], statusCode: HTTP::STATUS_NOT_FOUND);
+
+        }
+        $audittrail = $this->objectService->getOpenRegisters()->getLogs($objectId);
+
+        $data['body'] = $audittrail;
+
+
+        return $data;
+    }
+
+    /**
+     * Process a locking rule, either locking or unlocking a resource.
+     *
+     * @param Rule $rule Rule containing configuration for the execution of the rule.
+     * @param array $data The data to update
+     * @param string $objectId The object id of the object to lock or unlock
+     *
+     * @return array The updated data array.
+     *
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws \OCP\Files\NotFoundException
+     */
+    private function processLockingRule(Rule $rule, array $data, string $objectId): array
+    {
+        $config = $rule->getConfiguration();
+
+        if($config['locking']['action'] === 'lock') {
+            $process = (Uuid::v4())->jsonSerialize();
+            $object = $this->objectService->getOpenRegisters()->lockObject(identifier: $objectId, process: $process, duration: $config['locking']['duration'] ?? 3600);
+        } else if ($config['locking']['action'] === 'unlock') {
+            $object = $this->objectService->getOpenRegisters()->unlockObject(identifier: $objectId);
+        }
+
+        $data['body'] = $this->objectService->getOpenRegisters()->renderEntity(entity: $object->jsonSerialize());
+
+        return $data;
+    }
+
+    /**
+     * Process a custom rule
+     *
+     * @param Rule $rule The rule to process
+     * @param array $data The data to process
+     *
+     * @return array The updated data array.
+     */
+    private function processCustomRule(Rule $rule, array $data): array|JSONResponse
+    {
+        return $this->ruleService->processCustomRule(rule: $rule, data: $data);
+    }
+
+    /**
+     * Process a rule to write files.
+     *
+     * @param Rule $rule The rule to process.
+     * @param array $data The data to write.
+     * @param string $objectId The object to write the data to.
+     * @param int $registerId The register the object is in.
+     * @param int $schemaId The schema the object is in.
+     *
+     * @return array
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws Exception
+     */
+    private function processWriteFileRule(Rule $rule, array $data, string $objectId): array
+    {
+        if (isset($rule->getConfiguration()['write_file']) === false) {
+            throw new Exception('No configuration found for write_file');
+        }
+
+        $config  = $rule->getConfiguration()['write_file'];
+        $dataDot = new Dot($data);
+        $files = $dataDot[$config['filePath']];
+        if (isset($files) === false || empty($files) === true) {
+            return $dataDot->jsonSerialize();
+        }
+
+        // Check if associative array
+        if (is_array($files) === true && isset($files[0]) === true & array_keys($files[0]) !== range(0, count($files[0]) - 1)) {
+            $result = [];
+            foreach ($files as $key => $value) {
+
+                // Check for tags
+                $tags = [];
+                if (is_array($value) === true) {
+                    $content = $value['content'];
+                    if (isset($value['label']) === true && isset($config['tags']) === true &&
+                        in_array(needle: $value['label'], haystack: $config['tags']) === true) {
+                        $tags = [$value['label']];
+                    }
+                    if (isset($value['filename']) === true) {
+                        $fileName = $value['filename'];
+                    }
+                } else {
+                    $content = $value;
+                }
+
+                try {
+                    // Write file with OpenRegister ObjectService.
+                    $objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
+                    $fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
+                    $file = $fileService->addFile(objectEntity: $objectService->find($objectId), fileName: $fileName, content: base64_decode($content));
+
+                    $tags = array_merge($config['tags'] ?? [], ["object:$objectId"]);
+                    if ($file instanceof \OCP\Files\File === true) {
+//                        $this->attachTagsToFile(fileId: $file->getId(), tags: $tags);
+                    }
+
+                    $result[$key] = $file->getPath();
+                } catch (Exception $exception) {
+                }
+            }
+            $result[$key] = $file->getPath();
+            $dataDot[$config['filePath']] = $result;
+        } else {
+            $content = $files;
+            $fileName = $dataDot[$config['fileNamePath']];
+
+            try {
+                // Write file with OpenRegister ObjectService.
+                $objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
+				$fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
+                $file = $fileService->addFile(objectEntity: $objectService->find($objectId), fileName: $fileName, content: base64_decode($content));
+
+                $tags = array_merge($config['tags'] ?? [], ["object:$objectId"]);
+                if ($file instanceof File === true) {
+//                    $this->attachTagsToFile(fileId: $file->getId(), tags: $tags);
+                }
+                $dataDot[$config['filePath']] = $file->getPath();
+            } catch (Exception $exception) {
+            }
+        }
+
+
+        return $dataDot->jsonSerialize();
     }
 
     /**
@@ -1038,8 +1441,36 @@ class EndpointService
             $force = false;
         }
 
+        $object = null;
+        if (isset($data['body']) === true) {
+            $object = $data['body'];
+        }
+
+        // Set $object to a different variable becuase we might update $object with reference and want to keep what we send to synchronize.
+        $sendObject = $object;
+
         // Run synchronization.
-        $data['body'] = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force);
+        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, object: $object);
+
+        // $object got updated through reference.
+        $returnedObject = $object;
+
+        if (isset($config['synchronizationConfig']['mergeResultToKey']) === true) {
+            // Merge result to root send object.
+            if ($config['synchronizationConfig']['mergeResultToKey'] === '#') {
+                $data['body'] = array_merge($sendObject, $returnedObject);
+            // Merge result to configured key in send object
+            } else {
+                $sendObject[$config['synchronizationConfig']['mergeResultToKey']] = $returnedObject;
+                $data['body'] = $sendObject;
+            }
+        // Overwrite body with result
+        } else if (isset($config['synchronizationConfig']['overwriteObjectWithResult']) === true && filter_var($config['synchronizationConfig']['overwriteObjectWithResult'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true) {
+            $data['body'] = $returnedObject;
+        } else {
+            $data['body'] = $log;
+        }
+
         return $data;
     }
 
@@ -1063,7 +1494,7 @@ class EndpointService
      * @throws \OCP\Files\InvalidPathException
      * @throws \OCP\Files\NotFoundException
      */
-    private function processFilePartRule(Rule $rule, array $data, Endpoint $endpoint, ?string $objectId = null): array
+    private function processFilePartRule(Rule $rule, array $data, Endpoint $endpoint, ?string $objectId = null): array|JSONResponse
     {
         if ($objectId === null) {
             throw new Exception('Filepart rules can only be applied after the object has been created');
@@ -1095,7 +1526,10 @@ class EndpointService
         $openRegister->setSchema($superSchemaId);
 
         $object   = $openRegister->find(id: $objectId);
-        $location = $object->getFolder();
+//        $location = $object->getFolder();
+
+		$fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
+		$location = $fileService->getObjectFolder($object)->getPath();
 
 
         $dataDot = new Dot($data);
@@ -1104,21 +1538,38 @@ class EndpointService
 
         $fileParts = $this->storageService->createUpload($location, $filename, $size, $objectId);
 
-        $fileParts = array_map(function ($filePart) use ($mapping, $registerId, $schemaId) {
+		$fileParts = array_map(function ($filePart) use ($mapping, $registerId, $schemaId) {
 
-            if ($mapping !== null) {
-                $formatted = $this->mappingService->executeMapping(mapping: $mapping, input: $filePart);
-            } else {
-                $formatted = $filePart;
-            }
+			if ($mapping !== null) {
+				$formatted = $this->mappingService->executeMapping(mapping: $mapping, input: $filePart);
+			} else {
+				$formatted = $filePart;
+			}
 
-            return $this->objectService->getOpenRegisters()->saveObject(
-                register: $registerId,
-                schema: $schemaId,
-                object: $formatted
-            )->jsonSerialize();
+			try {
+				return $this->objectService->getOpenRegisters()->saveObject(
+					register: $registerId,
+					schema: $schemaId,
+					object: $formatted,
+					uuid: $formatted['id']
+				)->jsonSerialize();
+			} catch (ValidationException $exception) {
+				return $this->objectService->getOpenRegisters()->handleValidationException($exception);
+			}
 
-        }, $fileParts);
+
+		}, $fileParts);
+
+		$errors = array_filter($fileParts, function($part) {
+			if($part instanceof JSONResponse) {
+				return true;
+			}
+		});
+
+		if(count($errors) > 0) {
+			return array_shift($errors);
+		}
+
 
 
         $dataDot[$filePartLocation] = $fileParts;
@@ -1130,7 +1581,7 @@ class EndpointService
         $saveObject = clone $dataDot;
         $saveObject[$filePartLocation] = $filepartIds;
 
-        $openRegister->saveObject($registerId, $schemaId, $saveObject->jsonSerialize());
+        $openRegister->saveObject(register: $registerId, schema: $schemaId, object: $saveObject->jsonSerialize());
 
         return $dataDot->jsonSerialize();
     }
@@ -1232,17 +1683,27 @@ class EndpointService
             $filename = $dot->get($config['filenamePosition']);
         }
 
+		$fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
+        $files = $fileService->getFiles(object: $object, sharedFilesOnly: false);
+
+        // Try to get filename from object its files (only works when object has 1 file)
         if (isset($filename) === false && count($object->getFiles()) === 1) {
-            $filename = $object->getFiles()[0]['filename'];
-        } else if (isset($filename) === false) {
+            $filename = $object->getFiles()[0]['title'];
+        }
+
+        // Try to get filename from files found with fileservice (only works when object has 1 file)
+        if (isset($filename) === false && count($files) === 1) {
+            $filename = $files[0]->getName();
+        }
+
+        if (isset($filename) === false) {
             throw new Exception('File could not be determined');
         }
 
-
         if(isset($data['parameters']['version']) === true) {
-            $file = $this->objectService->getOpenRegisters()->getFile(object: $object, filePath: $filename, version: $data['parameters']['version']);
+            $file = $fileService->getFile(object: $object, filePath: $filename, version: $data['parameters']['version']);
         } else {
-            $file = $this->objectService->getOpenRegisters()->getFile(object: $object, filePath: $filename);
+            $file = $fileService->getFile(object: $object, filePath: $filename);
         }
 
         $response = new DataDownloadResponse(data: $file->getContent(), filename: $file->getName(), contentType: $file->getType());

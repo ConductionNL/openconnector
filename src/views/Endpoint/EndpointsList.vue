@@ -12,23 +12,23 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 					label="Search"
 					class="searchField"
 					trailing-button-icon="close"
-					@trailing-button-click="endpointStore.refreshEndpointList()">
+					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
 				<NcActions>
-					<NcActionButton @click="endpointStore.refreshEndpointList()">
+					<NcActionButton close-after-click @click="endpointStore.refreshEndpointList()">
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
 						Refresh
 					</NcActionButton>
-					<NcActionButton @click="endpointStore.setEndpointItem(null); navigationStore.setModal('editEndpoint')">
+					<NcActionButton close-after-click @click="endpointStore.setEndpointItem(null); navigationStore.setModal('editEndpoint')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
 						Add endpoint
 					</NcActionButton>
-					<NcActionButton @click="navigationStore.setModal('importFile')">
+					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
@@ -37,7 +37,7 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 				</NcActions>
 			</div>
 			<div v-if="endpointStore.endpointList && endpointStore.endpointList.length > 0">
-				<NcListItem v-for="(endpoint, i) in endpointStore.endpointList"
+				<NcListItem v-for="(endpoint, i) in endpointStore.endpointList.filter(endpoint => searchStore.search === '' || endpoint.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${endpoint}${i}`"
 					:name="endpoint.name"
 					:active="endpointStore.endpointItem?.id === endpoint?.id"
@@ -46,31 +46,32 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 					<template #icon>
 						<Api :class="endpointStore.endpointItem?.id === endpoint.id && 'selectedEndpointIcon'"
 							disable-menu
+							:fill-color="getEndpointColor(endpoint.method)"
 							:size="44" />
 					</template>
 					<template #subname>
 						{{ endpoint?.description }}
 					</template>
 					<template #actions>
-						<NcActionButton @click="endpointStore.setEndpointItem(endpoint); navigationStore.setModal('editEndpoint')">
+						<NcActionButton close-after-click @click="endpointStore.setEndpointItem(endpoint); navigationStore.setModal('editEndpoint')">
 							<template #icon>
 								<Pencil />
 							</template>
-							Bewerken
+							Edit
 						</NcActionButton>
-						<NcActionButton @click="endpointStore.exportEndpoint(endpoint.id)">
+						<NcActionButton close-after-click @click="endpointStore.exportEndpoint(endpoint.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
 							Export endpoint
 						</NcActionButton>
-						<NcActionButton @click="endpointStore.setEndpointItem(endpoint); navigationStore.setDialog('deleteEndpoint')">
+						<NcActionButton close-after-click @click="endpointStore.setEndpointItem(endpoint); navigationStore.setDialog('deleteEndpoint')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Verwijderen
+							Delete
 						</NcActionButton>
-						<NcActionButton @click="endpointStore.setEndpointItem(endpoint); navigationStore.setModal('addEndpointRule')">
+						<NcActionButton close-after-click @click="endpointStore.setEndpointItem(endpoint); navigationStore.setModal('addEndpointRule')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
@@ -85,10 +86,10 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Endpoints aan het laden" />
+			name="Loading endpoints" />
 
 		<div v-if="!endpointStore.endpointList.length" class="emptyListHeader">
-			Er zijn nog geen endpoints gedefinieerd.
+			No endpoints defined
 		</div>
 	</NcAppContentList>
 </template>
@@ -103,6 +104,7 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import FileExportOutline from 'vue-material-design-icons/FileExportOutline.vue'
 import FileImportOutline from 'vue-material-design-icons/FileImportOutline.vue'
+import { getTheme } from '../../services/getTheme.js'
 
 export default {
 	name: 'EndpointsList',
@@ -122,7 +124,45 @@ export default {
 		TrashCanOutline,
 	},
 	mounted() {
+		searchStore.clearSearch()
 		endpointStore.refreshEndpointList()
+	},
+	methods: {
+		getEndpointColor(method) {
+			const theme = getTheme()
+
+			if (theme === 'dark') {
+				switch (method) {
+				case 'GET':
+					return '#5c8d4a'
+				case 'POST':
+					return '#5d82c0'
+				case 'PUT':
+					return '#a46f96'
+				case 'PATCH':
+					return '#bc6d3d'
+				case 'DELETE':
+					return '#d25c53'
+				default:
+					return '#fff'
+				}
+			} else {
+				switch (method) {
+				case 'GET':
+					return '#4e7f3d'
+				case 'POST':
+					return '#466eaa'
+				case 'PUT':
+					return '#87547a'
+				case 'PATCH':
+					return '#a95d2e'
+				case 'DELETE':
+					return '#b13f3a'
+				default:
+					return '#000'
+				}
+			}
+		},
 	},
 }
 </script>

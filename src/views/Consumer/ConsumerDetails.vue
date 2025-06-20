@@ -15,13 +15,13 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
-						<NcActionButton @click="navigationStore.setModal('editConsumer')">
+						<NcActionButton close-after-click @click="navigationStore.setModal('editConsumer')">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
 							Bewerken
 						</NcActionButton>
-						<NcActionButton @click="navigationStore.setDialog('deleteConsumer')">
+						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteConsumer')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>

@@ -27,6 +27,7 @@ import { Endpoint } from '../../entities/index.js'
 						:value.sync="endpointItem.name" />
 
 					<NcTextArea
+						resize="vertical"
 						label="Description"
 						:value.sync="endpointItem.description" />
 
@@ -35,6 +36,7 @@ import { Endpoint } from '../../entities/index.js'
 						:value.sync="endpointItem.endpoint" />
 
 					<NcTextArea
+						resize="vertical"
 						label="Endpoint Array (split on ,)"
 						:value.sync="endpointItem.endpointArray" />
 
@@ -42,22 +44,45 @@ import { Endpoint } from '../../entities/index.js'
 						label="Endpoint Regex"
 						:value.sync="endpointItem.endpointRegex" />
 
-					<NcSelect v-bind="methodOptions"
-						v-model="methodOptions.value" />
-
 					<NcTextField
-						label="Target Type"
-						:value.sync="endpointItem.targetType" />
+						label="Slug"
+						:value.sync="endpointItem.slug" />
 
-					<NcTextField
-						label="Target Id"
-						:value.sync="endpointItem.targetId" />
+					<div>
+						<NcSelect v-bind="methodOptions"
+							v-model="methodOptions.value" />
+					</div>
+
+					<div>
+						<NcSelect v-bind="targetTypeOptions"
+							v-model="targetTypeOptions.value" />
+					</div>
+
+					<div>
+						<NcSelect v-bind="registerOptions"
+							v-model="registerOptions.value"
+							input-label="Register"
+							:disabled="registersLoading" />
+
+						<NcSelect v-bind="schemaOptions"
+							v-model="schemaOptions.value"
+							:disabled="!registerOptions.value || schemasLoading"
+							input-label="Schema" />
+					</div>
+
+					<div>
+						<NcSelect v-bind="configurationOptions"
+							v-model="configurationOptions.value"
+							input-label="Configurations"
+							:multiple="true"
+							:disabled="configurationsLoading" />
+					</div>
 				</div>
 			</form>
 
 			<NcButton
 				v-if="success === null"
-				:disabled="loading || !endpointItem.name"
+				:disabled="loading || !endpointItem.name || !registerOptions.value || !schemaOptions.value"
 				type="primary"
 				@click="editEndpoint()">
 				<template #icon>
@@ -81,6 +106,7 @@ import {
 	NcTextArea,
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import _ from 'lodash'
 
 export default {
 	name: 'EditEndpoint',
@@ -104,6 +130,8 @@ export default {
 				method: '',
 				targetType: '',
 				targetId: '',
+				slug: '',
+				configurations: [],
 			},
 			success: null,
 			loading: false,
@@ -121,16 +149,54 @@ export default {
 					label: 'GET',
 				},
 			},
+			targetTypeOptions: {
+				inputLabel: 'Target Type',
+				options: [
+					{ label: 'register/schema' },
+				],
+				value: {
+					label: 'register/schema',
+				},
+			},
+			registerOptions: {
+				options: [],
+				value: null,
+			},
+			schemaOptions: {
+				options: [],
+				value: null,
+			},
+			configurationOptions: {
+				options: [],
+				value: [],
+			},
+			schemas: [],
 			hasUpdated: false,
 			closeTimeoutFunc: null,
+			registersLoading: false,
+			schemasLoading: false,
+			configurationsLoading: false,
+			initialSchemaSet: false,
 		}
+	},
+	watch: {
+		'registerOptions.value'(newVal) {
+			if (this.initialSchemaSet) {
+				this.schemaOptions.value = null
+			}
+			this.setSchemaOptions(newVal)
+		},
 	},
 	mounted() {
 		this.initializeEndpointItem()
+		this.fetchRegisters()
+		this.fetchSchemas()
+		this.fetchConfigurations()
 	},
 	updated() {
 		if (navigationStore.modal === 'editEndpoint' && !this.hasUpdated) {
 			this.initializeEndpointItem()
+			this.fetchRegisters()
 			this.hasUpdated = true
 		}
 	},
@@ -145,14 +211,24 @@ export default {
 					endpointArray: endpointStore.endpointItem.endpointArray.join(', '),
 					endpointRegex: endpointStore.endpointItem.endpointRegex,
 					method: endpointStore.endpointItem.method,
-					targetType: endpointStore.endpointItem.targetType,
+					targetType: this.targetTypeOptions.options.find(i => i.label === endpointStore.endpointItem.targetType),
 					targetId: endpointStore.endpointItem.targetId,
+					slug: endpointStore.endpointItem.slug,
+					configurations: endpointStore.endpointItem.configurations || [],
 				}
 
 				// If the method of the endpointItem exists on the methodOptions, apply it to the value
 				// this is done for future proofing incase we were to change the method options
 				if (this.methodOptions.options.map(i => i.label).indexOf(endpointStore.endpointItem.method) >= 0) {
 					this.methodOptions.value = { label: endpointStore.endpointItem.method }
+				}
+
+				// Set the configurations value if there are any
+				if (this.endpointItem.configurations?.length > 0) {
+					this.configurationOptions.value = this.endpointItem.configurations.map(id => ({
+						id,
+						label: this.configurationOptions.options.find(opt => opt.id === id)?.label || id,
+					}))
 				}
 			}
 		},
@@ -172,8 +248,167 @@ export default {
 				method: '',
 				targetType: '',
 				targetId: '',
+				slug: '',
+				configurations: [],
 			}
 			this.methodOptions.value = { label: 'GET' }
+			this.targetTypeOptions.value = { label: 'register/schema' }
+			this.initialSchemaSet = false
+		},
+		async fetchRegisters() {
+			this.registersLoading = true
+
+			// checking if OpenRegister is installed
+			console.info('Fetching registers from Open Register')
+			const response = await fetch('/index.php/apps/openregister/api/registers', {
+				headers: {
+					accept: '*/*',
+					'accept-language': 'en-US,en;q=0.9,nl;q=0.8',
+					'cache-control': 'no-cache',
+					pragma: 'no-cache',
+					'x-requested-with': 'XMLHttpRequest',
+				},
+				referrerPolicy: 'no-referrer',
+				body: null,
+				method: 'GET',
+				mode: 'cors',
+				credentials: 'include',
+			})
+
+			if (!response.ok) {
+				console.info('Open Register is not installed')
+				this.schemasLoading = false
+				this.$emit('open-register', {
+					isInstalled: false,
+				})
+				return
+			}
+
+			const responseData = (await response.json()).results
+
+			const registerId = endpointStore.endpointItem?.targetId?.split('/')[0]
+
+			const selectedRegister = responseData.find(register => _.toString(register.id) === registerId)
+
+			this.registerOptions = {
+				options: responseData.map((register) => ({
+					id: register.id,
+					label: register.title,
+					schemas: register.schemas,
+				})),
+				value: selectedRegister
+					? {
+						label: selectedRegister.title,
+						id: selectedRegister.id,
+						schemas: selectedRegister.schemas,
+					}
+					: null,
+			}
+
+			this.registersLoading = false
+		},
+		async fetchSchemas() {
+			this.schemasLoading = true
+
+			// checking if OpenRegister is installed
+			console.info('Fetching schemas from Open Register')
+			const response = await fetch('/index.php/apps/openregister/api/schemas', {
+				headers: {
+					accept: '*/*',
+					'accept-language': 'en-US,en;q=0.9,nl;q=0.8',
+					'cache-control': 'no-cache',
+					pragma: 'no-cache',
+					'x-requested-with': 'XMLHttpRequest',
+				},
+				referrerPolicy: 'no-referrer',
+				body: null,
+				method: 'GET',
+				mode: 'cors',
+				credentials: 'include',
+			})
+
+			if (!response.ok) {
+				console.info('Open Register is not installed')
+				this.schemasLoading = false
+				this.$emit('open-register', {
+					isInstalled: false,
+				})
+				return
+			}
+
+			const responseData = (await response.json()).results
+
+			this.schemas = responseData
+
+			this.schemasLoading = false
+		},
+		async fetchConfigurations() {
+			this.configurationsLoading = true
+
+			try {
+				console.info('Fetching configurations from Open Register')
+				const response = await fetch('/index.php/apps/openregister/api/configurations', {
+					headers: {
+						accept: '*/*',
+						'accept-language': 'en-US,en;q=0.9,nl;q=0.8',
+						'cache-control': 'no-cache',
+						pragma: 'no-cache',
+						'x-requested-with': 'XMLHttpRequest',
+					},
+					referrerPolicy: 'no-referrer',
+					body: null,
+					method: 'GET',
+					mode: 'cors',
+					credentials: 'include',
+				})
+
+				if (!response.ok) {
+					console.info('Failed to fetch configurations')
+					return
+				}
+
+				const responseData = (await response.json()).results
+
+				this.configurationOptions = {
+					options: responseData.map((config) => ({
+						id: config.id,
+						label: config.name,
+					})),
+					value: this.endpointItem.configurations?.map(id => ({
+						id,
+						label: responseData.find(c => c.id === id)?.name || id,
+					})) || [],
+				}
+			} catch (error) {
+				console.error('Error fetching configurations:', error)
+			} finally {
+				this.configurationsLoading = false
+			}
+		},
+		setSchemaOptions(register) {
+			const schemaId = endpointStore.endpointItem?.targetId.split('/')[1]
+
+			const selectedSchema = this.schemas.find(schema => _.toString(schema.id) === schemaId)
+
+			const selectableSchemas = this.schemas.filter(schema => register?.schemas?.includes(schema.id))
+
+			const isSchemaInSelectableSchemas = selectableSchemas.includes(selectedSchema)
+
+			this.schemaOptions = {
+				options: selectableSchemas.map((schema) => ({
+					id: schema.id,
+					label: schema.title,
+				})),
+				value: !this.initialSchemaSet && isSchemaInSelectableSchemas && selectedSchema
+					? {
+						label: selectedSchema.title,
+						id: selectedSchema.id,
+					}
+					: null,
+			}
+
+			this.initialSchemaSet = true
+
 		},
 		async editEndpoint() {
 			this.loading = true
@@ -182,6 +417,9 @@ export default {
 				...this.endpointItem,
 				endpointArray: this.endpointItem.endpointArray.split(/ *, */g), // split on comma's, also take any spaces into consideration
 				method: this.methodOptions.value.label,
+				targetType: this.targetTypeOptions.value.label,
+				targetId: `${this.registerOptions.value.id}/${this.schemaOptions.value.id}`,
+				configurations: this.configurationOptions.value.map(v => v.id),
 			})
 
 			await endpointStore.saveEndpoint(endpointItem)

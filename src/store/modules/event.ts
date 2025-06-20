@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { Event, TEvent } from '../../entities/index.js'
 import { MissingParameterError } from '../../services/errors/index.js'
+import { useLogStore } from './log'
 
 const apiEndpoint = '/index.php/apps/openconnector/api/events'
 
@@ -391,7 +392,7 @@ export const useEventStore = defineStore('event', () => {
 		const data = await response.json()
 
 		setEventTest(data)
-		refreshEventLogs(id)
+		refreshEventLogs({ event_id: id })
 
 		return { response, data }
 	}
@@ -418,31 +419,48 @@ export const useEventStore = defineStore('event', () => {
 
 		const data = await response.json()
 		setEventRun(data)
-		refreshEventLogs(id)
+		refreshEventLogs({ event_id: id })
 
 		return { response, data }
 	}
 
 	// event logs
 	/**
-	 * Refreshes event logs for the current event
-	 * @param id - The ID of the event to refresh logs for
-	 * @return {Promise<{ response: Response, data: object }>} The response and data
+	 * Refresh the event logs
+	 * @param filters - Optional filters to apply to the logs
+	 * @return {Promise<{ response: Response, data: object[] }>} The response and data
 	 */
-	const refreshEventLogs = async (id: string): Promise<{ response: Response, data: object }> => {
-		if (!id) {
-			throw new MissingParameterError('id')
+	const refreshEventLogs = async (filters: object = {}) => {
+		const logStore = useLogStore()
+		logStore.setLogsLoading(true)
+
+		try {
+			// Build query parameters
+			const queryParams = new URLSearchParams()
+			// Only add event_id if not already present in filters
+			if (!('event_id' in filters) && eventItem.value?.id) {
+				queryParams.append('event_id', eventItem.value.id.toString())
+			}
+			// Add other filters
+			Object.entries(filters).forEach(([key, value]) => {
+				if (value !== null && value !== undefined && value !== '') {
+					queryParams.append(key, value.toString())
+				}
+			})
+			// Build the endpoint
+			const endpoint = `/index.php/apps/openconnector/api/events/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+			const response = await fetch(endpoint, {
+				method: 'GET',
+			})
+			const data = await response.json()
+			setEventLogs(data)
+			return { response, data }
+		} catch (error) {
+			console.error('Error refreshing event logs:', error)
+			throw error
+		} finally {
+			logStore.setLogsLoading(false)
 		}
-
-		const endpoint = `/index.php/apps/openconnector/api/events-logs/${id}`
-
-		const response = await fetch(endpoint)
-
-		const data = await response.json()
-
-		setEventLogs(data)
-
-		return { response, data }
 	}
 
 	return {

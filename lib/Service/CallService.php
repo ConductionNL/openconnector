@@ -39,6 +39,8 @@ class CallService
 	private Client $client;
 	private Environment $twig;
 
+	private const BASE_FILENAME_LOCATION = "%s-%s";
+
 	/**
 	 * The constructor sets al needed variables.
 	 *
@@ -79,7 +81,12 @@ class CallService
 			) {
 				return $this->twig->createTemplate(template: $value, name: "sourceConfig")->render(context: ['source' => $source]);
 			} else if (is_array($value) === true) {
-				$value = array_map(function($value) use ($source) { return $this->renderValue($value, $source);}, $value);
+				$value = array_map(function($value) use ($source) {
+					if (is_string($value) === false && is_array($value) === false) {
+						return $value;
+					}
+					return $this->renderValue($value, $source);
+				}, $value);
 			}
 
 			return $value;
@@ -98,7 +105,12 @@ class CallService
 	 */
 	private function renderConfiguration(array $configuration, Source $source): array
 	{
-		return array_map(function($value) use ($source) { return $this->renderValue($value, $source);}, $configuration);
+		return array_map(function($value) use ($source) { 
+            if (is_string($value) === true || is_array($value) === true) {
+                return $this->renderValue($value, $source);
+            }
+            return $value;
+        }, $configuration);
 	}
 
     /**
@@ -141,6 +153,97 @@ class CallService
 		}
 	}
 
+
+	/**
+	 * Writes temporary file
+	 *
+	 * @param string $baseFileName
+	 * @param string $contents
+	 *
+	 * @return string file location
+	 */
+    private function writeFile(string $baseFileName, string $contents): string
+    {
+        $stamp = microtime().getmypid();
+		$baseFileNameLocation = sprintf($this::BASE_FILENAME_LOCATION, $baseFileName, $stamp);
+
+		// Replace escaped new lines with actual new lines for certificates
+		$contents = str_replace('\n', "\n", $contents);
+
+        file_put_contents($baseFileNameLocation, $contents);
+
+        return $baseFileNameLocation;
+
+    }
+
+	/**
+	 * Removes temporary file
+	 *
+	 * @param $filename
+	 *
+	 * @return void
+	 */
+    private function removeFile($filename): void
+    {
+        unlink($filename);
+    }
+
+	/**
+     * Writes the certificate and ssl keys to disk, returns the filenames.
+     *
+     * @param array $config The configuration as stored in the source
+     *
+     * @return void
+     */
+    public function getCertificate(array &$config)
+    {
+        if (isset($config['cert']) === true) {
+            if (is_array($config['cert']) === true) {
+                $config['cert'][0] = $this->writeFile('certificate', $config['cert'][0]);
+            } else if (is_string($config['cert'])) {
+                $config['cert'] = $this->writeFile('certificate', $config['cert']);
+			}
+        }
+
+        if (isset($config['ssl_key']) === true) {
+            if (is_array($config['ssl_key']) === true) {
+                $config['ssl_key'][0] = $this->writeFile('privateKey', $config['ssl_key'][0]);
+            } else if (is_string($config['ssl_key']) === true) {
+                $config['ssl_key'] = $this->writeFile('privateKey', $config['ssl_key']);
+            }
+        }
+
+        if (isset($config['verify']) === true && is_string($config['verify']) === true) {
+            $config['verify'] = $this->writeFile('verify', $config['verify']);
+        }
+
+    }//end getCertificate()
+
+    /**
+     * Removes certificates and private keys from disk if they are not necessary anymore.
+     *
+     * @param array $config The configuration with filenames
+     *
+     * @return void
+     */
+    public function removeFiles(array $config): void
+    {
+        if (isset($config['cert']) === true) {
+            $filename = is_array($config['cert']) === true ? $config['cert'][0] : $config['cert'];
+            $this->removeFile($filename);
+        }
+
+        if (isset($config['ssl_key']) === true) {
+            $filename = is_array($config['ssl_key']) === true ? $config['ssl_key'][0] : $config['ssl_key'];
+            $this->removeFile($filename);
+        }
+
+        if (isset($config['verify']) === true && is_string($config['verify']) === true) {
+            $this->removeFile($config['verify']);
+        }
+
+    }//end removeFiles()
+
 	/**
 	 * Calls a source according to given configuration.
 	 *
@@ -182,7 +285,7 @@ class CallService
 			$callLog->setStatusCode(409);
 			$callLog->setStatusMessage("This source is not enabled");
 			$callLog->setCreated(new \DateTime());
-			$callLog->setExpires(new \DateTime('now + '.$source->getErrorRetention().' seconds'));
+			//$callLog->setExpires(new \DateTime('now + '.$source->getErrorRetention().' seconds'));
 
 			$this->callLogMapper->insert($callLog);
 
@@ -197,7 +300,7 @@ class CallService
 			$callLog->setStatusCode(409);
 			$callLog->setStatusMessage("This source has no location");
 			$callLog->setCreated(new \DateTime());
-			$callLog->setExpires(new \DateTime('now + '.$source->getErrorRetention().' seconds'));
+			//$callLog->setExpires(new \DateTime('now + '.$source->getErrorRetention().' seconds'));
 
 			$this->callLogMapper->insert($callLog);
 
@@ -224,7 +327,7 @@ class CallService
 			$callLog->setStatusCode(429); //
 			$callLog->setStatusMessage("The rate limit for this source has been exceeded. Try again later.");
 			$callLog->setCreated(new \DateTime());
-			$callLog->setExpires(new \DateTime('now + '.$source->getErrorRetention().' seconds'));
+			//$callLog->setExpires(new \DateTime('now + '.$source->getErrorRetention().' seconds'));
 
 			$this->callLogMapper->insert($callLog);
 
@@ -267,8 +370,8 @@ class CallService
 		// Set the URL to call and add an endpoint if needed
 		$url = $this->source->getLocation().$endpoint;
 
-		// Set authentication if needed. @todo: create  the authentication service
-		//$createCertificates && $this->getCertificate($config);
+		// Set authentication if needed.
+		$this->getCertificate($config);
 
 		// Make sure to filter out all the authentication variables / secrets.
 		$config = array_filter($config, function ($key) {
@@ -286,6 +389,7 @@ class CallService
 		// @todo: save the source
 		// Let's make the call.
 		$time_start = microtime(true);
+        
 		try {
 			if ($asynchronous === false) {
 			   $response = $this->client->request($method, $url, $config);
@@ -294,8 +398,11 @@ class CallService
 				return $this->client->requestAsync($method, $url, $config);
 			}
 		} catch (GuzzleHttp\Exception\BadResponseException $e) {
+			$this->removeFiles($config);
 			$response = $e->getResponse();
 		}
+
+		$this->removeFiles($config);
 
 		$time_end = microtime(true);
 
@@ -331,7 +438,7 @@ class CallService
 		$callLog->setStatusMessage($data['response']['statusMessage']);
 		$callLog->setRequest($data['request']);
 		$callLog->setCreated(new \DateTime());
-		$callLog->setExpires(new \DateTime('now + '.($data['response']['statusCode'] < 400 ? $source->getLogRetention() : $source->getErrorRetention()).' seconds'));
+		//$callLog->setExpires(new \DateTime('now + '.($data['response']['statusCode'] < 400 ? $source->getLogRetention() : $source->getErrorRetention()).' seconds'));
 
 		// Only persist response if we get bad requests or server errors.
 		if ($callLog->getStatusCode() >= 400 && $callLog->getStatusCode() < 600 || $logBody === true) {

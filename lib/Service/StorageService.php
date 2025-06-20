@@ -71,9 +71,9 @@ class StorageService
     public function createUpload(string $path, string $fileName, int $size, ?string $objectId = null): array
     {
         $user = $this->userManager->get(self::APP_USER);
-        $userFolder = $this->rootFolder->getUserFolder(userId: $user ? $user->getUID() : 'Guest');
+//        $userFolder = $this->rootFolder->getUserFolder(userId: $user ? $user->getUID() : 'Guest');
 
-        $uploadFolder = $userFolder->get($path);
+        $uploadFolder = $this->rootFolder->get($path);
 
         $partSize = $this->config->getValueInt('openconnector', 'part-size', 1000000);
 
@@ -82,6 +82,9 @@ class StorageService
         $remainingSize = $size;
         $parts = [];
 
+		/**
+		 * @var File $target
+		 */
         $target = $uploadFolder->newFile($fileName);
 
         $partsFolder = $uploadFolder->newFolder("{$fileName}_parts");
@@ -222,7 +225,7 @@ class StorageService
     {
         $partData = $this->cache->get("upload_$partUuid");
 
-        $targetFile  = $this->rootFolder->getById($partData[self::UPLOAD_TARGET_ID])[0];
+        $targetFile  = $this->rootFolder->getUserFolder(self::APP_USER)->getFirstNodeById($partData[self::UPLOAD_TARGET_ID]);
         $partsFolder = $this->rootFolder->get($partData[self::UPLOAD_TARGET_PATH]);
         $numParts    = $partData[self::NUMBER_OF_PARTS];
 

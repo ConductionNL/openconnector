@@ -5,17 +5,15 @@ namespace OCA\OpenConnector\EventListener;
 use OCA\OpenConnector\Service\SynchronizationService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
-use OCA\OpenConnector\Db\SynchronizationContractMapper;
+use Psr\Log\LoggerInterface;
 
 class ObjectDeletedEventListener implements IEventListener
 {
 
 	public function __construct(
 		private readonly SynchronizationService $synchronizationService,
-		private readonly SynchronizationContractMapper $synchronizationContractMapper,
+        private readonly LoggerInterface $logger,
 	)
 	{
 	}
@@ -26,15 +24,29 @@ class ObjectDeletedEventListener implements IEventListener
     public function handle(Event $event): void
     {
         if ($event instanceof ObjectDeletedEvent === false) {
-			return;
-		}
+            return;
+        }
 
-		$object = $event->getObject();
+        if (method_exists($event, 'getObject') === false) {
+            return;
+        }
 
-		$contracts = $this->synchronizationContractMapper->handleObjectRemoval($object->getUuid());
 
-		foreach ($contracts as $contract) {
-			$this->synchronizationService->synchronizeToTarget($object, $contract);
-		}
+        $object = $event->getObject();
+        if ($object === null || $object->getRegister() === null || $object->getSchema() === null) {
+            return;
+        }
+
+        $synchronizations = $this->synchronizationService->findAllBySourceId(register: $object->getRegister(), schema: $object->getSchema());
+        foreach ($synchronizations as $synchronization) {
+            try {
+                $this->synchronizationService->synchronize(synchronization: $synchronization, force: true, object: $object, mutationType: 'delete');
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to process object event: ' . $e->getMessage() . ' for synchronization ' . $synchronization->getId(), [
+                    'exception' => $e,
+                    'event' => get_class($event)
+                ]);
+            }
+        }
     }
 }

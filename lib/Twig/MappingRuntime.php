@@ -8,6 +8,8 @@ use OCA\OpenConnector\Db\Source;
 use OCA\OpenConnector\Service\AuthenticationService;
 use OCA\OpenConnector\Service\MappingService;
 use Twig\Extension\RuntimeExtensionInterface;
+use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Uid\UuidV4;
 
 class MappingRuntime implements RuntimeExtensionInterface
 {
@@ -49,5 +51,13 @@ class MappingRuntime implements RuntimeExtensionInterface
 		);
 	}
 
-
+	/**
+	 * Generate a uuid.
+	 *
+	 * @return array
+	 */
+	public function generateUuid(): UuidV4
+	{
+		return Uuid::v4();
+	}
 }

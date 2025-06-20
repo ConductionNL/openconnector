@@ -38,7 +38,7 @@ import { mappingStore } from '../../../store/store.js'
 				</div>
 				<div class="close-button">
 					<NcActions>
-						<NcActionButton @click="closeAlert = true">
+						<NcActionButton close-after-click @click="closeAlert = true">
 							<template #icon>
 								<Close :size="20" />
 							</template>
@@ -130,20 +130,28 @@ import { mappingStore } from '../../../store/store.js'
 				<NcTextField :value.sync="mappingItem.name"
 					label="name" />
 
-				<NcTextArea :value.sync="mappingItem.description"
+				<NcTextArea
+					resize="vertical"
+					:value.sync="mappingItem.description"
 					label="description" />
 
-				<NcTextArea :value.sync="mappingItem.mapping"
+				<NcTextArea
+					resize="vertical"
+					:value.sync="mappingItem.mapping"
 					label="mapping"
 					:error="!validJson(mappingItem.mapping)"
 					:helper-text="!validJson(mappingItem.mapping) ? 'Invalid JSON' : ''" />
 
-				<NcTextArea :value.sync="mappingItem.cast"
+				<NcTextArea
+					resize="vertical"
+					:value.sync="mappingItem.cast"
 					label="cast"
 					:error="!validJson(mappingItem.cast, true)"
 					:helper-text="!validJson(mappingItem.cast, true) ? 'Invalid JSON' : ''" />
 
-				<NcTextArea :value.sync="mappingItem.unset"
+				<NcTextArea
+					resize="vertical"
+					:value.sync="mappingItem.unset"
 					label="unset"
 					helper-text="Enter a comma-separated list of keys." />
 

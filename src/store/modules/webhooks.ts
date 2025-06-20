@@ -9,6 +9,7 @@ export const useWebhookStore = defineStore('webhook', () => {
 	// state
 	const webhookItem = ref<Webhook>(null)
 	const webhookList = ref<Webhook[]>([])
+	const viewMode = ref<string>('cards')
 
 	// ################################
 	// ||    Setters and Getters     ||
@@ -71,6 +72,35 @@ export const useWebhookStore = defineStore('webhook', () => {
 	 * @return {Webhook[]} The active webhook list
 	 */
 	const getWebhookList = (): Webhook[] => webhookList.value as Webhook[]
+
+	/**
+	 * Set the view mode.
+	 * @param mode - The view mode to set
+	 */
+	const setViewMode = (mode: string) => {
+		viewMode.value = mode
+		console.info('Webhook view mode set to ' + mode)
+	}
+
+	/**
+	 * Get the view mode.
+	 *
+	 * @description
+	 * Returns the currently active view mode. Note that the return value is non-reactive.
+	 *
+	 * For reactive usage, either:
+	 * 1. Reference the `viewMode` state directly:
+	 * ```js
+	 * const viewMode = useWebhookStore().viewMode // reactive state
+	 * ```
+	 * 2. Or wrap in a `computed` property:
+	 * ```js
+	 * const viewMode = computed(() => useWebhookStore().getViewMode())
+	 * ```
+	 *
+	 * @return {string} The active view mode
+	 */
+	const getViewMode = (): string => viewMode.value as string
 
 	// ################################
 	// ||          Actions           ||
@@ -208,12 +238,15 @@ export const useWebhookStore = defineStore('webhook', () => {
 		// state
 		webhookItem,
 		webhookList,
+		viewMode,
 
 		// setters and getters
 		setWebhookItem,
 		getWebhookItem,
 		setWebhookList,
 		getWebhookList,
+		setViewMode,
+		getViewMode,
 
 		// actions
 		refreshWebhookList,

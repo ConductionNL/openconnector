@@ -12,6 +12,7 @@ Documentation is available at [https://conduction.nl/openconnector](https://cond
 - PHP 8.1 or higher
 - Database: MySQL/MariaDB
 
+
 ## Installation
 
 [Installation instructions](https://conduction.nl/openconnector/installation)

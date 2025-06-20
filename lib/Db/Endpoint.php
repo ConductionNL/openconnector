@@ -12,6 +12,12 @@ use OCP\AppFramework\Db\Entity;
  * Represents an API endpoint configuration entity
  *
  * @package OCA\OpenConnector\Db
+ * @category Database
+ * @author OpenConnector Team
+ * @copyright 2024 OpenConnector
+ * @license AGPL-3.0
+ * @version 1.0.0
+ * @link https://github.com/OpenConnector/openconnector
  */
 class Endpoint extends Entity implements JsonSerializable
 {
@@ -32,6 +38,8 @@ class Endpoint extends Entity implements JsonSerializable
 	protected ?string 	$inputMapping = null;
 	protected ?string 	$outputMapping = null;
 	protected ?array 	$rules = []; // Array of rules to be applied
+	protected ?array    $configurations = []; // Array of configuration IDs that this endpoint belongs to
+	protected ?string   $slug = null;
 
 	/**
 	 * Get the endpoint array representation
@@ -81,7 +89,8 @@ class Endpoint extends Entity implements JsonSerializable
 		$this->addType(fieldName:'inputMapping', type: 'string');
 		$this->addType(fieldName:'outputMapping', type: 'string');
 		$this->addType(fieldName:'rules', type: 'json');
-
+		$this->addType(fieldName:'configurations', type: 'json');
+		$this->addType(fieldName:'slug', type: 'string');
 	}
 
 	public function getJsonFields(): array
@@ -91,6 +100,34 @@ class Endpoint extends Entity implements JsonSerializable
 				return $field === 'json';
 			})
 		);
+	}
+
+
+	/**
+	 * Get the slug for the endpoint.
+	 * If the slug is not set, generate one from the name.
+	 *
+	 * @return string The slug for the endpoint
+	 * @phpstan-return non-empty-string
+	 * @psalm-return non-empty-string
+	 */
+	public function getSlug(): string
+	{
+		// Check if the slug is already set
+		if (!empty($this->slug)) {
+			return $this->slug;
+		}
+
+		// Generate a slug from the name if not set
+		// Convert the name to lowercase, replace spaces with hyphens, and remove non-alphanumeric characters
+		$generatedSlug = preg_replace('/[^a-z0-9]+/', '-', strtolower(trim($this->name)));
+
+		// Ensure the generated slug is not empty
+		if (empty($generatedSlug)) {
+			throw new \RuntimeException('Unable to generate a valid slug from the name.');
+		}
+
+		return $generatedSlug;
 	}
 
 	public function hydrate(array $object): self
@@ -138,6 +175,8 @@ class Endpoint extends Entity implements JsonSerializable
             'inputMapping' => $this->inputMapping,
             'outputMapping' => $this->outputMapping,
             'rules' => $this->rules,
+            'configurations' => $this->configurations,
+            'slug' => $this->getSlug(),
             'created' => isset($this->created) ? $this->created->format('c') : null,
             'updated' => isset($this->updated) ? $this->updated->format('c') : null
         ];

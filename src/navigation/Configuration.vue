@@ -164,7 +164,10 @@
 
 				<NcTextField id="organisationName" :value.sync="configuration.organisationName" />
 				<NcTextField id="organisationOin" :value.sync="configuration.organisationOin" />
-				<NcTextArea id="organisationPki" :value.sync="configuration.organisationPki" />
+				<NcTextArea
+					id="organisationPki"
+					:value.sync="configuration.organisationPki"
+					resize="vertical" />
 
 				<NcButton aria-label="Opslaan"
 					type="primary"
