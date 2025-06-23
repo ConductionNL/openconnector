@@ -1,3 +1,9 @@
+# Version: 0.1.76
+
+* [#404](https://github.com/ConductionNL/openconnector/pull/404): Show correct amount for skipped in sync response/result
+* [#405](https://github.com/ConductionNL/openconnector/pull/405): Show correct amount for skipped in sync response/result
+
+
 # Changelog
 
 ## [Unreleased]
