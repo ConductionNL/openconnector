@@ -1,3 +1,9 @@
+# Version: 0.1.73
+
+* [#364](https://github.com/ConductionNL/openconnector/pull/364): Only add Content-Disposition header to XMLResponse if url ends with .xml
+* [#366](https://github.com/ConductionNL/openconnector/pull/366): Only add Content-Disposition header to XMLResponse if url ends with .xml
+
+
 # Changelog
 
 ## [Unreleased]
