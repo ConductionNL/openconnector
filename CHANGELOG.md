@@ -1,3 +1,9 @@
+# Version: 0.1.23
+
+* [#109](https://github.com/ConductionNL/openconnector/pull/109): Fetch extra data for results of fetched extra data
+* [#110](https://github.com/ConductionNL/openconnector/pull/110): Dev to main
+
+
 # Changelog
 
 ## [Unreleased]
