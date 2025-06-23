@@ -3,7 +3,7 @@ name: Release Workflow
 on:
   push:
     branches:
-      - never
+      - main
   workflow_dispatch:
     inputs:
       version:
