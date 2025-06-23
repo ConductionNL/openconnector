@@ -1,3 +1,10 @@
+# Version: 0.1.41
+
+* [#208](https://github.com/ConductionNL/openconnector/pull/208): Assign tags for fetch and write rules
+* [#209](https://github.com/ConductionNL/openconnector/pull/209): Change writeFile to OpenRegister addFile
+* [#210](https://github.com/ConductionNL/openconnector/pull/210): Development
+
+
 # Changelog
 
 ## [Unreleased]
