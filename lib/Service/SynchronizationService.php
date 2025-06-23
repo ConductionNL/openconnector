@@ -2289,7 +2289,7 @@ class SynchronizationService
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
 	 */
-	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?array $tags = [], ?string $filename = null): string
+	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?array $tags = [], ?string $filename = null, ?string $published = null): string
 	{
 		$originalEndpoint = $endpoint;
 		$endpoint = str_contains(haystack: $endpoint, needle: $source->getLocation()) === true
@@ -2329,6 +2329,10 @@ class SynchronizationService
         $fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
         $content = $response['body'];
         $shouldShare = !empty($tags) && isset($config['autoShare']) ? $config['autoShare'] : false;
+		
+		// Determine if file should be published based on the published parameter
+		$shouldPublish = $this->shouldPublishFile($published);
+		
 		try {
 			$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
 			$objectEntity = $objectService->findByUuid(uuid: $objectId);
@@ -2339,11 +2343,33 @@ class SynchronizationService
 				share: $shouldShare,
 				tags: $tags
 			);
+			
+			// Publish the file if needed
+			if ($shouldPublish && $file !== null) {
+				try {
+					$fileService->publishFile(object: $objectEntity, filePath: $filename);
+				} catch (Exception $e) {
+					// Log but don't fail the entire operation
+					error_log("Failed to publish file {$filename} for object {$objectId}: " . $e->getMessage());
+				}
+			}
 		} catch (DoesNotExistException $exception) {
 			// If the object cannot be found, continue with register/schema/objectId combination
 			$register = $config['register'] ?? null;
 			$schema   = $config['schema'] ?? null;
 			$file = $fileService->addFile(objectEntity: $objectId, fileName: $filename, content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false, tags: $tags, register: $register, schema: $schema);
+			
+			// For the addFile case, we'll need to get the object entity to publish
+			if ($shouldPublish && $file !== null) {
+				try {
+					$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
+					$objectEntity = $objectService->findByUuid(uuid: $objectId);
+					$fileService->publishFile(object: $objectEntity, filePath: $filename);
+				} catch (Exception $e) {
+					// Log but don't fail the entire operation
+					error_log("Failed to publish file {$filename} for object {$objectId}: " . $e->getMessage());
+				}
+			}
 		} catch (Exception $e) {
 			throw new Exception("Failed to save file {$filename} for object {$objectId}: " . $e->getMessage());
 		}
@@ -2393,10 +2419,11 @@ class SynchronizationService
 	 * @param string|null &$filename A reference to the filename (if available) that will be updated.
 	 * @param array|null  &$tags     A reference to an array of tags (if available) that will be updated.
 	 * @param string|null  &$objectId     A reference to the object id (if available) that the file will be attached to.
+	 * @param string|null  &$published     A reference to the published status (if available) that will be updated.
 	 *
 	 * @return string The extracted endpoint from the data.
 	 */
-	private function getFileContext(array $config, mixed $endpoint, ?string &$filename = null, ?array &$tags = [], ?string &$objectId = null)
+	private function getFileContext(array $config, mixed $endpoint, ?string &$filename = null, ?array &$tags = [], ?string &$objectId = null, ?string &$published = null)
 	{
 		$dataDot = new Dot($endpoint);
 		if (isset($config['objectIdPath']) === true && empty($config['objectIdPath']) === false) {
@@ -2459,6 +2486,11 @@ class SynchronizationService
 			// Extract filename if available
 			if (isset($endpoint['filename']) === true && empty($endpoint['filename']) === false) {
 				$filename = $endpoint['filename'];
+			}
+
+			// Extract published status if available
+			if (isset($endpoint['published']) === true) {
+				$published = $endpoint['published'];
 			}
 
 			// Check if endpoint exists before returning it
@@ -2561,29 +2593,31 @@ class SynchronizationService
         }
 		$filename = null;
 		$tags = [];
+		$published = null;
 		switch ($this->getArrayType($endpoint)) {
 			// Single file endpoint
 			case 'Not array':
-				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId);
+				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, published: $published);
 				break;
 			// Array of object that has file(s)
 			case 'Associative array':
-				$endpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId);
+				$endpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published);
 				if ($endpoint === null) {
                     return $dataDot->jsonSerialize();
 				}
-				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, filename: $filename);
+				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, filename: $filename, published: $published);
 				break;
 			// Array of object(s) that has file(s)
 			case "Multidimensional array":
 				foreach ($endpoint as $object) {
 					$filename = null;
 					$tags = [];
-					$endpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId);
+					$published = null;
+					$endpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId, published: $published);
 					if ($endpoint === null) {
                         continue;
 					}
-					$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, filename: $filename);
+					$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, filename: $filename, published: $published);
 				}
 				break;
 			// Array of just endpoints
@@ -2591,7 +2625,8 @@ class SynchronizationService
 				foreach ($endpoint as $key => $childEndpoint) {
 					$filename = null;
 					$tags = [];
-					$this->fetchFile(source: $source, endpoint: $childEndpoint, config: $config, objectId: $objectId);
+					$published = null;
+					$this->fetchFile(source: $source, endpoint: $childEndpoint, config: $config, objectId: $objectId, tags: $tags, published: $published);
 				}
 				break;
 		}
@@ -2652,6 +2687,7 @@ class SynchronizationService
         try {
             $filename = null;
             $tags = [];
+            $published = null;
 
             switch ($this->getArrayType($endpoint)) {
                 // Single file endpoint
@@ -2662,11 +2698,11 @@ class SynchronizationService
                 // Array of object that has file(s)
                 case 'Associative array':
                     $contextObjectId = null; // Separate variable to avoid overwriting the original
-                    $actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $contextObjectId);
+                    $actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $contextObjectId, published: $published);
                     // Use context object ID if specified, otherwise fall back to the original object ID
                     $targetObjectId = $contextObjectId ?? $objectId;
                     if ($actualEndpoint !== null) {
-                        $this->fetchFileSafely($source, $actualEndpoint, $config, $targetObjectId, $filename, $tags);
+                        $this->fetchFileSafely($source, $actualEndpoint, $config, $targetObjectId, $filename, $tags, $published);
                     }
                     break;
 
@@ -2698,13 +2734,14 @@ class SynchronizationService
 	 * @param string $objectId The UUID of the object the file belongs to.
 	 * @param string|null $filename Optional filename to assign to the file.
 	 * @param array $tags Optional tags to assign to the file.
+	 * @param string|null $published Optional published status to determine if file should be published.
 	 *
 	 * @return void
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 * @psalm-param array<string> $tags
 	 */
-	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = []): void
+	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = [], ?string $published = null): void
 	{
         try {
             // Execute the file fetching operation
@@ -2714,7 +2751,8 @@ class SynchronizationService
                 config: $config,
                 objectId: $objectId,
                 tags: $tags,
-                filename: $filename
+                filename: $filename,
+                published: $published
             );
         } catch (Exception $e) {
             // Log error with detailed information but don't throw
@@ -3472,4 +3510,70 @@ class SynchronizationService
 		return $this->cleanupOrphanedFiles($objectId, $expectedFileNames);
 	}
 
+	/**
+	 * Determines if a file should be published based on the published parameter.
+	 *
+	 * This method checks if the published parameter indicates that a file should be published.
+	 * It supports boolean values (true/false), string values ("true"/"false"), and date strings.
+	 * For date strings, it assumes the file should be published if a date is provided.
+	 *
+	 * @param string|null $published The published parameter from the attachment data.
+	 *
+	 * @return bool True if the file should be published, false otherwise.
+	 */
+	private function shouldPublishFile(?string $published): bool
+	{
+		if ($published === null) {
+			return false;
+		}
+
+		// Handle boolean true values
+		if ($published === true || $published === 'true' || $published === '1') {
+			return true;
+		}
+
+		// Handle boolean false values
+		if ($published === false || $published === 'false' || $published === '0') {
+			return false;
+		}
+
+		// Handle date strings - if it's a valid date string, consider it as published
+		if (is_string($published) && !empty($published)) {
+			// Try to parse as a date
+			$date = \DateTime::createFromFormat(\DateTime::ATOM, $published);
+			if ($date !== false) {
+				return true;
+			}
+			
+			// Try other common date formats
+			$formats = ['Y-m-d', 'Y-m-d H:i:s', 'Y-m-d\TH:i:s\Z', 'Y-m-d\TH:i:sP'];
+			foreach ($formats as $format) {
+				$date = \DateTime::createFromFormat($format, $published);
+				if ($date !== false) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Fetches a file from a given endpoint and saves it to the OpenRegister system.
+	 *
+	 * This method downloads a file from a remote source and stores it in the OpenRegister
+	 * file system, optionally applying tags and sharing settings.
+	 *
+	 * @param Source $source The source configuration for the API call.
+	 * @param string $endpoint The endpoint URL to fetch the file from.
+	 * @param array $config Configuration array containing method, write settings, etc.
+	 * @param string $objectId The UUID of the object to attach the file to.
+	 * @param array|null $tags Optional array of tags to apply to the file.
+	 * @param string|null $filename Optional filename to use for the saved file.
+	 * @param string|null $published Optional published status to determine if file should be published.
+	 *
+	 * @return string The original endpoint URL.
+	 * @throws Exception If the file cannot be fetched or saved.
+	 * @throws \OCP\DB\Exception
+	 */
 }
