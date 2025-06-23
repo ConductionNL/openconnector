@@ -1,3 +1,9 @@
+# Version: 0.1.53
+
+* [#265](https://github.com/ConductionNL/openconnector/pull/265): Small change / fix for getting next page when handling Sync pagination
+* [#269](https://github.com/ConductionNL/openconnector/pull/269): Fix CORS and url rewrites
+
+
 # Changelog
 
 ## [Unreleased]
