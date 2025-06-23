@@ -1,3 +1,10 @@
+# Version: 0.1.45
+
+* [#224](https://github.com/ConductionNL/openconnector/pull/224): Sharepoint updated config and run sync fix
+* [#225](https://github.com/ConductionNL/openconnector/pull/225): Dev to main
+* [#226](https://github.com/ConductionNL/openconnector/pull/226): fix format schedule after
+
+
 # Changelog
 
 ## [Unreleased]
