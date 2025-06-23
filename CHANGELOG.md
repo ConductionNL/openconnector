@@ -1,3 +1,9 @@
+# Version: 0.1.43
+
+* [#214](https://github.com/ConductionNL/openconnector/pull/214): Fix objecttype of systemtags
+* [#215](https://github.com/ConductionNL/openconnector/pull/215): Development to main
+
+
 # Changelog
 
 ## [Unreleased]
