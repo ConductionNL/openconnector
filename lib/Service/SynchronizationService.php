@@ -537,6 +537,7 @@ class SynchronizationService
 	 *
 	 * @param Synchronization $synchronization The synchronization containing the source.
 	 * @param string $endpoint The endpoint to request to fetch the desired object.
+	 * @param string|int|null $source The source to request if object is in other source than synchronization.
 	 *
 	 * @return array The resulting object.
 	 *
@@ -545,9 +546,16 @@ class SynchronizationService
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
 	 */
-	public function getObjectFromSource(Synchronization $synchronization, string $endpoint): array
+	public function getObjectFromSource(Synchronization $synchronization, string $endpoint, string|int|null $source = null): array
 	{
-		$source = $this->sourceMapper->find(id: $synchronization->getSourceId());
+		$sourceId = $synchronization->getSourceId();
+
+		// If source passed down used that instead.
+		if ($source !== null) {
+			$sourceId = $source;
+		}
+
+		$source = $this->sourceMapper->find(id: $sourceId);
 
 		// Let's get the source config
 		$sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
@@ -654,7 +662,12 @@ class SynchronizationService
             $synchronization->setSourceConfig($sourceConfig);
         }
 
-        $extraData = $this->getObjectFromSource($synchronization, $endpoint);
+		$source = null;
+		if (isset($extraDataConfig['source']) === true && is_scalar($extraDataConfig['source']) === true) {
+			$source = $extraDataConfig['source'];
+		}
+
+        $extraData = $this->getObjectFromSource(synchronization: $synchronization, endpoint: $endpoint, source: $source);
 
 		// Temporary fix,
 		if (isset($extraDataConfig['extraDataConfigPerResult']) === true) {
