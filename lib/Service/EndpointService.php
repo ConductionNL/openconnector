@@ -563,11 +563,11 @@ class EndpointService
                 $id = pos($pathParams);
             }
 
-            $main = $this->objectService->getOpenRegisters()->renderEntity($mapper->findByUuid($pathParams['id'])->getObject());
+            $main = $mapper->findByUuid($pathParams['id'])->getObject();
             $ids = $main[$property];
 
             if(isset($main[$property]) === false) {
-                return $this->objectService->getOpenRegisters()->renderEntity(entity: $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id'])));
+                return $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id']));
             }
 
             if ($ids === null || empty($ids) === true) {
