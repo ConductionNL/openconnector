@@ -105,6 +105,17 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 					<BTabs content-class="mt-3" justified>
 						<!-- Rules Tab -->
 						<BTab title="Rules">
+							<div class="tabButtonsContainer">
+								<NcButton type="primary"
+									class="fullWidthButton"
+									aria-label="Add Rule"
+									@click="navigationStore.setModal('addEndpointRule')">
+									<template #icon>
+										<Plus :size="20" />
+									</template>
+									Add Rule
+								</NcButton>
+							</div>
 							<div v-if="endpointStore.endpointItem?.rules?.length">
 								<NcListItem v-for="ruleId in endpointStore.endpointItem.rules"
 									:key="ruleId"
@@ -156,7 +167,7 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcListItem } from '@nextcloud/vue'
+import { NcActions, NcActionButton, NcListItem, NcButton } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -186,6 +197,7 @@ export default {
 		Plus,
 		EyeOutline,
 		LinkOff,
+		NcButton,
 	},
 	data() {
 		return {
@@ -264,16 +276,18 @@ export default {
 }
 </script>
 
-<style scoped>
-.detailContainer {
-	padding: 20px;
-}
-
+<style>
 .detailHeader {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 20px;
+}
+</style>
+
+<style scoped>
+.detailContainer {
+	padding: 20px;
 }
 
 .detailGrid {
