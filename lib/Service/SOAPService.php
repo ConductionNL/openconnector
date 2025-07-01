@@ -78,12 +78,9 @@ class SOAPService
         return $engine;
     }
 
-	private function parseDynamicXsd (string $xmlString): stdClass
+	private function parseDynamicXsd (string $xmlString): \SimpleXMLElement
 	{
 		$xmlString = '<any>'.str_replace('NewDataSet', 'DocumentElement', $xmlString).'</any>';
-
-
-		echo $xmlString;
 
 		$dom = new DOMDocument();
 		$dom->loadXML($xmlString);
@@ -114,8 +111,6 @@ class SOAPService
     public function createMessage(Source $source, string $endpoint, array $config): Response
     {
 
-//		var_dump($endpoint, $this->cookieJar->count());
-
         $body = json_decode(json: $config['body'], associative: true);
         unset($config['body']);
 
@@ -136,10 +131,14 @@ class SOAPService
 			$result->{'QueryExecute2Result'} = $this->parseDynamicXsd($result->{'QueryExecute2Result'}->any);
 		}
 
+
+		if(isset($result->FileBytes) === true) {
+			$result->FileBytes = base64_encode($result->FileBytes);
+		}
+
         libxml_set_external_entity_loader(static function () {
             return null;
         });
-
 
         return new Response(status: 200, body: json_encode($result));
 
