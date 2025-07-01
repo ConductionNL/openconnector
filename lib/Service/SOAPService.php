@@ -2,7 +2,10 @@
 
 namespace OCA\OpenConnector\Service;
 
+use DOMDocument;
+use DOMXPath;
 use GuzzleHttp\Client;
+use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -21,14 +24,19 @@ use Soap\ExtSoapEngine\Transport\ExtSoapClientTransport;
 use Soap\ExtSoapEngine\Transport\TraceableTransport;
 use Soap\ExtSoapEngine\Wsdl\InMemoryWsdlProvider;
 use Soap\ExtSoapEngine\Wsdl\TemporaryWsdlLoaderProvider;
+use Soap\Psr18Transport\Psr18Transport;
 use Soap\Psr18Transport\Wsdl\Psr18Loader;
 use Soap\Wsdl\Loader\StreamWrapperLoader;
+use stdClass;
 use Symfony\Component\Config\Definition\Exception\Exception;
 
 class SOAPService
 {
     private Client $client;
     private ResponseInterface $response;
+	private Psr18Transport $transport;
+	public function __construct(private readonly CookieJar $cookieJar) {
+	}
 
     public function setupEngine(Source $source, array $passedConfig): Engine {
 
@@ -38,26 +46,30 @@ class SOAPService
             throw new Exception('No wsdl provided');
         }
 
+		$passedConfig['cookies'] = $this->cookieJar;
+
         $this->client = new Client($passedConfig);
         $wsdl = $config['wsdl'];
         unset($passedConfig['wsdl']);
         try {
             $engine = new SimpleEngine(
-                $this->driver = ExtSoapDriver::createFromClient(
-                    $this->soap = $client = AbusedClient::createFromOptions(
+                $driver = ExtSoapDriver::createFromClient(
+                    $soap = $client = AbusedClient::createFromOptions(
                         ExtSoapOptions::defaults($wsdl, [
                             'cache_wsdl' => WSDL_CACHE_NONE,
                             'trace' => true,
                             'location' => $source->getLocation(),
+							'soap_version' => SOAP_1_2
                         ])
                             ->withWsdlProvider(new TemporaryWsdlLoaderProvider(new Psr18Loader($this->client, new HttpFactory())))
                             ->disableWsdlCache()
                     )
                 ),
-                $transport = new TraceableTransport(
-                    $client,
-                    new ExtSoapClientTransport($client)
-                )
+				$this->transport = Psr18Transport::createForClient($this->client),
+//                $transport = new TraceableTransport(
+//                    $client,
+//                    new ExtSoapClientTransport($client)
+//                )
             );
         } catch (\SoapFault $fault) {
             throw $fault;
@@ -66,8 +78,43 @@ class SOAPService
         return $engine;
     }
 
+	private function parseDynamicXsd (string $xmlString): stdClass
+	{
+		$xmlString = '<any>'.str_replace('NewDataSet', 'DocumentElement', $xmlString).'</any>';
+
+
+		echo $xmlString;
+
+		$dom = new DOMDocument();
+		$dom->loadXML($xmlString);
+
+// 3. OPTIONAL: Validate against schema in the XML itself (or use an external .xsd file)
+		libxml_use_internal_errors(true);
+		if ($dom->schemaValidateSource($xmlString) === true) {
+		} else {
+			libxml_clear_errors();
+		}
+
+// 4. Parse the data inside diffgram
+		$simpleXml = simplexml_load_string($xmlString, 'SimpleXMLElement', 0,
+			'diffgr', true);
+
+// The diffgram will be under the 'diffgram' namespace
+		$namespaces = $simpleXml->getNamespaces(true);
+		$diffgram = $simpleXml->children($namespaces['diffgr'])->diffgram;
+
+// Or just get the DocumentElement directly
+		$documentElement = $simpleXml->xpath('//DocumentElement')[0];
+
+// Loop through QueryExecResult rows
+
+		return $documentElement->QueryExecResult;
+	}
+
     public function createMessage(Source $source, string $endpoint, array $config): Response
     {
+
+//		var_dump($endpoint, $this->cookieJar->count());
 
         $body = json_decode(json: $config['body'], associative: true);
         unset($config['body']);
@@ -77,7 +124,6 @@ class SOAPService
         });
         /**
          * @var $engine Engine
-         * @var $transport TraceableTransport
          */
         $engine = $this->setupEngine(source: $source, passedConfig: $config);
 
@@ -85,10 +131,15 @@ class SOAPService
 
         $result = $engine->request($endpoint, $body);
 
+		if(isset($result->{'QueryExecute2Result'}) === true && isset($result->{'QueryExecute2Result'}->any) === true) {
+
+			$result->{'QueryExecute2Result'} = $this->parseDynamicXsd($result->{'QueryExecute2Result'}->any);
+		}
 
         libxml_set_external_entity_loader(static function () {
             return null;
         });
+
 
         return new Response(status: 200, body: json_encode($result));
 

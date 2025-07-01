@@ -4,6 +4,7 @@ namespace OCA\OpenConnector\Service;
 
 use Adbar\Dot;
 use Exception;
+use GuzzleHttp\Cookie\CookieJar;
 use OCA\OpenConnector\Db\SourceMapper;
 use OCA\OpenConnector\Service\AuthenticationService;
 use OCA\OpenConnector\Service\MappingService;
@@ -39,6 +40,8 @@ class CallService
 	private Client $client;
 	private Environment $twig;
 
+	private CookieJar $cookieJar;
+
 	private const BASE_FILENAME_LOCATION = "%s-%s";
 
 	/**
@@ -60,6 +63,7 @@ class CallService
 		$this->twig = new Environment($loader);
 		$this->twig->addExtension(new AuthenticationExtension());
 		$this->twig->addRuntimeLoader(new AuthenticationRuntimeLoader($authenticationService));
+		$this->cookieJar = new CookieJar();
 	}
 
 	/**
@@ -269,7 +273,8 @@ class CallService
 		bool $asynchronous = false,
 		bool $createCertificates = true,
 		bool $overruleAuth = false,
-		bool $read = false
+		bool $read = false,
+		bool $runningSupportRequest = false,
 	): CallLog
 	{
 		$this->source = $source;
@@ -339,6 +344,16 @@ class CallService
 			$config = array_merge_recursive($config, $this->applyConfigDot($this->source->getConfiguration()));
 		}
 
+		if (isset($config['preRequest']) === true && $runningSupportRequest === false) {
+			$this->call(source: $source, endpoint: $config['preRequest']['endpoint'], config: $config['preRequest']['options'], runningSupportRequest: true);
+			unset($config['preRequest']);
+		}
+
+		if (isset($config['postRequest']) === true) {
+			$postRequest = $config['postRequest'];
+			unset($config['postRequest']);
+		}
+
 		// Check if the config has a Content-Type header and overwrite it if it does
 		if (isset($config['headers']['Content-Type']) === true) {
 			$overwriteContentType = $config['headers']['Content-Type'];
@@ -391,7 +406,7 @@ class CallService
 		$time_start = microtime(true);
 
         if ($source->getType() === 'soap') {
-            $soapService = new SoapService();
+            $soapService = new SoapService($this->cookieJar);
 
             $response = $soapService->createMessage($source, $endpoint, $config);
         } else {
@@ -459,6 +474,10 @@ class CallService
 
 		// Set response after persist so we can process the response body.
 		$callLog->setResponse($data['response']);
+
+		if (isset($postRequest) === true && $runningSupportRequest === false) {
+			$this->call(source: $source, endpoint: $postRequest['endpoint'], config: $postRequest['options'], runningSupportRequest: true);
+		}
 
 		return $callLog;
 	}
