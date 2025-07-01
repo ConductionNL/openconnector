@@ -13,6 +13,7 @@ export const useMappingStore = defineStore('mapping', () => {
 	const mappingMappingKey = ref<string>(null)
 	const mappingCastKey = ref<string>(null)
 	const mappingUnsetKey = ref<string>(null)
+	const viewMode = ref<string>('cards')
 
 	// ################################
 	// ||    Setters and Getters     ||
@@ -163,6 +164,35 @@ export const useMappingStore = defineStore('mapping', () => {
 	 * @return {string | null} The active mapping unset key
 	 */
 	const getMappingUnsetKey = (): string | null => mappingUnsetKey.value as string | null
+
+	/**
+	 * Set the view mode.
+	 * @param mode - The view mode to set
+	 */
+	const setViewMode = (mode: string) => {
+		viewMode.value = mode
+		console.info('Mapping view mode set to ' + mode)
+	}
+
+	/**
+	 * Get the view mode.
+	 *
+	 * @description
+	 * Returns the currently active view mode. Note that the return value is non-reactive.
+	 *
+	 * For reactive usage, either:
+	 * 1. Reference the `viewMode` state directly:
+	 * ```js
+	 * const viewMode = useMappingStore().viewMode // reactive state
+	 * ```
+	 * 2. Or wrap in a `computed` property:
+	 * ```js
+	 * const viewMode = computed(() => useMappingStore().getViewMode())
+	 * ```
+	 *
+	 * @return {string} The active view mode
+	 */
+	const getViewMode = (): string => viewMode.value as string
 
 	// ################################
 	// ||          Actions           ||
@@ -445,6 +475,7 @@ export const useMappingStore = defineStore('mapping', () => {
 		mappingMappingKey,
 		mappingCastKey,
 		mappingUnsetKey,
+		viewMode,
 
 		// setters and getters
 		setMappingItem,
@@ -457,6 +488,8 @@ export const useMappingStore = defineStore('mapping', () => {
 		getMappingCastKey,
 		setMappingUnsetKey,
 		getMappingUnsetKey,
+		setViewMode,
+		getViewMode,
 
 		// actions
 		refreshMappingList,

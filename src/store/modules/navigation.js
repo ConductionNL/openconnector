@@ -9,6 +9,12 @@ export const useNavigationStore = defineStore(
 			modal: false,
 			// The currently active dialog
 			dialog: false,
+			// Sidebar state management
+			sidebarState: {
+				sourceLogs: true,
+				contracts: true,
+				logs: true,
+			},
 			// Any data needed in various models, dialogs, views which cannot be transferred through normal means or without writing crappy/excessive code
 			transferData: null,
 		}),
@@ -28,6 +34,10 @@ export const useNavigationStore = defineStore(
 			setDialog(dialog) {
 				this.dialog = dialog
 				console.info('Active dialog set to ' + dialog)
+			},
+			setSidebarState(sidebarKey, state) {
+				this.sidebarState[sidebarKey] = state
+				console.info(`Sidebar ${sidebarKey} set to ${state}`)
 			},
 			setTransferData(data) {
 				this.transferData = data

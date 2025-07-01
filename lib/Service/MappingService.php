@@ -18,6 +18,8 @@ use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\SyntaxError;
 use Twig\Loader\ArrayLoader;
+use Throwable;
+use Exception;
 
 class MappingService
 {
@@ -139,7 +141,12 @@ class MappingService
                 $dotArray->set($key, $value);
                 continue;
             }
-			$dotArray->set($key, $this->twig->createTemplate($value)->render($originalInput));
+
+            try {
+			    $dotArray->set($key, $this->twig->createTemplate($value)->render($originalInput));
+            } catch (Throwable $e) {
+                throw new Exception("Error for mapping: {$mapping->getName()}, key: $key, value: $value and with message thrown: {$e->getMessage()}");
+            }
         }
 
         // Unset unwanted key's.

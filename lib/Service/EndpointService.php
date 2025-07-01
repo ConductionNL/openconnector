@@ -459,7 +459,7 @@ class EndpointService
                 continue;
             }
 
-			if (is_array($value) === true && array_is_list($value) === true) {
+			if (is_array($value) === true && array_is_list($value) === true && isset($extend[$key]) === true) {
 				$extend[$key] = array_fill(0, count($value), $extend[$key]);
 			}
 
@@ -498,7 +498,7 @@ class EndpointService
         foreach($rewriteParameters as $rewriteParameter) {
             if (
                 filter_var($parameters[$rewriteParameter], FILTER_VALIDATE_URL) === false
-				&& in_array(parse_url($parameters[$rewriteParameter], PHP_URL_HOST), $this->containerInterface->getParameter('kernel.trusted_hosts')) === false
+				&& in_array(parse_url($parameters[$rewriteParameter], PHP_URL_HOST), $this->config->getSystemValue('trusted_domains')) === false
             ) {
                 continue;
             }
@@ -542,10 +542,7 @@ class EndpointService
     ): Entity|array
     {
         if (isset($pathParams['id']) === true && $pathParams['id'] === end($pathParams)) {
-			$serializedObject = $this->objectService->getOpenRegisters()->renderEntity(
-				entity: $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize(),
-				extend: $parameters['_extend'] ?? $parameters['extend'] ?? null
-			);
+			$serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
             $result = $this->replaceInternalReferences(
 				mapper: $mapper,
 				serializedObject: $serializedObject,
@@ -566,11 +563,11 @@ class EndpointService
                 $id = pos($pathParams);
             }
 
-            $main = $this->objectService->getOpenRegisters()->renderEntity($mapper->findByUuid($pathParams['id'])->getObject());
+            $main = $mapper->findByUuid($pathParams['id'])->getObject();
             $ids = $main[$property];
 
             if(isset($main[$property]) === false) {
-                return $this->objectService->getOpenRegisters()->renderEntity(entity: $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id'])));
+                return $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id']));
             }
 
             if ($ids === null || empty($ids) === true) {
@@ -610,7 +607,7 @@ class EndpointService
         $result = $mapper->findAllPaginated(requestParams: $parameters);
 
         $result['results'] = array_map(function ($object) use ($mapper) {
-            return $this->replaceInternalReferences(mapper: $mapper, serializedObject: $this->objectService->getOpenRegisters()->renderEntity(entity: $object->jsonSerialize()), extend: $parameters['extend'] ?? $parameters['_extend'] ?? []);
+            return $this->replaceInternalReferences(mapper: $mapper, serializedObject: $object->jsonSerialize());
         }, $result['results']);
 
         $returnArray = [
@@ -983,10 +980,10 @@ class EndpointService
             // Process each rule in order
             foreach ($ruleEntities as $rule) {
 
-                // Skip if rule action doesn't match request method
-                if (strtolower($rule->getAction()) !== strtolower($request->getMethod())) {
-                    continue;
-                }
+//                // Skip if rule action doesn't match request method
+//                if (strtolower($rule->getAction()) !== strtolower($request->getMethod())) {
+//                    continue;
+//                }
 
                 // Check rule conditions
                 if ($this->checkRuleConditions($rule, $data) === false || $rule->getTiming() !== $timing) {
@@ -1211,8 +1208,13 @@ class EndpointService
                 $value = end($exploded);
             }
 
+			$extends = [];
+			if(isset($config['extend_input']['extends']) === true && isset($config['extend_input']['extends'][$property]) === true) {
+				$extends = $config['extend_input']['extends'][$property];
+			}
+
             try {
-                $object = $this->objectService->getOpenRegisters()->getMapper('objectEntity')->find(identifier: $value);
+                $object = $this->objectService->getOpenRegisters()->find(id: $value, extend: $extends);
             } catch (DoesNotExistException $exception) {
                 continue;
             }
@@ -1615,8 +1617,6 @@ class EndpointService
             $mappedData = $this->mappingService->executeMapping(mapping: $mapping, input: $mappedData);
         }
 
-		var_dump($mappedData);
-
         $mappedData['successful'] = $this->storageService->writePart(partId: $mappedData['order'], partUuid: $mappedData['id'], data: $mappedData['data']);
 
         unset($data['data']);
@@ -1624,8 +1624,6 @@ class EndpointService
         if (isset($config['mappingOutId']) === true) {
             $mappedData = $this->mappingService->executeMapping(mapping: $this->mappingService->getMapping(mappingId: $config['mappingOutId']), input: $mappedData);
         }
-
-		var_dump($mappedData);
 
         $object = $this->objectService->getOpenRegisters()->getMapper('objectEntity')->find($objectId);
         $object->setObject($mappedData);
@@ -1697,7 +1695,7 @@ class EndpointService
         if (isset($filename) === false && count($files) === 1) {
             $filename = $files[0]->getName();
         }
-        
+
         if (isset($filename) === false) {
             throw new Exception('File could not be determined');
         }

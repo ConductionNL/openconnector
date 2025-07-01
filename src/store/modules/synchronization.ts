@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { Synchronization, TSynchronization } from '../../entities/index.js'
 import { importExportStore } from '../store.js'
 import { MissingParameterError } from '../../services/errors/index.js'
+import { useLogStore } from './log'
 
 const apiEndpoint = '/index.php/apps/openconnector/api/synchronizations'
 
@@ -16,6 +17,7 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 	const synchronizationLogs = ref<object[]>([])
 	const synchronizationSourceConfigKey = ref<string | null>(null)
 	const synchronizationTargetConfigKey = ref<string | null>(null)
+	const viewMode = ref<string>('cards')
 
 	// ################################
 	// ||    Setters and Getters     ||
@@ -253,6 +255,35 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 	 */
 	const getSynchronizationTargetConfigKey = (): string => synchronizationTargetConfigKey.value as string
 
+	/**
+	 * Set the view mode.
+	 * @param mode - The view mode to set
+	 */
+	const setViewMode = (mode: string) => {
+		viewMode.value = mode
+		console.info('Synchronization view mode set to ' + mode)
+	}
+
+	/**
+	 * Get the view mode.
+	 *
+	 * @description
+	 * Returns the currently active view mode. Note that the return value is non-reactive.
+	 *
+	 * For reactive usage, either:
+	 * 1. Reference the `viewMode` state directly:
+	 * ```js
+	 * const viewMode = useSynchronizationStore().viewMode // reactive state
+	 * ```
+	 * 2. Or wrap in a `computed` property:
+	 * ```js
+	 * const viewMode = computed(() => useSynchronizationStore().getViewMode())
+	 * ```
+	 *
+	 * @return {string} The active view mode
+	 */
+	const getViewMode = (): string => viewMode.value as string
+
 	// ################################
 	// ||          Actions           ||
 	// ################################
@@ -393,7 +424,7 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 
 	// contracts
 	const refreshSynchronizationContracts = async (id: string, search?: string) => {
-		let endpoint = `/index.php/apps/openconnector/api/synchronizations-contracts/${id}`
+		let endpoint = `/index.php/apps/openconnector/api/synchronizations/${id}/contracts`
 
 		if (search && search !== '') {
 			endpoint = endpoint + '?_search=' + search
@@ -411,22 +442,66 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 	}
 
 	// logs
-	const refreshSynchronizationLogs = async (id: number, search?: string) => {
-		let endpoint = `/index.php/apps/openconnector/api/synchronizations-logs/${id}`
+	const refreshSynchronizationLogs = async (filters: { page?: number; limit?: number; [key: string]: unknown } = {}) => {
+		const logStore = useLogStore()
+		logStore.setLogsLoading(true)
 
-		if (search && search !== '') {
-			endpoint = endpoint + '?_search=' + search
+		try {
+			// Build query parameters
+			const queryParams = new URLSearchParams()
+
+			// Add pagination parameters with defaults using correct backend parameter names
+			const page = filters.page || 1
+			const limit = filters.limit || 20
+			queryParams.append('_page', page.toString())
+			queryParams.append('_limit', limit.toString())
+
+			// Only add synchronization_id if not already present in filters
+			if (!('synchronization_id' in filters) && synchronizationItem.value?.id) {
+				queryParams.append('synchronization_id', synchronizationItem.value.id.toString())
+			}
+
+			// Add other filters (exclude page and limit to avoid duplication)
+			Object.entries(filters).forEach(([key, value]) => {
+				if (key !== 'page' && key !== 'limit' && value !== null && value !== undefined && value !== '') {
+					queryParams.append(key, value.toString())
+				}
+			})
+
+			// Build the endpoint
+			const endpoint = `/index.php/apps/openconnector/api/synchronizations/logs?${queryParams.toString()}`
+			const response = await fetch(endpoint, {
+				method: 'GET',
+			})
+			const data = await response.json()
+			setSynchronizationLogs(data)
+			return { response, data }
+		} catch (error) {
+			console.error('Error refreshing synchronization logs:', error)
+			throw error
+		} finally {
+			logStore.setLogsLoading(false)
 		}
+	}
 
-		const response = await fetch(endpoint, {
-			method: 'GET',
-		})
+	// Add new method for fetching log statistics
+	const fetchSynchronizationLogsStatistics = async () => {
+		const logStore = useLogStore()
+		logStore.setLogsLoading(true)
 
-		const data = await response.json() as TSynchronization[]
-
-		setSynchronizationLogs(data)
-
-		return { response, data }
+		try {
+			const endpoint = '/index.php/apps/openconnector/api/synchronizations/logs/statistics'
+			const response = await fetch(endpoint, {
+				method: 'GET',
+			})
+			const data = await response.json()
+			return { response, data }
+		} catch (error) {
+			console.error('Error fetching synchronization log statistics:', error)
+			throw error
+		} finally {
+			logStore.setLogsLoading(false)
+		}
 	}
 
 	// synchronization actions
@@ -437,7 +512,7 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 
 		console.info('Testing synchronization...')
 
-		const endpoint = `/index.php/apps/openconnector/api/synchronizations-test/${synchronizationItem.value.id}`
+		const endpoint = `/index.php/apps/openconnector/api/synchronizations/${synchronizationItem.value.id}/test`
 
 		const response = await fetch(endpoint, {
 			method: 'POST',
@@ -450,7 +525,7 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 		setSynchronizationTest(data)
 
 		console.info('Synchronization tested')
-		refreshSynchronizationLogs(synchronizationItem.value.id)
+		refreshSynchronizationLogs({})
 
 		return { response, data }
 	}
@@ -462,7 +537,7 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 
 		console.info('Testing synchronization...')
 
-		const endpoint = `/index.php/apps/openconnector/api/synchronizations-run/${id}?test=${test}&force=${force}`
+		const endpoint = `/index.php/apps/openconnector/api/synchronizations/${id}/run?test=${test}&force=${force}`
 
 		const response = await fetch(endpoint, {
 			method: 'POST',
@@ -475,7 +550,7 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 		setSynchronizationRun(data)
 
 		console.info('Synchronization run')
-		refreshSynchronizationLogs(synchronizationItem.value.id)
+		refreshSynchronizationLogs({})
 
 		return { response, data }
 	}
@@ -498,6 +573,58 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 			})
 	}
 
+	/**
+	 * Delete a single synchronization log
+	 *
+	 * @param {string} id - The ID of the synchronization log to delete
+	 * @return {Promise<{ response: Response }>}
+	 */
+	const deleteSynchronizationLog = async (id: string): Promise<{ response: Response }> => {
+		if (!id) {
+			throw new MissingParameterError('id')
+		}
+
+		console.info('Deleting synchronization log...')
+
+		const endpoint = `/index.php/apps/openconnector/api/synchronizations/logs/${id}`
+
+		const response = await fetch(endpoint, {
+			method: 'DELETE',
+		})
+
+		return { response }
+	}
+
+	/**
+	 * Export synchronization logs
+	 *
+	 * @return {Promise<{ response: Response }>}
+	 */
+	const exportSynchronizationLogs = async (): Promise<{ response: Response }> => {
+		console.info('Exporting synchronization logs...')
+
+		const endpoint = '/index.php/apps/openconnector/api/synchronizations/logs/export'
+
+		const response = await fetch(endpoint, {
+			method: 'GET',
+		})
+
+		// Handle file download
+		if (response.ok) {
+			const blob = await response.blob()
+			const url = window.URL.createObjectURL(blob)
+			const a = document.createElement('a')
+			a.href = url
+			a.download = 'synchronization-logs.csv'
+			document.body.appendChild(a)
+			a.click()
+			window.URL.revokeObjectURL(url)
+			document.body.removeChild(a)
+		}
+
+		return { response }
+	}
+
 	return {
 		// state
 		synchronizationItem,
@@ -508,6 +635,7 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 		synchronizationLogs,
 		synchronizationSourceConfigKey,
 		synchronizationTargetConfigKey,
+		viewMode,
 
 		// setters and getters
 		setSynchronizationItem,
@@ -526,6 +654,8 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 		getSynchronizationSourceConfigKey,
 		setSynchronizationTargetConfigKey,
 		getSynchronizationTargetConfigKey,
+		setViewMode,
+		getViewMode,
 
 		// actions
 		refreshSynchronizationList,
@@ -534,8 +664,11 @@ export const useSynchronizationStore = defineStore('synchronization', () => {
 		saveSynchronization,
 		refreshSynchronizationContracts,
 		refreshSynchronizationLogs,
+		fetchSynchronizationLogsStatistics,
 		testSynchronization,
 		runSynchronization,
 		exportSynchronization,
+		deleteSynchronizationLog,
+		exportSynchronizationLogs,
 	}
 })

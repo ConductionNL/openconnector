@@ -163,14 +163,20 @@ class SynchronizationLogMapper extends QBMapper
 	 *
 	 * @param array $filters Optional filters to apply
 	 * @return int The total number of logs
+	 * @throws \OCP\DB\Exception Database operation exceptions
+	 *
+	 * @psalm-return int
+	 * @phpstan-return int
 	 */
 	public function getTotalCount(array $filters = []): int
 	{
 		$qb = $this->db->getQueryBuilder();
 
+		// Select count of all logs
 		$qb->select($qb->createFunction('COUNT(*) as count'))
-			->from('openconnector_synchronization_logs');
+		   ->from('openconnector_synchronization_logs');
 
+		// Apply filters if provided
 		foreach ($filters as $filter => $value) {
 			if ($value === 'IS NOT NULL') {
 				$qb->andWhere($qb->expr()->isNotNull($filter));
@@ -181,10 +187,10 @@ class SynchronizationLogMapper extends QBMapper
 			}
 		}
 
-		$result = $qb->executeQuery();
+		$result = $qb->execute();
 		$row = $result->fetch();
-		$result->closeCursor();
 
+		// Return the total count
 		return (int)$row['count'];
 	}
 

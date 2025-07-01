@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { Endpoint, TEndpoint } from '../../entities/index.js'
+import { TLog } from '../../entities/log/log.types.js'
 import { MissingParameterError } from '../../services/errors/index.js'
 import { importExportStore } from '../../store/store.js'
 
@@ -10,6 +11,10 @@ export const useEndpointStore = defineStore('endpoint', () => {
 	// state
 	const endpointItem = ref<Endpoint | null>(null)
 	const endpointList = ref<Endpoint[]>([])
+	const endpointLogs = ref([])
+	const loading = ref(false)
+	const error = ref(null)
+	const viewMode = ref<string>('cards')
 
 	// ################################
 	// ||    Setters and Getters     ||
@@ -74,6 +79,80 @@ export const useEndpointStore = defineStore('endpoint', () => {
 	 * @return {Endpoint[]} The endpoint list
 	 */
 	const getEndpointList = (): Endpoint[] => endpointList.value as Endpoint[]
+
+	/**
+	 * Set the endpoint logs
+	 * @param logs - The logs to set
+	 */
+	const setEndpointLogs = (logs: TLog[]): void => {
+		endpointLogs.value = logs
+	}
+
+	/**
+	 * Set the view mode.
+	 * @param mode - The view mode to set
+	 */
+	const setViewMode = (mode: string) => {
+		viewMode.value = mode
+		console.info('Endpoint view mode set to ' + mode)
+	}
+
+	/**
+	 * Get the view mode.
+	 *
+	 * @description
+	 * Returns the currently active view mode. Note that the return value is non-reactive.
+	 *
+	 * For reactive usage, either:
+	 * 1. Reference the `viewMode` state directly:
+	 * ```js
+	 * const viewMode = useEndpointStore().viewMode // reactive state
+	 * ```
+	 * 2. Or wrap in a `computed` property:
+	 * ```js
+	 * const viewMode = computed(() => useEndpointStore().getViewMode())
+	 * ```
+	 *
+	 * @return {string} The active view mode
+	 */
+	const getViewMode = (): string => viewMode.value as string
+
+	/**
+	 * Refresh the endpoint logs
+	 * @param filters - Optional filters to apply to the logs
+	 * @return {Promise<{ response: Response, data: object[] }>} The response and data
+	 */
+	const refreshEndpointLogs = async (filters = {}) => {
+		loading.value = true
+		error.value = null
+		try {
+			// Build query parameters
+			const queryParams = new URLSearchParams()
+			// Only add endpoint_id if not already present in filters
+			if (!('endpoint_id' in filters) && endpointItem.value?.id) {
+				queryParams.append('endpoint_id', endpointItem.value.id.toString())
+			}
+			// Add other filters
+			Object.entries(filters).forEach(([key, value]) => {
+				if (value !== null && value !== undefined && value !== '') {
+					queryParams.append(key, value.toString())
+				}
+			})
+			// Build the endpoint
+			const endpoint = `/index.php/apps/openconnector/api/endpoints/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`
+			const response = await fetch(endpoint, {
+				method: 'GET',
+			})
+			const data = await response.json()
+			setEndpointLogs(data)
+			return { response, data }
+		} catch (err) {
+			error.value = err.message || 'Failed to load endpoint logs'
+			throw err
+		} finally {
+			loading.value = false
+		}
+	}
 
 	// ################################
 	// ||          Actions           ||
@@ -238,17 +317,25 @@ export const useEndpointStore = defineStore('endpoint', () => {
 		// state
 		endpointItem,
 		endpointList,
+		endpointLogs,
+		loading,
+		error,
+		viewMode,
 		// setter / getter
 		setEndpointItem,
 		getEndpointItem,
 		setEndpointList,
 		getEndpointList,
+		setEndpointLogs,
+		setViewMode,
+		getViewMode,
 		// actions
 		refreshEndpointList,
 		fetchEndpoint,
 		deleteEndpoint,
 		saveEndpoint,
 		exportEndpoint,
+		refreshEndpointLogs,
 	}
 
 })

@@ -5,6 +5,7 @@ namespace OCA\OpenConnector\Service\ConfigurationHandlers;
 use OCA\OpenConnector\Db\Synchronization;
 use OCA\OpenConnector\Db\SynchronizationMapper;
 use OCP\AppFramework\Db\Entity;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Class SynchronizationHandler
@@ -133,6 +134,11 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
         foreach ($idArrays as $arrayKey) {
             if (isset($syncArray[$arrayKey]) && is_array($syncArray[$arrayKey])) {
                 $syncArray[$arrayKey] = array_map(function($id) use ($mappings, $arrayKey) {
+                    // Check for valid id, must be numeric or uuid
+                    if (is_scalar($id) === false || (is_numeric($id) === false && Uuid::isValid($id) === false)) {
+                        return $id;
+                    }
+
                     // For actions, use rule mapping
                     if ($arrayKey === 'actions' && isset($mappings['rule']['idToSlug'][$id])) {
                         return $mappings['rule']['idToSlug'][$id];
