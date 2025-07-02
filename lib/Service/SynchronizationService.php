@@ -674,8 +674,12 @@ class SynchronizationService
 
 		// Temporary fix,
 		if (isset($extraDataConfig['extraDataConfigPerResult']) === true) {
-			$dotObject = new Dot($extraData);
-			$results = $dotObject->get($extraDataConfig['resultsLocation']);
+
+			$results = $extraData;
+			if (isset($extraDataConfig['resultsLocation']) === true) {
+				$dotObject = new Dot($extraData);
+				$results = $dotObject->get($extraDataConfig['resultsLocation']);
+			}
 
 			foreach ($results as $key => $result) {
 				$results[$key] = $this->fetchExtraDataForObject(synchronization: $synchronization, extraDataConfig: $extraDataConfig['extraDataConfigPerResult'], object: $result, originId: $originId);
