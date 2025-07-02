@@ -406,9 +406,11 @@ class CallService
 		$time_start = microtime(true);
 
         if ($source->getType() === 'soap') {
+			// If the source type is SOAP, use the soap service.
+			// Warning: This functionality requires ext-soap and ext-xsd.
             $soapService = new SoapService($this->cookieJar);
 
-            $response = $soapService->createMessage($source, $endpoint, $config);
+            $response = $soapService->callSoapSource(source: $source, soapAction: $endpoint, config: $config);
         } else {
             try {
                 if ($asynchronous === false) {

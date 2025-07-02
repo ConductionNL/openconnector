@@ -30,14 +30,40 @@ use Soap\Wsdl\Loader\StreamWrapperLoader;
 use stdClass;
 use Symfony\Component\Config\Definition\Exception\Exception;
 
+/**
+ * This class contains a basic SOAP client for communicating with SOAP Sources using a WSDL
+ *
+ * It manages the execution of SOAP requests using the Guzzle HTTP client for performing the actual HTTP requests.
+ */
 class SOAPService
 {
+	/**
+	 * @var Client The GuzzleClient used by the SOAP engine
+	 */
     private Client $client;
-    private ResponseInterface $response;
+
+	/**
+	 * @var Psr18Transport The PSR-18 transport layer of the SOAP engine
+	 */
 	private Psr18Transport $transport;
+
+	/**
+	 * Constructor
+	 *
+	 * @param CookieJar $cookieJar A cookie jar to pass on cookies between SOAP requests.
+	 */
 	public function __construct(private readonly CookieJar $cookieJar) {
 	}
 
+	/**
+	 * Setup an SOAP engine for a source.
+	 *
+	 * @param Source $source The source to call.
+	 * @param array $passedConfig The config to setup the HTTP client with.
+	 *
+	 * @return Engine The resulting soap engine.
+	 * @throws \SoapFault
+	 */
     public function setupEngine(Source $source, array $passedConfig): Engine {
 
         $config = $source->getConfiguration();
@@ -78,37 +104,53 @@ class SOAPService
         return $engine;
     }
 
+	/**
+	 * Parse an XML snippet with its own dynamic XSD
+	 *
+	 * @param string $xmlString The XML split in two parts: the XSD and the data to parse.
+	 *
+	 * @return \SimpleXMLElement The resulting XML element.
+	 */
 	private function parseDynamicXsd (string $xmlString): \SimpleXMLElement
 	{
+		// @TODO: This is awfully specific, to be replaced by a more generic fix for faulty XSD.
 		$xmlString = '<any>'.str_replace('NewDataSet', 'DocumentElement', $xmlString).'</any>';
 
 		$dom = new DOMDocument();
 		$dom->loadXML($xmlString);
 
-// 3. OPTIONAL: Validate against schema in the XML itself (or use an external .xsd file)
+		// 3. OPTIONAL: Validate against schema in the XML itself (or use an external .xsd file)
 		libxml_use_internal_errors(true);
 		if ($dom->schemaValidateSource($xmlString) === true) {
 		} else {
 			libxml_clear_errors();
 		}
 
-// 4. Parse the data inside diffgram
+		// 4. Parse the data inside diffgram
 		$simpleXml = simplexml_load_string($xmlString, 'SimpleXMLElement', 0,
 			'diffgr', true);
 
-// The diffgram will be under the 'diffgram' namespace
+		// The diffgram will be under the 'diffgram' namespace
 		$namespaces = $simpleXml->getNamespaces(true);
 		$diffgram = $simpleXml->children($namespaces['diffgr'])->diffgram;
 
-// Or just get the DocumentElement directly
+		// Or just get the DocumentElement directly
 		$documentElement = $simpleXml->xpath('//DocumentElement')[0];
-
-// Loop through QueryExecResult rows
 
 		return $documentElement->QueryExecResult;
 	}
 
-    public function createMessage(Source $source, string $endpoint, array $config): Response
+	/**
+	 * Call a soap source with provided configuration.
+	 *
+	 * @param Source $source The SOAP source to call.
+	 * @param string $soapAction The SOAPAction to call (most comparable to an endpoint in REST).
+	 * @param array $config The configuration to use when calling the source.
+	 *
+	 * @return Response The resulting response.
+	 * @throws \SoapFault
+	 */
+    public function callSoapSource(Source $source, string $soapAction, array $config): Response
     {
 
         $body = json_decode(json: $config['body'], associative: true);
@@ -123,16 +165,16 @@ class SOAPService
         $engine = $this->setupEngine(source: $source, passedConfig: $config);
 
         // In SOAP the endpoint is decided by the WSDL, however, the SOAP method can be derived from the endpoint property of the call.
+        $result = $engine->request($soapAction, $body);
 
-        $result = $engine->request($endpoint, $body);
-
+		// @TODO: This must be replaced by an generic detector of fields that should be parsed in the parseDynamicXsd-function.
 		if(isset($result->{'QueryExecute2Result'}) === true && isset($result->{'QueryExecute2Result'}->any) === true) {
 
 			$result->{'QueryExecute2Result'} = $this->parseDynamicXsd($result->{'QueryExecute2Result'}->any);
 		}
 
-
-		if(isset($result->FileBytes) === true) {
+		// @TODO: The detection of binary data fields should be dynamic
+		if(isset($result->FileBytes) === true && json_encode($result) === false) {
 			$result->FileBytes = base64_encode($result->FileBytes);
 		}
 
