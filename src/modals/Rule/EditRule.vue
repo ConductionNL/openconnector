@@ -767,7 +767,6 @@ export default {
 						filenamePath: ruleStore.ruleItem.configuration?.fetch_file?.filenamePath ?? null,
 						fileExtension: ruleStore.ruleItem.configuration?.fetch_file?.fileExtension ?? null,
 
-
 					},
 					write_file: {
 						filePath: ruleStore.ruleItem.configuration?.write_file?.filePath ?? '',
@@ -1309,10 +1308,10 @@ export default {
 					tags: this.ruleItem.configuration.fetch_file.tags,
 					sourceConfiguration: this.ruleItem.configuration.fetch_file.sourceConfiguration ? JSON.parse(this.ruleItem.configuration.fetch_file.sourceConfiguration) : [],
 					autoShare: this.ruleItem.configuration.fetch_file.autoShare,
-					endpoint:      this.ruleItem.configuration?.fetch_file?.endpoint ?? null,
-					contentPath:   this.ruleItem.configuration?.fetch_file?.contentPath ?? null,
-					originIdPath:  this.ruleItem.configuration?.fetch_file?.originIdPath ?? null,
-					filenamePath:  this.ruleItem.configuration?.fetch_file?.filenamePath ?? null,
+					endpoint: this.ruleItem.configuration?.fetch_file?.endpoint ?? null,
+					contentPath: this.ruleItem.configuration?.fetch_file?.contentPath ?? null,
+					originIdPath: this.ruleItem.configuration?.fetch_file?.originIdPath ?? null,
+					filenamePath: this.ruleItem.configuration?.fetch_file?.filenamePath ?? null,
 					fileExtension: this.ruleItem.configuration?.fetch_file?.fileExtension ?? null,
 
 				}
