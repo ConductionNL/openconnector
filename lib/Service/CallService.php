@@ -345,7 +345,7 @@ class CallService
 		}
 
 		if (isset($config['preRequest']) === true && $runningSupportRequest === false) {
-			$this->call(source: $source, endpoint: $config['preRequest']['endpoint'], config: $config['preRequest']['options'], runningSupportRequest: true);
+			$this->call(source: $source, endpoint: $config['preRequest']['endpoint'], config: $config['preRequest']['config'], runningSupportRequest: true);
 			unset($config['preRequest']);
 		}
 
@@ -478,7 +478,7 @@ class CallService
 		$callLog->setResponse($data['response']);
 
 		if (isset($postRequest) === true && $runningSupportRequest === false) {
-			$this->call(source: $source, endpoint: $postRequest['endpoint'], config: $postRequest['options'], runningSupportRequest: true);
+			$this->call(source: $source, endpoint: $postRequest['endpoint'], config: $postRequest['config'], runningSupportRequest: true);
 		}
 
 		return $callLog;

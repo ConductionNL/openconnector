@@ -1427,7 +1427,7 @@ class EndpointService
         if(isset($data['body']['isTest']) === true) {
             $test = $data['body']['isTest'];
         } elseif (isset($config['isTest']) === true) {
-            $force = $config['isTest'];
+            $test = $config['isTest'];
         } else {
             $test = false;
         }

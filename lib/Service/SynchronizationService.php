@@ -1410,19 +1410,17 @@ class SynchronizationService
 			$config['query'] = $query;
 		}
 
-		if (isset($sourceConfig['useDataAsRequestBody']) === true && $useDataAsRequestBody = filter_var($sourceConfig['useDataAsRequestBody'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === null) {
+		if (isset($sourceConfig['useDataAsRequestBody']) === true) {
 			$useDataAsRequestBody = $sourceConfig['useDataAsRequestBody'];
 		} else {
-			$useDataAsRequestBody = false;
+			$useDataAsRequestBody = null;
 		}
 
-		if ($useDataAsRequestBody === true) {
+		if ($useDataAsRequestBody === '#') {
 			$config['body'] = json_encode($data);
-		} else if (is_string($useDataAsRequestBody) === true) {
+		} else if (empty($useDataAsRequestBody) === false) {
 			$config['body'] = json_encode((new Dot($data))->get($useDataAsRequestBody));
 		}
-
-		echo($config['body']);
 
 		$currentPage = 1;
 
@@ -2678,14 +2676,11 @@ class SynchronizationService
 					$tags = [];
 					$published = null;
 
-					$endpointConfig = $config;
-					$endpointConfig['sourceConfiguration'] = $object['config'];
-
-					$endpoint = $this->getFileContext(config: $endpointConfig, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId, published: $published);
+					$endpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId, published: $published);
 					if ($endpoint === null) {
                         continue;
 					}
-					$this->fetchFile(source: $source, endpoint: $endpoint, config: $endpointConfig, objectId: $objectId, tags: $tags, filename: $filename, published: $published);
+					$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, filename: $filename, published: $published);
 				}
 				break;
 			// Array of just endpoints
