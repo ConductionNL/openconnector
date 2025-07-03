@@ -153,9 +153,12 @@ class SynchronizationService
 		$targetConfig = $synchronization->getTargetConfig();
 
 		$originId = null;
-		if (is_array($object) === true && isset($object['id']) === true) {
+		if (is_array($object) === true && isset($object['@self']['id']) === true) {
+			$originId = $object['@self']['id'];
+		} elseif (is_array($object) === true && isset($object['id']) === true) {
 			$originId = $object['id'];
 		}
+
 		if ($object instanceof \OCA\OpenRegister\Db\ObjectEntity === true && $object->getUuid()) {
 			$originId = $object->getUuid();
 			$object = $object->getObject();
@@ -671,8 +674,12 @@ class SynchronizationService
 
 		// Temporary fix,
 		if (isset($extraDataConfig['extraDataConfigPerResult']) === true) {
-			$dotObject = new Dot($extraData);
-			$results = $dotObject->get($extraDataConfig['resultsLocation']);
+
+			$results = $extraData;
+			if (isset($extraDataConfig['resultsLocation']) === true) {
+				$dotObject = new Dot($extraData);
+				$results = $dotObject->get($extraDataConfig['resultsLocation']);
+			}
 
 			foreach ($results as $key => $result) {
 				$results[$key] = $this->fetchExtraDataForObject(synchronization: $synchronization, extraDataConfig: $extraDataConfig['extraDataConfigPerResult'], object: $result, originId: $originId);
@@ -1922,7 +1929,9 @@ class SynchronizationService
 		?string 				$mutationType = null
 	): SynchronizationContract
 	{
+		$targetId = $contract->getTargetId();
 		$target = $this->sourceMapper->find(id: $synchronization->getTargetId());
+
         if ($targetObject !== null) {
             $object = $targetObject;
         }
@@ -1953,8 +1962,10 @@ class SynchronizationService
 			// @todo check for {{targetId}} in endpoint and replace
 			if (isset($targetConfig['deleteEndpoint']) === true) {
 				$endpoint = $targetConfig['deleteEndpoint'];
+				$endpoint = str_replace(search: '{{ originId }}', replace: $sourceId, subject: $endpoint);
+				$endpoint = str_replace(search: '{{originId}}', replace: $sourceId, subject: $endpoint);
 			} else {
-				$endpoint .= '/'.$contract->getTargetId();
+				$endpoint .= "/$targetId";
 			}
 
 			if (isset($targetConfig['deleteMethod']) === true) {
@@ -1978,8 +1989,7 @@ class SynchronizationService
 		// @TODO For now only JSON APIs are supported
 		$targetConfig['json'] = $object;
 
-		if ($contract->getTargetId() === null) {
-            $targetId = null;
+		if ($targetId === null) {
             if (isset($targetConfig['idInRequestBody']) === true) {
                 $targetId = $targetConfig['json'][$targetConfig['idInRequestBody']];
             }
@@ -1987,13 +1997,14 @@ class SynchronizationService
 
 			$body = json_decode($response['body'], true);
 
-            if ($targetId === null) {
-                $targetId = $body['id'];
+			$targetId = $body['id'];
 
-                if (isset($targetConfig['idposition']) === true) {
-					$bodyDot = new Dot($body);
-					$targetId = $bodyDot->get($targetConfig['idposition']);
-                }
+            $bodyDot = new Dot($body);
+			if (isset($targetConfig['idPosition']) === true) {
+				$targetId = $bodyDot->get($targetConfig['idPosition']);
+			} else if (isset($targetConfig['idposition']) === true) {
+                // Backwards compatible if older sync still use idposition (lowercase)
+				$targetId = $bodyDot->get($targetConfig['idposition']);
             }
 
 			$contract->setTargetId($targetId);
@@ -2001,21 +2012,27 @@ class SynchronizationService
 		}
 
 		$method = 'PUT';
-		$endpoint .= '/'.$contract->getTargetId();
-
 
 		if (isset($targetConfig['updateEndpoint']) === true) {
 			$endpoint = $targetConfig['updateEndpoint'];
+			$endpoint = str_replace(search: '{{ originId }}', replace: $targetId, subject: $endpoint);
+			$endpoint = str_replace(search: '{{originId}}', replace: $targetId, subject: $endpoint);
+		} else {
+			$endpoint .= "/$targetId";
 		}
 
 		if (isset($targetConfig['updateMethod']) === true) {
 			$method = $targetConfig['updateMethod'];
 		}
 
+		if (isset($targetConfig['updateMapping']) === true) {
+        	$mapping = $this->mappingService->getMapping($targetConfig['updateMapping']);
+            $targetConfig['json'] = $this->processMapping(mapping: $mapping, data: $targetConfig['json']);
+		}
 
 		$response = $this->callService->call(source: $target, endpoint: $endpoint, method: $method, config: $targetConfig)->getResponse();
 
-		$body = array_merge(json_decode($response['body']), ['targetId' => $contract->getTargetId()], true);
+		$body = array_merge(json_decode($response['body'], true), ['targetId' => $targetId]);
         $targetObject = $body;
 
 		return $contract;
