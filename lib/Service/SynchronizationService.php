@@ -1999,10 +1999,13 @@ class SynchronizationService
 
 			$targetId = $body['id'];
 
+            $bodyDot = new Dot($body);
 			if (isset($targetConfig['idPosition']) === true) {
-				$bodyDot = new Dot($body);
 				$targetId = $bodyDot->get($targetConfig['idPosition']);
-			}
+			} else if (isset($targetConfig['idposition']) === true) {
+                // Backwards compatible if older sync still use idposition (lowercase)
+				$targetId = $bodyDot->get($targetConfig['idposition']);
+            }
 
 			$contract->setTargetId($targetId);
 			return $contract;
