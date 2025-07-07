@@ -517,7 +517,7 @@ class EndpointService
             $endpoint = array_shift($endpoints);
 
             $pathArray = $this->getPathParameters(endpointArray: $endpoint->getEndpointArray(), path: $parsedPath);
-            $parameters[$rewriteParameter] = end($pathArray);
+            $parameters[$rewriteParameter] = [$parameters[$rewriteParameter], end($pathArray)];
 
         }
 
