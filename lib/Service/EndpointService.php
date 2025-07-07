@@ -495,6 +495,9 @@ class EndpointService
 
         $rewriteParameters = array_intersect(array_keys($parameters), array_keys($schema->getProperties()));
 
+//        var_dump($rewriteParameters);
+
+
         foreach($rewriteParameters as $rewriteParameter) {
             if (
                 filter_var($parameters[$rewriteParameter], FILTER_VALIDATE_URL) === false
@@ -502,6 +505,13 @@ class EndpointService
             ) {
                 continue;
             }
+
+//            var_dump($schema->getProperties()[$rewriteParameter]);
+
+//            if (isset($schema->getProperties()[$rewriteParameter]) === true && $schema->getProperties()[$rewriteParameter]['format'] === 'uri') {
+//                var_dump($parameters[$rewriteParameter]);
+//                continue;
+//            }
 
             $parsedPath = parse_url($parameters[$rewriteParameter], PHP_URL_PATH);
             $parsedPath = substr($parsedPath, 33);
@@ -517,7 +527,7 @@ class EndpointService
             $endpoint = array_shift($endpoints);
 
             $pathArray = $this->getPathParameters(endpointArray: $endpoint->getEndpointArray(), path: $parsedPath);
-            $parameters[$rewriteParameter] = end($pathArray);
+            $parameters[$rewriteParameter] = [$parameters[$rewriteParameter], end($pathArray)];
 
         }
 
