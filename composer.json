@@ -38,6 +38,8 @@
 		"elasticsearch/elasticsearch": "^v8.14.0",
 		"guzzlehttp/guzzle": "^7.0",
 		"jwadhams/json-logic-php": "^1.5",
+		"php-soap/ext-soap-engine": "^1.7",
+		"php-soap/psr18-transport": "^1.7",
 		"react/async": "^4.3",
 		"react/event-loop": "^1.5",
 		"react/promise": "^3.2",
@@ -59,7 +61,7 @@
 		"optimize-autoloader": true,
 		"sort-packages": true,
 		"platform": {
-			"php": "8.1"
+			"php": "8.3"
 		}
 	}
 }
