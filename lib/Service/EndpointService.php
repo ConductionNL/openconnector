@@ -1218,7 +1218,7 @@ class EndpointService
             } catch (DoesNotExistException $exception) {
                 continue;
             }
-            $extendedParameters->add($property, $this->objectService->getOpenRegisters()->renderEntity($object->jsonSerialize()));
+            $extendedParameters->add($property, $object->jsonSerialize());
 
         }
 
@@ -1294,7 +1294,7 @@ class EndpointService
             $object = $this->objectService->getOpenRegisters()->unlockObject(identifier: $objectId);
         }
 
-        $data['body'] = $this->objectService->getOpenRegisters()->renderEntity(entity: $object->jsonSerialize());
+        $data['body'] = $object->jsonSerialize();
 
         return $data;
     }
