@@ -1107,12 +1107,43 @@ class SynchronizationService
     
             } elseif ($subConfig === 'true' && is_string($object[$key]) === true) {
                 // Leaf: value is a string, marked for replacement
-                $object[$key] = $this->synchronizationContractMapper->findTargetIdByOriginId($object[$key]);
+            	$object[$key] = $this->replaceIdInString($object[$key]);
             }
         }
     
         return $object;
     }
+
+	/**
+	 * Replaces a UUID within a string with a mapped target ID using the synchronization mapper.
+	 *
+	 * This method scans the input string for the first valid UUID (v4 or general format),
+	 * validates it using Uuid::isValid(), and replaces only that UUID with the mapped target ID.
+	 * If no valid UUID is found, the original string is returned unchanged.
+	 *
+	 * Examples:
+	 * - '80c24f50-4dc9-4937-b99e-9c253b5dfe8a' → 'abc123'
+	 * - 'https://example.com/entity/80c24f50-4dc9-4937-b99e-9c253b5dfe8a' → 'https://example.com/entity/abc123'
+	 * - 'no-id-here' → 'no-id-here'
+	 *
+	 * @param string $value The string potentially containing a UUID to replace.
+	 * @return string The string with the UUID replaced if found and valid, otherwise the original string.
+	 */
+	private function replaceIdInString(string $value): string
+	{
+		// Look for uuid in the string
+		if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches)) {
+			$originId = $matches[0];
+
+			if (Uuid::isValid($originId) === true) {
+				$targetId = $this->synchronizationContractMapper->findTargetIdByOriginId($originId);
+
+				return str_replace($originId, $targetId, $value);
+			}
+		}
+
+		return $value;
+	}
 
 	/**
 	 * Handles the synchronization of subObjects based on source configuration.
