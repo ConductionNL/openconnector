@@ -2704,7 +2704,7 @@ class SynchronizationService
 		}
 
         // Start fire-and-forget file fetching based on endpoint type
-        $this->startAsyncFileFetching($source, $config, $endpoint, $objectId, $rule->getId());
+        $this->startAsyncFileFetching(source: $source, config: $config, endpoint: $endpoint, objectId: $objectId, ruleId: $rule->getId());
 
         // Return data immediately with placeholder values
         if (isset($config['setPlaceholder']) === false || (isset($config['setPlaceholder']) === true && $config['setPlaceholder'] != false)) {
@@ -2760,6 +2760,7 @@ class SynchronizationService
             $filename = null;
             $tags = [];
             $published = null;
+            $registerId = null;
 
             switch ($this->getArrayType($endpoint)) {
                 // Single file endpoint
@@ -2770,11 +2771,11 @@ class SynchronizationService
                 // Array of object that has file(s)
                 case 'Associative array':
                     $contextObjectId = null; // Separate variable to avoid overwriting the original
-                    $actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $contextObjectId, published: $published);
+                    $actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $contextObjectId, published: $published, registerId: $registerId);
                     // Use context object ID if specified, otherwise fall back to the original object ID
                     $targetObjectId = $contextObjectId ?? $objectId;
                     if ($actualEndpoint !== null) {
-                        $this->fetchFileSafely($source, $actualEndpoint, $config, $targetObjectId, $filename, $tags, $published);
+                        $this->fetchFileSafely($source, $actualEndpoint, $config, $targetObjectId, $filename, $tags, $published, $registerId);
                     }
                     break;
 
@@ -2807,13 +2808,14 @@ class SynchronizationService
 	 * @param string|null $filename Optional filename to assign to the file.
 	 * @param array $tags Optional tags to assign to the file.
 	 * @param string|null $published Optional published status to determine if file should be published.
+	 * @param int|null $registerId Optional published status to determine if file should be published.
 	 *
 	 * @return void
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 * @psalm-param array<string> $tags
 	 */
-	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = [], ?string $published = null): void
+	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = [], ?int $published = null, ?int $registerId = null): void
 	{
         try {
             // Execute the file fetching operation
@@ -2824,7 +2826,8 @@ class SynchronizationService
                 objectId: $objectId,
                 tags: $tags,
                 filename: $filename,
-                published: $published
+                published: $published,
+                registerId: $registerId
             );
         } catch (Exception $e) {
             // Log error with detailed information but don't throw
@@ -3488,6 +3491,7 @@ class SynchronizationService
 			$tags = [];
 			$contextObjectId = null;
 			$actualEndpoint = null;
+			$registerId = null;
 
 			// Handle different endpoint types
 			if (is_array($endpoint)) {
@@ -3497,7 +3501,8 @@ class SynchronizationService
 					endpoint: $endpoint,
 					filename: $filename,
 					tags: $tags,
-					objectId: $contextObjectId
+					objectId: $contextObjectId,
+                    registerId: $registerId
 				);
 			} else {
 				// This is a simple endpoint string (indexed array case)
@@ -3535,7 +3540,8 @@ class SynchronizationService
 						config: $config,
 						objectId: $targetObjectId,
 						tags: $tags,
-						filename: $filename
+						filename: $filename,
+                        registerId: $registerId
 					);
 				} catch (Exception $e) {
 					error_log("Failed to fetch file from endpoint {$actualEndpoint}: " . $e->getMessage());
