@@ -2337,6 +2337,8 @@ class SynchronizationService
 	 * @param string $endpoint The endpoint for the file.
 	 * @param array $config The configuration of the action.
 	 * @param string $objectId The id of the object the file belongs to.
+	 * @param int| $objectId The id of the object the file belongs to.
+	 * @param string $registerId The id of the register the object belongs to.
      * @param array $tags Tags to assign to the file.
      * @param string|null $filename Filename to assign to the file.
 	 *
@@ -2350,7 +2352,7 @@ class SynchronizationService
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
 	 */
-	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?array $tags = [], ?string $filename = null, ?string $published = null): string
+	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?int $registerId = null, ?array $tags = [], ?string $filename = null, ?string $published = null): string
 	{
 		$originalEndpoint = $endpoint;
 		$endpoint = str_contains(haystack: $endpoint, needle: $source->getLocation()) === true
@@ -2418,7 +2420,7 @@ class SynchronizationService
 			// If the object cannot be found, continue with register/schema/objectId combination
 			$register = $config['register'] ?? null;
 			$schema   = $config['schema'] ?? null;
-			$file = $fileService->addFile(objectEntity: $objectId, fileName: $filename, content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false, tags: $tags, register: $register, schema: $schema);
+			$file = $fileService->addFile(objectEntity: $objectId, registerId: $registerId, fileName: $filename, content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false, tags: $tags, register: $register, schema: $schema);
 			
 			// For the addFile case, we'll need to get the object entity to publish
 			if ($shouldPublish && $file !== null) {
@@ -2481,10 +2483,11 @@ class SynchronizationService
 	 * @param array|null  &$tags     A reference to an array of tags (if available) that will be updated.
 	 * @param string|null  &$objectId     A reference to the object id (if available) that the file will be attached to.
 	 * @param string|null  &$published     A reference to the published status (if available) that will be updated.
+	 * @param int|null  &$registerId     A reference to the registerId (if available) that will be updated.
 	 *
 	 * @return string The extracted endpoint from the data.
 	 */
-	private function getFileContext(array $config, mixed $endpoint, ?string &$filename = null, ?array &$tags = [], ?string &$objectId = null, ?string &$published = null)
+	private function getFileContext(array $config, mixed $endpoint, ?string &$filename = null, ?array &$tags = [], ?string &$objectId = null, ?string &$published = null, ?int &$registerId = null)
 	{
 		$dataDot = new Dot($endpoint);
 		if (isset($config['objectIdPath']) === true && empty($config['objectIdPath']) === false) {
@@ -2552,6 +2555,11 @@ class SynchronizationService
 			// Extract published status if available
 			if (isset($endpoint['published']) === true) {
 				$published = $endpoint['published'];
+			}
+
+			// Extract published status if available
+			if (isset($endpoint['registerId']) === true) {
+				$registerId = $endpoint['registerId'];
 			}
 
 			// Check if endpoint exists before returning it
@@ -2655,6 +2663,7 @@ class SynchronizationService
 		$filename = null;
 		$tags = [];
 		$published = null;
+        $registerId = null;
 		switch ($this->getArrayType($endpoint)) {
 			// Single file endpoint
 			case 'Not array':
@@ -2662,11 +2671,11 @@ class SynchronizationService
 				break;
 			// Array of object that has file(s)
 			case 'Associative array':
-				$endpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published);
+				$endpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
 				if ($endpoint === null) {
                     return $dataDot->jsonSerialize();
 				}
-				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, filename: $filename, published: $published);
+				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
 				break;
 			// Array of object(s) that has file(s)
 			case "Multidimensional array":
@@ -2674,11 +2683,12 @@ class SynchronizationService
 					$filename = null;
 					$tags = [];
 					$published = null;
-					$endpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId, published: $published);
+					$registerId = null;
+					$endpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
 					if ($endpoint === null) {
                         continue;
 					}
-					$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, filename: $filename, published: $published);
+					$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
 				}
 				break;
 			// Array of just endpoints
@@ -2687,7 +2697,8 @@ class SynchronizationService
 					$filename = null;
 					$tags = [];
 					$published = null;
-					$this->fetchFile(source: $source, endpoint: $childEndpoint, config: $config, objectId: $objectId, tags: $tags, published: $published);
+					$registerId = null;
+					$this->fetchFile(source: $source, endpoint: $childEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, published: $published);
 				}
 				break;
 		}
