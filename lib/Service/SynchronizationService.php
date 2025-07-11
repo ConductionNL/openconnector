@@ -2410,7 +2410,7 @@ class SynchronizationService
 			// Publish the file if needed
 			if ($shouldPublish && $file !== null) {
 				try {
-					$fileService->publishFile(object: $objectEntity, filePath: $filename);
+					$fileService->publishFile(object: $objectEntity, file: $filename);
 				} catch (Exception $e) {
 					// Log but don't fail the entire operation
 					error_log("Failed to publish file {$filename} for object {$objectId}: " . $e->getMessage());
@@ -2427,7 +2427,7 @@ class SynchronizationService
 				try {
 					$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
 					$objectEntity = $objectService->findByUuid(uuid: $objectId);
-					$fileService->publishFile(object: $objectEntity, filePath: $filename);
+					$fileService->publishFile(object: $objectEntity, file: $filename);
 				} catch (Exception $e) {
 					// Log but don't fail the entire operation
 					error_log("Failed to publish file {$filename} for object {$objectId}: " . $e->getMessage());
