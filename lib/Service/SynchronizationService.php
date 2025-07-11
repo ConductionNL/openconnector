@@ -2338,7 +2338,7 @@ class SynchronizationService
 	 * @param array $config The configuration of the action.
 	 * @param string $objectId The id of the object the file belongs to.
 	 * @param int| $objectId The id of the object the file belongs to.
-	 * @param string $registerId The id of the register the object belongs to.
+	 * @param int|string|null $registerId The id of the register the object belongs to.
      * @param array $tags Tags to assign to the file.
      * @param string|null $filename Filename to assign to the file.
 	 *
@@ -2352,7 +2352,7 @@ class SynchronizationService
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
 	 */
-	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?int $registerId = null, ?array $tags = [], ?string $filename = null, ?string $published = null): string
+	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, int|string|null $registerId = null, ?array $tags = [], ?string $filename = null, ?string $published = null): string
 	{
 		$originalEndpoint = $endpoint;
 		$endpoint = str_contains(haystack: $endpoint, needle: $source->getLocation()) === true
@@ -2420,7 +2420,7 @@ class SynchronizationService
 			// If the object cannot be found, continue with register/schema/objectId combination
 			$register = $config['register'] ?? null;
 			$schema   = $config['schema'] ?? null;
-			$file = $fileService->addFile(objectEntity: $objectId, registerId: $registerId, fileName: $filename, content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false, tags: $tags, register: $register, schema: $schema);
+			$file = $fileService->addFile(objectEntity: $objectId, fileName: $filename, content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false, tags: $tags, register: $register, schema: $schema, registerId: $registerId);
 			
 			// For the addFile case, we'll need to get the object entity to publish
 			if ($shouldPublish && $file !== null) {
@@ -2483,11 +2483,11 @@ class SynchronizationService
 	 * @param array|null  &$tags     A reference to an array of tags (if available) that will be updated.
 	 * @param string|null  &$objectId     A reference to the object id (if available) that the file will be attached to.
 	 * @param string|null  &$published     A reference to the published status (if available) that will be updated.
-	 * @param int|null  &$registerId     A reference to the registerId (if available) that will be updated.
+	 * @param int|string|null  &$registerId     A reference to the registerId (if available) that will be updated.
 	 *
 	 * @return string The extracted endpoint from the data.
 	 */
-	private function getFileContext(array $config, mixed $endpoint, ?string &$filename = null, ?array &$tags = [], ?string &$objectId = null, ?string &$published = null, ?int &$registerId = null)
+	private function getFileContext(array $config, mixed $endpoint, ?string &$filename = null, ?array &$tags = [], ?string &$objectId = null, ?string &$published = null, int|string|null &$registerId = null)
 	{
 		$dataDot = new Dot($endpoint);
 		if (isset($config['objectIdPath']) === true && empty($config['objectIdPath']) === false) {
@@ -2734,7 +2734,7 @@ class SynchronizationService
 	{
         // Execute file fetching immediately but with error isolation
         // This provides "fire-and-forget" behavior without complex ReactPHP setup
-        $this->executeAsyncFileFetching($source, $config, $endpoint, $objectId, $ruleId);
+        $this->executeAsyncFileFetching(source: $source, config: $config, endpoint: $endpoint, objectId: $objectId, ruleId: $ruleId);
 	}
 
 	/**
@@ -2775,7 +2775,7 @@ class SynchronizationService
                     // Use context object ID if specified, otherwise fall back to the original object ID
                     $targetObjectId = $contextObjectId ?? $objectId;
                     if ($actualEndpoint !== null) {
-                        $this->fetchFileSafely($source, $actualEndpoint, $config, $targetObjectId, $filename, $tags, $published, $registerId);
+                        $this->fetchFileSafely(source: $source, endpoint: $actualEndpoint, config: $config, objectId: $targetObjectId, filename: $filename, tags: $tags, published: $published, registerId: $registerId);
                     }
                     break;
 
@@ -2808,14 +2808,14 @@ class SynchronizationService
 	 * @param string|null $filename Optional filename to assign to the file.
 	 * @param array $tags Optional tags to assign to the file.
 	 * @param string|null $published Optional published status to determine if file should be published.
-	 * @param int|null $registerId Optional published status to determine if file should be published.
+	 * @param int|string|null $registerId Optional published status to determine if file should be published.
 	 *
 	 * @return void
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 * @psalm-param array<string> $tags
 	 */
-	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = [], ?int $published = null, ?int $registerId = null): void
+	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = [], ?int $published = null, int|string|null $registerId = null): void
 	{
         try {
             // Execute the file fetching operation
