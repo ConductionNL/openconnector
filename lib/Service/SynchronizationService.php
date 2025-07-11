@@ -2338,9 +2338,9 @@ class SynchronizationService
 	 * @param array $config The configuration of the action.
 	 * @param string $objectId The id of the object the file belongs to.
 	 * @param int| $objectId The id of the object the file belongs to.
-	 * @param int|string|null $registerId The id of the register the object belongs to.
      * @param array $tags Tags to assign to the file.
      * @param string|null $filename Filename to assign to the file.
+	 * @param int|string|null $registerId The id of the register the object belongs to.
 	 *
 	 * @return string If write is enabled: the url of the file, if write is disabled: the base64 encoded file.
 	 * @throws ContainerExceptionInterface
@@ -2352,7 +2352,7 @@ class SynchronizationService
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
 	 */
-	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, int|string|null $registerId = null, ?array $tags = [], ?string $filename = null, ?string $published = null): string
+	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?array $tags = [], ?string $filename = null, ?string $published = null, int|string|null $registerId = null): string
 	{
 		$originalEndpoint = $endpoint;
 		$endpoint = str_contains(haystack: $endpoint, needle: $source->getLocation()) === true
