@@ -40,7 +40,7 @@ class JobHandler implements ConfigurationHandlerInterface
 
         $jobArray = $entity->jsonSerialize();
         unset($jobArray['id'], $jobArray['uuid']);
-        
+
         // Ensure slug is set
         if (empty($jobArray['slug'])) {
             $jobArray['slug'] = $entity->getSlug();
@@ -75,8 +75,12 @@ class JobHandler implements ConfigurationHandlerInterface
     {
         // Convert slugs back to IDs in arguments JSON.
         if (isset($data['arguments'])) {
-            $arguments = json_decode($data['arguments'], true);
-            if (is_array($arguments)) {
+
+			if(is_array($data['arguments']) === false) {
+				$arguments = json_decode($data['arguments'], true);
+			}
+
+			if (is_array($arguments)) {
                 if (isset($arguments['synchronizationId']) && isset($mappings['synchronization']['slugToId'][$arguments['synchronizationId']])) {
                     $arguments['synchronizationId'] = $mappings['synchronization']['slugToId'][$arguments['synchronizationId']];
                 }
