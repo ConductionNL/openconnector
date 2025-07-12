@@ -192,6 +192,17 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 							</div>
 						</BTab>
 						<BTab title="Source config">
+							<div class="tabButtonsContainer">
+								<NcButton type="primary"
+									class="fullWidthButton"
+									aria-label="Add Source Config"
+									@click="synchronizationStore.setSynchronizationSourceConfigKey(null); navigationStore.setModal('editSynchronizationSourceConfig')">
+									<template #icon>
+										<Plus :size="20" />
+									</template>
+									Add Source Config
+								</NcButton>
+							</div>
 							<div v-if="Object.keys(synchronizationStore.synchronizationItem.sourceConfig).length">
 								<NcListItem v-for="(value, key, i) in synchronizationStore.synchronizationItem.sourceConfig"
 									:key="`${key}${i}`"
@@ -228,6 +239,17 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 							</div>
 						</BTab>
 						<BTab title="Target config">
+							<div class="tabButtonsContainer">
+								<NcButton type="primary"
+									class="fullWidthButton"
+									aria-label="Add Target Config"
+									@click="synchronizationStore.setSynchronizationTargetConfigKey(null); navigationStore.setModal('editSynchronizationTargetConfig')">
+									<template #icon>
+										<Plus :size="20" />
+									</template>
+									Add Target Config
+								</NcButton>
+							</div>
 							<div v-if="Object.keys(synchronizationStore.synchronizationItem.targetConfig).length">
 								<NcListItem v-for="(value, key, i) in synchronizationStore.synchronizationItem.targetConfig"
 									:key="`${key}${i}`"
@@ -336,7 +358,7 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcListItem } from '@nextcloud/vue'
+import { NcActions, NcActionButton, NcListItem, NcButton } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -351,6 +373,7 @@ import CardBulletedSettingsOutline from 'vue-material-design-icons/CardBulletedS
 import Play from 'vue-material-design-icons/Play.vue'
 import FileExportOutline from 'vue-material-design-icons/FileExportOutline.vue'
 import FileImportOutline from 'vue-material-design-icons/FileImportOutline.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
 
 import getValidISOstring from '../../services/getValidISOstring.js'
 
@@ -362,6 +385,8 @@ export default {
 		DotsHorizontal,
 		Pencil,
 		TrashCanOutline,
+		NcButton,
+		Plus,
 	},
 	data() {
 		return {
