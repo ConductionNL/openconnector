@@ -430,6 +430,13 @@ class UserService
         $customNameFields = $this->getCustomNameFields($user);
         $additionalInfo = array_merge($additionalInfo, $customNameFields);
         
+        // Get organization UUID from core namespace (set by SoftwareCatalog)
+        $userId = $user->getUID();
+        $organizationUuid = $this->config->getUserValue($userId, 'core', 'organisation', '');
+        if (!empty($organizationUuid)) {
+            $additionalInfo['organisation'] = $organizationUuid;
+        }
+        
         return $additionalInfo;
     }
 
