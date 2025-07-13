@@ -323,7 +323,6 @@ class AuthorizationService
      */
     public function authorizeApiKey(string $header, array $keys): void
     {
-
         if (array_key_exists(key: $header, array: $keys) === false) {
             throw new AuthenticationException(message: 'Invalid API key', details: []);
         }
