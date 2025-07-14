@@ -79,6 +79,13 @@ class UserController extends Controller
     private readonly UserService $userService;
 
     /**
+     * Logger for application events
+     *
+     * @var LoggerInterface
+     */
+    private readonly LoggerInterface $logger;
+
+    /**
      * Constructor for the UserController
      *
      * Initializes the controller with required dependencies for user management
@@ -126,6 +133,7 @@ class UserController extends Controller
         $this->authorizationService = $authorizationService;
         $this->securityService = new SecurityService($cacheFactory, $logger);
         $this->userService = $userService;
+        $this->logger = $logger;
     }
 
     /**
@@ -254,6 +262,22 @@ class UserController extends Controller
     public function login(): JSONResponse
     {
         try {
+            // MEMORY MONITORING: Check initial memory usage to prevent OOM
+            $initialMemoryUsage = memory_get_usage(true);
+            $memoryLimit = ini_get('memory_limit');
+            
+            // Convert memory limit to bytes for comparison
+            $memoryLimitBytes = $this->convertToBytes($memoryLimit);
+            
+            // If we're already using more than 80% of memory limit, return error
+            if ($memoryLimitBytes > 0 && $initialMemoryUsage > ($memoryLimitBytes * 0.8)) {
+                $response = new JSONResponse(
+                    data: ['error' => 'Server memory usage too high, please try again later'],
+                    statusCode: 503 // Service Unavailable
+                );
+                return $this->securityService->addSecurityHeaders($response);
+            }
+            
             // Get client IP address for rate limiting
             $clientIp = $this->securityService->getClientIpAddress($this->request);
             
@@ -330,6 +354,21 @@ class UserController extends Controller
             // Build user data array for response (sanitized)
             $userData = $this->userService->buildUserDataArray($user);
 
+            // MEMORY MONITORING: Check memory usage after building user data
+            $finalMemoryUsage = memory_get_usage(true);
+            $memoryIncreaseBytes = $finalMemoryUsage - $initialMemoryUsage;
+            
+            // Log memory usage for monitoring
+            if ($memoryIncreaseBytes > 10 * 1024 * 1024) { // 10MB threshold
+                $this->logger->warning('High memory usage during login', [
+                    'user' => $user->getUID(),
+                    'initial_memory' => $initialMemoryUsage,
+                    'final_memory' => $finalMemoryUsage,
+                    'increase_bytes' => $memoryIncreaseBytes,
+                    'increase_mb' => round($memoryIncreaseBytes / (1024 * 1024), 2)
+                ]);
+            }
+
             // Create successful response with security headers
             $response = new JSONResponse([
                 'message' => 'Login successful',
@@ -346,5 +385,45 @@ class UserController extends Controller
             );
             return $this->securityService->addSecurityHeaders($response);
         }
+    }
+
+    /**
+     * Convert PHP memory limit string to bytes
+     *
+     * This helper method converts PHP memory limit strings (like "128M", "1G") 
+     * to bytes for memory usage comparisons.
+     *
+     * @param string $memoryLimit The memory limit string from PHP ini
+     * @return int The memory limit in bytes, or 0 if unlimited
+     * 
+     * @psalm-param string $memoryLimit
+     * @psalm-return int
+     * @phpstan-param string $memoryLimit
+     * @phpstan-return int
+     */
+    private function convertToBytes(string $memoryLimit): int
+    {
+        // If memory limit is -1, it means unlimited
+        if ($memoryLimit === '-1') {
+            return 0;
+        }
+
+        // Convert the memory limit to bytes
+        $memoryLimit = trim($memoryLimit);
+        $last = strtolower($memoryLimit[strlen($memoryLimit) - 1]);
+        $value = (int) $memoryLimit;
+
+        switch ($last) {
+            case 'g':
+                $value *= 1024;
+                // fall through
+            case 'm':
+                $value *= 1024;
+                // fall through
+            case 'k':
+                $value *= 1024;
+        }
+
+        return $value;
     }
 } 
