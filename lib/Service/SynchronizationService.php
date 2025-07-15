@@ -1088,7 +1088,7 @@ class SynchronizationService
             if (isset($object[$key]) === false) {
                 continue;
             }
-    
+
             if (
                 is_array($object[$key]) === true &&
                 $this->isAssociativeArray(reset($object[$key])) === true &&
@@ -1100,17 +1100,17 @@ class SynchronizationService
                         $object[$key][$i] = $this->replaceRelatedOriginIds($item, $subConfig);
                     }
                 }
-    
+
             } elseif ($this->isAssociativeArray($object[$key]) === true && is_array($subConfig) === true) {
                 // Single nested associative object
                 $object[$key] = $this->replaceRelatedOriginIds($object[$key], $subConfig);
-    
+
             } elseif ($subConfig === 'true' && is_string($object[$key]) === true) {
                 // Leaf: value is a string, marked for replacement
             	$object[$key] = $this->replaceIdInString($object[$key]);
             }
         }
-    
+
         return $object;
     }
 
@@ -1281,7 +1281,7 @@ class SynchronizationService
                 continue;
             }
 
-            if (is_array(reset($value)) === true && $this->isAssociativeArray(reset($value)) === true) { 
+            if (is_array(reset($value)) === true && $this->isAssociativeArray(reset($value)) === true) {
                 foreach ($value as $key => $subValue) {
                     if (is_array($subValue) === false) {
                         continue;
@@ -2392,10 +2392,10 @@ class SynchronizationService
         $fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
         $content = $response['body'];
         $shouldShare = !empty($tags) && isset($config['autoShare']) ? $config['autoShare'] : false;
-		
+
 		// Determine if file should be published based on the published parameter
 		$shouldPublish = $this->shouldPublishFile($published);
-		
+
 		try {
 			$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
 			$objectEntity = $objectService->findByUuid(uuid: $objectId);
@@ -2406,7 +2406,7 @@ class SynchronizationService
 				share: $shouldShare,
 				tags: $tags
 			);
-			
+
 			// Publish the file if needed
 			if ($shouldPublish && $file !== null) {
 				try {
@@ -2421,7 +2421,7 @@ class SynchronizationService
 			$register = $config['register'] ?? null;
 			$schema   = $config['schema'] ?? null;
 			$file = $fileService->addFile(objectEntity: $objectId, fileName: $filename, content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false, tags: $tags, register: $register, schema: $schema, registerId: $registerId);
-			
+
 			// For the addFile case, we'll need to get the object entity to publish
 			if ($shouldPublish && $file !== null) {
 				try {
@@ -2671,11 +2671,11 @@ class SynchronizationService
 				break;
 			// Array of object that has file(s)
 			case 'Associative array':
-				$endpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
+				$actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
 				if ($endpoint === null) {
                     return $dataDot->jsonSerialize();
 				}
-				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
+				$this->fetchFile(source: $source, endpoint: $actualEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
 				break;
 			// Array of object(s) that has file(s)
 			case "Multidimensional array":
@@ -2708,7 +2708,7 @@ class SynchronizationService
 
         // Return data immediately with placeholder values
         if (isset($config['setPlaceholder']) === false || (isset($config['setPlaceholder']) === true && $config['setPlaceholder'] != false)) {
-            $dataDot[$config['filePath']] = $this->generatePlaceholderValues($endpoint); 
+            $dataDot[$config['filePath']] = $this->generatePlaceholderValues($endpoint);
         }
 
 		return $dataDot->jsonSerialize();
@@ -3622,7 +3622,7 @@ class SynchronizationService
 			if ($date !== false) {
 				return true;
 			}
-			
+
 			// Try other common date formats
 			$formats = ['Y-m-d', 'Y-m-d H:i:s', 'Y-m-d\TH:i:s\Z', 'Y-m-d\TH:i:sP'];
 			foreach ($formats as $format) {
