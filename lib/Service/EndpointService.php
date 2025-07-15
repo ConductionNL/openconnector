@@ -399,6 +399,10 @@ class EndpointService
 	{
 		$reducedKeys = [];
 
+        if (empty($extend) === true) {
+            return $extend;
+        }
+
 		foreach($extend as $key => $value) {
 			if(str_contains(haystack: $value, needle: '.') === false) {
 				$reducedKeys[] = $key;
