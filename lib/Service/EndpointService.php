@@ -399,6 +399,10 @@ class EndpointService
 	{
 		$reducedKeys = [];
 
+        if (empty($extend) === true) {
+            return $extend;
+        }
+
 		foreach($extend as $key => $value) {
 			if(str_contains(haystack: $value, needle: '.') === false) {
 				$reducedKeys[] = $key;
@@ -517,7 +521,7 @@ class EndpointService
             $endpoint = array_shift($endpoints);
 
             $pathArray = $this->getPathParameters(endpointArray: $endpoint->getEndpointArray(), path: $parsedPath);
-            $parameters[$rewriteParameter] = end($pathArray);
+            $parameters[$rewriteParameter] = [$parameters[$rewriteParameter], end($pathArray)];
 
         }
 
@@ -563,11 +567,11 @@ class EndpointService
                 $id = pos($pathParams);
             }
 
-            $main = $this->objectService->getOpenRegisters()->renderEntity($mapper->findByUuid($pathParams['id'])->getObject());
+            $main = $mapper->findByUuid($pathParams['id'])->getObject();
             $ids = $main[$property];
 
             if(isset($main[$property]) === false) {
-                return $this->objectService->getOpenRegisters()->renderEntity(entity: $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id'])));
+                return $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id']));
             }
 
             if ($ids === null || empty($ids) === true) {
@@ -1058,12 +1062,19 @@ class EndpointService
         $configuration = $rule->getConfiguration();
         $header = $data['headers']['Authorization'] ?? $data['headers']['authorization'] ?? '';
 
+		if(isset($configuration['authentication']) === false) {
+			return $data;
+		}
+
+		if (isset($configuration['authentication']['header']) === true) {
+			$header = $data['headers'][$configuration['authentication']['header']] ??
+				$data['headers'][strtolower($configuration['authentication']['header'])] ??
+				$data['headers'][str_replace(search: '-', replace: '_', subject: strtolower($configuration['authentication']['header']))] ??
+				null;
+		}
+
         if ($header === '' || $header === null) {
             return new JSONResponse(['error' => 'forbidden', 'details' => 'you are not allowed to access this endpoint unauththenticated'], Http::STATUS_FORBIDDEN);
-        }
-
-        if(isset($configuration['authentication']) === false) {
-            return $data;
         }
 
         switch($configuration['authentication']['type']) {
@@ -1218,7 +1229,7 @@ class EndpointService
             } catch (DoesNotExistException $exception) {
                 continue;
             }
-            $extendedParameters->add($property, $this->objectService->getOpenRegisters()->renderEntity($object->jsonSerialize()));
+            $extendedParameters->add($property, $object->jsonSerialize());
 
         }
 
@@ -1294,7 +1305,7 @@ class EndpointService
             $object = $this->objectService->getOpenRegisters()->unlockObject(identifier: $objectId);
         }
 
-        $data['body'] = $this->objectService->getOpenRegisters()->renderEntity(entity: $object->jsonSerialize());
+        $data['body'] = $object->jsonSerialize();
 
         return $data;
     }

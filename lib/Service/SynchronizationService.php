@@ -153,9 +153,12 @@ class SynchronizationService
 		$targetConfig = $synchronization->getTargetConfig();
 
 		$originId = null;
-		if (is_array($object) === true && isset($object['id']) === true) {
+		if (is_array($object) === true && isset($object['@self']['id']) === true) {
+			$originId = $object['@self']['id'];
+		} elseif (is_array($object) === true && isset($object['id']) === true) {
 			$originId = $object['id'];
 		}
+
 		if ($object instanceof \OCA\OpenRegister\Db\ObjectEntity === true && $object->getUuid()) {
 			$originId = $object->getUuid();
 			$object = $object->getObject();
@@ -537,6 +540,7 @@ class SynchronizationService
 	 *
 	 * @param Synchronization $synchronization The synchronization containing the source.
 	 * @param string $endpoint The endpoint to request to fetch the desired object.
+	 * @param string|int|null $source The source to request if object is in other source than synchronization.
 	 *
 	 * @return array The resulting object.
 	 *
@@ -545,9 +549,16 @@ class SynchronizationService
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
 	 */
-	public function getObjectFromSource(Synchronization $synchronization, string $endpoint): array
+	public function getObjectFromSource(Synchronization $synchronization, string $endpoint, string|int|null $source = null): array
 	{
-		$source = $this->sourceMapper->find(id: $synchronization->getSourceId());
+		$sourceId = $synchronization->getSourceId();
+
+		// If source passed down used that instead.
+		if ($source !== null) {
+			$sourceId = $source;
+		}
+
+		$source = $this->sourceMapper->find(id: $sourceId);
 
 		// Let's get the source config
 		$sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
@@ -654,12 +665,21 @@ class SynchronizationService
             $synchronization->setSourceConfig($sourceConfig);
         }
 
-        $extraData = $this->getObjectFromSource($synchronization, $endpoint);
+		$source = null;
+		if (isset($extraDataConfig['source']) === true && is_scalar($extraDataConfig['source']) === true) {
+			$source = $extraDataConfig['source'];
+		}
+
+        $extraData = $this->getObjectFromSource(synchronization: $synchronization, endpoint: $endpoint, source: $source);
 
 		// Temporary fix,
 		if (isset($extraDataConfig['extraDataConfigPerResult']) === true) {
-			$dotObject = new Dot($extraData);
-			$results = $dotObject->get($extraDataConfig['resultsLocation']);
+
+			$results = $extraData;
+			if (isset($extraDataConfig['resultsLocation']) === true) {
+				$dotObject = new Dot($extraData);
+				$results = $dotObject->get($extraDataConfig['resultsLocation']);
+			}
 
 			foreach ($results as $key => $result) {
 				$results[$key] = $this->fetchExtraDataForObject(synchronization: $synchronization, extraDataConfig: $extraDataConfig['extraDataConfigPerResult'], object: $result, originId: $originId);
@@ -1068,7 +1088,7 @@ class SynchronizationService
             if (isset($object[$key]) === false) {
                 continue;
             }
-    
+
             if (
                 is_array($object[$key]) === true &&
                 $this->isAssociativeArray(reset($object[$key])) === true &&
@@ -1080,19 +1100,50 @@ class SynchronizationService
                         $object[$key][$i] = $this->replaceRelatedOriginIds($item, $subConfig);
                     }
                 }
-    
+
             } elseif ($this->isAssociativeArray($object[$key]) === true && is_array($subConfig) === true) {
                 // Single nested associative object
                 $object[$key] = $this->replaceRelatedOriginIds($object[$key], $subConfig);
-    
+
             } elseif ($subConfig === 'true' && is_string($object[$key]) === true) {
                 // Leaf: value is a string, marked for replacement
-                $object[$key] = $this->synchronizationContractMapper->findTargetIdByOriginId($object[$key]);
+            	$object[$key] = $this->replaceIdInString($object[$key]);
             }
         }
-    
+
         return $object;
     }
+
+	/**
+	 * Replaces a UUID within a string with a mapped target ID using the synchronization mapper.
+	 *
+	 * This method scans the input string for the first valid UUID (v4 or general format),
+	 * validates it using Uuid::isValid(), and replaces only that UUID with the mapped target ID.
+	 * If no valid UUID is found, the original string is returned unchanged.
+	 *
+	 * Examples:
+	 * - '80c24f50-4dc9-4937-b99e-9c253b5dfe8a' → 'abc123'
+	 * - 'https://example.com/entity/80c24f50-4dc9-4937-b99e-9c253b5dfe8a' → 'https://example.com/entity/abc123'
+	 * - 'no-id-here' → 'no-id-here'
+	 *
+	 * @param string $value The string potentially containing a UUID to replace.
+	 * @return string The string with the UUID replaced if found and valid, otherwise the original string.
+	 */
+	private function replaceIdInString(string $value): string
+	{
+		// Look for uuid in the string
+		if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches)) {
+			$originId = $matches[0];
+
+			if (Uuid::isValid($originId) === true) {
+				$targetId = $this->synchronizationContractMapper->findTargetIdByOriginId($originId);
+
+				return str_replace($originId, $targetId, $value);
+			}
+		}
+
+		return $value;
+	}
 
 	/**
 	 * Handles the synchronization of subObjects based on source configuration.
@@ -1230,7 +1281,7 @@ class SynchronizationService
                 continue;
             }
 
-            if (is_array(reset($value)) === true && $this->isAssociativeArray(reset($value)) === true) { 
+            if (is_array(reset($value)) === true && $this->isAssociativeArray(reset($value)) === true) {
                 foreach ($value as $key => $subValue) {
                     if (is_array($subValue) === false) {
                         continue;
@@ -1909,7 +1960,9 @@ class SynchronizationService
 		?string 				$mutationType = null
 	): SynchronizationContract
 	{
+		$targetId = $contract->getTargetId();
 		$target = $this->sourceMapper->find(id: $synchronization->getTargetId());
+
         if ($targetObject !== null) {
             $object = $targetObject;
         }
@@ -1940,8 +1993,10 @@ class SynchronizationService
 			// @todo check for {{targetId}} in endpoint and replace
 			if (isset($targetConfig['deleteEndpoint']) === true) {
 				$endpoint = $targetConfig['deleteEndpoint'];
+				$endpoint = str_replace(search: '{{ originId }}', replace: $sourceId, subject: $endpoint);
+				$endpoint = str_replace(search: '{{originId}}', replace: $sourceId, subject: $endpoint);
 			} else {
-				$endpoint .= '/'.$contract->getTargetId();
+				$endpoint .= "/$targetId";
 			}
 
 			if (isset($targetConfig['deleteMethod']) === true) {
@@ -1965,8 +2020,7 @@ class SynchronizationService
 		// @TODO For now only JSON APIs are supported
 		$targetConfig['json'] = $object;
 
-		if ($contract->getTargetId() === null) {
-            $targetId = null;
+		if ($targetId === null) {
             if (isset($targetConfig['idInRequestBody']) === true) {
                 $targetId = $targetConfig['json'][$targetConfig['idInRequestBody']];
             }
@@ -1974,13 +2028,14 @@ class SynchronizationService
 
 			$body = json_decode($response['body'], true);
 
-            if ($targetId === null) {
-                $targetId = $body['id'];
+			$targetId = $body['id'];
 
-                if (isset($targetConfig['idposition']) === true) {
-					$bodyDot = new Dot($body);
-					$targetId = $bodyDot->get($targetConfig['idposition']);
-                }
+            $bodyDot = new Dot($body);
+			if (isset($targetConfig['idPosition']) === true) {
+				$targetId = $bodyDot->get($targetConfig['idPosition']);
+			} else if (isset($targetConfig['idposition']) === true) {
+                // Backwards compatible if older sync still use idposition (lowercase)
+				$targetId = $bodyDot->get($targetConfig['idposition']);
             }
 
 			$contract->setTargetId($targetId);
@@ -1988,21 +2043,27 @@ class SynchronizationService
 		}
 
 		$method = 'PUT';
-		$endpoint .= '/'.$contract->getTargetId();
-
 
 		if (isset($targetConfig['updateEndpoint']) === true) {
 			$endpoint = $targetConfig['updateEndpoint'];
+			$endpoint = str_replace(search: '{{ originId }}', replace: $targetId, subject: $endpoint);
+			$endpoint = str_replace(search: '{{originId}}', replace: $targetId, subject: $endpoint);
+		} else {
+			$endpoint .= "/$targetId";
 		}
 
 		if (isset($targetConfig['updateMethod']) === true) {
 			$method = $targetConfig['updateMethod'];
 		}
 
+		if (isset($targetConfig['updateMapping']) === true) {
+        	$mapping = $this->mappingService->getMapping($targetConfig['updateMapping']);
+            $targetConfig['json'] = $this->processMapping(mapping: $mapping, data: $targetConfig['json']);
+		}
 
 		$response = $this->callService->call(source: $target, endpoint: $endpoint, method: $method, config: $targetConfig)->getResponse();
 
-		$body = array_merge(json_decode($response['body']), ['targetId' => $contract->getTargetId()], true);
+		$body = array_merge(json_decode($response['body'], true), ['targetId' => $targetId]);
         $targetObject = $body;
 
 		return $contract;
@@ -2276,8 +2337,10 @@ class SynchronizationService
 	 * @param string $endpoint The endpoint for the file.
 	 * @param array $config The configuration of the action.
 	 * @param string $objectId The id of the object the file belongs to.
+	 * @param int| $objectId The id of the object the file belongs to.
      * @param array $tags Tags to assign to the file.
      * @param string|null $filename Filename to assign to the file.
+	 * @param int|string|null $registerId The id of the register the object belongs to.
 	 *
 	 * @return string If write is enabled: the url of the file, if write is disabled: the base64 encoded file.
 	 * @throws ContainerExceptionInterface
@@ -2289,7 +2352,7 @@ class SynchronizationService
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
 	 */
-	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?array $tags = [], ?string $filename = null): string
+	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?array $tags = [], ?string $filename = null, ?string $published = null, int|string|null $registerId = null): string
 	{
 		$originalEndpoint = $endpoint;
 		$endpoint = str_contains(haystack: $endpoint, needle: $source->getLocation()) === true
@@ -2329,6 +2392,10 @@ class SynchronizationService
         $fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
         $content = $response['body'];
         $shouldShare = !empty($tags) && isset($config['autoShare']) ? $config['autoShare'] : false;
+
+		// Determine if file should be published based on the published parameter
+		$shouldPublish = $this->shouldPublishFile($published);
+
 		try {
 			$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
 			$objectEntity = $objectService->findByUuid(uuid: $objectId);
@@ -2339,11 +2406,33 @@ class SynchronizationService
 				share: $shouldShare,
 				tags: $tags
 			);
+
+			// Publish the file if needed
+			if ($shouldPublish && $file !== null) {
+				try {
+					$fileService->publishFile(object: $objectEntity, file: $filename);
+				} catch (Exception $e) {
+					// Log but don't fail the entire operation
+					error_log("Failed to publish file {$filename} for object {$objectId}: " . $e->getMessage());
+				}
+			}
 		} catch (DoesNotExistException $exception) {
 			// If the object cannot be found, continue with register/schema/objectId combination
 			$register = $config['register'] ?? null;
 			$schema   = $config['schema'] ?? null;
-			$file = $fileService->addFile(objectEntity: $objectId, fileName: $filename, content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false, tags: $tags, register: $register, schema: $schema);
+			$file = $fileService->addFile(objectEntity: $objectId, fileName: $filename, content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false, tags: $tags, register: $register, schema: $schema, registerId: $registerId);
+
+			// For the addFile case, we'll need to get the object entity to publish
+			if ($shouldPublish && $file !== null) {
+				try {
+					$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
+					$objectEntity = $objectService->findByUuid(uuid: $objectId);
+					$fileService->publishFile(object: $objectEntity, file: $filename);
+				} catch (Exception $e) {
+					// Log but don't fail the entire operation
+					error_log("Failed to publish file {$filename} for object {$objectId}: " . $e->getMessage());
+				}
+			}
 		} catch (Exception $e) {
 			throw new Exception("Failed to save file {$filename} for object {$objectId}: " . $e->getMessage());
 		}
@@ -2393,10 +2482,12 @@ class SynchronizationService
 	 * @param string|null &$filename A reference to the filename (if available) that will be updated.
 	 * @param array|null  &$tags     A reference to an array of tags (if available) that will be updated.
 	 * @param string|null  &$objectId     A reference to the object id (if available) that the file will be attached to.
+	 * @param string|null  &$published     A reference to the published status (if available) that will be updated.
+	 * @param int|string|null  &$registerId     A reference to the registerId (if available) that will be updated.
 	 *
 	 * @return string The extracted endpoint from the data.
 	 */
-	private function getFileContext(array $config, mixed $endpoint, ?string &$filename = null, ?array &$tags = [], ?string &$objectId = null)
+	private function getFileContext(array $config, mixed $endpoint, ?string &$filename = null, ?array &$tags = [], ?string &$objectId = null, ?string &$published = null, int|string|null &$registerId = null)
 	{
 		$dataDot = new Dot($endpoint);
 		if (isset($config['objectIdPath']) === true && empty($config['objectIdPath']) === false) {
@@ -2459,6 +2550,16 @@ class SynchronizationService
 			// Extract filename if available
 			if (isset($endpoint['filename']) === true && empty($endpoint['filename']) === false) {
 				$filename = $endpoint['filename'];
+			}
+
+			// Extract published status if available
+			if (isset($endpoint['published']) === true) {
+				$published = $endpoint['published'];
+			}
+
+			// Extract published status if available
+			if (isset($endpoint['registerId']) === true) {
+				$registerId = $endpoint['registerId'];
 			}
 
 			// Check if endpoint exists before returning it
@@ -2561,29 +2662,33 @@ class SynchronizationService
         }
 		$filename = null;
 		$tags = [];
+		$published = null;
+        $registerId = null;
 		switch ($this->getArrayType($endpoint)) {
 			// Single file endpoint
 			case 'Not array':
-				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId);
+				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, published: $published);
 				break;
 			// Array of object that has file(s)
 			case 'Associative array':
-				$endpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId);
+				$actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
 				if ($endpoint === null) {
                     return $dataDot->jsonSerialize();
 				}
-				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, filename: $filename);
+				$this->fetchFile(source: $source, endpoint: $actualEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
 				break;
 			// Array of object(s) that has file(s)
 			case "Multidimensional array":
 				foreach ($endpoint as $object) {
 					$filename = null;
 					$tags = [];
-					$endpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId);
+					$published = null;
+					$registerId = null;
+					$endpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
 					if ($endpoint === null) {
                         continue;
 					}
-					$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, filename: $filename);
+					$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
 				}
 				break;
 			// Array of just endpoints
@@ -2591,17 +2696,19 @@ class SynchronizationService
 				foreach ($endpoint as $key => $childEndpoint) {
 					$filename = null;
 					$tags = [];
-					$this->fetchFile(source: $source, endpoint: $childEndpoint, config: $config, objectId: $objectId);
+					$published = null;
+					$registerId = null;
+					$this->fetchFile(source: $source, endpoint: $childEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, published: $published);
 				}
 				break;
 		}
 
         // Start fire-and-forget file fetching based on endpoint type
-        $this->startAsyncFileFetching($source, $config, $endpoint, $objectId, $rule->getId());
+        $this->startAsyncFileFetching(source: $source, config: $config, endpoint: $endpoint, objectId: $objectId, ruleId: $rule->getId());
 
         // Return data immediately with placeholder values
         if (isset($config['setPlaceholder']) === false || (isset($config['setPlaceholder']) === true && $config['setPlaceholder'] != false)) {
-            $dataDot[$config['filePath']] = $this->generatePlaceholderValues($endpoint); 
+            $dataDot[$config['filePath']] = $this->generatePlaceholderValues($endpoint);
         }
 
 		return $dataDot->jsonSerialize();
@@ -2627,7 +2734,7 @@ class SynchronizationService
 	{
         // Execute file fetching immediately but with error isolation
         // This provides "fire-and-forget" behavior without complex ReactPHP setup
-        $this->executeAsyncFileFetching($source, $config, $endpoint, $objectId, $ruleId);
+        $this->executeAsyncFileFetching(source: $source, config: $config, endpoint: $endpoint, objectId: $objectId, ruleId: $ruleId);
 	}
 
 	/**
@@ -2652,6 +2759,8 @@ class SynchronizationService
         try {
             $filename = null;
             $tags = [];
+            $published = null;
+            $registerId = null;
 
             switch ($this->getArrayType($endpoint)) {
                 // Single file endpoint
@@ -2662,11 +2771,11 @@ class SynchronizationService
                 // Array of object that has file(s)
                 case 'Associative array':
                     $contextObjectId = null; // Separate variable to avoid overwriting the original
-                    $actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $contextObjectId);
+                    $actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $contextObjectId, published: $published, registerId: $registerId);
                     // Use context object ID if specified, otherwise fall back to the original object ID
                     $targetObjectId = $contextObjectId ?? $objectId;
                     if ($actualEndpoint !== null) {
-                        $this->fetchFileSafely($source, $actualEndpoint, $config, $targetObjectId, $filename, $tags);
+                        $this->fetchFileSafely(source: $source, endpoint: $actualEndpoint, config: $config, objectId: $targetObjectId, filename: $filename, tags: $tags, published: $published, registerId: $registerId);
                     }
                     break;
 
@@ -2698,13 +2807,15 @@ class SynchronizationService
 	 * @param string $objectId The UUID of the object the file belongs to.
 	 * @param string|null $filename Optional filename to assign to the file.
 	 * @param array $tags Optional tags to assign to the file.
+	 * @param string|null $published Optional published status to determine if file should be published.
+	 * @param int|string|null $registerId Optional published status to determine if file should be published.
 	 *
 	 * @return void
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 * @psalm-param array<string> $tags
 	 */
-	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = []): void
+	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = [], ?int $published = null, int|string|null $registerId = null): void
 	{
         try {
             // Execute the file fetching operation
@@ -2714,7 +2825,9 @@ class SynchronizationService
                 config: $config,
                 objectId: $objectId,
                 tags: $tags,
-                filename: $filename
+                filename: $filename,
+                published: $published,
+                registerId: $registerId
             );
         } catch (Exception $e) {
             // Log error with detailed information but don't throw
@@ -3378,6 +3491,7 @@ class SynchronizationService
 			$tags = [];
 			$contextObjectId = null;
 			$actualEndpoint = null;
+			$registerId = null;
 
 			// Handle different endpoint types
 			if (is_array($endpoint)) {
@@ -3387,7 +3501,8 @@ class SynchronizationService
 					endpoint: $endpoint,
 					filename: $filename,
 					tags: $tags,
-					objectId: $contextObjectId
+					objectId: $contextObjectId,
+                    registerId: $registerId
 				);
 			} else {
 				// This is a simple endpoint string (indexed array case)
@@ -3425,7 +3540,8 @@ class SynchronizationService
 						config: $config,
 						objectId: $targetObjectId,
 						tags: $tags,
-						filename: $filename
+						filename: $filename,
+                        registerId: $registerId
 					);
 				} catch (Exception $e) {
 					error_log("Failed to fetch file from endpoint {$actualEndpoint}: " . $e->getMessage());
@@ -3472,4 +3588,70 @@ class SynchronizationService
 		return $this->cleanupOrphanedFiles($objectId, $expectedFileNames);
 	}
 
+	/**
+	 * Determines if a file should be published based on the published parameter.
+	 *
+	 * This method checks if the published parameter indicates that a file should be published.
+	 * It supports boolean values (true/false), string values ("true"/"false"), and date strings.
+	 * For date strings, it assumes the file should be published if a date is provided.
+	 *
+	 * @param string|null $published The published parameter from the attachment data.
+	 *
+	 * @return bool True if the file should be published, false otherwise.
+	 */
+	private function shouldPublishFile(?string $published): bool
+	{
+		if ($published === null) {
+			return false;
+		}
+
+		// Handle boolean true values
+		if ($published === true || $published === 'true' || $published === '1') {
+			return true;
+		}
+
+		// Handle boolean false values
+		if ($published === false || $published === 'false' || $published === '0') {
+			return false;
+		}
+
+		// Handle date strings - if it's a valid date string, consider it as published
+		if (is_string($published) && !empty($published)) {
+			// Try to parse as a date
+			$date = \DateTime::createFromFormat(\DateTime::ATOM, $published);
+			if ($date !== false) {
+				return true;
+			}
+
+			// Try other common date formats
+			$formats = ['Y-m-d', 'Y-m-d H:i:s', 'Y-m-d\TH:i:s\Z', 'Y-m-d\TH:i:sP'];
+			foreach ($formats as $format) {
+				$date = \DateTime::createFromFormat($format, $published);
+				if ($date !== false) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Fetches a file from a given endpoint and saves it to the OpenRegister system.
+	 *
+	 * This method downloads a file from a remote source and stores it in the OpenRegister
+	 * file system, optionally applying tags and sharing settings.
+	 *
+	 * @param Source $source The source configuration for the API call.
+	 * @param string $endpoint The endpoint URL to fetch the file from.
+	 * @param array $config Configuration array containing method, write settings, etc.
+	 * @param string $objectId The UUID of the object to attach the file to.
+	 * @param array|null $tags Optional array of tags to apply to the file.
+	 * @param string|null $filename Optional filename to use for the saved file.
+	 * @param string|null $published Optional published status to determine if file should be published.
+	 *
+	 * @return string The original endpoint URL.
+	 * @throws Exception If the file cannot be fetched or saved.
+	 * @throws \OCP\DB\Exception
+	 */
 }

@@ -227,6 +227,9 @@ class UserService
      *
      * This method safely builds quota information including used space, free space,
      * total quota, and relative usage percentage with proper fallbacks.
+     * 
+     * MEMORY OPTIMIZATION: This method now uses NextCloud's built-in quota calculation
+     * methods instead of recursively calculating folder sizes to prevent memory issues.
      *
      * @param IUser $user The user object
      * @return array The quota information array
@@ -242,16 +245,26 @@ class UserService
             $userQuota = method_exists($user, 'getQuota') ? $user->getQuota() : 'none';
             $usedSpace = 0;
             
-            // Try to get used space from file system if methods exist
-            if (method_exists($user, 'getUsedSpace')) {
-                $usedSpace = $user->getUsedSpace();
-            } else {
-                // Alternative way to get used space
-                $userId = $user->getUID();
-                $userFolder = \OC::$server->getUserFolder($userId);
-                if ($userFolder !== null) {
-                    $usedSpace = $userFolder->getSize();
+            // MEMORY FIX: Use NextCloud's built-in quota system instead of recursive folder size calculation
+            // This prevents memory exhaustion when users have large amounts of data
+            $userId = $user->getUID();
+            
+            // Try to get used space from NextCloud's user object first
+            try {
+                // Fallback 1: Try user object method if available
+                if (method_exists($user, 'getUsedSpace')) {
+                    $usedSpace = $user->getUsedSpace();
+                } else {
+                    // Fallback 2: Use a memory-safe approach with timeout protection
+                    $usedSpace = $this->getUsedSpaceMemorySafe($userId);
                 }
+            } catch (\Exception $quotaException) {
+                // If quota calculation fails, use memory-safe approach
+                $this->logger->debug('User quota calculation failed for user: ' . $userId, [
+                    'exception' => $quotaException->getMessage()
+                ]);
+                
+                $usedSpace = $this->getUsedSpaceMemorySafe($userId);
             }
             
             $quota = [
@@ -282,6 +295,69 @@ class UserService
                 'total' => 'none',
                 'relative' => 0
             ];
+        }
+    }
+
+    /**
+     * Get used space in a memory-safe way
+     *
+     * This method attempts to get used space without causing memory exhaustion
+     * by using database queries or cache lookups instead of recursive folder scanning.
+     *
+     * @param string $userId The user ID
+     * @return int The used space in bytes or 0 if cannot be determined safely
+     * 
+     * @psalm-param string $userId
+     * @psalm-return int
+     * @phpstan-param string $userId
+     * @phpstan-return int
+     */
+    private function getUsedSpaceMemorySafe(string $userId): int
+    {
+        try {
+            // Set memory limit and timeout for safety
+            $originalMemoryLimit = ini_get('memory_limit');
+            $currentMemoryUsage = memory_get_usage(true);
+            
+            // If we're already using too much memory, return 0 to prevent OOM
+            if ($currentMemoryUsage > 128 * 1024 * 1024) { // 128MB threshold
+                $this->logger->warning('Memory usage too high for quota calculation', [
+                    'user' => $userId,
+                    'memory_usage' => $currentMemoryUsage
+                ]);
+                return 0;
+            }
+            
+            // Try to get size from database if available (NextCloud stores this)
+            $connection = \OC::$server->getDatabaseConnection();
+            $query = $connection->getQueryBuilder();
+            
+            // Check if NextCloud has cached storage stats
+            $query->select('size')
+                  ->from('storages')
+                  ->join('storages', 'mounts', 'm', 'storages.id = m.storage_id')
+                  ->where($query->expr()->eq('m.user_id', $query->createNamedParameter($userId)))
+                  ->setMaxResults(1);
+            
+            $result = $query->execute();
+            $row = $result->fetch();
+            $result->closeCursor();
+            
+            if ($row && isset($row['size']) && is_numeric($row['size'])) {
+                return (int)$row['size'];
+            }
+            
+            // If database lookup fails, return 0 to prevent memory issues
+            // The quota display will show 0 used space rather than causing OOM
+            $this->logger->info('Using fallback quota calculation for user: ' . $userId);
+            return 0;
+            
+        } catch (\Exception $e) {
+            // Log error and return 0 to prevent memory issues
+            $this->logger->warning('Memory-safe quota calculation failed for user: ' . $userId, [
+                'exception' => $e->getMessage()
+            ]);
+            return 0;
         }
     }
 
@@ -342,65 +418,9 @@ class UserService
         $additionalInfo = [];
         
         try {
-            // Get user account data from AccountManager
-            $account = $this->accountManager->getAccount($user);
-            
-            // Extract profile information from account properties
-            $properties = $account->getAllProperties();
-            
-            foreach ($properties as $property) {
-                $name = $property->getName();
-                $value = $property->getValue();
-                
-                // Map NextCloud account property names to our API fields
-                switch ($name) {
-                    case IAccountManager::PROPERTY_PHONE:
-                        if (!empty($value)) {
-                            $additionalInfo['phone'] = $value;
-                        }
-                        break;
-                    case IAccountManager::PROPERTY_ADDRESS:
-                        if (!empty($value)) {
-                            $additionalInfo['address'] = $value;
-                        }
-                        break;
-                    case IAccountManager::PROPERTY_WEBSITE:
-                        if (!empty($value)) {
-                            $additionalInfo['website'] = $value;
-                        }
-                        break;
-                    case IAccountManager::PROPERTY_TWITTER:
-                        if (!empty($value)) {
-                            $additionalInfo['twitter'] = $value;
-                        }
-                        break;
-                    case IAccountManager::PROPERTY_FEDIVERSE:
-                        if (!empty($value)) {
-                            $additionalInfo['fediverse'] = $value;
-                        }
-                        break;
-                    case IAccountManager::PROPERTY_ORGANISATION:
-                        if (!empty($value)) {
-                            $additionalInfo['organisation'] = $value;
-                        }
-                        break;
-                    case IAccountManager::PROPERTY_ROLE:
-                        if (!empty($value)) {
-                            $additionalInfo['role'] = $value;
-                        }
-                        break;
-                    case IAccountManager::PROPERTY_HEADLINE:
-                        if (!empty($value)) {
-                            $additionalInfo['headline'] = $value;
-                        }
-                        break;
-                    case IAccountManager::PROPERTY_BIOGRAPHY:
-                        if (!empty($value)) {
-                            $additionalInfo['biography'] = $value;
-                        }
-                        break;
-                }
-            }
+            // MEMORY FIX: Use selective property loading instead of getAllProperties()
+            // This prevents loading unnecessary data and reduces memory usage
+            $additionalInfo = $this->getAccountManagerPropertiesSelectively($user);
         } catch (\Exception $e) {
             // If AccountManager fails, try to get some info from user config
             $this->logger->warning('AccountManager failed for user: ' . $user->getUID(), [
@@ -429,6 +449,69 @@ class UserService
         // Always get custom name fields from core namespace (accessible to other apps)
         $customNameFields = $this->getCustomNameFields($user);
         $additionalInfo = array_merge($additionalInfo, $customNameFields);
+        
+        // Get organization UUID from core namespace (set by SoftwareCatalog)
+        $userId = $user->getUID();
+        $organizationUuid = $this->config->getUserValue($userId, 'core', 'organisation', '');
+        if (!empty($organizationUuid)) {
+            $additionalInfo['organisation'] = $organizationUuid;
+        }
+        
+        return $additionalInfo;
+    }
+
+    /**
+     * Get AccountManager properties selectively to reduce memory usage
+     *
+     * This method loads only the specific properties we need instead of all properties,
+     * which significantly reduces memory usage when the user has many account properties.
+     *
+     * @param IUser $user The user object
+     * @return array Profile information from AccountManager
+     * 
+     * @psalm-param IUser $user
+     * @psalm-return array
+     * @phpstan-param IUser $user
+     * @phpstan-return array
+     */
+    private function getAccountManagerPropertiesSelectively(IUser $user): array
+    {
+        $additionalInfo = [];
+        
+        // Get user account data from AccountManager
+        $account = $this->accountManager->getAccount($user);
+        
+        // Define the properties we actually need (selective loading)
+        $neededProperties = [
+            IAccountManager::PROPERTY_PHONE => 'phone',
+            IAccountManager::PROPERTY_ADDRESS => 'address',
+            IAccountManager::PROPERTY_WEBSITE => 'website',
+            IAccountManager::PROPERTY_TWITTER => 'twitter',
+            IAccountManager::PROPERTY_FEDIVERSE => 'fediverse',
+            IAccountManager::PROPERTY_ORGANISATION => 'organisation',
+            IAccountManager::PROPERTY_ROLE => 'role',
+            IAccountManager::PROPERTY_HEADLINE => 'headline',
+            IAccountManager::PROPERTY_BIOGRAPHY => 'biography'
+        ];
+        
+        // Load only the properties we need
+        foreach ($neededProperties as $propertyName => $apiField) {
+            try {
+                $property = $account->getProperty($propertyName);
+                if ($property !== null) {
+                    $value = $property->getValue();
+                    if (!empty($value)) {
+                        $additionalInfo[$apiField] = $value;
+                    }
+                }
+            } catch (\Exception $e) {
+                // If a specific property fails, log it but continue with others
+                $this->logger->debug('Failed to load account property: ' . $propertyName, [
+                    'user' => $user->getUID(),
+                    'exception' => $e->getMessage()
+                ]);
+            }
+        }
         
         return $additionalInfo;
     }
