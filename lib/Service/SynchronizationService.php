@@ -1467,6 +1467,18 @@ class SynchronizationService
 			$config['query'] = $query;
 		}
 
+		if (isset($sourceConfig['useDataAsRequestBody']) === true) {
+			$useDataAsRequestBody = $sourceConfig['useDataAsRequestBody'];
+		} else {
+			$useDataAsRequestBody = null;
+		}
+
+		if ($useDataAsRequestBody === '#') {
+			$config['body'] = json_encode($data);
+		} else if (empty($useDataAsRequestBody) === false) {
+			$config['body'] = json_encode((new Dot($data))->get($useDataAsRequestBody));
+		}
+
 		$currentPage = 1;
 
 		// Start with the current page
@@ -1485,10 +1497,17 @@ class SynchronizationService
             usesPagination: $usesPagination
 		);
 
+		if(array_is_list($objects) === false) {
+			$objects = [$objects];
+		}
+
 		// Merge additional data into each object if $data is provided
-		if ($data !== null && empty($data) === false) {
-;			foreach ($objects as &$object) {
-                $object = array_merge($object, $data);
+		if ($data !== null
+			&& empty($data) === false
+			&& $useDataAsRequestBody === false
+		) {
+			foreach ($objects as &$object) {
+				$object = array_merge($object, $data);
 			}
 		}
 
@@ -2378,6 +2397,13 @@ class SynchronizationService
 			? substr(string: $endpoint, offset: strlen(string: $source->getLocation()))
 			: $endpoint;
 
+		$sourceConfig = json_encode($config['sourceConfiguration']);
+		$sourceConfig = str_replace(search: "{{ originId }}", replace: $config['originId'], subject: $sourceConfig);
+		$sourceConfig = json_decode($sourceConfig, true);
+		$sourceConfig['body'] = json_encode($sourceConfig['body']);
+
+		$config['sourceConfiguration'] = $sourceConfig;
+
 		$result = $this->callService->call(
 			source: $source,
 			endpoint: $endpoint,
@@ -2385,6 +2411,18 @@ class SynchronizationService
 			config: $config['sourceConfiguration'] ?? []
 		);
 		$response = $result->getResponse();
+
+		$body = json_decode($response['body'], true);
+
+		if (isset($config['contentPath']) === true) {
+			$content = base64_decode((new Dot($body))->get($config['contentPath']));
+		}
+		if (isset($config['filenamePath']) === true) {
+			$filename = (new Dot($body))->get($config['filenamePath']);
+		}
+		if (isset($config['fileExtension']) === true) {
+			$filename = $filename.$config['fileExtension'];
+		}
 
 		// Check if response is valid
 		if ($response === null) {
@@ -2409,7 +2447,11 @@ class SynchronizationService
 			throw new Exception("Invalid object ID format: {$objectId}. Expected a valid UUID.");
 		}
         $fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
-        $content = $response['body'];
+
+		if (isset($content) === false) {
+			$content = $response['body'];
+		}
+
         $shouldShare = !empty($tags) && isset($config['autoShare']) ? $config['autoShare'] : false;
 
 		// Determine if file should be published based on the published parameter
@@ -2647,6 +2689,7 @@ class SynchronizationService
 	 */
 	private function processFetchFileRule(Rule $rule, array $data, ?string $objectId = null): array
 	{
+
         // Check if OpenRegister app is available
         $appManager = \OC::$server->get(\OCP\App\IAppManager::class);
         if ($appManager->isEnabledForUser('openregister') === false) {
@@ -2659,11 +2702,16 @@ class SynchronizationService
 		}
 
 		$config = $rule->getConfiguration()['fetch_file'];
+
 		$dataDot = new Dot($data);
-		$endpoint = $dataDot->get($config['filePath']);
+		$endpoint = isset($config['filePath']) ? $dataDot->get($config['filePath']) : $config['endpoint'];
 
 		if ($objectId === null && isset($config['objectIdPath']) === true) {
 			$objectId = $dataDot->get($config['objectIdPath']);
+		}
+
+		if (isset($config['originIdPath']) === true) {
+			$config['originId'] = $dataDot->get($config['originIdPath']);
 		}
 
         // If no endpoint is found, return data unchanged

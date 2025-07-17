@@ -315,7 +315,6 @@ import { Rule } from '../../entities/index.js'
 
 					<NcTextField
 						label="File Path"
-						required
 						:value.sync="ruleItem.configuration.fetch_file.filePath"
 						placeholder="path.to.fetch.file" />
 
@@ -358,6 +357,31 @@ import { Rule } from '../../entities/index.js'
 							Invalid JSON format
 						</span>
 					</div>
+
+					<NcTextField
+						label="Origin id path (optional)"
+						:value.sync="ruleItem.configuration.fetch_file.originIdPath"
+						placeholder="path.to.fetch.file.objects" />
+
+					<NcTextField
+						label="Content path (optional)"
+						:value.sync="ruleItem.configuration.fetch_file.contentPath"
+						placeholder="path.to.fetch.file.objects" />
+
+					<NcTextField
+						label="Filename path (optional)"
+						:value.sync="ruleItem.configuration.fetch_file.filenamePath"
+						placeholder="path.to.fetch.file.objects" />
+
+					<NcTextField
+						label="File extension (optional)"
+						:value.sync="ruleItem.configuration.fetch_file.fileExtension"
+						placeholder="path.to.fetch.file.objects" />
+
+					<NcTextField
+						label="Endpoint (optional)"
+						:value.sync="ruleItem.configuration.fetch_file.endpoint"
+						placeholder="path.to.fetch.file.objects" />
 				</template>
 
 				<!-- Write File Configuration -->
@@ -477,7 +501,7 @@ import { Rule } from '../../entities/index.js'
 				:disabled="loading
 					|| !ruleItem.name
 					|| !isValidJson(ruleItem.conditions)
-					|| typeOptions.value?.id === 'fetch_file' && (!ruleItem.configuration.fetch_file.filePath || !sourceOptions.sourceValue)
+					|| typeOptions.value?.id === 'fetch_file' && (!sourceOptions.sourceValue)
 					|| typeOptions.value?.id === 'save_object' && (!ruleItem.configuration.save_object.schema || !ruleItem.configuration.save_object.register)
 					|| typeOptions.value?.id === 'write_file' && (!ruleItem.configuration.write_file.filePath || !ruleItem.configuration.write_file.fileNamePath)
 					|| typeOptions.value?.id === 'fileparts_create' && (!schemaOptions.value || !ruleItem.configuration.fileparts_create.sizeLocation)
@@ -622,6 +646,11 @@ export default {
 						tags: [],
 						sourceConfiguration: '[]',
 						autoShare: false,
+						endpoint: '',
+						contentPath: '',
+						originIdPath: '',
+						filenamePath: '',
+						fileExtension: '',
 					},
 					write_file: {
 						filePath: '',
@@ -737,6 +766,12 @@ export default {
 						tags: ruleStore.ruleItem.configuration?.fetch_file?.tags ?? [],
 						sourceConfiguration: JSON.stringify(ruleStore.ruleItem.configuration?.fetch_file?.sourceConfiguration, null, 2) ?? '[]',
 						autoShare: ruleStore.ruleItem.configuration?.fetch_file?.autoShare ?? false,
+						endpoint: ruleStore.ruleItem.configuration?.fetch_file?.endpoint ?? '',
+						contentPath: ruleStore.ruleItem.configuration?.fetch_file?.contentPath ?? '',
+						originIdPath: ruleStore.ruleItem.configuration?.fetch_file?.originIdPath ?? '',
+						filenamePath: ruleStore.ruleItem.configuration?.fetch_file?.filenamePath ?? '',
+						fileExtension: ruleStore.ruleItem.configuration?.fetch_file?.fileExtension ?? '',
+
 					},
 					write_file: {
 						filePath: ruleStore.ruleItem.configuration?.write_file?.filePath ?? '',
@@ -1278,6 +1313,12 @@ export default {
 					tags: this.ruleItem.configuration.fetch_file.tags,
 					sourceConfiguration: this.ruleItem.configuration.fetch_file.sourceConfiguration ? JSON.parse(this.ruleItem.configuration.fetch_file.sourceConfiguration) : [],
 					autoShare: this.ruleItem.configuration.fetch_file.autoShare,
+					endpoint: this.ruleItem.configuration?.fetch_file?.endpoint ?? '',
+					contentPath: this.ruleItem.configuration?.fetch_file?.contentPath ?? '',
+					originIdPath: this.ruleItem.configuration?.fetch_file?.originIdPath ?? '',
+					filenamePath: this.ruleItem.configuration?.fetch_file?.filenamePath ?? '',
+					fileExtension: this.ruleItem.configuration?.fetch_file?.fileExtension ?? '',
+
 				}
 				break
 			case 'write_file':
