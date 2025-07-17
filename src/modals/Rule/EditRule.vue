@@ -380,7 +380,7 @@ import { Rule } from '../../entities/index.js'
 
 					<NcTextField
 						label="Endpoint (optional)"
-						:value.sync="ruleItem.configuration.fetch_file.endpoint.endpoint"
+						:value.sync="ruleItem.configuration.fetch_file.endpoint"
 						placeholder="path.to.fetch.file.objects" />
 				</template>
 
@@ -761,11 +761,11 @@ export default {
 						tags: ruleStore.ruleItem.configuration?.fetch_file?.tags ?? [],
 						sourceConfiguration: JSON.stringify(ruleStore.ruleItem.configuration?.fetch_file?.sourceConfiguration, null, 2) ?? '[]',
 						autoShare: ruleStore.ruleItem.configuration?.fetch_file?.autoShare ?? false,
-						endpoint: ruleStore.ruleItem.configuration?.fetch_file?.endpoint ?? null,
-						contentPath: ruleStore.ruleItem.configuration?.fetch_file?.contentPath ?? null,
-						originIdPath: ruleStore.ruleItem.configuration?.fetch_file?.originIdPath ?? null,
-						filenamePath: ruleStore.ruleItem.configuration?.fetch_file?.filenamePath ?? null,
-						fileExtension: ruleStore.ruleItem.configuration?.fetch_file?.fileExtension ?? null,
+						endpoint: ruleStore.ruleItem.configuration?.fetch_file?.endpoint ?? '',
+						contentPath: ruleStore.ruleItem.configuration?.fetch_file?.contentPath ?? '',
+						originIdPath: ruleStore.ruleItem.configuration?.fetch_file?.originIdPath ?? '',
+						filenamePath: ruleStore.ruleItem.configuration?.fetch_file?.filenamePath ?? '',
+						fileExtension: ruleStore.ruleItem.configuration?.fetch_file?.fileExtension ?? '',
 
 					},
 					write_file: {
@@ -1308,11 +1308,11 @@ export default {
 					tags: this.ruleItem.configuration.fetch_file.tags,
 					sourceConfiguration: this.ruleItem.configuration.fetch_file.sourceConfiguration ? JSON.parse(this.ruleItem.configuration.fetch_file.sourceConfiguration) : [],
 					autoShare: this.ruleItem.configuration.fetch_file.autoShare,
-					endpoint: this.ruleItem.configuration?.fetch_file?.endpoint ?? null,
-					contentPath: this.ruleItem.configuration?.fetch_file?.contentPath ?? null,
-					originIdPath: this.ruleItem.configuration?.fetch_file?.originIdPath ?? null,
-					filenamePath: this.ruleItem.configuration?.fetch_file?.filenamePath ?? null,
-					fileExtension: this.ruleItem.configuration?.fetch_file?.fileExtension ?? null,
+					endpoint: this.ruleItem.configuration?.fetch_file?.endpoint ?? '',
+					contentPath: this.ruleItem.configuration?.fetch_file?.contentPath ?? '',
+					originIdPath: this.ruleItem.configuration?.fetch_file?.originIdPath ?? '',
+					filenamePath: this.ruleItem.configuration?.fetch_file?.filenamePath ?? '',
+					fileExtension: this.ruleItem.configuration?.fetch_file?.fileExtension ?? '',
 
 				}
 				break
