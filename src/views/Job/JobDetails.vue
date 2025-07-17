@@ -119,6 +119,17 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 				<div class="tabContainer">
 					<BTabs content-class="mt-3" justified>
 						<BTab title="Job Arguments">
+							<div class="tabButtonsContainer">
+								<NcButton type="primary"
+									class="fullWidthButton"
+									aria-label="Add Argument"
+									@click="addJobArgument">
+									<template #icon>
+										<Plus :size="20" />
+									</template>
+									Add Argument
+								</NcButton>
+							</div>
 							<div v-if="jobStore.jobItem?.arguments !== null && Object.keys(jobStore.jobItem?.arguments).length > 0">
 								<NcListItem v-for="(value, key, i) in jobStore.jobItem?.arguments"
 									:key="`${key}${i}`"
@@ -197,7 +208,7 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcListItem, NcUserStatusIcon } from '@nextcloud/vue'
+import { NcActions, NcActionButton, NcListItem, NcUserStatusIcon, NcButton } from '@nextcloud/vue'
 import { BTabs, BTab } from 'bootstrap-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -226,6 +237,8 @@ export default {
 		BTabs,
 		BTab,
 		NcListItem,
+		Plus,
+		NcButton,
 	},
 	mounted() {
 		jobStore.refreshJobLogs(jobStore.jobItem.id)

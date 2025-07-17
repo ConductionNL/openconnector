@@ -32,7 +32,7 @@ class CallLogMapper extends QBMapper
         return $this->findEntity($qb);
     }
 
-    public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = []): array
+    public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = [], ?array $sortFields = []): array
     {
         $qb = $this->db->getQueryBuilder();
 
@@ -56,6 +56,10 @@ class CallLogMapper extends QBMapper
             foreach ($searchParams as $param => $value) {
                 $qb->setParameter($param, $value);
             }
+        }
+
+        foreach ($sortFields as $field => $direction) {
+            $qb->addOrderBy($field, $direction);
         }
 
         return $this->findEntities($qb);
