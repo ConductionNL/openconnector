@@ -1445,7 +1445,7 @@ class EndpointService
         if(isset($data['body']['isTest']) === true) {
             $test = $data['body']['isTest'];
         } elseif (isset($config['isTest']) === true) {
-            $force = $config['isTest'];
+            $test = $config['isTest'];
         } else {
             $test = false;
         }
@@ -1468,7 +1468,7 @@ class EndpointService
         $sendObject = $object;
 
         // Run synchronization.
-        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, object: $object);
+        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, data: $object);
 
         // $object got updated through reference.
         $returnedObject = $object;
