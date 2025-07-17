@@ -391,11 +391,11 @@ export const useSourceStore = defineStore('source', () => {
 				queryParams.append('source_id', sourceItem.value.id.toString())
 			}
 
-            // Ensure _sort[created]=desc if not set
-            const sortKey = '_sort[created]'
-            if (!(sortKey in filters)) {
-                queryParams.append(sortKey, 'desc')
-            }   
+			// Ensure _sort[created]=desc if not set
+			const sortKey = '_sort[created]'
+			if (!(sortKey in filters)) {
+				queryParams.append(sortKey, 'desc')
+			}
 
 			// Add other filters
 			Object.entries(filters).forEach(([key, value]) => {
