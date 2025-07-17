@@ -574,13 +574,14 @@ class EndpointService
             }
 
             $main = $mapper->findByUuid($pathParams['id'])->getObject();
-            $ids = $main[$property];
 
             if(isset($main[$property]) === false) {
                 return $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id']));
             }
 
-            if ($ids === null || empty($ids) === true) {
+            $ids = $main[$property];
+
+            if (isset($ids) === false || $ids === null || empty($ids) === true) {
                 $returnArray = [
                     'count' => 0,
                     'results' => []
@@ -1718,9 +1719,11 @@ class EndpointService
         }
 
         if(isset($data['parameters']['version']) === true) {
-            $file = $fileService->getFile(object: $object, filePath: $filename, version: $data['parameters']['version']);
+            // @todo this is not supported currently
+            // $file = $fileService->getFile(object: $object, file: $filename, version: $data['parameters']['version']);
+            $file = $fileService->getFile(object: $object, file: $filename);
         } else {
-            $file = $fileService->getFile(object: $object, filePath: $filename);
+            $file = $fileService->getFile(object: $object, file: $filename);
         }
 
         $response = new DataDownloadResponse(data: $file->getContent(), filename: $file->getName(), contentType: $file->getType());
