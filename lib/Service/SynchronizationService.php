@@ -1100,13 +1100,13 @@ class SynchronizationService
                 // It's a list of associative objects
                 foreach ($object[$key] as $i => $item) {
                     if (is_array($item) === true) {
-                        $object[$key][$i] = $this->replaceRelatedOriginIds($item, $subConfig);
+                        $object[$key][$i] = $this->replaceRelatedOriginIds(object: $item, config: $subConfig, replaceIdWithTargetId: $replaceIdWithTargetId);
                     }
                 }
 
             } elseif ($this->isAssociativeArray($object[$key]) === true && is_array($subConfig) === true) {
                 // Single nested associative object
-                $object[$key] = $this->replaceRelatedOriginIds($object[$key], $subConfig);
+                $object[$key] = $this->replaceRelatedOriginIds(object: $object[$key], config: $subConfig, replaceIdWithTargetId: $replaceIdWithTargetId);
 
             } elseif ($subConfig === 'true' && is_string($object[$key]) === true && $replaceIdWithTargetId === false) {
                 // Leaf: value is a string, marked for replacement
