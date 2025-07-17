@@ -926,6 +926,8 @@ class SynchronizationService
 		    $contractLog->setTarget($object);
         }
 
+        $object = $this->replaceRelatedOriginIds(object: $object, config: $sourceConfig['idsToReplaceWithTargetIdsBeforeRules'] ?? [], replaceIdWithTargetId: true);
+
         if ($synchronization->getActions() !== []) {
             $object = $this->processRules(synchronization: $synchronization, data: $object, timing: 'before');
         }
@@ -1077,12 +1079,13 @@ class SynchronizationService
      * Beforehand the $object must be mapped so properties that are relations to other objects set as a 'originId' which are equal to existing originIds on SynchronizationContracts, so that we can take the targetId of
      * those found contracts so objects can be linked from earlier synchronizations.
      *
-     * @param array $object The object array to process (can be nested)
-     * @param array $config A nested config tree indicating which keys to process and replace.
+     * @param array $object                The object array to process (can be nested)
+     * @param array $config                A nested config tree indicating which keys to process and replace.
+     * @param bool  $replaceIdWithTargetId If we need to replace id with target id found by origin id if configured.
      *
      * @return array The processed data with 'originId' replaced with actual ObjectEntities their uuids where applicable.
      */
-    public function replaceRelatedOriginIds(array $object, array $config): array
+    public function replaceRelatedOriginIds(array $object, array $config, bool $replaceIdWithTargetId = false): array
     {
         foreach ($config as $key => $subConfig) {
             if (isset($object[$key]) === false) {
@@ -1105,12 +1108,20 @@ class SynchronizationService
                 // Single nested associative object
                 $object[$key] = $this->replaceRelatedOriginIds($object[$key], $subConfig);
 
-            } elseif ($subConfig === 'true' && is_string($object[$key]) === true) {
+            } elseif ($subConfig === 'true' && is_string($object[$key]) === true && $replaceIdWithTargetId === false) {
                 // Leaf: value is a string, marked for replacement
             	$object[$key] = $this->replaceIdInString($object[$key]);
             }
-        }
 
+            // Replace 'id' at this level if requested, demands originId to be set aswel
+            if ($replaceIdWithTargetId === true && $key === 'id' && isset($object['originId']) && is_string($object['originId'])) {
+                $targetId = $this->replaceIdInString($object['originId']);
+                if ($targetId !== null) {
+                    $object['id'] = $targetId;
+                }
+            }
+
+        }
         return $object;
     }
 
