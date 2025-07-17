@@ -201,53 +201,72 @@ class SourcesController extends Controller
             unset($filters['_limit'], $filters['_page']);
 
             // Handle special filters
-            if (!empty($filters['date_from'])) {
+            if (empty($filters['date_from']) === false) {
                 $specialFilters['date_from'] = $filters['date_from'];
+                unset($filters['date_from']);
             }
-            if (!empty($filters['date_to'])) {
+            if (empty($filters['date_to']) === false) {
                 $specialFilters['date_to'] = $filters['date_to'];
+                unset($filters['date_to']);
             }
-            if (!empty($filters['endpoint'])) {
+            if (empty($filters['endpoint']) === false) {
                 $specialFilters['endpoint_like'] = '%' . $filters['endpoint'] . '%';
+                unset($filters['endpoint']);
             }
-            if (!empty($filters['status_code'])) {
+            if (empty($filters['status_code']) === false) {
                 $statusCodes = explode(',', $filters['status_code']);
                 if (count($statusCodes) === 2) {
                     $specialFilters['status_code_range'] = $statusCodes;
                 }
+                unset($filters['status_code']);
             }
-            if (!empty($filters['slow_requests'])) {
+            if (empty($filters['slow_requests']) === false) {
                 $specialFilters['slow_requests'] = 5000; // 5 seconds in milliseconds
+                unset($filters['slow_requests']);
             }
 
             // Build search conditions and parameters
             $searchConditions = [];
             $searchParams = [];
 
-            if (!empty($specialFilters['date_from'])) {
+            if (empty($specialFilters['date_from']) === false) {
                 $searchConditions[] = "created >= ?";
                 $searchParams[] = $specialFilters['date_from'];
             }
 
-            if (!empty($specialFilters['date_to'])) {
+            if (empty($specialFilters['date_to']) === false) {
                 $searchConditions[] = "created <= ?";
                 $searchParams[] = $specialFilters['date_to'];
             }
 
-            if (!empty($specialFilters['endpoint_like'])) {
+            if (empty($specialFilters['endpoint_like']) === false) {
                 $searchConditions[] = "endpoint LIKE ?";
                 $searchParams[] = $specialFilters['endpoint_like'];
             }
 
-            if (!empty($specialFilters['status_code_range'])) {
+            if (empty($specialFilters['status_code_range']) === false) {
                 $searchConditions[] = "status_code >= ? AND status_code <= ?";
                 $searchParams = array_merge($searchParams, $specialFilters['status_code_range']);
             }
 
-            if (!empty($specialFilters['slow_requests'])) {
+            if (empty($specialFilters['slow_requests']) === false) {
                 $searchConditions[] = "JSON_EXTRACT(response, '$.responseTime') > ?";
                 $searchParams[] = $specialFilters['slow_requests'];
             }
+
+            $sortFields = [];
+            if (empty($filters['_sort']) === false && is_array($filters['_sort']) === true) {
+                // Have some control of what to be sortable
+                $allowedSortFields = ['created', 'status_code', 'endpoint']; 
+                foreach ($filters['_sort'] as $field => $direction) {
+                    if (in_array($field, $allowedSortFields, true) === true) {
+                        $dir = strtoupper($direction) === 'DESC' ? 'DESC' : 'ASC';
+                        $sortFields[$field] = $dir;
+                    }
+                }
+                unset($filters['_sort']);
+            }
+
 
             // Remove special query params from filters
             $filters = $searchService->unsetSpecialQueryParams(filters: $filters);
@@ -258,7 +277,8 @@ class SourcesController extends Controller
                 offset: $offset,
                 filters: $filters,
                 searchConditions: $searchConditions,
-                searchParams: $searchParams
+                searchParams: $searchParams,
+                sortFields: $sortFields
             );
 
             // Get total count for pagination

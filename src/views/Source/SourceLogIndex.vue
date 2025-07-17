@@ -17,7 +17,7 @@ import { logStore, navigationStore, sourceStore } from '../../store/store.js'
 			<div class="viewActionsBar">
 				<div class="viewInfo">
 					<span class="viewTotalCount">
-						{{ t('openconnector', 'Showing {showing} of {total} logs', { showing: paginatedLogs.length, total: filteredLogs.length }) }}
+						{{ t('openconnector', 'Showing {showing} of {total} logs', { showing: paginatedLogs.length, total: totalLogs }) }}
 					</span>
 					<span v-if="hasActiveFilters" class="viewIndicator">
 						({{ t('openconnector', 'Filtered') }})
@@ -275,6 +275,9 @@ export default {
 		},
 		filteredLogs() {
 			return (sourceStore.sourceLogs && Array.isArray(sourceStore.sourceLogs.results)) ? sourceStore.sourceLogs.results : []
+		},
+		totalLogs() {
+			return (sourceStore.sourceLogs && sourceStore.sourceLogs.total ? sourceStore.sourceLogs.total : '?')
 		},
 		paginatedLogs() {
 			return this.filteredLogs
