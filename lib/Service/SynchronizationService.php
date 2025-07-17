@@ -1116,7 +1116,7 @@ class SynchronizationService
             // Replace 'id' at this level if requested, demands originId to be set aswel
             if ($replaceIdWithTargetId === true && $key === 'id' && isset($object['originId']) && is_string($object['originId'])) {
                 $targetId = $this->replaceIdInString($object['originId']);
-                if ($targetId !== null) {
+                if ($targetId !== null && $targetId !== $object['originId']) {
                     $object['id'] = $targetId;
                 }
             }
