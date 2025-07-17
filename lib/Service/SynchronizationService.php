@@ -1129,21 +1129,29 @@ class SynchronizationService
 	 * @param string $value The string potentially containing a UUID to replace.
 	 * @return string The string with the UUID replaced if found and valid, otherwise the original string.
 	 */
-	private function replaceIdInString(string $value): string
-	{
-		// Look for uuid in the string
-		if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches)) {
-			$originId = $matches[0];
+    private function replaceIdInString(string $value): string
+    {
+        // First check if we already can find object with origin id as is.
+        $targetId = $this->synchronizationContractMapper->findTargetIdByOriginId($value);
+        if ($targetId !== null && $targetId !== $value) {
+            return $targetId;
+        }
 
-			if (Uuid::isValid($originId) === true) {
-				$targetId = $this->synchronizationContractMapper->findTargetIdByOriginId($originId);
+        // If not a direct match, check for embedded UUID (used for uri relations)
+        if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches)) {
+            $originId = $matches[0];
 
-				return str_replace($originId, $targetId, $value);
-			}
-		}
+            if (Uuid::isValid($originId) === true) {
+                $targetId = $this->synchronizationContractMapper->findTargetIdByOriginId($originId);
 
-		return $value;
-	}
+                if ($targetId !== null && $targetId !== $originId) {
+                    return str_replace($originId, $targetId, $value);
+                }
+            }
+        }
+
+        return $value;
+    }
 
 	/**
 	 * Handles the synchronization of subObjects based on source configuration.
