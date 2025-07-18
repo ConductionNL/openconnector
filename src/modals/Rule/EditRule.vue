@@ -646,6 +646,11 @@ export default {
 						tags: [],
 						sourceConfiguration: '[]',
 						autoShare: false,
+						endpoint: '',
+						contentPath: '',
+						originIdPath: '',
+						filenamePath: '',
+						fileExtension: '',
 					},
 					write_file: {
 						filePath: '',
