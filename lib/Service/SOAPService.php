@@ -111,7 +111,7 @@ class SOAPService
 	 *
 	 * @return \SimpleXMLElement The resulting XML element.
 	 */
-	private function parseDynamicXsd (string $xmlString): \SimpleXMLElement
+	private function parseDynamicXsd (string $xmlString): ?\SimpleXMLElement
 	{
 		// @TODO: This is awfully specific, to be replaced by a more generic fix for faulty XSD.
 		$xmlString = '<any>'.str_replace('NewDataSet', 'DocumentElement', $xmlString).'</any>';
@@ -136,6 +136,10 @@ class SOAPService
 
 		// Or just get the DocumentElement directly
 		$documentElement = $simpleXml->xpath('//DocumentElement')[0];
+
+        if ($documentElement === null) {
+            return null;
+        }
 
 		return $documentElement->QueryExecResult;
 	}
@@ -171,6 +175,10 @@ class SOAPService
 		if(isset($result->{'QueryExecute2Result'}) === true && isset($result->{'QueryExecute2Result'}->any) === true) {
 
 			$result->{'QueryExecute2Result'} = $this->parseDynamicXsd($result->{'QueryExecute2Result'}->any);
+
+            if($result->{'QueryExecute2Result'} === null) {
+                $result->{'QueryExecute2Result'} = [];
+            }
 		}
 
 		// @TODO: The detection of binary data fields should be dynamic
