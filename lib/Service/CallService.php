@@ -408,7 +408,7 @@ class CallService
         if ($source->getType() === 'soap') {
 			// If the source type is SOAP, use the soap service.
 			// Warning: This functionality requires ext-soap and ext-xsd.
-            $soapService = new SoapService($this->cookieJar);
+            $soapService = new SOAPService($this->cookieJar);
 
             $response = $soapService->callSoapSource(source: $source, soapAction: $endpoint, config: $config);
         } else {
