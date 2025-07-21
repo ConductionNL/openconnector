@@ -41,7 +41,7 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
 
         $syncArray = $entity->jsonSerialize();
         unset($syncArray['id'], $syncArray['uuid']);
-        
+
         // Ensure slug is set
         if (empty($syncArray['slug'])) {
             $syncArray['slug'] = $entity->getSlug();
@@ -247,7 +247,7 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
         }
 
         // Convert arrays of slugs back to IDs
-        $idArrays = ['actions', 'followUps', 'conditions'];
+        $idArrays = ['actions', 'followUps'];
         foreach ($idArrays as $arrayKey) {
             if (isset($data[$arrayKey]) && is_array($data[$arrayKey])) {
                 $data[$arrayKey] = array_map(function($slug) use ($mappings, $arrayKey) {
