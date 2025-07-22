@@ -97,6 +97,13 @@ class EndpointService
     {
     }
 
+	/**
+	 * Parse the error message from the validation service for ZGW format
+	 *
+	 * @param array $response The response that is build
+	 * @param array $responseData The data from the responses found in the rules and openregister.
+	 * @return array
+	 */
 	private function parseMessage(array $response, array $responseData): array
 	{
 		if (isset($responseData['message']) === true
