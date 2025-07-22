@@ -97,6 +97,41 @@ class EndpointService
     {
     }
 
+	private function parseMessage(array $response, array $responseData): array
+	{
+		if (isset($responseData['message']) === true
+			&& $responseData['message'] === 'Validation failed'
+			&& isset($responseData['errors']) === true
+			&& str_contains(haystack: $responseData['errors'][0]['message'], needle: 'missing')
+		) {
+			$startChar = strpos($responseData['errors'][0]['message'], '(') + 1;
+			$endChar = strpos($responseData['errors'][0]['message'], ')');
+
+			$keys = explode(separator: ',', string: substr(string: $responseData['errors'][0]['message'], offset: $startChar, length: $endChar - $startChar));
+
+			$response['detail'] = $responseData['errors'][0]['message'];
+			$response['invalidParams'] = array_map(function (string $key) {
+				return ['property' => trim($key), 'code' => 'required', 'reason' => 'The required property is missing'];
+			}, $keys);
+		} else if (isset($responseData['message']) === true
+			&& $responseData['message'] === 'Validation failed'
+			&& isset($responseData['errors']) === true
+		) {
+			$response['detail'] = $responseData['errors'][0]['message'];
+			$response['invalidParams'] = array_map(function (string $key, array $message) {
+				if (str_contains(haystack: $message[0], needle: 'type')) {
+					$code = 'invalid type';
+				} else {
+					$code = 'invalid value';
+				}
+				return ['property' => $key, 'code' => $code, 'reason' => $message[0]];
+			}, array_keys($responseData['errors'][0]['errors']), array_values($responseData['errors'][0]['errors']));
+		}
+
+
+		return $response;
+	}
+
     /**
      * Handles incoming requests to endpoints
      *
@@ -208,20 +243,27 @@ class EndpointService
                     return $ruleResult;
                 }
 
-                if ($ruleResult instanceof Response === true || $result->getStatus() < 200 && $result->getStatus() >= 300) {
+//				var_dump($result->getStatus());
+
+                if ($ruleResult instanceof Response === true || $result->getStatus() < 200 || $result->getStatus() >= 300) {
                     if($ruleResult instanceof Response === true) {
                         $result = $ruleResult;
                     }
 
                     $responseData = [
-                        'requestId' => $request->getId(),
-                        'message'   => $result->getData()['message'],
-                        'status' => $result->getStatus(),
+						'type' => $result->getData()['message'],
+						'code' => $result->getStatus(),
+						'title'   => $result->getData()['message'],
+						'status' => $result->getStatus(),
+						'instance' => $request->getId(),
 
                     ];
 
-                    var_Dump($responseData);
-                }
+					$responseData = $this->parseMessage(response: $responseData, responseData: $result->getData());
+
+					return new JSONResponse(data: $responseData, statusCode: $result->getStatus());
+
+				}
 
 				if ($result->getStatus() !== 200 && $result->getStatus() !== 201) {
 					return new JSONResponse(data: $ruleResult['body'], statusCode: $result->getStatus(), headers: $ruleResult['headers']);
