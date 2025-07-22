@@ -204,8 +204,23 @@ class EndpointService
                     objectId: $result->getData()['id'] ?? null
                 );
 
-                if ($ruleResult instanceof Response === true) {
+                if ($ruleResult instanceof Response === true && $ruleResult->getStatus() >= 200 && $ruleResult->getStatus() < 300) {
                     return $ruleResult;
+                }
+
+                if ($ruleResult instanceof Response === true || $result->getStatus() < 200 && $result->getStatus() >= 300) {
+                    if($ruleResult instanceof Response === true) {
+                        $result = $ruleResult;
+                    }
+
+                    $responseData = [
+                        'requestId' => $request->getId(),
+                        'message'   => $result->getData()['message'],
+                        'status' => $result->getStatus(),
+
+                    ];
+
+                    var_Dump($responseData);
                 }
 
 				if ($result->getStatus() !== 200 && $result->getStatus() !== 201) {
