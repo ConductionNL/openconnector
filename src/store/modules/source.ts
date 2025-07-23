@@ -390,17 +390,26 @@ export const useSourceStore = defineStore('source', () => {
 			if (!('source_id' in filters) && sourceItem.value?.id) {
 				queryParams.append('source_id', sourceItem.value.id.toString())
 			}
+
+			// Ensure _sort[created]=desc if not set
+			const sortKey = '_sort[created]'
+			if (!(sortKey in filters)) {
+				queryParams.append(sortKey, 'desc')
+			}
+
 			// Add other filters
 			Object.entries(filters).forEach(([key, value]) => {
 				if (value !== null && value !== undefined && value !== '') {
 					queryParams.append(key, value.toString())
 				}
 			})
+
 			// Build the endpoint
 			const endpoint = `/index.php/apps/openconnector/api/sources/logs${queryParams.toString() ? '?' + queryParams.toString() : ''}`
 			const response = await fetch(endpoint, {
 				method: 'GET',
 			})
+
 			const data = await response.json()
 			setSourceLogs(data)
 			return { response, data }

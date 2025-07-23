@@ -82,6 +82,17 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 				<div class="tabContainer">
 					<BTabs content-class="mt-3" justified>
 						<BTab title="Mapping">
+							<div class="tabButtonsContainer">
+								<NcButton type="primary"
+									class="fullWidthButton"
+									aria-label="Add Mapping"
+									@click="addMappingMapping">
+									<template #icon>
+										<Plus :size="20" />
+									</template>
+									Add Mapping
+								</NcButton>
+							</div>
 							<div v-if="mappingStore.mappingItem?.mapping !== null && Object.keys(mappingStore.mappingItem?.mapping || {}).length">
 								<NcListItem v-for="(value, key, i) in mappingStore.mappingItem?.mapping"
 									:key="`${key}${i}`"
@@ -120,6 +131,17 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 							</div>
 						</BTab>
 						<BTab title="Cast">
+							<div class="tabButtonsContainer">
+								<NcButton type="primary"
+									class="fullWidthButton"
+									aria-label="Add Cast"
+									@click="addMappingCast">
+									<template #icon>
+										<Plus :size="20" />
+									</template>
+									Add Cast
+								</NcButton>
+							</div>
 							<div v-if="mappingStore.mappingItem?.cast !== null && Object.keys(mappingStore.mappingItem?.cast || {}).length">
 								<NcListItem v-for="(value, key, i) in mappingStore.mappingItem?.cast"
 									:key="`${key}${i}`"
@@ -158,6 +180,17 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 							</div>
 						</BTab>
 						<BTab title="Unset">
+							<div class="tabButtonsContainer">
+								<NcButton type="primary"
+									class="fullWidthButton"
+									aria-label="Add Unset"
+									@click="mappingStore.setMappingUnsetKey(null); navigationStore.setModal('editMappingUnset')">
+									<template #icon>
+										<Plus :size="20" />
+									</template>
+									Add Unset
+								</NcButton>
+							</div>
 							<div v-if="mappingStore.mappingItem?.unset?.length">
 								<NcListItem v-for="(value, i) in mappingStore.mappingItem?.unset"
 									:key="`${value}${i}`"
@@ -198,7 +231,7 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcListItem } from '@nextcloud/vue'
+import { NcActions, NcActionButton, NcListItem, NcButton } from '@nextcloud/vue'
 import { BTab, BTabs } from 'bootstrap-vue'
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
@@ -210,7 +243,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import TestTube from 'vue-material-design-icons/TestTube.vue'
 import Eraser from 'vue-material-design-icons/Eraser.vue'
 import FileExportOutline from 'vue-material-design-icons/FileExportOutline.vue'
-
+import Plus from 'vue-material-design-icons/Plus.vue'
 export default {
 	name: 'MappingDetails',
 	components: {
@@ -220,6 +253,8 @@ export default {
 		TrashCanOutline,
 		BTab,
 		BTabs,
+		NcButton,
+		Plus,
 	},
 	methods: {
 		deleteMappingMapping(key) {
@@ -261,5 +296,10 @@ export default {
 </script>
 
 <style>
-/* Styles remain the same */
+.tabButtonsContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
 </style>

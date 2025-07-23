@@ -926,6 +926,8 @@ class SynchronizationService
 		    $contractLog->setTarget($object);
         }
 
+        $object = $this->replaceRelatedOriginIds(object: $object, config: $sourceConfig['idsToReplaceWithTargetIdsBeforeRules'] ?? [], replaceIdWithTargetId: true);
+
         if ($synchronization->getActions() !== []) {
             $object = $this->processRules(synchronization: $synchronization, data: $object, timing: 'before');
         }
@@ -1077,18 +1079,19 @@ class SynchronizationService
      * Beforehand the $object must be mapped so properties that are relations to other objects set as a 'originId' which are equal to existing originIds on SynchronizationContracts, so that we can take the targetId of
      * those found contracts so objects can be linked from earlier synchronizations.
      *
-     * @param array $object The object array to process (can be nested)
-     * @param array $config A nested config tree indicating which keys to process and replace.
+     * @param array $object                The object array to process (can be nested)
+     * @param array $config                A nested config tree indicating which keys to process and replace.
+     * @param bool  $replaceIdWithTargetId If we need to replace id with target id found by origin id if configured.
      *
      * @return array The processed data with 'originId' replaced with actual ObjectEntities their uuids where applicable.
      */
-    public function replaceRelatedOriginIds(array $object, array $config): array
+    public function replaceRelatedOriginIds(array $object, array $config, bool $replaceIdWithTargetId = false): array
     {
         foreach ($config as $key => $subConfig) {
             if (isset($object[$key]) === false) {
                 continue;
             }
-    
+
             if (
                 is_array($object[$key]) === true &&
                 $this->isAssociativeArray(reset($object[$key])) === true &&
@@ -1097,20 +1100,28 @@ class SynchronizationService
                 // It's a list of associative objects
                 foreach ($object[$key] as $i => $item) {
                     if (is_array($item) === true) {
-                        $object[$key][$i] = $this->replaceRelatedOriginIds($item, $subConfig);
+                        $object[$key][$i] = $this->replaceRelatedOriginIds(object: $item, config: $subConfig, replaceIdWithTargetId: $replaceIdWithTargetId);
                     }
                 }
-    
+
             } elseif ($this->isAssociativeArray($object[$key]) === true && is_array($subConfig) === true) {
                 // Single nested associative object
-                $object[$key] = $this->replaceRelatedOriginIds($object[$key], $subConfig);
-    
-            } elseif ($subConfig === 'true' && is_string($object[$key]) === true) {
+                $object[$key] = $this->replaceRelatedOriginIds(object: $object[$key], config: $subConfig, replaceIdWithTargetId: $replaceIdWithTargetId);
+
+            } elseif ($subConfig === 'true' && is_string($object[$key]) === true && $replaceIdWithTargetId === false) {
                 // Leaf: value is a string, marked for replacement
             	$object[$key] = $this->replaceIdInString($object[$key]);
             }
+
+            // Replace 'id' at this level if requested, demands originId to be set aswel
+            if ($replaceIdWithTargetId === true && $key === 'id' && isset($object['originId']) && is_string($object['originId'])) {
+                $targetId = $this->replaceIdInString($object['originId']);
+                if ($targetId !== null && $targetId !== $object['originId']) {
+                    $object['id'] = $targetId;
+                }
+            }
+
         }
-    
         return $object;
     }
 
@@ -1129,21 +1140,29 @@ class SynchronizationService
 	 * @param string $value The string potentially containing a UUID to replace.
 	 * @return string The string with the UUID replaced if found and valid, otherwise the original string.
 	 */
-	private function replaceIdInString(string $value): string
-	{
-		// Look for uuid in the string
-		if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches)) {
-			$originId = $matches[0];
+    private function replaceIdInString(string $value): string
+    {
+        // First check if we already can find object with origin id as is.
+        $targetId = $this->synchronizationContractMapper->findTargetIdByOriginId($value);
+        if ($targetId !== null && $targetId !== $value) {
+            return $targetId;
+        }
 
-			if (Uuid::isValid($originId) === true) {
-				$targetId = $this->synchronizationContractMapper->findTargetIdByOriginId($originId);
+        // If not a direct match, check for embedded UUID (used for uri relations)
+        if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches)) {
+            $originId = $matches[0];
 
-				return str_replace($originId, $targetId, $value);
-			}
-		}
+            if (Uuid::isValid($originId) === true) {
+                $targetId = $this->synchronizationContractMapper->findTargetIdByOriginId($originId);
 
-		return $value;
-	}
+                if ($targetId !== null && $targetId !== $originId) {
+                    return str_replace($originId, $targetId, $value);
+                }
+            }
+        }
+
+        return $value;
+    }
 
 	/**
 	 * Handles the synchronization of subObjects based on source configuration.
@@ -1281,7 +1300,7 @@ class SynchronizationService
                 continue;
             }
 
-            if (is_array(reset($value)) === true && $this->isAssociativeArray(reset($value)) === true) { 
+            if (is_array(reset($value)) === true && $this->isAssociativeArray(reset($value)) === true) {
                 foreach ($value as $key => $subValue) {
                     if (is_array($subValue) === false) {
                         continue;
@@ -1448,6 +1467,18 @@ class SynchronizationService
 			$config['query'] = $query;
 		}
 
+		if (isset($sourceConfig['useDataAsRequestBody']) === true) {
+			$useDataAsRequestBody = $sourceConfig['useDataAsRequestBody'];
+		} else {
+			$useDataAsRequestBody = null;
+		}
+
+		if ($useDataAsRequestBody === '#') {
+			$config['body'] = json_encode($data);
+		} else if (empty($useDataAsRequestBody) === false) {
+			$config['body'] = json_encode((new Dot($data))->get($useDataAsRequestBody));
+		}
+
 		$currentPage = 1;
 
 		// Start with the current page
@@ -1466,10 +1497,17 @@ class SynchronizationService
             usesPagination: $usesPagination
 		);
 
+		if(array_is_list($objects) === false) {
+			$objects = [$objects];
+		}
+
 		// Merge additional data into each object if $data is provided
-		if ($data !== null && empty($data) === false) {
-;			foreach ($objects as &$object) {
-                $object = array_merge($object, $data);
+		if ($data !== null
+			&& empty($data) === false
+			&& $useDataAsRequestBody === false
+		) {
+			foreach ($objects as &$object) {
+				$object = array_merge($object, $data);
 			}
 		}
 
@@ -2359,6 +2397,13 @@ class SynchronizationService
 			? substr(string: $endpoint, offset: strlen(string: $source->getLocation()))
 			: $endpoint;
 
+		$sourceConfig = json_encode($config['sourceConfiguration']);
+		$sourceConfig = str_replace(search: "{{ originId }}", replace: $config['originId'], subject: $sourceConfig);
+		$sourceConfig = json_decode($sourceConfig, true);
+		$sourceConfig['body'] = json_encode($sourceConfig['body']);
+
+		$config['sourceConfiguration'] = $sourceConfig;
+
 		$result = $this->callService->call(
 			source: $source,
 			endpoint: $endpoint,
@@ -2366,6 +2411,18 @@ class SynchronizationService
 			config: $config['sourceConfiguration'] ?? []
 		);
 		$response = $result->getResponse();
+
+		$body = json_decode($response['body'], true);
+
+		if (isset($config['contentPath']) === true) {
+			$content = base64_decode((new Dot($body))->get($config['contentPath']));
+		}
+		if (isset($config['filenamePath']) === true) {
+			$filename = (new Dot($body))->get($config['filenamePath']);
+		}
+		if (isset($config['fileExtension']) === true) {
+			$filename = $filename.$config['fileExtension'];
+		}
 
 		// Check if response is valid
 		if ($response === null) {
@@ -2390,12 +2447,16 @@ class SynchronizationService
 			throw new Exception("Invalid object ID format: {$objectId}. Expected a valid UUID.");
 		}
         $fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
-        $content = $response['body'];
+
+		if (isset($content) === false) {
+			$content = $response['body'];
+		}
+
         $shouldShare = !empty($tags) && isset($config['autoShare']) ? $config['autoShare'] : false;
-		
+
 		// Determine if file should be published based on the published parameter
 		$shouldPublish = $this->shouldPublishFile($published);
-		
+
 		try {
 			$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
 			$objectEntity = $objectService->findByUuid(uuid: $objectId);
@@ -2406,7 +2467,7 @@ class SynchronizationService
 				share: $shouldShare,
 				tags: $tags
 			);
-			
+
 			// Publish the file if needed
 			if ($shouldPublish && $file !== null) {
 				try {
@@ -2421,7 +2482,7 @@ class SynchronizationService
 			$register = $config['register'] ?? null;
 			$schema   = $config['schema'] ?? null;
 			$file = $fileService->addFile(objectEntity: $objectId, fileName: $filename, content: $response['body'], share: isset($config['autoShare']) ? $config['autoShare'] : false, tags: $tags, register: $register, schema: $schema, registerId: $registerId);
-			
+
 			// For the addFile case, we'll need to get the object entity to publish
 			if ($shouldPublish && $file !== null) {
 				try {
@@ -2628,6 +2689,7 @@ class SynchronizationService
 	 */
 	private function processFetchFileRule(Rule $rule, array $data, ?string $objectId = null): array
 	{
+
         // Check if OpenRegister app is available
         $appManager = \OC::$server->get(\OCP\App\IAppManager::class);
         if ($appManager->isEnabledForUser('openregister') === false) {
@@ -2640,11 +2702,16 @@ class SynchronizationService
 		}
 
 		$config = $rule->getConfiguration()['fetch_file'];
+
 		$dataDot = new Dot($data);
-		$endpoint = $dataDot->get($config['filePath']);
+		$endpoint = isset($config['filePath']) ? $dataDot->get($config['filePath']) : $config['endpoint'];
 
 		if ($objectId === null && isset($config['objectIdPath']) === true) {
 			$objectId = $dataDot->get($config['objectIdPath']);
+		}
+
+		if (isset($config['originIdPath']) === true) {
+			$config['originId'] = $dataDot->get($config['originIdPath']);
 		}
 
         // If no endpoint is found, return data unchanged
@@ -2671,11 +2738,11 @@ class SynchronizationService
 				break;
 			// Array of object that has file(s)
 			case 'Associative array':
-				$endpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
+				$actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
 				if ($endpoint === null) {
                     return $dataDot->jsonSerialize();
 				}
-				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
+				$this->fetchFile(source: $source, endpoint: $actualEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
 				break;
 			// Array of object(s) that has file(s)
 			case "Multidimensional array":
@@ -2708,7 +2775,7 @@ class SynchronizationService
 
         // Return data immediately with placeholder values
         if (isset($config['setPlaceholder']) === false || (isset($config['setPlaceholder']) === true && $config['setPlaceholder'] != false)) {
-            $dataDot[$config['filePath']] = $this->generatePlaceholderValues($endpoint); 
+            $dataDot[$config['filePath']] = $this->generatePlaceholderValues($endpoint);
         }
 
 		return $dataDot->jsonSerialize();
@@ -3622,7 +3689,7 @@ class SynchronizationService
 			if ($date !== false) {
 				return true;
 			}
-			
+
 			// Try other common date formats
 			$formats = ['Y-m-d', 'Y-m-d H:i:s', 'Y-m-d\TH:i:s\Z', 'Y-m-d\TH:i:sP'];
 			foreach ($formats as $format) {

@@ -97,6 +97,48 @@ class EndpointService
     {
     }
 
+	/**
+	 * Parse the error message from the validation service for ZGW format
+	 *
+	 * @param array $response The response that is build
+	 * @param array $responseData The data from the responses found in the rules and openregister.
+	 * @return array
+	 */
+	private function parseMessage(array $response, array $responseData): array
+	{
+		if (isset($responseData['message']) === true
+			&& $responseData['message'] === 'Validation failed'
+			&& isset($responseData['errors']) === true
+			&& str_contains(haystack: $responseData['errors'][0]['message'], needle: 'missing')
+		) {
+			$startChar = strpos($responseData['errors'][0]['message'], '(') + 1;
+			$endChar = strpos($responseData['errors'][0]['message'], ')');
+
+			$keys = explode(separator: ',', string: substr(string: $responseData['errors'][0]['message'], offset: $startChar, length: $endChar - $startChar));
+
+			$response['detail'] = $responseData['errors'][0]['message'];
+			$response['invalidParams'] = array_map(function (string $key) {
+				return ['property' => trim($key), 'code' => 'required', 'reason' => 'The required property is missing'];
+			}, $keys);
+		} else if (isset($responseData['message']) === true
+			&& $responseData['message'] === 'Validation failed'
+			&& isset($responseData['errors']) === true
+		) {
+			$response['detail'] = $responseData['errors'][0]['message'];
+			$response['invalidParams'] = array_map(function (string $key, array $message) {
+				if (str_contains(haystack: $message[0], needle: 'type')) {
+					$code = 'invalid type';
+				} else {
+					$code = 'invalid value';
+				}
+				return ['property' => $key, 'code' => $code, 'reason' => $message[0]];
+			}, array_keys($responseData['errors'][0]['errors']), array_values($responseData['errors'][0]['errors']));
+		}
+
+
+		return $response;
+	}
+
     /**
      * Handles incoming requests to endpoints
      *
@@ -204,9 +246,31 @@ class EndpointService
                     objectId: $result->getData()['id'] ?? null
                 );
 
-                if ($ruleResult instanceof Response === true) {
+                if ($ruleResult instanceof Response === true && $ruleResult->getStatus() >= 200 && $ruleResult->getStatus() < 300) {
                     return $ruleResult;
                 }
+
+//				var_dump($result->getStatus());
+
+                if ($ruleResult instanceof Response === true || $result->getStatus() < 200 || $result->getStatus() >= 300) {
+                    if($ruleResult instanceof Response === true) {
+                        $result = $ruleResult;
+                    }
+
+                    $responseData = [
+						'type' => $result->getData()['message'],
+						'code' => $result->getStatus(),
+						'title'   => $result->getData()['message'],
+						'status' => $result->getStatus(),
+						'instance' => $request->getId(),
+
+                    ];
+
+					$responseData = $this->parseMessage(response: $responseData, responseData: $result->getData());
+
+					return new JSONResponse(data: $responseData, statusCode: $result->getStatus());
+
+				}
 
 				if ($result->getStatus() !== 200 && $result->getStatus() !== 201) {
 					return new JSONResponse(data: $ruleResult['body'], statusCode: $result->getStatus(), headers: $ruleResult['headers']);
@@ -393,33 +457,43 @@ class EndpointService
 	 * Create a reduced list of extend keys and extends for checking purposes
 	 *
 	 * @param array $extend The original extend array
+     *
 	 * @return array The reduced extend array
 	 */
 	private function reduceExtendKeys(array $extend): array
-	{
-		$reducedKeys = [];
+    {
+        if (empty($extend)) {
+            return $extend;
+        }
 
-		foreach($extend as $key => $value) {
-			if(str_contains(haystack: $value, needle: '.') === false) {
-				$reducedKeys[] = $key;
-				continue;
-			}
+        $reducedKeys = [];
 
+        foreach ($extend as $key => $value) {
+            // Normalize input in case it's a simple array: ['something.subthing']
+            $actualValue = is_int($key) ? $value : $key;
 
-			[$prefix, $newKey] = explode('.', $value, 2);
+            if (str_contains($actualValue, '.') === false) {
+                $reducedKeys[] = $actualValue;
+                continue;
+            }
 
-			if(($newPrefix = array_search(needle: $prefix, haystack: $extend)) !== false) {
-				$reducedKeys[] = $newPrefix .'.'. $newKey;
-				continue;
-			}
-			$reducedKeys[] = $value;
-		}
+            [$prefix, $newKey] = explode('.', $actualValue, 2);
 
-		$reducedExtend = array_combine($reducedKeys, $reducedKeys);
+            if (in_array($prefix, $extend, true)) {
+                $reducedKeys[] = $prefix . '.' . $newKey;
+                continue;
+            }
 
-		$serialized = (new Dot($reducedExtend, parse: true))->jsonSerialize();
-		return $serialized;
-	} //end reduceExtendKeys()
+            $reducedKeys[] = $actualValue;
+        }
+
+        $dot = new Dot([], parse: true);
+        foreach ($reducedKeys as $path) {
+            $dot->set($path, true); // true is a safe placeholder for Dot to serialize
+        }
+
+        return $dot->jsonSerialize();
+    }
 
     /**
      * Recursively replaces UUIDs in an array with their corresponding URLs.
@@ -564,13 +638,14 @@ class EndpointService
             }
 
             $main = $mapper->findByUuid($pathParams['id'])->getObject();
-            $ids = $main[$property];
 
             if(isset($main[$property]) === false) {
                 return $this->replaceInternalReferences(mapper: $mapper, object: $mapper->find($pathParams['id']));
             }
 
-            if ($ids === null || empty($ids) === true) {
+            $ids = $main[$property];
+
+            if (isset($ids) === false || $ids === null || empty($ids) === true) {
                 $returnArray = [
                     'count' => 0,
                     'results' => []
@@ -1434,7 +1509,7 @@ class EndpointService
         if(isset($data['body']['isTest']) === true) {
             $test = $data['body']['isTest'];
         } elseif (isset($config['isTest']) === true) {
-            $force = $config['isTest'];
+            $test = $config['isTest'];
         } else {
             $test = false;
         }
@@ -1457,7 +1532,7 @@ class EndpointService
         $sendObject = $object;
 
         // Run synchronization.
-        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, object: $object);
+        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, data: $object);
 
         // $object got updated through reference.
         $returnedObject = $object;
@@ -1708,9 +1783,11 @@ class EndpointService
         }
 
         if(isset($data['parameters']['version']) === true) {
-            $file = $fileService->getFile(object: $object, filePath: $filename, version: $data['parameters']['version']);
+            // @todo this is not supported currently
+            // $file = $fileService->getFile(object: $object, file: $filename, version: $data['parameters']['version']);
+            $file = $fileService->getFile(object: $object, file: $filename);
         } else {
-            $file = $fileService->getFile(object: $object, filePath: $filename);
+            $file = $fileService->getFile(object: $object, file: $filename);
         }
 
         $response = new DataDownloadResponse(data: $file->getContent(), filename: $file->getName(), contentType: $file->getType());
