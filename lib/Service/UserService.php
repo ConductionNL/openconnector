@@ -49,6 +49,7 @@ class UserService
      * @param IGroupManager $groupManager The group manager service
      * @param IAccountManager $accountManager The account manager service
      * @param LoggerInterface $logger The logger interface
+     * @param OrganisationBridgeService $organisationBridgeService The organization bridge service
      */
     public function __construct(
         private readonly IUserManager $userManager,
@@ -56,7 +57,8 @@ class UserService
         private readonly IConfig $config,
         private readonly IGroupManager $groupManager,
         private readonly IAccountManager $accountManager,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly OrganisationBridgeService $organisationBridgeService
     ) {
     }
 
@@ -137,6 +139,10 @@ class UserService
         $result['lastName'] = $result['lastName'] ?? null;
         $result['middleName'] = $result['middleName'] ?? null;
         
+        // Add organization information if available
+        $organisationStats = $this->organisationBridgeService->getUserOrganisationStats();
+        $result['organisations'] = $organisationStats;
+        
         return $result;
     }
 
@@ -148,22 +154,40 @@ class UserService
      *
      * @param IUser $user The user object to update
      * @param array $data The data array containing updates
-     * @return void
+     * @return array Result of the update operation including organization changes
      * 
      * @psalm-param IUser $user
      * @psalm-param array $data
-     * @psalm-return void
+     * @psalm-return array
      * @phpstan-param IUser $user
      * @phpstan-param array $data
-     * @phpstan-return void
+     * @phpstan-return array
      */
-    public function updateUserProperties(IUser $user, array $data): void
+    public function updateUserProperties(IUser $user, array $data): array
     {
+        $result = [
+            'success' => true,
+            'message' => 'User properties updated successfully',
+            'organisation_updated' => false
+        ];
+
+        // Handle organization switching if requested
+        if (isset($data['activeOrganisation']) && is_string($data['activeOrganisation'])) {
+            $organisationResult = $this->organisationBridgeService->setActiveOrganisation($data['activeOrganisation']);
+            $result['organisation_updated'] = $organisationResult['success'];
+            $result['organisation_message'] = $organisationResult['message'];
+            
+            // Remove the organization field from data to prevent it from being processed as a user property
+            unset($data['activeOrganisation']);
+        }
+
         // Update standard user properties
         $this->updateStandardUserProperties($user, $data);
 
         // Update profile fields via AccountManager and custom fields
         $this->updateProfileProperties($user, $data);
+
+        return $result;
     }
 
     /**
