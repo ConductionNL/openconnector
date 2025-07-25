@@ -166,6 +166,13 @@ import { Rule } from '../../entities/index.js'
 						maxlength="2550"
 						:value.sync="ruleItem.configuration.error.message"
 						placeholder="We encountered an unexpected problem" />
+
+                    <NcCheckboxRadioSwitch
+                        type="checkbox"
+                        label="Include JSON Logic results in errors array"
+                        :checked.sync="ruleItem.configuration.error.includeJsonLogicResult">
+                        Include JSON Logic results in errors array
+                    </NcCheckboxRadioSwitch>
 				</template>
 
 				<!-- JavaScript Configuration -->
@@ -1261,6 +1268,7 @@ export default {
 					code: this.ruleItem.configuration.error.code,
 					name: this.ruleItem.configuration.error.name,
 					message: this.ruleItem.configuration.error.message,
+                    includeJsonLogicResult: this.ruleItem.configuration.error.includeJsonLogicResult,
 				}
 				break
 			case 'mapping':
