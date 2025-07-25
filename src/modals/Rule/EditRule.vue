@@ -625,6 +625,7 @@ export default {
 						code: 500,
 						name: 'Something went wrong',
 						message: 'We encountered an unexpected problem',
+                        includeJsonLogicResult: false,
 					},
 					javascript: '',
 					authentication: {
@@ -744,6 +745,7 @@ export default {
 						code: ruleStore.ruleItem.configuration?.error?.code ?? 500,
 						name: ruleStore.ruleItem.configuration?.error?.name ?? 'Something went wrong',
 						message: ruleStore.ruleItem.configuration?.error?.message ?? 'We encountered an unexpected problem',
+                        includeJsonLogicResult: ruleStore.ruleItem.configuration?.error?.includeJsonLogicResult ?? false,
 					},
 					javascript: ruleStore.ruleItem.configuration?.javascript ?? '',
 					authentication: {
