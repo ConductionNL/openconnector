@@ -39,8 +39,8 @@ class Application extends App implements IBootstrap {
         // @todo: remove this temporary listener to the software catalog application
 //        $dispatcher->addServiceListener(eventName: ViewUpdatedOrCreatedEventListener::class, className: ViewUpdatedOrCreatedEventListener::class);
 
-		// Register the OrganisationBridgeService
-		$context->registerService(OrganisationBridgeService::class);
+		// OrganisationBridgeService now uses lazy dependency resolution
+		// No manual registration needed - Nextcloud will auto-inject it
 	}
 
 	public function boot(IBootContext $context): void {

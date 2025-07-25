@@ -94,6 +94,27 @@ class UserController extends Controller
     private readonly LoggerInterface $logger;
 
     /**
+     * Allowed CORS methods
+     *
+     * @var string
+     */
+    private readonly string $corsMethods;
+
+    /**
+     * Allowed CORS headers
+     *
+     * @var string
+     */
+    private readonly string $corsAllowedHeaders;
+
+    /**
+     * CORS max age
+     *
+     * @var int
+     */
+    private readonly int $corsMaxAge;
+
+    /**
      * Constructor for the UserController
      *
      * Initializes the controller with required dependencies for user management
@@ -108,6 +129,9 @@ class UserController extends Controller
      * @param LoggerInterface $logger The logger for security events
      * @param UserService $userService The user service for user-related operations
      * @param OrganisationBridgeService $organisationBridgeService The organization bridge service
+     * @param string $corsMethods Allowed CORS methods
+     * @param string $corsAllowedHeaders Allowed CORS headers
+     * @param int $corsMaxAge CORS max age
      *
      * @psalm-param string $appName
      * @psalm-param IRequest $request
@@ -118,6 +142,9 @@ class UserController extends Controller
      * @psalm-param LoggerInterface $logger
      * @psalm-param UserService $userService
      * @psalm-param OrganisationBridgeService $organisationBridgeService
+     * @psalm-param string $corsMethods
+     * @psalm-param string $corsAllowedHeaders
+     * @psalm-param int $corsMaxAge
      * @phpstan-param string $appName
      * @phpstan-param IRequest $request
      * @phpstan-param IUserManager $userManager
@@ -127,6 +154,9 @@ class UserController extends Controller
      * @phpstan-param LoggerInterface $logger
      * @phpstan-param UserService $userService
      * @phpstan-param OrganisationBridgeService $organisationBridgeService
+     * @phpstan-param string $corsMethods
+     * @phpstan-param string $corsAllowedHeaders
+     * @phpstan-param int $corsMaxAge
      */
     public function __construct(
         string $appName,
@@ -137,7 +167,10 @@ class UserController extends Controller
         ICacheFactory $cacheFactory,
         LoggerInterface $logger,
         UserService $userService,
-        OrganisationBridgeService $organisationBridgeService
+        OrganisationBridgeService $organisationBridgeService,
+        string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+        string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+        int $corsMaxAge = 1728000
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
@@ -147,6 +180,80 @@ class UserController extends Controller
         $this->userService = $userService;
         $this->organisationBridgeService = $organisationBridgeService;
         $this->logger = $logger;
+        $this->corsMethods = $corsMethods;
+        $this->corsAllowedHeaders = $corsAllowedHeaders;
+        $this->corsMaxAge = $corsMaxAge;
+    }
+
+    /**
+     * Implements a preflighted CORS response for OPTIONS requests
+     *
+     * This method handles CORS preflight requests by returning appropriate
+     * CORS headers to allow cross-origin requests from web applications.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     *
+     * @return \OCP\AppFramework\Http\Response The CORS response with appropriate headers
+     * 
+     * @psalm-return \OCP\AppFramework\Http\Response
+     * @phpstan-return \OCP\AppFramework\Http\Response
+     */
+    public function preflightedCors(): \OCP\AppFramework\Http\Response
+    {
+        // Determine the origin from request headers
+        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+
+        // For credentials to work, we cannot use '*' as origin
+        if ($origin === '*' && $this->request->getHeader('Origin') === '') {
+            $origin = 'http://localhost:3000'; // Default for development
+        }
+
+        // Create and configure the CORS response
+        $response = new \OCP\AppFramework\Http\Response();
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+        $response->addHeader('Access-Control-Allow-Credentials', 'true'); // Enable credentials for browser auth
+
+        return $response;
+    }
+
+    /**
+     * Add CORS headers to a JSON response
+     *
+     * This method adds the necessary CORS headers to a JSONResponse to allow
+     * cross-origin requests from web applications, including support for
+     * credentials (cookies) for browser-based authentication.
+     *
+     * @param JSONResponse $response The response to add CORS headers to
+     * @return JSONResponse The response with CORS headers added
+     * 
+     * @psalm-param JSONResponse $response
+     * @psalm-return JSONResponse
+     * @phpstan-param JSONResponse $response
+     * @phpstan-return JSONResponse
+     */
+    private function addCorsHeaders(JSONResponse $response): JSONResponse
+    {
+        // Determine the origin from request headers
+        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+        
+        // For credentials to work, we cannot use '*' as origin
+        // Use the actual origin or a default allowed origin
+        if ($origin === '*' && $this->request->getHeader('Origin') === '') {
+            $origin = 'http://localhost:3000'; // Default for development
+        }
+        
+        // Add CORS headers to the response with credentials support
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+        $response->addHeader('Access-Control-Allow-Credentials', 'true'); // Enable credentials
+        
+        return $response;
     }
 
     /**
@@ -154,6 +261,7 @@ class UserController extends Controller
      *
      * This method returns the current authenticated user's information
      * in JSON format for external API consumption with security headers.
+     * Supports both session-based and basic authentication.
      *
      * @NoAdminRequired
      * @NoCSRFRequired
@@ -166,30 +274,45 @@ class UserController extends Controller
     public function me(): JSONResponse
     {
         try {
-            // Get the current user from the session
+            // First try to get user from session
             $currentUser = $this->userService->getCurrentUser();
             
-            // Check if user is logged in
+            // If no session user, try basic authentication
             if ($currentUser === null) {
+                $authHeader = $this->request->getHeader('Authorization');
+                if ($authHeader && str_starts_with($authHeader, 'Basic ')) {
+                    $credentials = base64_decode(substr($authHeader, 6));
+                    if ($credentials && str_contains($credentials, ':')) {
+                        [$username, $password] = explode(':', $credentials, 2);
+                        $currentUser = $this->userManager->checkPassword($username, $password);
+                    }
+                }
+            }
+            
+            // Check if user is authenticated (either via session or basic auth)
+            if ($currentUser === false || $currentUser === null) {
                 $response = new JSONResponse(
-                    data: ['error' => 'User not authenticated'],
+                    data: ['message' => 'Current user is not logged in'],
                     statusCode: 401
                 );
-                return $this->securityService->addSecurityHeaders($response);
+                $response = $this->securityService->addSecurityHeaders($response);
+                return $this->addCorsHeaders($response);
             }
 
             // Build user data array with essential information (already sanitized)
             $userData = $this->userService->buildUserDataArray($currentUser);
 
             $response = new JSONResponse($userData);
-            return $this->securityService->addSecurityHeaders($response);
+            $response = $this->securityService->addSecurityHeaders($response);
+            return $this->addCorsHeaders($response);
         } catch (\Exception $e) {
             // Log the error and return generic error response
             $response = new JSONResponse(
                 data: ['error' => 'Failed to retrieve user information'],
                 statusCode: 500
             );
-            return $this->securityService->addSecurityHeaders($response);
+            $response = $this->securityService->addSecurityHeaders($response);
+            return $this->addCorsHeaders($response);
         }
     }
 
@@ -219,7 +342,8 @@ class UserController extends Controller
                     data: ['error' => 'User not authenticated'],
                     statusCode: 401
                 );
-                return $this->securityService->addSecurityHeaders($response);
+                $response = $this->securityService->addSecurityHeaders($response);
+                return $this->addCorsHeaders($response);
             }
 
             // Get and sanitize the request data to prevent XSS
@@ -246,14 +370,16 @@ class UserController extends Controller
             }
 
             $response = new JSONResponse($responseData);
-            return $this->securityService->addSecurityHeaders($response);
+            $response = $this->securityService->addSecurityHeaders($response);
+            return $this->addCorsHeaders($response);
         } catch (\Exception $e) {
             // Log the error and return generic error response
             $response = new JSONResponse(
                 data: ['error' => 'Failed to update user information'],
                 statusCode: 500
             );
-            return $this->securityService->addSecurityHeaders($response);
+            $response = $this->securityService->addSecurityHeaders($response);
+            return $this->addCorsHeaders($response);
         }
     }
 
@@ -294,7 +420,8 @@ class UserController extends Controller
                     data: ['error' => 'Server memory usage too high, please try again later'],
                     statusCode: 503 // Service Unavailable
                 );
-                return $this->securityService->addSecurityHeaders($response);
+                $response = $this->securityService->addSecurityHeaders($response);
+                return $this->addCorsHeaders($response);
             }
             
             // Get client IP address for rate limiting
@@ -310,7 +437,8 @@ class UserController extends Controller
                     data: ['error' => $credentialValidation['error']],
                     statusCode: 400
                 );
-                return $this->securityService->addSecurityHeaders($response);
+                $response = $this->securityService->addSecurityHeaders($response);
+                return $this->addCorsHeaders($response);
             }
 
             $credentials = $credentialValidation['credentials'];
@@ -333,7 +461,8 @@ class UserController extends Controller
                     ],
                     statusCode: 429 // Too Many Requests
                 );
-                return $this->securityService->addSecurityHeaders($response);
+                $response = $this->securityService->addSecurityHeaders($response);
+                return $this->addCorsHeaders($response);
             }
 
             // Attempt to authenticate the user
@@ -349,7 +478,8 @@ class UserController extends Controller
                     data: ['error' => 'Invalid username or password'],
                     statusCode: 401
                 );
-                return $this->securityService->addSecurityHeaders($response);
+                $response = $this->securityService->addSecurityHeaders($response);
+                return $this->addCorsHeaders($response);
             }
 
             // Check if user account is enabled
@@ -361,14 +491,29 @@ class UserController extends Controller
                     data: ['error' => 'Account is disabled'],
                     statusCode: 401
                 );
-                return $this->securityService->addSecurityHeaders($response);
+                $response = $this->securityService->addSecurityHeaders($response);
+                return $this->addCorsHeaders($response);
             }
 
             // Authentication successful - record success and clear rate limits
             $this->securityService->recordSuccessfulLogin($username, $clientIp);
 
-            // Set the user in the session to create login session
+            // Set the user in the session using Nextcloud's session management
             $this->userSession->setUser($user);
+            
+            // Create a complete login using Nextcloud's login flow
+            $this->userSession->createSessionToken($this->request, $user->getUID(), $user->getUID(), $password);
+            
+            // Verify the session was established
+            $sessionUser = $this->userSession->getUser();
+            if ($sessionUser === null || $sessionUser->getUID() !== $user->getUID()) {
+                $response = new JSONResponse(
+                    data: ['error' => 'Failed to establish persistent session'],
+                    statusCode: 500
+                );
+                $response = $this->securityService->addSecurityHeaders($response);
+                return $this->addCorsHeaders($response);
+            }
 
             // Build user data array for response (sanitized)
             $userData = $this->userService->buildUserDataArray($user);
@@ -388,21 +533,39 @@ class UserController extends Controller
                 ]);
             }
 
-            // Create successful response with security headers
+            // Get session information for API usage
+            $sessionId = session_id();
+            $sessionName = session_name();
+            
+            // Create successful response with security headers and session info
             $response = new JSONResponse([
                 'message' => 'Login successful',
                 'user' => $userData,
-                'session_created' => true
+                'session_created' => true,
+                'session' => [
+                    'id' => $sessionId,
+                    'name' => $sessionName,
+                    'cookie_instructions' => 'Use the returned session cookies for subsequent authenticated requests'
+                ]
             ]);
             
-            return $this->securityService->addSecurityHeaders($response);
+            $response = $this->securityService->addSecurityHeaders($response);
+            return $this->addCorsHeaders($response);
         } catch (\Exception $e) {
-            // Log the error securely without exposing sensitive information
+            // Log the actual error for debugging
+            $this->logger->error('Login method exception', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
             $response = new JSONResponse(
                 data: ['error' => 'Login failed due to a system error'],
                 statusCode: 500
             );
-            return $this->securityService->addSecurityHeaders($response);
+            $response = $this->securityService->addSecurityHeaders($response);
+            return $this->addCorsHeaders($response);
         }
     }
 

@@ -376,7 +376,16 @@ class EndpointService
         } else if ($serializedObject === null) {
             return $serializedObject;
         } else {
-            $object = $mapper->find($serializedObject['id']);
+            try {
+                $object = $mapper->find($serializedObject['id']);
+            } catch (DoesNotExistException $e) {
+                // Object doesn't exist yet, return the serialized object as-is
+                $this->logger->info('OpenConnector: Object not found during reference resolution', [
+                    'objectId' => $serializedObject['id'] ?? 'unknown',
+                    'reason' => 'Object not found during initial lookup'
+                ]);
+                return $serializedObject;
+            }
         }
 
         $uses = (new Dot($object->jsonSerialize()))->flatten();
@@ -430,10 +439,26 @@ class EndpointService
             }
 
             try {
+                // Try to find the object first to ensure it exists before generating URL
+                try {
+                    $mapper->find($useId);
+                } catch (DoesNotExistException $e) {
+                    // Object doesn't exist yet, skip this reference
+                    $this->logger->info('OpenConnector: Skipping reference to non-existent object', [
+                        'objectId' => $useId,
+                        'reason' => 'Object not found during reference resolution'
+                    ]);
+                    continue;
+                }
+                
                 $generatedUrl = $this->generateEndpointUrl(id: $useId, parentIds: [$object->getUuid()], schemaMapper: $schemaMapper);
                 $uuidToUrlMap[$useId] = $generatedUrl;
                 $useUrls[] = $generatedUrl;
             } catch (Exception $exception) {
+                $this->logger->warning('OpenConnector: Failed to generate URL for object reference', [
+                    'objectId' => $useId,
+                    'error' => $exception->getMessage()
+                ]);
                 continue;
             }
         }
