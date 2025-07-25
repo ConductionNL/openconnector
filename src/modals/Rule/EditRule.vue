@@ -167,12 +167,12 @@ import { Rule } from '../../entities/index.js'
 						:value.sync="ruleItem.configuration.error.message"
 						placeholder="We encountered an unexpected problem" />
 
-                    <NcCheckboxRadioSwitch
-                        type="checkbox"
-                        label="Include JSON Logic results in errors array"
-                        :checked.sync="ruleItem.configuration.error.includeJsonLogicResult">
-                        Include JSON Logic results in errors array
-                    </NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch
+						type="checkbox"
+						label="Include JSON Logic results in errors array"
+						:checked.sync="ruleItem.configuration.error.includeJsonLogicResult">
+						Include JSON Logic results in errors array
+					</NcCheckboxRadioSwitch>
 				</template>
 
 				<!-- JavaScript Configuration -->
@@ -625,7 +625,7 @@ export default {
 						code: 500,
 						name: 'Something went wrong',
 						message: 'We encountered an unexpected problem',
-                        includeJsonLogicResult: false,
+						includeJsonLogicResult: false,
 					},
 					javascript: '',
 					authentication: {
@@ -745,7 +745,7 @@ export default {
 						code: ruleStore.ruleItem.configuration?.error?.code ?? 500,
 						name: ruleStore.ruleItem.configuration?.error?.name ?? 'Something went wrong',
 						message: ruleStore.ruleItem.configuration?.error?.message ?? 'We encountered an unexpected problem',
-                        includeJsonLogicResult: ruleStore.ruleItem.configuration?.error?.includeJsonLogicResult ?? false,
+						includeJsonLogicResult: ruleStore.ruleItem.configuration?.error?.includeJsonLogicResult ?? false,
 					},
 					javascript: ruleStore.ruleItem.configuration?.javascript ?? '',
 					authentication: {
@@ -1270,7 +1270,7 @@ export default {
 					code: this.ruleItem.configuration.error.code,
 					name: this.ruleItem.configuration.error.name,
 					message: this.ruleItem.configuration.error.message,
-                    includeJsonLogicResult: this.ruleItem.configuration.error.includeJsonLogicResult,
+					includeJsonLogicResult: this.ruleItem.configuration.error.includeJsonLogicResult,
 				}
 				break
 			case 'mapping':
