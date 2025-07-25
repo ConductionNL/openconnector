@@ -81,8 +81,8 @@ return [
 		['name' => 'synchronizationContracts#execute', 'url' => '/api/synchronization-contracts/{id}/execute', 'verb' => 'POST'],
 
 		// User CORS endpoints
-		['name' => 'user#preflightedCors', 'url' => '/api/user/me', 'verb' => 'OPTIONS'],
-		['name' => 'user#preflightedCors', 'url' => '/api/user/login', 'verb' => 'OPTIONS'],
+		['name' => 'user#preflightedCorsMe', 'url' => '/api/user/me', 'verb' => 'OPTIONS'],
+		['name' => 'user#preflightedCorsLogin', 'url' => '/api/user/login', 'verb' => 'OPTIONS'],
 
 		// User endpoints
 		['name' => 'user#me', 'url' => '/api/user/me', 'verb' => 'GET'],

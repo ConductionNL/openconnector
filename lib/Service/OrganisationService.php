@@ -59,7 +59,7 @@ class OrganisationService
     /**
      * App name for user configuration storage
      */
-    private const APP_NAME = 'openregister';
+    private const APP_NAME = 'openconnector';
 
     /**
      * Organisation mapper for database operations

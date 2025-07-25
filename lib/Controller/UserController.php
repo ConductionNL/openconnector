@@ -186,7 +186,7 @@ class UserController extends Controller
     }
 
     /**
-     * Implements a preflighted CORS response for OPTIONS requests
+     * Implements a preflighted CORS response for OPTIONS requests on /me endpoint
      *
      * This method handles CORS preflight requests by returning appropriate
      * CORS headers to allow cross-origin requests from web applications.
@@ -200,7 +200,43 @@ class UserController extends Controller
      * @psalm-return \OCP\AppFramework\Http\Response
      * @phpstan-return \OCP\AppFramework\Http\Response
      */
-    public function preflightedCors(): \OCP\AppFramework\Http\Response
+    public function preflightedCorsMe(): \OCP\AppFramework\Http\Response
+    {
+        // Determine the origin from request headers
+        $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
+
+        // For credentials to work, we cannot use '*' as origin
+        if ($origin === '*' && $this->request->getHeader('Origin') === '') {
+            $origin = 'http://localhost:3000'; // Default for development
+        }
+
+        // Create and configure the CORS response
+        $response = new \OCP\AppFramework\Http\Response();
+        $response->addHeader('Access-Control-Allow-Origin', $origin);
+        $response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
+        $response->addHeader('Access-Control-Max-Age', (string) $this->corsMaxAge);
+        $response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
+        $response->addHeader('Access-Control-Allow-Credentials', 'true'); // Enable credentials for browser auth
+
+        return $response;
+    }
+
+    /**
+     * Implements a preflighted CORS response for OPTIONS requests on /login endpoint
+     *
+     * This method handles CORS preflight requests by returning appropriate
+     * CORS headers to allow cross-origin requests from web applications.
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     *
+     * @return \OCP\AppFramework\Http\Response The CORS response with appropriate headers
+     * 
+     * @psalm-return \OCP\AppFramework\Http\Response
+     * @phpstan-return \OCP\AppFramework\Http\Response
+     */
+    public function preflightedCorsLogin(): \OCP\AppFramework\Http\Response
     {
         // Determine the origin from request headers
         $origin = $this->request->getHeader('Origin') ?: ($this->request->server['HTTP_ORIGIN'] ?? '*');
