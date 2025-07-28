@@ -184,6 +184,13 @@ The type `audit_trail` gives the possibility to access the audit trails of an ob
 The type `extend_input` can be used to access pre-existing objects in the database when business logic has to check whether or not to create a new object. The rule takes the configuration `properties` containing a dot-array containing the properties in the input that will be extended if possible.
 The extended parameters will be included in the field extendedParameters in the data array for use by other actions.
 
+#### Extend external inputs
+In addition to the `extend_input` rule type, there is also an `extend_external_input` rule type, which does virtually the same, but fetches the input that should be extended from an external source rather than from an internal source. This rule takes the following configuration parameters:
+
+- `properties`: The list of properties that should be extended. This contains a number of values
+  - `schema`: The schema that the object that is found should adhere to
+  - `property`: The name of the property that should be extended.
+
 ## Tags in Rules
 
 For the fetch file and write file rule you can add tags to these files. This can be useful when wanting to make a difference between files for further use.

@@ -105,7 +105,7 @@ class EndpointService
 	 * @return array
 	 */
 	private function parseMessage(array $response, array $responseData): array
-	{
+    {
 		if (isset($responseData['message']) === true
 			&& $responseData['message'] === 'Validation failed'
 			&& isset($responseData['errors']) === true
@@ -123,6 +123,7 @@ class EndpointService
 		} else if (isset($responseData['message']) === true
 			&& $responseData['message'] === 'Validation failed'
 			&& isset($responseData['errors']) === true
+            && isset($responseData['errors'][0]['errors'])
 		) {
 			$response['detail'] = $responseData['errors'][0]['message'];
 			$response['invalidParams'] = array_map(function (string $key, array $message) {
@@ -133,11 +134,44 @@ class EndpointService
 				}
 				return ['property' => $key, 'code' => $code, 'reason' => $message[0]];
 			}, array_keys($responseData['errors'][0]['errors']), array_values($responseData['errors'][0]['errors']));
-		}
+		} else if (isset($responseData['errors']) === true) {
+            $response['invalidParams'] = $responseData['errors'];
+        }
 
 
 		return $response;
 	}
+
+    /**
+     * Transform outgoing errors according to a specified format
+     *
+     * @param Response $result  The result from either the rules or the target of the endpoint.
+     * @param Request  $request The current request, used to determine the request identifier.
+     *
+     * @return Response
+     */
+    private function transformError(Response $result, Request $request): Response
+    {
+        if ($result->getStatus() < 200 || $result->getStatus() >= 300) {
+
+
+            $responseData = [
+                'type' => $result->getData()['message'],
+                'code' => $result->getStatus(),
+                'title'   => $result->getData()['message'],
+                'status' => $result->getStatus(),
+                'instance' => $request->getId(),
+                'detail'  => $result->getData()['error'],
+            ];
+
+            $responseData = $this->parseMessage(response: $responseData, responseData: $result->getData());
+
+            return new JSONResponse(data: $responseData, statusCode: $result->getStatus());
+
+        }
+
+        return $result;
+    }
 
     /**
      * Handles incoming requests to endpoints
@@ -214,7 +248,7 @@ class EndpointService
             );
 
             if ($ruleResult instanceof JSONResponse === true) {
-                return $ruleResult;
+                return $this->transformError($ruleResult, $request);
             }
 
             // Update request data with rule processing results
@@ -250,30 +284,8 @@ class EndpointService
                     return $ruleResult;
                 }
 
-//				var_dump($result->getStatus());
-
-                if ($ruleResult instanceof Response === true || $result->getStatus() < 200 || $result->getStatus() >= 300) {
-                    if($ruleResult instanceof Response === true) {
-                        $result = $ruleResult;
-                    }
-
-                    $responseData = [
-						'type' => $result->getData()['message'],
-						'code' => $result->getStatus(),
-						'title'   => $result->getData()['message'],
-						'status' => $result->getStatus(),
-						'instance' => $request->getId(),
-
-                    ];
-
-					$responseData = $this->parseMessage(response: $responseData, responseData: $result->getData());
-
-					return new JSONResponse(data: $responseData, statusCode: $result->getStatus());
-
-				}
-
 				if ($result->getStatus() !== 200 && $result->getStatus() !== 201) {
-					return new JSONResponse(data: $ruleResult['body'], statusCode: $result->getStatus(), headers: $ruleResult['headers']);
+					return $this->transformError($result, $request);
 				}
 
                 // Set the proper status code for the method.
@@ -570,9 +582,14 @@ class EndpointService
         $rewriteParameters = array_intersect(array_keys($parameters), array_keys($schema->getProperties()));
 
         foreach($rewriteParameters as $rewriteParameter) {
+            if (is_array($parameters[$rewriteParameter]) === true) {
+                //@TODO: this is a dirty hotfix, here we should run through values
+                continue;
+            }
+
             if (
                 filter_var($parameters[$rewriteParameter], FILTER_VALIDATE_URL) === false
-				&& in_array(parse_url($parameters[$rewriteParameter], PHP_URL_HOST), $this->config->getSystemValue('trusted_domains')) === false
+				|| in_array(parse_url($parameters[$rewriteParameter], PHP_URL_HOST), $this->config->getSystemValue('trusted_domains')) === false
             ) {
                 continue;
             }
@@ -1060,16 +1077,24 @@ class EndpointService
 //                    continue;
 //                }
 
+                $logicResult = null;
+
                 // Check rule conditions
-                if ($this->checkRuleConditions($rule, $data) === false || $rule->getTiming() !== $timing) {
+                if ($this->checkRuleConditions(rule: $rule, data: $data, logicResult:  $logicResult) === false || $rule->getTiming() !== $timing) {
                     continue;
+                }
+
+                if(is_string($logicResult) === true && json_decode(json: $logicResult, associative: true) !== null) {
+                    $data['logicResult'] = json_decode($logicResult, true);
+                } else {
+                    $data['logicResult'] = $logicResult;
                 }
 
                 // Process rule based on type
                 $result = match ($rule->getType()) {
                     'save_object' => $this->processSaveObjectRule($rule, $data),
                     'authentication' => $this->processAuthenticationRule($rule, $data),
-                    'error' => $this->processErrorRule($rule),
+                    'error' => $this->processErrorRule($rule, $data),
                     'mapping' => $this->processMappingRule($rule, $data),
                     'synchronization' => $this->processSyncRule($rule, $data),
                     'javascript' => $this->processJavaScriptRule($rule, $data),
@@ -1204,14 +1229,22 @@ class EndpointService
      *
      * @return JSONResponse Response containing error details and HTTP status code
      */
-    private function processErrorRule(Rule $rule): JSONResponse
+    private function processErrorRule(Rule $rule, array $data = []): JSONResponse
     {
         $config = $rule->getConfiguration();
+
+        $response = [
+            'error' => $config['error']['name'],
+            'message' => $config['error']['message'],
+        ];
+
+        // Include the json logic result as errors array
+        if ($config['error']['includeJsonLogicResult']) {
+            $response['errors'] = $data['logicResult'];
+        }
+
         return new JSONResponse(
-            [
-                'error' => $config['error']['name'],
-                'message' => $config['error']['message']
-            ],
+            $response,
             $config['error']['code']
         );
     }
@@ -1804,14 +1837,14 @@ class EndpointService
      * @return bool True if conditions are met, false otherwise
      * @throws Exception
      */
-    private function checkRuleConditions(Rule $rule, array $data): bool
+    private function checkRuleConditions(Rule $rule, array $data, mixed &$logicResult): bool
     {
         $conditions = $rule->getConditions();
         if (empty($conditions) === true) {
             return true;
         }
 
-        return JsonLogic::apply($conditions, $data) === true;
+        return ($logicResult = JsonLogic::apply($conditions, $data)) == true;
     }
 
     /**
