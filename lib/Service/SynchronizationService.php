@@ -2739,7 +2739,7 @@ class SynchronizationService
 			// Array of object that has file(s)
 			case 'Associative array':
 				$actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
-				if ($endpoint === null) {
+				if ($actualEndpoint === null) {
                     return $dataDot->jsonSerialize();
 				}
 				$this->fetchFile(source: $source, endpoint: $actualEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
