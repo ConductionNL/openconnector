@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\OpenConnector\Service;
 
 use OCP\App\IAppManager;
+use OCP\Server;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -39,15 +40,41 @@ class OrganisationBridgeService
     /**
      * Constructor for the OrganisationBridgeService
      *
-     * @param IAppManager $appManager The app manager to check if OpenRegister is installed
-     * @param ContainerInterface $container The container to access OpenRegister services
-     * @param LoggerInterface $logger The logger for error tracking
+     * Uses lazy dependency resolution to avoid complex dependency injection issues.
+     * Dependencies are resolved from the Server container when needed.
      */
-    public function __construct(
-        private readonly IAppManager $appManager,
-        private readonly ContainerInterface $container,
-        private readonly LoggerInterface $logger
-    ) {
+    public function __construct()
+    {
+    }
+
+    /**
+     * Get the app manager using lazy resolution
+     *
+     * @return IAppManager The app manager instance
+     */
+    private function getAppManager(): IAppManager
+    {
+        return Server::get(IAppManager::class);
+    }
+
+    /**
+     * Get the container using lazy resolution
+     *
+     * @return ContainerInterface The container instance
+     */
+    private function getContainer(): ContainerInterface
+    {
+        return Server::get(ContainerInterface::class);
+    }
+
+    /**
+     * Get the logger using lazy resolution
+     *
+     * @return LoggerInterface The logger instance
+     */
+    private function getLogger(): LoggerInterface
+    {
+        return Server::get(LoggerInterface::class);
     }
 
     /**
@@ -64,16 +91,16 @@ class OrganisationBridgeService
     public function getOrganisationService(): ?\OCA\OpenRegister\Service\OrganisationService
     {
         // Check if OpenRegister app is installed
-        if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === false) {
+        if (in_array(needle: 'openregister', haystack: $this->getAppManager()->getInstalledApps()) === false) {
             return null;
         }
 
         try {
             // Attempt to get the OrganisationService from the container
-            return $this->container->get('OCA\OpenRegister\Service\OrganisationService');
+            return $this->getContainer()->get('OCA\OpenRegister\Service\OrganisationService');
         } catch (ContainerExceptionInterface|NotFoundExceptionInterface $e) {
             // Log the error but don't fail the application
-            $this->logger->warning('OpenRegister OrganisationService not available', [
+            $this->getLogger()->warning('OpenRegister OrganisationService not available', [
                 'exception' => $e->getMessage()
             ]);
             return null;
@@ -123,7 +150,7 @@ class OrganisationBridgeService
             $stats['available'] = true;
             return $stats;
         } catch (\Exception $e) {
-            $this->logger->error('Failed to get user organization stats', [
+            $this->getLogger()->error('Failed to get user organization stats', [
                 'exception' => $e->getMessage()
             ]);
             
@@ -171,7 +198,7 @@ class OrganisationBridgeService
                 'available' => true
             ];
         } catch (\Exception $e) {
-            $this->logger->error('Failed to set active organization', [
+            $this->getLogger()->error('Failed to set active organization', [
                 'organisationUuid' => $organisationUuid,
                 'exception' => $e->getMessage()
             ]);
@@ -204,7 +231,7 @@ class OrganisationBridgeService
             $activeOrg = $organisationService->getActiveOrganisation();
             return $activeOrg !== null ? $activeOrg->jsonSerialize() : null;
         } catch (\Exception $e) {
-            $this->logger->error('Failed to get active organization', [
+            $this->getLogger()->error('Failed to get active organization', [
                 'exception' => $e->getMessage()
             ]);
             return null;
@@ -231,7 +258,7 @@ class OrganisationBridgeService
             $organisations = $organisationService->getUserOrganisations();
             return array_map(fn($org) => $org->jsonSerialize(), $organisations);
         } catch (\Exception $e) {
-            $this->logger->error('Failed to get user organizations', [
+            $this->getLogger()->error('Failed to get user organizations', [
                 'exception' => $e->getMessage()
             ]);
             return [];

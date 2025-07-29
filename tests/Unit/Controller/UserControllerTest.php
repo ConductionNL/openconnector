@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * UserControllerTest
  * 
- * Unit tests for the UserController
+ * Unit tests for the UserController with updated dependencies and CORS support
  *
  * @category   Test
  * @package    OCA\OpenConnector\Tests\Unit\Controller
@@ -20,19 +20,24 @@ namespace OCA\OpenConnector\Tests\Unit\Controller;
 
 use OCA\OpenConnector\Controller\UserController;
 use OCA\OpenConnector\Service\AuthorizationService;
+use OCA\OpenConnector\Service\SecurityService;
+use OCA\OpenConnector\Service\UserService;
+use OCA\OpenConnector\Service\OrganisationBridgeService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\IUser;
+use OCP\ICacheFactory;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for the UserController
  *
  * This test class covers all functionality of the UserController
- * including authentication, user data retrieval, and user updates.
+ * including authentication, user data retrieval, user updates, and CORS handling.
  *
  * @category Test
  * @package  OCA\OpenConnector\Tests\Unit\Controller
@@ -75,6 +80,34 @@ class UserControllerTest extends TestCase
     private MockObject $authorizationService;
 
     /**
+     * Mock cache factory
+     *
+     * @var MockObject|ICacheFactory
+     */
+    private MockObject $cacheFactory;
+
+    /**
+     * Mock logger
+     *
+     * @var MockObject|LoggerInterface
+     */
+    private MockObject $logger;
+
+    /**
+     * Mock user service
+     *
+     * @var MockObject|UserService
+     */
+    private MockObject $userService;
+
+    /**
+     * Mock organisation bridge service
+     *
+     * @var MockObject|OrganisationBridgeService
+     */
+    private MockObject $organisationBridgeService;
+
+    /**
      * Mock user object
      *
      * @var MockObject|IUser
@@ -82,10 +115,17 @@ class UserControllerTest extends TestCase
     private MockObject $user;
 
     /**
+     * Mock admin user object
+     *
+     * @var MockObject|IUser
+     */
+    private MockObject $adminUser;
+
+    /**
      * Set up test environment before each test
      *
      * This method initializes all mocks and the controller instance
-     * for testing purposes.
+     * for testing purposes with updated dependencies.
      *
      * @return void
      * 
@@ -101,7 +141,20 @@ class UserControllerTest extends TestCase
         $this->userManager = $this->createMock(IUserManager::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->authorizationService = $this->createMock(AuthorizationService::class);
+        $this->cacheFactory = $this->createMock(ICacheFactory::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->userService = $this->createMock(UserService::class);
+        $this->organisationBridgeService = $this->createMock(OrganisationBridgeService::class);
         $this->user = $this->createMock(IUser::class);
+        $this->adminUser = $this->createMock(IUser::class);
+
+        // Setup request headers for CORS testing
+        $this->request->method('getHeader')
+            ->willReturnMap([
+                ['Origin', 'https://localhost:3000']
+            ]);
+        $this->request->method('server')
+            ->willReturn(['HTTP_ORIGIN' => 'https://localhost:3000']);
 
         // Initialize the controller with mocked dependencies
         $this->controller = new UserController(
@@ -109,30 +162,207 @@ class UserControllerTest extends TestCase
             $this->request,
             $this->userManager,
             $this->userSession,
-            $this->authorizationService
+            $this->authorizationService,
+            $this->cacheFactory,
+            $this->logger,
+            $this->userService,
+            $this->organisationBridgeService
         );
     }
 
     /**
-     * Test successful retrieval of current user information
+     * Test CORS preflight response
      *
-     * This test verifies that the me() method returns correct user data
-     * when a user is authenticated.
+     * This test verifies that the preflightedCors() method returns proper
+     * CORS headers for OPTIONS requests.
      *
      * @return void
      * 
      * @psalm-return void
      * @phpstan-return void
      */
-    public function testMeSuccessful(): void
+    public function testPreflightedCors(): void
+    {
+        // Execute the method
+        $response = $this->controller->preflightedCors();
+
+        // Assert response has correct CORS headers
+        $headers = $response->getHeaders();
+        $this->assertEquals('https://localhost:3000', $headers['Access-Control-Allow-Origin']);
+        $this->assertEquals('PUT, POST, GET, DELETE, PATCH', $headers['Access-Control-Allow-Methods']);
+        $this->assertEquals('Authorization, Content-Type, Accept', $headers['Access-Control-Allow-Headers']);
+        $this->assertEquals('1728000', $headers['Access-Control-Max-Age']);
+        $this->assertEquals('false', $headers['Access-Control-Allow-Credentials']);
+    }
+
+    /**
+     * Test successful admin login
+     *
+     * This test verifies that the login() method successfully authenticates
+     * an admin user with valid credentials and includes CORS headers.
+     *
+     * @return void
+     * 
+     * @psalm-return void
+     * @phpstan-return void
+     */
+    public function testAdminLoginSuccessful(): void
+    {
+        // Setup mock admin user data
+        $this->setupMockAdminUserData();
+
+        // Mock request parameters with admin login credentials
+        $loginData = [
+            'username' => 'admin',
+            'password' => 'admin123'
+        ];
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn($loginData);
+
+        // Mock security service validation (should be successful)
+        $this->mockSecurityServiceForSuccessfulLogin();
+
+        // Mock user manager to return authenticated admin user
+        $this->userManager->expects($this->once())
+            ->method('checkPassword')
+            ->with('admin', 'admin123')
+            ->willReturn($this->adminUser);
+
+        // Mock user session to set the authenticated admin user
+        $this->userSession->expects($this->once())
+            ->method('setUser')
+            ->with($this->adminUser);
+
+        // Mock user service to build admin user data
+        $this->userService->expects($this->once())
+            ->method('buildUserDataArray')
+            ->with($this->adminUser)
+            ->willReturn([
+                'uid' => 'admin',
+                'displayName' => 'Administrator',
+                'email' => 'admin@example.com',
+                'enabled' => true,
+                'isAdmin' => true,
+                'groups' => ['admin'],
+                'permissions' => ['all']
+            ]);
+
+        // Execute the method
+        $response = $this->controller->login();
+
+        // Assert response is successful
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(200, $response->getStatus());
+
+        // Assert response contains success message and admin user data
+        $data = $response->getData();
+        $this->assertEquals('Login successful', $data['message']);
+        $this->assertArrayHasKey('user', $data);
+        $this->assertEquals('admin', $data['user']['uid']);
+        $this->assertTrue($data['user']['isAdmin']);
+        $this->assertTrue($data['session_created']);
+
+        // Assert CORS headers are present
+        $headers = $response->getHeaders();
+        $this->assertEquals('https://localhost:3000', $headers['Access-Control-Allow-Origin']);
+    }
+
+    /**
+     * Test successful regular user login
+     *
+     * This test verifies that the login() method successfully authenticates
+     * a regular user with valid credentials.
+     *
+     * @return void
+     * 
+     * @psalm-return void
+     * @phpstan-return void
+     */
+    public function testUserLoginSuccessful(): void
     {
         // Setup mock user data
         $this->setupMockUserData();
 
-        // Mock user session to return the authenticated user
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock request parameters with user login credentials
+        $loginData = [
+            'username' => 'testuser',
+            'password' => 'testpassword'
+        ];
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn($loginData);
+
+        // Mock security service validation (should be successful)
+        $this->mockSecurityServiceForSuccessfulLogin();
+
+        // Mock user manager to return authenticated user
+        $this->userManager->expects($this->once())
+            ->method('checkPassword')
+            ->with('testuser', 'testpassword')
             ->willReturn($this->user);
+
+        // Mock user session to set the authenticated user
+        $this->userSession->expects($this->once())
+            ->method('setUser')
+            ->with($this->user);
+
+        // Mock user service to build user data
+        $this->userService->expects($this->once())
+            ->method('buildUserDataArray')
+            ->with($this->user)
+            ->willReturn([
+                'uid' => 'testuser',
+                'displayName' => 'Test User',
+                'email' => 'test@example.com',
+                'enabled' => true
+            ]);
+
+        // Execute the method
+        $response = $this->controller->login();
+
+        // Assert response is successful
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(200, $response->getStatus());
+
+        // Assert response contains success message and user data
+        $data = $response->getData();
+        $this->assertEquals('Login successful', $data['message']);
+        $this->assertArrayHasKey('user', $data);
+        $this->assertEquals('testuser', $data['user']['uid']);
+    }
+
+    /**
+     * Test successful retrieval of current user information with CORS
+     *
+     * This test verifies that the me() method returns correct user data
+     * when a user is authenticated and includes CORS headers.
+     *
+     * @return void
+     * 
+     * @psalm-return void
+     * @phpstan-return void
+     */
+    public function testMeSuccessfulWithCors(): void
+    {
+        // Setup mock user data
+        $this->setupMockUserData();
+
+        // Mock user service to return current user
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
+            ->willReturn($this->user);
+
+        // Mock user service to build user data
+        $this->userService->expects($this->once())
+            ->method('buildUserDataArray')
+            ->with($this->user)
+            ->willReturn([
+                'uid' => 'testuser',
+                'displayName' => 'Test User',
+                'email' => 'test@example.com',
+                'enabled' => true
+            ]);
 
         // Execute the method
         $response = $this->controller->me();
@@ -147,13 +377,17 @@ class UserControllerTest extends TestCase
         $this->assertEquals('Test User', $data['displayName']);
         $this->assertEquals('test@example.com', $data['email']);
         $this->assertTrue($data['enabled']);
+
+        // Assert CORS headers are present
+        $headers = $response->getHeaders();
+        $this->assertEquals('https://localhost:3000', $headers['Access-Control-Allow-Origin']);
     }
 
     /**
      * Test me() method when user is not authenticated
      *
      * This test verifies that the me() method returns proper error
-     * when no user is logged in.
+     * when no user is logged in and includes CORS headers.
      *
      * @return void
      * 
@@ -162,9 +396,9 @@ class UserControllerTest extends TestCase
      */
     public function testMeUnauthenticated(): void
     {
-        // Mock user session to return null (no authenticated user)
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to return null (no authenticated user)
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willReturn(null);
 
         // Execute the method
@@ -174,6 +408,10 @@ class UserControllerTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(401, $response->getStatus());
         $this->assertEquals(['error' => 'User not authenticated'], $response->getData());
+
+        // Assert CORS headers are present
+        $headers = $response->getHeaders();
+        $this->assertEquals('https://localhost:3000', $headers['Access-Control-Allow-Origin']);
     }
 
     /**
@@ -259,56 +497,6 @@ class UserControllerTest extends TestCase
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(401, $response->getStatus());
         $this->assertEquals(['error' => 'User not authenticated'], $response->getData());
-    }
-
-    /**
-     * Test successful user login
-     *
-     * This test verifies that the login() method successfully authenticates
-     * a user with valid credentials.
-     *
-     * @return void
-     * 
-     * @psalm-return void
-     * @phpstan-return void
-     */
-    public function testLoginSuccessful(): void
-    {
-        // Setup mock user data
-        $this->setupMockUserData();
-
-        // Mock request parameters with login credentials
-        $loginData = [
-            'username' => 'testuser',
-            'password' => 'testpassword'
-        ];
-        $this->request->expects($this->once())
-            ->method('getParams')
-            ->willReturn($loginData);
-
-        // Mock user manager to return authenticated user
-        $this->userManager->expects($this->once())
-            ->method('checkPassword')
-            ->with('testuser', 'testpassword')
-            ->willReturn($this->user);
-
-        // Mock user session to set the authenticated user
-        $this->userSession->expects($this->once())
-            ->method('setUser')
-            ->with($this->user);
-
-        // Execute the method
-        $response = $this->controller->login();
-
-        // Assert response is successful
-        $this->assertInstanceOf(JSONResponse::class, $response);
-        $this->assertEquals(200, $response->getStatus());
-
-        // Assert response contains success message and user data
-        $data = $response->getData();
-        $this->assertEquals('Login successful', $data['message']);
-        $this->assertArrayHasKey('user', $data);
-        $this->assertEquals('testuser', $data['user']['uid']);
     }
 
     /**
@@ -518,18 +706,46 @@ class UserControllerTest extends TestCase
         $this->user->method('getDisplayName')->willReturn('Test User');
         $this->user->method('getEMailAddress')->willReturn('test@example.com');
         $this->user->method('isEnabled')->willReturn(true);
-        $this->user->method('getQuota')->willReturn('1 GB');
-        $this->user->method('getUsedSpace')->willReturn(524288000); // 500 MB in bytes
-        $this->user->method('getAvatarScope')->willReturn('contacts');
-        $this->user->method('getLastLogin')->willReturn(1640995200); // Unix timestamp
-        $this->user->method('getBackendClassName')->willReturn('Database');
-        $this->user->method('getLanguage')->willReturn('en');
-        $this->user->method('getLocale')->willReturn('en_US');
-        
-        // Configure capability methods
-        $this->user->method('canChangeDisplayName')->willReturn(true);
-        $this->user->method('canChangeMailAddress')->willReturn(true);
-        $this->user->method('canChangePassword')->willReturn(true);
-        $this->user->method('canChangeAvatar')->willReturn(true);
+        $this->user->method('getLastLogin')->willReturn(1640995200);
+    }
+
+    /**
+     * Set up mock admin user data for testing
+     *
+     * This helper method configures the mock admin user object with
+     * administrative privileges for testing admin-specific scenarios.
+     *
+     * @return void
+     * 
+     * @psalm-return void
+     * @phpstan-return void
+     */
+    private function setupMockAdminUserData(): void
+    {
+        // Configure mock admin user with test data
+        $this->adminUser->method('getUID')->willReturn('admin');
+        $this->adminUser->method('getDisplayName')->willReturn('Administrator');
+        $this->adminUser->method('getEMailAddress')->willReturn('admin@example.com');
+        $this->adminUser->method('isEnabled')->willReturn(true);
+        $this->adminUser->method('getLastLogin')->willReturn(1640995200);
+    }
+
+    /**
+     * Mock security service for successful login scenario
+     *
+     * This helper method sets up the security service mocks for
+     * a successful login flow without rate limiting issues.
+     *
+     * @return void
+     * 
+     * @psalm-return void
+     * @phpstan-return void
+     */
+    private function mockSecurityServiceForSuccessfulLogin(): void
+    {
+        // Since SecurityService is instantiated in constructor, we need to mock
+        // the behavior indirectly through the controller's methods
+        // For now, we'll assume the security service allows the login
+        // In a real implementation, you might need dependency injection for SecurityService
     }
 } 
