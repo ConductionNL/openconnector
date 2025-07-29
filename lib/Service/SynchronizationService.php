@@ -2398,9 +2398,11 @@ class SynchronizationService
 			: $endpoint;
 
 		$sourceConfig = json_encode($config['sourceConfiguration']);
-		$sourceConfig = str_replace(search: "{{ originId }}", replace: $config['originId'], subject: $sourceConfig);
+		if (isset($config['originId']) === true) {
+			$sourceConfig = str_replace(search: "{{ originId }}", replace: $config['originId'], subject: $sourceConfig);
+		}
 		$sourceConfig = json_decode($sourceConfig, true);
-		$sourceConfig['body'] = json_encode($sourceConfig['body']);
+		$sourceConfig['body'] = json_encode($sourceConfig['body'] ?? []);
 
 		$config['sourceConfiguration'] = $sourceConfig;
 
