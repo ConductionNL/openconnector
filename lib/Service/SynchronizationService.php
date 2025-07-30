@@ -3515,7 +3515,12 @@ class SynchronizationService
 		try {
 			// Get the object entity
 			$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
-			$objectEntity = $objectService->findByUuid(uuid: $objectId);
+			try {
+				$objectEntity = $objectService->findByUuid(uuid: $objectId);
+			} catch (DoesNotExistException $e) {
+				// It is possible we are trying to delete files for an object id where the object has not been persisted yet (for example a zgw informatieobject can have a beforehand generated uuid)
+				return 0;
+			}
 
 			// Get the file service
 			$fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
