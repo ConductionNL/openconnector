@@ -1149,7 +1149,7 @@ class SynchronizationService
         }
 
         // If not a direct match, check for embedded UUID (used for uri relations)
-        if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches)) {
+        if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches) && filter_var($value, FILTER_VALIDATE_URL)) {
             $originId = $matches[0];
 
             if (Uuid::isValid($originId) === true) {
