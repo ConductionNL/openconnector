@@ -2895,7 +2895,7 @@ class SynchronizationService
 	 * @psalm-param array<string, mixed> $config
 	 * @psalm-param array<string> $tags
 	 */
-	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = [], ?int $published = null, int|string|null $registerId = null): void
+	private function fetchFileSafely(Source $source, string $endpoint, array $config, string $objectId, ?string $filename = null, array $tags = [], int|string|null $published = null, int|string|null $registerId = null): void
 	{
         try {
             // Execute the file fetching operation
@@ -3572,6 +3572,7 @@ class SynchronizationService
 			$contextObjectId = null;
 			$actualEndpoint = null;
 			$registerId = null;
+            $published = null;
 
 			// Handle different endpoint types
 			if (is_array($endpoint)) {
@@ -3582,6 +3583,7 @@ class SynchronizationService
 					filename: $filename,
 					tags: $tags,
 					objectId: $contextObjectId,
+                    published: $published,
                     registerId: $registerId
 				);
 			} else {
@@ -3621,6 +3623,7 @@ class SynchronizationService
 						objectId: $targetObjectId,
 						tags: $tags,
 						filename: $filename,
+                        published: $published,
                         registerId: $registerId
 					);
 				} catch (Exception $e) {
