@@ -2392,6 +2392,7 @@ class SynchronizationService
 	 */
 	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?array $tags = [], ?string $filename = null, ?string $published = null, int|string|null $registerId = null): string
 	{
+
 		$originalEndpoint = $endpoint;
 		$endpoint = str_contains(haystack: $endpoint, needle: $source->getLocation()) === true
 			? substr(string: $endpoint, offset: strlen(string: $source->getLocation()))
@@ -2414,15 +2415,23 @@ class SynchronizationService
 		);
 		$response = $result->getResponse();
 
-		$body = json_decode($response['body'], true);
+		$body = $response['body'];
 
-		if (isset($config['contentPath']) === true) {
+
+		if (($decodedBody = json_decode(json: $body, associative: true)) !== null) {
+			$body = $decodedBody;
+		} else if (($decodedBody = base64_decode(string: $body, strict: true)) !== false) {
+			$body = $decodedBody;
+		}
+
+		if (isset($config['contentPath']) === true && empty($config['contentPath']) === false) {
 			$content = base64_decode((new Dot($body))->get($config['contentPath']));
 		}
-		if (isset($config['filenamePath']) === true) {
+		if (isset($config['filenamePath']) === true && empty($config['filenamePath']) === false) {
 			$filename = (new Dot($body))->get($config['filenamePath']);
 		}
-		if (isset($config['fileExtension']) === true) {
+
+		if (isset($config['fileExtension']) === true && empty($config['fileExtension']) === false) {
 			$filename = $filename.$config['fileExtension'];
 		}
 
@@ -2432,7 +2441,7 @@ class SynchronizationService
 		}
 
 		if (isset($config['write']) === true && $config['write'] === false) {
-            return base64_encode($response['body']);
+            return base64_encode($body);
         }
 
 		if ($filename === null) {
@@ -2451,7 +2460,7 @@ class SynchronizationService
         $fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
 
 		if (isset($content) === false) {
-			$content = $response['body'];
+			$content = $body;
 		}
 
         $shouldShare = !empty($tags) && isset($config['autoShare']) ? $config['autoShare'] : false;
@@ -2733,44 +2742,46 @@ class SynchronizationService
 		$tags = [];
 		$published = null;
         $registerId = null;
-		switch ($this->getArrayType($endpoint)) {
-			// Single file endpoint
-			case 'Not array':
-				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, published: $published);
-				break;
-			// Array of object that has file(s)
-			case 'Associative array':
-				$actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
-				if ($actualEndpoint === null) {
-                    return $dataDot->jsonSerialize();
-				}
-				$this->fetchFile(source: $source, endpoint: $actualEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
-				break;
-			// Array of object(s) that has file(s)
-			case "Multidimensional array":
-				foreach ($endpoint as $object) {
-					$filename = null;
-					$tags = [];
-					$published = null;
-					$registerId = null;
-					$endpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
-					if ($endpoint === null) {
-                        continue;
-					}
-					$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
-				}
-				break;
-			// Array of just endpoints
-			case "Indexed array":
-				foreach ($endpoint as $key => $childEndpoint) {
-					$filename = null;
-					$tags = [];
-					$published = null;
-					$registerId = null;
-					$this->fetchFile(source: $source, endpoint: $childEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, published: $published);
-				}
-				break;
-		}
+
+//		switch ($this->getArrayType($endpoint)) {
+//			// Single file endpoint
+//			case 'Not array':
+//				$this->fetchFile(source: $source, endpoint: $endpoint, config: $config, objectId: $objectId, tags: $tags, published: $published);
+//				break;
+//			// Array of object that has file(s)
+//			case 'Associative array':
+//				$actualEndpoint = $this->getFileContext(config: $config, endpoint: $endpoint, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
+//
+//				if ($actualEndpoint === null) {
+//                    return $dataDot->jsonSerialize();
+//				}
+//				$this->fetchFile(source: $source, endpoint: $actualEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
+//				break;
+//			// Array of object(s) that has file(s)
+//			case "Multidimensional array":
+//				foreach ($endpoint as $object) {
+//					$filename = null;
+//					$tags = [];
+//					$published = null;
+//					$registerId = null;
+//					$actualEndpoint = $this->getFileContext(config: $config, endpoint: $object, filename: $filename, tags: $tags, objectId: $objectId, published: $published, registerId: $registerId);
+//					if ($actualEndpoint === null) {
+//                        continue;
+//					}
+//					$this->fetchFile(source: $source, endpoint: $actualEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, filename: $filename, published: $published);
+//				}
+//				break;
+//			// Array of just endpoints
+//			case "Indexed array":
+//				foreach ($endpoint as $key => $childEndpoint) {
+//					$filename = null;
+//					$tags = [];
+//					$published = null;
+//					$registerId = null;
+//					$this->fetchFile(source: $source, endpoint: $childEndpoint, config: $config, objectId: $objectId, registerId: $registerId, tags: $tags, published: $published);
+//				}
+//				break;
+//		}
 
         // Start fire-and-forget file fetching based on endpoint type
         $this->startAsyncFileFetching(source: $source, config: $config, endpoint: $endpoint, objectId: $objectId, ruleId: $rule->getId());

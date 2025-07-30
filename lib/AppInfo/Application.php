@@ -39,8 +39,6 @@ class Application extends App implements IBootstrap {
         // @todo: remove this temporary listener to the software catalog application
 //        $dispatcher->addServiceListener(eventName: ViewUpdatedOrCreatedEventListener::class, className: ViewUpdatedOrCreatedEventListener::class);
 
-		// Register the OrganisationBridgeService
-		$context->registerService(OrganisationBridgeService::class);
 	}
 
 	public function boot(IBootContext $context): void {
