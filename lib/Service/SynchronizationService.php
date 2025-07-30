@@ -1149,7 +1149,7 @@ class SynchronizationService
         }
 
         // If not a direct match, check for embedded UUID (used for uri relations)
-        if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches)) {
+        if (preg_match('/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/', $value, $matches) && filter_var($value, FILTER_VALIDATE_URL)) {
             $originId = $matches[0];
 
             if (Uuid::isValid($originId) === true) {
@@ -2690,7 +2690,7 @@ class SynchronizationService
 	 *
 	 * @param Rule $rule The rule to process containing fetch_file configuration.
 	 * @param array $data The data written to the object.
-	 * @param string $objectId The UUID of the object to attach files to.
+	 * @param string|null $objectId The UUID of the object to attach files to.
 	 *
 	 * @return array The resulting object data with placeholder values for file paths.
 	 * @throws Exception If OpenRegister app is not available or configuration is missing.
@@ -2738,10 +2738,11 @@ class SynchronizationService
             error_log("Failed to find source for fetch file rule: " . $e->getMessage());
             return $dataDot->jsonSerialize();
         }
-		$filename = null;
-		$tags = [];
-		$published = null;
-        $registerId = null;
+
+		// $filename = null;
+		// $tags = [];
+		// $published = null;
+        // $registerId = null;
 
 //		switch ($this->getArrayType($endpoint)) {
 //			// Single file endpoint
@@ -2803,14 +2804,14 @@ class SynchronizationService
 	 * @param Source $source The source to fetch files from.
 	 * @param array $config The fetch_file rule configuration.
 	 * @param mixed $endpoint The endpoint(s) to fetch files from.
-	 * @param string $objectId The UUID of the object to attach files to.
+	 * @param string|null $objectId The UUID of the object to attach files to.
 	 * @param int $ruleId The ID of the rule for error logging.
 	 *
 	 * @return void
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 */
-	private function startAsyncFileFetching(Source $source, array $config, mixed $endpoint, string $objectId, int $ruleId): void
+	private function startAsyncFileFetching(Source $source, array $config, mixed $endpoint, ?string $objectId = null, int $ruleId): void
 	{
         // Execute file fetching immediately but with error isolation
         // This provides "fire-and-forget" behavior without complex ReactPHP setup
@@ -2827,14 +2828,14 @@ class SynchronizationService
 	 * @param Source $source The source to fetch files from.
 	 * @param array $config The fetch_file rule configuration.
 	 * @param mixed $endpoint The endpoint(s) to fetch files from.
-	 * @param string $objectId The UUID of the object to attach files to.
+	 * @param string|null $objectId The UUID of the object to attach files to.
 	 * @param int $ruleId The ID of the rule for error logging.
 	 *
 	 * @return void
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 */
-	private function executeAsyncFileFetching(Source $source, array $config, mixed $endpoint, string $objectId, int $ruleId): void
+	private function executeAsyncFileFetching(Source $source, array $config, mixed $endpoint, ?string $objectId = null, int $ruleId): void
 	{
         try {
             $filename = null;
@@ -3514,7 +3515,12 @@ class SynchronizationService
 		try {
 			// Get the object entity
 			$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
-			$objectEntity = $objectService->findByUuid(uuid: $objectId);
+			try {
+				$objectEntity = $objectService->findByUuid(uuid: $objectId);
+			} catch (DoesNotExistException $e) {
+				// It is possible we are trying to delete files for an object id where the object has not been persisted yet (for example a zgw informatieobject can have a beforehand generated uuid)
+				return 0;
+			}
 
 			// Get the file service
 			$fileService = $this->containerInterface->get('OCA\OpenRegister\Service\FileService');
@@ -3557,11 +3563,11 @@ class SynchronizationService
 	 * @param Source $source The source to fetch files from.
 	 * @param array $config The fetch_file rule configuration.
 	 * @param array $endpoints Array of endpoints/file data to process.
-	 * @param string $objectId The UUID of the object to attach files to.
+	 * @param string|null $objectId The UUID of the object to attach files to.
 	 *
 	 * @return void
 	 */
-	private function processMultipleFilesWithCleanup(Source $source, array $config, array $endpoints, string $objectId): void
+	private function processMultipleFilesWithCleanup(Source $source, array $config, array $endpoints, ?string $objectId = null): void
 	{
 		$newFileNames = [];
 
@@ -3636,7 +3642,7 @@ class SynchronizationService
 
 		// Always run cleanup, even if newFileNames is empty
 		// This handles the case where all files should be removed from an object
-		$this->cleanupOrphanedFiles($objectId, $newFileNames);
+		$this->cleanupOrphanedFiles($targetObjectId, $newFileNames);
 	}
 
 	/**
