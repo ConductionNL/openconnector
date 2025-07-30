@@ -3707,7 +3707,7 @@ class SynchronizationService
 			}
 
 			// Try other common date formats
-			$formats = ['Y-m-d', 'Y-m-d H:i:s', 'Y-m-d\TH:i:s\Z', 'Y-m-d\TH:i:sP'];
+			$formats = ['Y-m-d', 'Y-m-d H:i:s', 'Y-m-d\TH:i:s\Z', 'Y-m-d\TH:i:sP', 'Y-m-d\TH:i:s'];
 			foreach ($formats as $format) {
 				$date = \DateTime::createFromFormat($format, $published);
 				if ($date !== false) {
