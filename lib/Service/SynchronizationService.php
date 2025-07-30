@@ -2738,10 +2738,11 @@ class SynchronizationService
             error_log("Failed to find source for fetch file rule: " . $e->getMessage());
             return $dataDot->jsonSerialize();
         }
-		$filename = null;
-		$tags = [];
-		$published = null;
-        $registerId = null;
+
+		// $filename = null;
+		// $tags = [];
+		// $published = null;
+        // $registerId = null;
 
 //		switch ($this->getArrayType($endpoint)) {
 //			// Single file endpoint
