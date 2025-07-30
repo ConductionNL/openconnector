@@ -3642,7 +3642,7 @@ class SynchronizationService
 
 		// Always run cleanup, even if newFileNames is empty
 		// This handles the case where all files should be removed from an object
-		$this->cleanupOrphanedFiles($objectId, $newFileNames);
+		$this->cleanupOrphanedFiles($targetObjectId, $newFileNames);
 	}
 
 	/**
