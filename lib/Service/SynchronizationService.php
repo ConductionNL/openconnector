@@ -2506,12 +2506,10 @@ class SynchronizationService
 					$fileService->publishFile(object: $objectEntity, file: $filename);
 				} catch (Exception $e) {
 					// Log but don't fail the entire operation
-                    var_dump($e->getMessage());
 					error_log("Failed to publish file {$filename} for object {$objectId}: " . $e->getMessage());
 				}
 			}
 		} catch (Exception $e) {
-            var_dump($e->getMessage());
 			throw new Exception("Failed to save file {$filename} for object {$objectId}: " . $e->getMessage());
 		}
 
