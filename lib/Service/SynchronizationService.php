@@ -2390,7 +2390,7 @@ class SynchronizationService
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
 	 */
-	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?array $tags = [], ?string $filename = null, ?string $published = null, int|string|null $registerId = null): string
+	private function fetchFile(Source $source, string $endpoint, array $config, string $objectId, ?array $tags = [], ?string &$filename = null, ?string $published = null, int|string|null $registerId = null): string
 	{
 
 		$originalEndpoint = $endpoint;
@@ -2403,7 +2403,11 @@ class SynchronizationService
 			$sourceConfig = str_replace(search: "{{ originId }}", replace: $config['originId'], subject: $sourceConfig);
 		}
 		$sourceConfig = json_decode($sourceConfig, true);
-		$sourceConfig['body'] = json_encode($sourceConfig['body'] ?? []);
+
+        if(isset($sourceConfig['body']) === true
+            || (isset($config['method']) === true && $config['method'] !== 'GET')) {
+            $sourceConfig['body'] = json_encode($sourceConfig['body'] ?? []);
+        }
 
 		$config['sourceConfiguration'] = $sourceConfig;
 
@@ -2502,10 +2506,12 @@ class SynchronizationService
 					$fileService->publishFile(object: $objectEntity, file: $filename);
 				} catch (Exception $e) {
 					// Log but don't fail the entire operation
+                    var_dump($e->getMessage());
 					error_log("Failed to publish file {$filename} for object {$objectId}: " . $e->getMessage());
 				}
 			}
 		} catch (Exception $e) {
+            var_dump($e->getMessage());
 			throw new Exception("Failed to save file {$filename} for object {$objectId}: " . $e->getMessage());
 		}
 
@@ -3602,23 +3608,7 @@ class SynchronizationService
 
 			if ($actualEndpoint !== null) {
 				// Determine filename for tracking BEFORE attempting fetch
-				$trackingFilename = $filename;
 
-				if ($trackingFilename === null) {
-					// Try to extract filename from endpoint URL
-					$pathParts = explode('/', $actualEndpoint);
-					$trackingFilename = end($pathParts);
-
-					// If still no clear filename, generate a fallback
-					if (empty($trackingFilename) || strpos($trackingFilename, '?') !== false) {
-						$trackingFilename = 'file_' . md5($actualEndpoint);
-					}
-				}
-
-				// Add to tracking array BEFORE attempting fetch (so failures don't affect cleanup)
-				if (!empty($trackingFilename)) {
-					$newFileNames[] = $trackingFilename;
-				}
 
 				try {
 					// Fetch the file
@@ -3637,6 +3627,24 @@ class SynchronizationService
 					// Note: We still keep the filename in tracking array even if fetch fails
 					// This prevents cleanup from deleting files that should exist
 				}
+
+                $trackingFilename = $filename;
+
+                if ($trackingFilename === null) {
+                    // Try to extract filename from endpoint URL
+                    $pathParts = explode('/', $actualEndpoint);
+                    $trackingFilename = end($pathParts);
+
+                    // If still no clear filename, generate a fallback
+                    if (empty($trackingFilename) || strpos($trackingFilename, '?') !== false) {
+                        $trackingFilename = 'file_' . md5($actualEndpoint);
+                    }
+                }
+
+                // Add to tracking array BEFORE attempting fetch (so failures don't affect cleanup)
+                if (!empty($trackingFilename)) {
+                    $newFileNames[] = $trackingFilename;
+                }
 			}
 		}
 
