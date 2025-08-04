@@ -1531,11 +1531,17 @@ class EndpointService
             return $data;
         }
 
+        if (is_array($config['synchronization']) === true && isset($config['synchronization']['synchronization'])) {
+            $synchronizationId = $config['synchronization']['synchronization'];
+        } else {
+            $synchronizationId = $config['synchronization'];
+        }
+
         // Fetch the synchronization.
         if (is_numeric($config['synchronization']) === true) {
-            $synchronization = $this->synchronizationService->getSynchronization(id: (int) $config['synchronization']);
+            $synchronization = $this->synchronizationService->getSynchronization(id: (int) $synchronizationId);
         } else {
-            $synchronization = $this->synchronizationService->getSynchronization(filters: ['reference' => $config['synchronization']]);
+            $synchronization = $this->synchronizationService->getSynchronization(filters: ['reference' => $synchronizationId]);
         }
 
         // Check if the synchronization should be in test mode.
@@ -1570,13 +1576,11 @@ class EndpointService
         // $object got updated through reference.
         $returnedObject = $object;
 
-        if (isset($config['retainResponse']) === true) {
-            $retainResponse = (bool) $config['retainResponse'];
+        if (isset($config['synchronization']['retainResponse']) === true) {
+            $retainResponse = (bool) $config['synchronization']['retainResponse'];
         } else {
             $retainResponse = false;
         }
-
-
 
         if (isset($config['synchronizationConfig']['mergeResultToKey']) === true && $retainResponse === false) {
             // Merge result to root send object.
