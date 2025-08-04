@@ -354,7 +354,7 @@ class SynchronizationService
 
         // Stage 5: Cleanup - Delete invalid objects
         $stageStartTime = microtime(true);
-        $deletedCount = $this->deleteInvalidObjects($synchronization, $synchronizedTargetIds);
+        $deletedCount = $this->deleteInvalidObjects(synchronization: $synchronization, synchronizedTargetIds: $synchronizedTargetIds, deleteRestriction: (bool) $sourceConfig['restrictDeletion'] ?? false, data: $data);
         $result['objects']['deleted'] = $deletedCount;
 
         $result['timing']['stages']['cleanup_invalid'] = [
@@ -769,8 +769,10 @@ class SynchronizationService
 	 * @return int The count of objects that were deleted.
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception If any database or object deletion errors occur during execution.
 	 */
-	public function deleteInvalidObjects(Synchronization $synchronization, ?array $synchronizedTargetIds = []): int
+	public function deleteInvalidObjects(Synchronization $synchronization, ?array $synchronizedTargetIds = [], bool $deleteRestriction = false, array $data = []): int
 	{
+//        var_dump($deleteRestriction);
+
 		$deletedObjectsCount = 0;
 		$type = $synchronization->getTargetType();
 
@@ -781,9 +783,11 @@ class SynchronizationService
 				[$registerId, $schemaId] = explode(separator: '/', string: $synchronization->getTargetId());
 				$allContracts = $this->synchronizationContractMapper->findAllBySynchronizationAndSchema(synchronizationId: $synchronization->getId(), schemaId: $schemaId);
 				$allContractTargetIds = [];
+                $allContractSourceIds = [];
 				foreach ($allContracts as $contract) {
 					if ($contract->getTargetId() !== null) {
 						$allContractTargetIds[] = $contract->getTargetId();
+                        $allContractSourceIds[$contract->getTargetId()] = $contract->getOriginId();
 					}
 				}
 
@@ -792,8 +796,18 @@ class SynchronizationService
 					$synchronizedTargetIds = [];
 				}
 
-				// Check if we have contracts that became invalid or do not exist in the source anymore
-				$targetIdsToDelete = array_diff($allContractTargetIds, $synchronizedTargetIds);
+                // Check if we have contracts that became invalid or do not exist in the source anymore
+                $targetIdsToDelete = array_diff($allContractTargetIds, $synchronizedTargetIds);
+
+                var_dump($allContractSourceIds);
+
+                if ($deleteRestriction === true) {
+                    $encodedData = json_encode($data);
+                    $targetIdsToDelete = array_filter($targetIdsToDelete, function(string|int $targetId) use ($encodedData, $allContractSourceIds) {
+                        $sourceId = $allContractSourceIds[$targetId];
+                        return str_contains($encodedData, $sourceId);
+                    });
+                }
 
 				foreach ($targetIdsToDelete as $targetIdToDelete) {
 					try {
