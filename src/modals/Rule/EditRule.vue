@@ -136,13 +136,22 @@ import { Rule } from '../../entities/index.js'
 					:clearable="false" />
 
 				<!-- Add synchronization select -->
-				<NcSelect v-if="typeOptions.value?.id === 'synchronization'"
-					v-bind="syncOptions"
-					v-model="syncOptions.value"
-					:loading="syncOptions.loading"
-					input-label="Select Synchronization"
-					:multiple="false"
-					:clearable="false" />
+				<template v-if="typeOptions.value?.id === 'synchronization'">
+					<NcSelect
+						v-bind="syncOptions"
+						v-model="syncOptions.value"
+						:loading="syncOptions.loading"
+						input-label="Select Synchronization"
+						:multiple="false"
+						:clearable="false" />
+
+					<NcCheckboxRadioSwitch
+						type="checkbox"
+						label="Retain response"
+						:checked.sync="ruleItem.configuration.retainResponse">
+						Retain original response
+					</NcCheckboxRadioSwitch>
+				</template>
 
 				<!-- Error Configuration -->
 				<template v-if="typeOptions.value?.id === 'error'">
@@ -620,7 +629,9 @@ export default {
 				timing: '',
 				configuration: {
 					mapping: null,
-					synchronization: null,
+					synchronization: {
+						retainResponse: false
+					},
 					error: {
 						code: 500,
 						name: 'Something went wrong',
@@ -740,7 +751,10 @@ export default {
 				...ruleStore.ruleItem,
 				configuration: {
 					mapping: ruleStore.ruleItem.configuration?.mapping ?? null,
-					synchronization: ruleStore.ruleItem.configuration?.synchronization ?? null,
+					synchronization: {
+						synchronization: ruleStore.ruleItem.configuration?.synchronization ?? null,
+						retainResponse: ruleStore.ruleItem.configuration?.retainResponse ?? false,
+					},
 					error: {
 						code: ruleStore.ruleItem.configuration?.error?.code ?? 500,
 						name: ruleStore.ruleItem.configuration?.error?.name ?? 'Something went wrong',

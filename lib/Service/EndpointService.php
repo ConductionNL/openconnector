@@ -1570,19 +1570,27 @@ class EndpointService
         // $object got updated through reference.
         $returnedObject = $object;
 
-        if (isset($config['synchronizationConfig']['mergeResultToKey']) === true) {
+        if (isset($config['retainResponse']) === true) {
+            $retainResponse = (bool) $config['retainResponse'];
+        } else {
+            $retainResponse = false;
+        }
+
+
+
+        if (isset($config['synchronizationConfig']['mergeResultToKey']) === true && $retainResponse === false) {
             // Merge result to root send object.
             if ($config['synchronizationConfig']['mergeResultToKey'] === '#') {
                 $data['body'] = array_merge($sendObject, $returnedObject);
-            // Merge result to configured key in send object
+                // Merge result to configured key in send object
             } else {
                 $sendObject[$config['synchronizationConfig']['mergeResultToKey']] = $returnedObject;
                 $data['body'] = $sendObject;
             }
-        // Overwrite body with result
-        } else if (isset($config['synchronizationConfig']['overwriteObjectWithResult']) === true && filter_var($config['synchronizationConfig']['overwriteObjectWithResult'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true) {
+            // Overwrite body with result
+        } else if (isset($config['synchronizationConfig']['overwriteObjectWithResult']) === true && filter_var($config['synchronizationConfig']['overwriteObjectWithResult'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true && $retainResponse === false) {
             $data['body'] = $returnedObject;
-        } else {
+        } else if ($retainResponse === false) {
             $data['body'] = $log;
         }
 
