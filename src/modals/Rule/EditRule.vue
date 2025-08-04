@@ -148,7 +148,7 @@ import { Rule } from '../../entities/index.js'
 					<NcCheckboxRadioSwitch
 						type="checkbox"
 						label="Retain response"
-						:checked.sync="ruleItem.configuration.retainResponse">
+						:checked.sync="ruleItem.configuration.synchronization.retainResponse">
 						Retain original response
 					</NcCheckboxRadioSwitch>
 				</template>
@@ -1001,9 +1001,9 @@ export default {
 					}))
 
 					// Set active synchronization if editing
-					if (this.IS_EDIT && this.ruleItem.configuration?.synchronization) {
+					if (this.IS_EDIT && this.ruleItem.configuration?.synchronization.synchronization) {
 						const activeSync = this.syncOptions.options.find(
-							option => option.value === this.ruleItem.configuration.synchronization,
+							option => option.value === this.ruleItem.configuration.synchronization.synchronization,
 						)
 						if (activeSync) {
 							this.syncOptions.value = activeSync
@@ -1291,10 +1291,10 @@ export default {
 			case 'mapping':
 				configuration.mapping = this.mappingOptions.value?.value
 				break
-			case 'synchronization':
+				case 'synchronization':
 				configuration.synchronization = {}
 				configuration.synchronization.synchronization = this.syncOptions.value?.value
-				configuration.synchronization.retainResponse = this.ruleItem.configuration.retainResponse
+				configuration.synchronization.retainResponse = this.ruleItem.configuration.synchronization.retainResponse
 				break
 			case 'javascript':
 				configuration.javascript = this.ruleItem.configuration.javascript

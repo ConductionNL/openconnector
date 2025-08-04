@@ -284,6 +284,11 @@ class EndpointService
                     return $ruleResult;
                 }
 
+
+                if ($ruleResult instanceof JSONResponse === true) {
+                    return $this->transformError($ruleResult, $request);
+                }
+
 				if ($result->getStatus() !== 200 && $result->getStatus() !== 201) {
 					return $this->transformError($result, $request);
 				}
@@ -1531,14 +1536,15 @@ class EndpointService
             return $data;
         }
 
-        if (is_array($config['synchronization']) === true && isset($config['synchronization']['synchronization'])) {
+        if (is_array($config['synchronization']) === true && isset($config['synchronization']['synchronization']) === true) {
             $synchronizationId = $config['synchronization']['synchronization'];
         } else {
             $synchronizationId = $config['synchronization'];
         }
 
+
         // Fetch the synchronization.
-        if (is_numeric($config['synchronization']) === true) {
+        if (is_numeric($synchronizationId) === true) {
             $synchronization = $this->synchronizationService->getSynchronization(id: (int) $synchronizationId);
         } else {
             $synchronization = $this->synchronizationService->getSynchronization(filters: ['reference' => $synchronizationId]);
