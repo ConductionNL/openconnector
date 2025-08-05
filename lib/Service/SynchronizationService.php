@@ -354,7 +354,7 @@ class SynchronizationService
 
         // Stage 5: Cleanup - Delete invalid objects
         $stageStartTime = microtime(true);
-        $deletedCount = $this->deleteInvalidObjects($synchronization, $synchronizedTargetIds);
+        $deletedCount = $this->deleteInvalidObjects(synchronization: $synchronization, synchronizedTargetIds: $synchronizedTargetIds, deleteRestriction: (bool) $sourceConfig['restrictDeletion'] ?? false, data: $data);
         $result['objects']['deleted'] = $deletedCount;
 
         $result['timing']['stages']['cleanup_invalid'] = [
@@ -771,7 +771,7 @@ class SynchronizationService
 	 * @return int The count of objects that were deleted.
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception If any database or object deletion errors occur during execution.
 	 */
-	public function deleteInvalidObjects(Synchronization $synchronization, ?array $synchronizedTargetIds = []): int
+	public function deleteInvalidObjects(Synchronization $synchronization, ?array $synchronizedTargetIds = [], bool $deleteRestriction = false, array $data = []): int
 	{
 		$deletedObjectsCount = 0;
 		$type = $synchronization->getTargetType();
@@ -783,9 +783,11 @@ class SynchronizationService
 				[$registerId, $schemaId] = explode(separator: '/', string: $synchronization->getTargetId());
 				$allContracts = $this->synchronizationContractMapper->findAllBySynchronizationAndSchema(synchronizationId: $synchronization->getId(), schemaId: $schemaId);
 				$allContractTargetIds = [];
+                $allContractSourceIds = [];
 				foreach ($allContracts as $contract) {
 					if ($contract->getTargetId() !== null) {
 						$allContractTargetIds[] = $contract->getTargetId();
+                        $allContractSourceIds[$contract->getTargetId()] = $contract->getOriginId();
 					}
 				}
 
@@ -794,8 +796,15 @@ class SynchronizationService
 					$synchronizedTargetIds = [];
 				}
 
-				// Check if we have contracts that became invalid or do not exist in the source anymore
-				$targetIdsToDelete = array_diff($allContractTargetIds, $synchronizedTargetIds);
+                // Check if we have contracts that became invalid or do not exist in the source anymore
+                $targetIdsToDelete = array_diff($allContractTargetIds, $synchronizedTargetIds);
+                if ($deleteRestriction === true) {
+                    $encodedData = json_encode($data);
+                    $targetIdsToDelete = array_filter($targetIdsToDelete, function(string|int $targetId) use ($encodedData, $allContractSourceIds) {
+                        $sourceId = $allContractSourceIds[$targetId];
+                        return str_contains($encodedData, $sourceId);
+                    });
+                }
 
 				foreach ($targetIdsToDelete as $targetIdToDelete) {
 					try {
@@ -2706,7 +2715,6 @@ class SynchronizationService
 	 */
 	private function processFetchFileRule(Rule $rule, array $data, ?string $objectId = null): array
 	{
-
         // Check if OpenRegister app is available
         $appManager = \OC::$server->get(\OCP\App\IAppManager::class);
         if ($appManager->isEnabledForUser('openregister') === false) {
@@ -2721,7 +2729,7 @@ class SynchronizationService
 		$config = $rule->getConfiguration()['fetch_file'];
 
 		$dataDot = new Dot($data);
-		$endpoint = isset($config['filePath']) ? $dataDot->get($config['filePath']) : $config['endpoint'];
+        $endpoint = isset($config['filePath']) === true && $config['filePath'] !== '' ? $dataDot->get($config['filePath']) : $config['endpoint'];
 
 		if ($objectId === null && isset($config['objectIdPath']) === true) {
 			$objectId = $dataDot->get($config['objectIdPath']);
@@ -2731,10 +2739,11 @@ class SynchronizationService
 			$config['originId'] = $dataDot->get($config['originIdPath']);
 		}
 
+
         // If no endpoint is found, return data unchanged
-		if ($endpoint === null) {
-			return $dataDot->jsonSerialize();
-		}
+        if ($endpoint === null) {
+            return $dataDot->jsonSerialize();
+        }
 
         // Get source for file fetching
         try {
