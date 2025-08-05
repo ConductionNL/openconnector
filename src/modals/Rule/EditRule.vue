@@ -631,7 +631,7 @@ export default {
 					mapping: null,
 					synchronization: {
 						synchronization: null,
-						retainResponse: false
+						retainResponse: false,
 					},
 					error: {
 						code: 500,
@@ -754,7 +754,7 @@ export default {
 					mapping: ruleStore.ruleItem.configuration?.mapping ?? null,
 					synchronization: {
 						synchronization: ruleStore.ruleItem.configuration?.synchronization.synchronization ?? null,
-						retainResponse: ruleStore.ruleItem.configuration?.synchronization.retainResponse ?? false
+						retainResponse: ruleStore.ruleItem.configuration?.synchronization.retainResponse ?? false,
 					},
 					error: {
 						code: ruleStore.ruleItem.configuration?.error?.code ?? 500,
@@ -1291,7 +1291,7 @@ export default {
 			case 'mapping':
 				configuration.mapping = this.mappingOptions.value?.value
 				break
-				case 'synchronization':
+            case 'synchronization':
 				configuration.synchronization = {}
 				configuration.synchronization.synchronization = this.syncOptions.value?.value
 				configuration.synchronization.retainResponse = this.ruleItem.configuration.synchronization.retainResponse
