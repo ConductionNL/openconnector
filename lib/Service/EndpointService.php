@@ -284,6 +284,11 @@ class EndpointService
                     return $ruleResult;
                 }
 
+
+                if ($ruleResult instanceof JSONResponse === true) {
+                    return $this->transformError($ruleResult, $request);
+                }
+
 				if ($result->getStatus() !== 200 && $result->getStatus() !== 201) {
 					return $this->transformError($result, $request);
 				}
@@ -1531,11 +1536,18 @@ class EndpointService
             return $data;
         }
 
-        // Fetch the synchronization.
-        if (is_numeric($config['synchronization']) === true) {
-            $synchronization = $this->synchronizationService->getSynchronization(id: (int) $config['synchronization']);
+        if (is_array($config['synchronization']) === true && isset($config['synchronization']['synchronization']) === true) {
+            $synchronizationId = $config['synchronization']['synchronization'];
         } else {
-            $synchronization = $this->synchronizationService->getSynchronization(filters: ['reference' => $config['synchronization']]);
+            $synchronizationId = $config['synchronization'];
+        }
+
+
+        // Fetch the synchronization.
+        if (is_numeric($synchronizationId) === true) {
+            $synchronization = $this->synchronizationService->getSynchronization(id: (int) $synchronizationId);
+        } else {
+            $synchronization = $this->synchronizationService->getSynchronization(filters: ['reference' => $synchronizationId]);
         }
 
         // Check if the synchronization should be in test mode.
@@ -1570,19 +1582,25 @@ class EndpointService
         // $object got updated through reference.
         $returnedObject = $object;
 
-        if (isset($config['synchronizationConfig']['mergeResultToKey']) === true) {
+        if (isset($config['synchronization']['retainResponse']) === true) {
+            $retainResponse = (bool) $config['synchronization']['retainResponse'];
+        } else {
+            $retainResponse = false;
+        }
+
+        if (isset($config['synchronizationConfig']['mergeResultToKey']) === true && $retainResponse === false) {
             // Merge result to root send object.
             if ($config['synchronizationConfig']['mergeResultToKey'] === '#') {
                 $data['body'] = array_merge($sendObject, $returnedObject);
-            // Merge result to configured key in send object
+                // Merge result to configured key in send object
             } else {
                 $sendObject[$config['synchronizationConfig']['mergeResultToKey']] = $returnedObject;
                 $data['body'] = $sendObject;
             }
-        // Overwrite body with result
-        } else if (isset($config['synchronizationConfig']['overwriteObjectWithResult']) === true && filter_var($config['synchronizationConfig']['overwriteObjectWithResult'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true) {
+            // Overwrite body with result
+        } else if (isset($config['synchronizationConfig']['overwriteObjectWithResult']) === true && filter_var($config['synchronizationConfig']['overwriteObjectWithResult'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === true && $retainResponse === false) {
             $data['body'] = $returnedObject;
-        } else {
+        } else if ($retainResponse === false) {
             $data['body'] = $log;
         }
 
