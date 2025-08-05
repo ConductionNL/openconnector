@@ -765,6 +765,8 @@ class SynchronizationService
 	 *
 	 * @param Synchronization $synchronization The synchronization entity to process.
 	 * @param array|null $synchronizedTargetIds An array of target IDs that are still valid in the source.
+     * @param bool $deleteRestriction Sets if the deletion of objects should be restricted to identifiers called in $data
+     * @param array $data The data to be checked when $deleteRestriction is true for origin ids
 	 *
 	 * @return int The count of objects that were deleted.
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface|\OCP\DB\Exception If any database or object deletion errors occur during execution.

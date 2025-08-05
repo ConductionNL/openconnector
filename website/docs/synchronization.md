@@ -24,6 +24,7 @@ Synchronization is a core feature that enables data transfer between different s
 - Optional endpoint configuration for fetching data
 - usesPagination: configure this field if you know this source **does not** uses pagination or next endpoint. Use value "false". If this source uses next endpoint it will auto detect.
 - Optional configuration of sub objects.
+- (Optional) restrictDeletion: if set to true or 1, restricts the deletion of objects in the synchronization to objects of which the origin id was in the request to the source, to prevent deletion of objects when a specified set of objects is synchronized.
 
 #### Related or sub objects
 
