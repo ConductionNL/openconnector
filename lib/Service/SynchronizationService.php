@@ -798,9 +798,6 @@ class SynchronizationService
 
                 // Check if we have contracts that became invalid or do not exist in the source anymore
                 $targetIdsToDelete = array_diff($allContractTargetIds, $synchronizedTargetIds);
-
-                var_dump($allContractSourceIds);
-
                 if ($deleteRestriction === true) {
                     $encodedData = json_encode($data);
                     $targetIdsToDelete = array_filter($targetIdsToDelete, function(string|int $targetId) use ($encodedData, $allContractSourceIds) {
@@ -899,6 +896,8 @@ class SynchronizationService
 			}
 		}
 
+
+        $force = true;
         // Let's prevent pointless updates by checking:
         // 1. If the origin hash matches (object hasn't changed)
         // 2. If the synchronization config hasn't been updated since last check
@@ -2306,6 +2305,7 @@ class SynchronizationService
                 if ($this->checkRuleConditions($rule, $data) === false || $rule->getTiming() !== $timing) {
                     continue;
                 }
+                var_dump($rule->getName());
 
                 // Process rule based on type
                 $result = match ($rule->getType()) {
@@ -2718,6 +2718,7 @@ class SynchronizationService
 	 */
 	private function processFetchFileRule(Rule $rule, array $data, ?string $objectId = null): array
 	{
+        var_dump('hello darkness my old friend');
 
         // Check if OpenRegister app is available
         $appManager = \OC::$server->get(\OCP\App\IAppManager::class);
@@ -2725,15 +2726,17 @@ class SynchronizationService
 			throw new Exception('OpenRegister app is required for the fetch file rule and not installed');
         }
 
+        var_dump('came here to talk to you again');
         // Validate rule configuration
 		if (isset($rule->getConfiguration()['fetch_file']) === false) {
 			throw new Exception('No configuration found for fetch_file');
 		}
+        var_dump('for a vision softly creeping');
 
 		$config = $rule->getConfiguration()['fetch_file'];
 
 		$dataDot = new Dot($data);
-		$endpoint = isset($config['filePath']) ? $dataDot->get($config['filePath']) : $config['endpoint'];
+        $endpoint = isset($config['filePath']) === true && $config['filePath'] !== '' ? $dataDot->get($config['filePath']) : $config['endpoint'];
 
 		if ($objectId === null && isset($config['objectIdPath']) === true) {
 			$objectId = $dataDot->get($config['objectIdPath']);
@@ -2743,19 +2746,24 @@ class SynchronizationService
 			$config['originId'] = $dataDot->get($config['originIdPath']);
 		}
 
+
         // If no endpoint is found, return data unchanged
-		if ($endpoint === null) {
-			return $dataDot->jsonSerialize();
-		}
+        if ($endpoint === null) {
+            return $dataDot->jsonSerialize();
+        }
+        var_dump('left its seeds while i was sleeping');
 
         // Get source for file fetching
         try {
             $source = $this->sourceMapper->find($config['source']);
         } catch (Exception $e) {
+            var_dump('a');
             // Log error but don't block synchronization
             error_log("Failed to find source for fetch file rule: " . $e->getMessage());
             return $dataDot->jsonSerialize();
         }
+
+        var_dump($endpoint);
 
 		// $filename = null;
 		// $tags = [];
