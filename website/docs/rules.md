@@ -99,6 +99,7 @@ The synchronization rules take the following configuration options:
 - force (optional): if set to true, always force objects to be overwritten from the synchronization.
 - mergeResultToKey (optional): if set , merges the synchronization result to a key in the synchronized object. IF `#` is configured, will the result with the synchronizaiton object. Not compatible with `overwriteObjectWithResult` config option
 - overwriteObjectWithResult (optional): if set to true, overwrites result with synchronization result instead of synchronization object. Not compatible with `mergeResultToKey` config option
+- retainResponse (optional): Retain the original response of the request before running any rule. Overrides mergeResultToKey and overwriteObjectWithResult.
 
 The isTest and force options can also be overridden from the endpoint by setting the corresponding fields on the request body.
 
