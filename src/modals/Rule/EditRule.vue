@@ -1291,7 +1291,7 @@ export default {
 			case 'mapping':
 				configuration.mapping = this.mappingOptions.value?.value
 				break
-            case 'synchronization':
+			case 'synchronization':
 				configuration.synchronization = {}
 				configuration.synchronization.synchronization = this.syncOptions.value?.value
 				configuration.synchronization.retainResponse = this.ruleItem.configuration.synchronization.retainResponse
