@@ -21,6 +21,7 @@ namespace OCA\OpenConnector\Controller;
 use OCA\OpenConnector\Service\AuthorizationService;
 use OCA\OpenConnector\Service\SecurityService;
 use OCA\OpenConnector\Service\UserService;
+use OCA\OpenConnector\Service\OrganisationBridgeService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -79,6 +80,13 @@ class UserController extends Controller
     private readonly UserService $userService;
 
     /**
+     * Organisation bridge service for organization management
+     *
+     * @var OrganisationBridgeService
+     */
+    private readonly OrganisationBridgeService $organisationBridgeService;
+
+    /**
      * Logger for application events
      *
      * @var LoggerInterface
@@ -99,6 +107,7 @@ class UserController extends Controller
      * @param ICacheFactory $cacheFactory The cache factory for rate limiting
      * @param LoggerInterface $logger The logger for security events
      * @param UserService $userService The user service for user-related operations
+     * @param OrganisationBridgeService $organisationBridgeService The organization bridge service
      *
      * @psalm-param string $appName
      * @psalm-param IRequest $request
@@ -108,6 +117,7 @@ class UserController extends Controller
      * @psalm-param ICacheFactory $cacheFactory
      * @psalm-param LoggerInterface $logger
      * @psalm-param UserService $userService
+     * @psalm-param OrganisationBridgeService $organisationBridgeService
      * @phpstan-param string $appName
      * @phpstan-param IRequest $request
      * @phpstan-param IUserManager $userManager
@@ -116,6 +126,7 @@ class UserController extends Controller
      * @phpstan-param ICacheFactory $cacheFactory
      * @phpstan-param LoggerInterface $logger
      * @phpstan-param UserService $userService
+     * @phpstan-param OrganisationBridgeService $organisationBridgeService
      */
     public function __construct(
         string $appName,
@@ -125,7 +136,8 @@ class UserController extends Controller
         AuthorizationService $authorizationService,
         ICacheFactory $cacheFactory,
         LoggerInterface $logger,
-        UserService $userService
+        UserService $userService,
+        OrganisationBridgeService $organisationBridgeService
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
@@ -133,6 +145,7 @@ class UserController extends Controller
         $this->authorizationService = $authorizationService;
         $this->securityService = new SecurityService($cacheFactory, $logger);
         $this->userService = $userService;
+        $this->organisationBridgeService = $organisationBridgeService;
         $this->logger = $logger;
     }
 
@@ -221,12 +234,18 @@ class UserController extends Controller
             }
 
             // Update user properties based on provided data
-            $this->userService->updateUserProperties($currentUser, $sanitizedData);
+            $updateResult = $this->userService->updateUserProperties($currentUser, $sanitizedData);
 
             // Build updated user data array
             $userData = $this->userService->buildUserDataArray($currentUser);
 
-            $response = new JSONResponse($userData);
+            // Add update result information to response
+            $responseData = $userData;
+            if ($updateResult['organisation_updated'] === true) {
+                $responseData['update_message'] = $updateResult['organisation_message'];
+            }
+
+            $response = new JSONResponse($responseData);
             return $this->securityService->addSecurityHeaders($response);
         } catch (\Exception $e) {
             // Log the error and return generic error response
