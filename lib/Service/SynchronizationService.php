@@ -354,7 +354,7 @@ class SynchronizationService
 
         // Stage 5: Cleanup - Delete invalid objects
         $stageStartTime = microtime(true);
-        $deletedCount = $this->deleteInvalidObjects(synchronization: $synchronization, synchronizedTargetIds: $synchronizedTargetIds, deleteRestriction: (bool) $sourceConfig['restrictDeletion'] ?? false, data: $data);
+        $deletedCount = $this->deleteInvalidObjects(synchronization: $synchronization, synchronizedTargetIds: $synchronizedTargetIds, deleteRestriction: isset($sourceConfig['restrictDeletion']) === true && (bool)$sourceConfig['restrictDeletion'], data: isset($data) === true ? $data : []);
         $result['objects']['deleted'] = $deletedCount;
 
         $result['timing']['stages']['cleanup_invalid'] = [
