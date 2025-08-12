@@ -120,6 +120,11 @@ class SynchronizationContractLogMapper extends QBMapper
 			$obj->setSynchronizationLogId('n.a.');
 		}
 
+		// Calculate and set size if not provided
+		if ($obj->getSize() === null) {
+			$obj->setSize($this->calculateLogSize($obj));
+		}
+
 		return $this->insert($obj);
 	}
 
@@ -208,6 +213,233 @@ class SynchronizationContractLogMapper extends QBMapper
 			$stats[$row['hour']] = (int)$row['executions'];
 		}
 
-		return $stats;
-	}
+		        return $stats;
+    }
+
+	/**
+	 * Calculate the approximate size of a synchronization contract log entry.
+	 *
+	 * This method estimates the size by summing the length of all text and JSON fields.
+	 *
+	 * @param SynchronizationContractLog $log The log entry to calculate size for
+	 *
+	 * @return int The estimated size in bytes
+	 */
+	private function calculateLogSize(SynchronizationContractLog $log): int
+	{
+		$size = 0;
+		
+		// Add size of string fields
+		$size += strlen($log->getUuid() ?? '');
+		$size += strlen($log->getMessage() ?? '');
+		$size += strlen($log->getSynchronizationId() ?? '');
+		$size += strlen($log->getSynchronizationContractId() ?? '');
+		$size += strlen($log->getSynchronizationLogId() ?? '');
+		$size += strlen($log->getTargetResult() ?? '');
+		$size += strlen($log->getUserId() ?? '');
+		$size += strlen($log->getSessionId() ?? '');
+		
+		// Add size of JSON fields (source and target arrays)
+		$source = $log->getSource();
+		if (!empty($source)) {
+			$size += strlen(json_encode($source));
+		}
+		
+		$target = $log->getTarget();
+		if (!empty($target)) {
+			$size += strlen(json_encode($target));
+		}
+		
+		// Add approximate size of other fields (booleans, dates)
+		$size += 50; // Rough estimate for booleans and datetime fields
+		
+		return $size;
+	}//end calculateLogSize()
+
+	/**
+	 * Count synchronization contract logs with optional filters.
+	 *
+	 * This method provides flexible filtering capabilities similar to findAll
+	 * but returns only the count of matching records.
+	 *
+	 * @param array $filters Optional filters to apply
+	 *
+	 * @return int The count of logs matching the filters
+	 *
+	 * @throws \OCP\DB\Exception Database operation exceptions
+	 */
+	public function count(array $filters = []): int
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select($qb->func()->count('*'))
+			->from('openconnector_synchronization_contract_logs');
+
+		// Apply filters
+		foreach ($filters as $filter => $value) {
+			if ($value === 'IS NOT NULL') {
+				$qb->andWhere($qb->expr()->isNotNull($filter));
+			} elseif ($value === 'IS NULL') {
+				$qb->andWhere($qb->expr()->isNull($filter));
+			} elseif (is_array($value)) {
+				// Handle array values like ['IS NULL', '']
+				$conditions = [];
+				foreach ($value as $val) {
+					if ($val === 'IS NULL') {
+						$conditions[] = $qb->expr()->isNull($filter);
+					} elseif ($val === 'IS NOT NULL') {
+						$conditions[] = $qb->expr()->isNotNull($filter);
+					} else {
+						$conditions[] = $qb->expr()->eq($filter, $qb->createNamedParameter($val));
+					}
+				}
+				if (!empty($conditions)) {
+					$qb->andWhere($qb->expr()->orX(...$conditions));
+				}
+			} else {
+				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+			}
+		}
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+
+		return (int)($row['COUNT(*)'] ?? 0);
+	}//end count()
+
+	/**
+	 * Calculate total size of synchronization contract logs with optional filters.
+	 *
+	 * This method sums the size field of logs matching the given filters,
+	 * useful for storage management and retention analysis.
+	 *
+	 * @param array $filters Optional filters to apply
+	 *
+	 * @return int The total size of logs matching the filters in bytes
+	 *
+	 * @throws \OCP\DB\Exception Database operation exceptions
+	 */
+	public function size(array $filters = []): int
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select($qb->func()->sum('size'))
+			->from('openconnector_synchronization_contract_logs');
+
+		// Apply filters
+		foreach ($filters as $filter => $value) {
+			if ($value === 'IS NOT NULL') {
+				$qb->andWhere($qb->expr()->isNotNull($filter));
+			} elseif ($value === 'IS NULL') {
+				$qb->andWhere($qb->expr()->isNull($filter));
+			} elseif (is_array($value)) {
+				// Handle array values like ['IS NULL', '']
+				$conditions = [];
+				foreach ($value as $val) {
+					if ($val === 'IS NULL') {
+						$conditions[] = $qb->expr()->isNull($filter);
+					} elseif ($val === 'IS NOT NULL') {
+						$conditions[] = $qb->expr()->isNotNull($filter);
+					} else {
+						$conditions[] = $qb->expr()->eq($filter, $qb->createNamedParameter($val));
+					}
+				}
+				if (!empty($conditions)) {
+					$qb->andWhere($qb->expr()->orX(...$conditions));
+				}
+			} else {
+				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+			}
+		}
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+
+		return (int)($row['SUM(size)'] ?? 0);
+	}//end size()
+
+	/**
+	 * Clear expired logs from the database.
+	 *
+	 * This method deletes all synchronization contract logs that have expired 
+	 * (i.e., their 'expires' date is earlier than the current date and time)
+	 * and have the 'expires' column set. This helps maintain database performance 
+	 * by removing old log entries that are no longer needed.
+	 *
+	 * @return bool True if any logs were deleted, false otherwise.
+	 *
+	 * @throws \Exception Database operation exceptions
+	 */
+	public function clearLogs(): bool
+	{
+		try {
+			// Get the query builder for database operations
+			$qb = $this->db->getQueryBuilder();
+
+			// Build the delete query to remove expired logs that have the 'expires' column set
+			$qb->delete('openconnector_synchronization_contract_logs')
+			   ->where($qb->expr()->isNotNull('expires'))
+			   ->andWhere($qb->expr()->lt('expires', $qb->createFunction('NOW()')));
+
+			// Execute the query and get the number of affected rows
+			$result = $qb->executeStatement();
+
+			// Return true if any rows were affected (i.e., any logs were deleted)
+			return $result > 0;
+		} catch (\Exception $e) {
+			// Log the error for debugging purposes
+			\OC::$server->getLogger()->error('Failed to clear expired synchronization contract logs: ' . $e->getMessage(), [
+				'app' => 'openconnector',
+				'exception' => $e
+			]);
+			
+			// Re-throw the exception so the caller knows something went wrong
+			throw $e;
+		}
+	}//end clearLogs()
+
+	/**
+	 * Set expiry dates for synchronization contract logs based on retention period in milliseconds.
+	 *
+	 * Updates the expires column for synchronization contract logs based on their creation date plus the retention period.
+	 * Only affects synchronization contract logs that don't already have an expiry date set.
+	 *
+	 * @param int $retentionMs Retention period in milliseconds
+	 *
+	 * @return int Number of synchronization contract logs updated
+	 *
+	 * @throws \Exception Database operation exceptions
+	 *
+	 * @psalm-return int
+	 * @phpstan-return int
+	 */
+	public function setExpiryDate(int $retentionMs): int
+	{
+		try {
+			// Convert milliseconds to seconds for DateTime calculation
+			$retentionSeconds = intval($retentionMs / 1000);
+			
+			// Get the query builder
+			$qb = $this->db->getQueryBuilder();
+			
+			// Update synchronization contract logs that don't have an expiry date set
+			$qb->update('openconnector_synchronization_contract_logs')
+			   ->set('expires', $qb->createFunction(
+				   sprintf('DATE_ADD(created, INTERVAL %d SECOND)', $retentionSeconds)
+			   ))
+			   ->where($qb->expr()->isNull('expires'));
+			
+			// Execute the update and return number of affected rows
+			return $qb->executeStatement();
+		} catch (\Exception $e) {
+			// Log the error for debugging purposes
+			\OC::$server->getLogger()->error('Failed to set expiry dates for synchronization contract logs: ' . $e->getMessage(), [
+				'app' => 'openconnector',
+				'exception' => $e
+			]);
+			
+			// Re-throw the exception so the caller knows something went wrong
+			throw $e;
+		}
+	}//end setExpiryDate()
 }

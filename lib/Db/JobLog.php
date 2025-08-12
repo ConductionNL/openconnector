@@ -19,6 +19,7 @@ class JobLog extends Entity implements JsonSerializable
     protected ?string $userId = null;
     protected ?string $sessionId = null;
     protected ?array $stackTrace = [];
+    protected ?int $size = null;
     protected ?DateTime $expires = null;
     protected ?DateTime $lastRun = null;
     protected ?DateTime $nextRun = null;
@@ -56,6 +57,7 @@ class JobLog extends Entity implements JsonSerializable
         $this->addType('userId', 'string');
         $this->addType('sessionId', 'string');
         $this->addType('stackTrace', 'json');
+        $this->addType('size', 'integer');
         $this->addType('expires', 'datetime');
         $this->addType('lastRun', 'datetime');
         $this->addType('nextRun', 'datetime');
@@ -107,6 +109,7 @@ class JobLog extends Entity implements JsonSerializable
             'userId' => $this->userId,
             'sessionId' => $this->sessionId,
             'stackTrace' => $this->stackTrace,
+            'size' => $this->size,
             'expires' => isset($this->expires) ? $this->expires->format('c') : null,
             'lastRun' => isset($this->lastRun) ? $this->lastRun->format('c') : null,
             'nextRun' => isset($this->nextRun) ? $this->nextRun->format('c') : null,

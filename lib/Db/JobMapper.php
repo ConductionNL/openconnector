@@ -330,4 +330,94 @@ class JobMapper extends QBMapper
             ->andWhere($qb->expr()->lte('next_run', $qb->createNamedParameter((new \DateTime())->format('Y-m-d H:i:s'))));
         return $this->findEntities(query: $qb);
     }
+
+    /**
+     * Count jobs with optional filters.
+     *
+     * @param array $filters Optional filters to apply to the count query
+     * @return int The number of jobs matching the filters
+     * @throws \Exception If the count query fails
+     */
+    public function count(array $filters = []): int
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->createFunction('COUNT(*)'))
+               ->from($this->getTableName());
+
+            // Apply filters if provided
+            if (!empty($filters['withoutExpiry']) && $filters['withoutExpiry'] === true) {
+                $qb->where($qb->expr()->isNull('expires'));
+            }
+
+            if (!empty($filters['expired']) && $filters['expired'] === true) {
+                $qb->where($qb->expr()->lt('expires', $qb->createNamedParameter(new \DateTime(), 'datetime')));
+            }
+
+            $result = $qb->executeQuery();
+            return (int) $result->fetchOne();
+        } catch (\Exception $e) {
+            \OC::$server->getLogger()->error('Failed to count jobs: ' . $e->getMessage(), [
+                'app' => 'openconnector',
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Calculate total size of jobs with optional filters.
+     *
+     * @param array $filters Optional filters to apply to the size calculation
+     * @return int The total size in bytes of jobs matching the filters
+     * @throws \Exception If the size calculation fails
+     */
+    public function size(array $filters = []): int
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->createFunction('COALESCE(SUM(size), 0)'))
+               ->from($this->getTableName());
+
+            // Apply filters if provided
+            if (!empty($filters['withoutExpiry']) && $filters['withoutExpiry'] === true) {
+                $qb->where($qb->expr()->isNull('expires'));
+            }
+
+            if (!empty($filters['expired']) && $filters['expired'] === true) {
+                $qb->where($qb->expr()->lt('expires', $qb->createNamedParameter(new \DateTime(), 'datetime')));
+            }
+
+            $result = $qb->executeQuery();
+            return (int) $result->fetchOne();
+        } catch (\Exception $e) {
+            \OC::$server->getLogger()->error('Failed to calculate jobs size: ' . $e->getMessage(), [
+                'app' => 'openconnector',
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Clear all jobs (delete all records).
+     *
+     * @return bool True if the operation was successful
+     * @throws \Exception If the clear operation fails
+     */
+    public function clearJobs(): bool
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->delete($this->getTableName());
+            $qb->executeStatement();
+            return true;
+        } catch (\Exception $e) {
+            \OC::$server->getLogger()->error('Failed to clear jobs: ' . $e->getMessage(), [
+                'app' => 'openconnector',
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
 }

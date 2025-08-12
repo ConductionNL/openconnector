@@ -88,5 +88,11 @@ return [
 		['name' => 'user#me', 'url' => '/api/user/me', 'verb' => 'GET'],
 		['name' => 'user#updateMe', 'url' => '/api/user/me', 'verb' => 'PUT'],
 		['name' => 'user#login', 'url' => '/api/user/login', 'verb' => 'POST'],
+
+		// Settings endpoints
+		['name' => 'settings#getSettings', 'url' => '/api/settings', 'verb' => 'GET'],
+		['name' => 'settings#updateSettings', 'url' => '/api/settings', 'verb' => 'PUT'],
+		['name' => 'settings#rebase', 'url' => '/api/settings/rebase', 'verb' => 'POST'],
+		['name' => 'settings#stats', 'url' => '/api/settings/stats', 'verb' => 'GET'],
 	],
 ];

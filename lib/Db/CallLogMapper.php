@@ -73,6 +73,12 @@ class CallLogMapper extends QBMapper
 		if ($obj->getUuid() === null) {
 			$obj->setUuid(Uuid::v4());
 		}
+
+		// Calculate and set size if not provided
+		if ($obj->getSize() === null) {
+			$obj->setSize($this->calculateLogSize($obj));
+		}
+
         return $this->insert($obj);
     }
 
@@ -346,4 +352,187 @@ class CallLogMapper extends QBMapper
 
         return (int)$row['count'];
     }
+
+	/**
+	 * Calculate the approximate size of a call log entry.
+	 *
+	 * This method estimates the size by summing the length of all text and JSON fields.
+	 *
+	 * @param CallLog $log The log entry to calculate size for
+	 *
+	 * @return int The estimated size in bytes
+	 */
+	private function calculateLogSize(CallLog $log): int
+	{
+		$size = 0;
+		
+		// Add size of string fields
+		$size += strlen($log->getUuid() ?? '');
+		$size += strlen($log->getStatusMessage() ?? '');
+		$size += strlen($log->getUserId() ?? '');
+		$size += strlen($log->getSessionId() ?? '');
+		
+		// Add size of JSON fields (request and response arrays)
+		$request = $log->getRequest();
+		if (!empty($request)) {
+			$size += strlen(json_encode($request));
+		}
+		
+		$response = $log->getResponse();
+		if (!empty($response)) {
+			$size += strlen(json_encode($response));
+		}
+		
+		// Add approximate size of other fields (IDs, status code, dates)
+		$size += 100; // Rough estimate for integers and datetime fields
+		
+		return $size;
+	}//end calculateLogSize()
+
+	/**
+	 * Count call logs with optional filters.
+	 *
+	 * This method provides flexible filtering capabilities similar to findAll
+	 * but returns only the count of matching records.
+	 *
+	 * @param array $filters Optional filters to apply
+	 *
+	 * @return int The count of logs matching the filters
+	 *
+	 * @throws \OCP\DB\Exception Database operation exceptions
+	 */
+	public function count(array $filters = []): int
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select($qb->func()->count('*'))
+			->from('openconnector_call_logs');
+
+		// Apply filters
+		foreach ($filters as $filter => $value) {
+			if ($value === 'IS NOT NULL') {
+				$qb->andWhere($qb->expr()->isNotNull($filter));
+			} elseif ($value === 'IS NULL') {
+				$qb->andWhere($qb->expr()->isNull($filter));
+			} elseif (is_array($value)) {
+				// Handle array values like ['IS NULL', '']
+				$conditions = [];
+				foreach ($value as $val) {
+					if ($val === 'IS NULL') {
+						$conditions[] = $qb->expr()->isNull($filter);
+					} elseif ($val === 'IS NOT NULL') {
+						$conditions[] = $qb->expr()->isNotNull($filter);
+					} else {
+						$conditions[] = $qb->expr()->eq($filter, $qb->createNamedParameter($val));
+					}
+				}
+				if (!empty($conditions)) {
+					$qb->andWhere($qb->expr()->orX(...$conditions));
+				}
+			} else {
+				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+			}
+		}
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+
+		return (int)($row['COUNT(*)'] ?? 0);
+	}//end count()
+
+	/**
+	 * Calculate total size of call logs with optional filters.
+	 *
+	 * This method sums the size field of logs matching the given filters,
+	 * useful for storage management and retention analysis.
+	 *
+	 * @param array $filters Optional filters to apply
+	 *
+	 * @return int The total size of logs matching the filters in bytes
+	 *
+	 * @throws \OCP\DB\Exception Database operation exceptions
+	 */
+	public function size(array $filters = []): int
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select($qb->func()->sum('size'))
+			->from('openconnector_call_logs');
+
+		// Apply filters
+		foreach ($filters as $filter => $value) {
+			if ($value === 'IS NOT NULL') {
+				$qb->andWhere($qb->expr()->isNotNull($filter));
+			} elseif ($value === 'IS NULL') {
+				$qb->andWhere($qb->expr()->isNull($filter));
+			} elseif (is_array($value)) {
+				// Handle array values like ['IS NULL', '']
+				$conditions = [];
+				foreach ($value as $val) {
+					if ($val === 'IS NULL') {
+						$conditions[] = $qb->expr()->isNull($filter);
+					} elseif ($val === 'IS NOT NULL') {
+						$conditions[] = $qb->expr()->isNotNull($filter);
+					} else {
+						$conditions[] = $qb->expr()->eq($filter, $qb->createNamedParameter($val));
+					}
+				}
+				if (!empty($conditions)) {
+					$qb->andWhere($qb->expr()->orX(...$conditions));
+				}
+			} else {
+				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+			}
+		}
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+
+		return (int)($row['SUM(size)'] ?? 0);
+	}//end size()
+
+	/**
+	 * Set expiry dates for call logs based on retention period in milliseconds.
+	 *
+	 * Updates the expires column for call logs based on their creation date plus the retention period.
+	 * Only affects call logs that don't already have an expiry date set.
+	 *
+	 * @param int $retentionMs Retention period in milliseconds
+	 *
+	 * @return int Number of call logs updated
+	 *
+	 * @throws \Exception Database operation exceptions
+	 *
+	 * @psalm-return int
+	 * @phpstan-return int
+	 */
+	public function setExpiryDate(int $retentionMs): int
+	{
+		try {
+			// Convert milliseconds to seconds for DateTime calculation
+			$retentionSeconds = intval($retentionMs / 1000);
+			
+			// Get the query builder
+			$qb = $this->db->getQueryBuilder();
+			
+			// Update call logs that don't have an expiry date set
+			$qb->update('openconnector_call_logs')
+			   ->set('expires', $qb->createFunction(
+				   sprintf('DATE_ADD(created, INTERVAL %d SECOND)', $retentionSeconds)
+			   ))
+			   ->where($qb->expr()->isNull('expires'));
+			
+			// Execute the update and return number of affected rows
+			return $qb->executeStatement();
+		} catch (\Exception $e) {
+			// Log the error for debugging purposes
+			\OC::$server->getLogger()->error('Failed to set expiry dates for call logs: ' . $e->getMessage(), [
+				'app' => 'openconnector',
+				'exception' => $e
+			]);
+			
+			// Re-throw the exception so the caller knows something went wrong
+			throw $e;
+		}
+	}//end setExpiryDate()
 }

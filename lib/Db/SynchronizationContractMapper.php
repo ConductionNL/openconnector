@@ -497,4 +497,94 @@ class SynchronizationContractMapper extends QBMapper
             throw new Exception('Failed to handle object removal: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Count synchronization contracts with optional filters.
+     *
+     * @param array $filters Optional filters to apply to the count query
+     * @return int The number of synchronization contracts matching the filters
+     * @throws \Exception If the count query fails
+     */
+    public function count(array $filters = []): int
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->createFunction('COUNT(*)'))
+               ->from($this->getTableName());
+
+            // Apply filters if provided
+            if (!empty($filters['withoutExpiry']) && $filters['withoutExpiry'] === true) {
+                $qb->where($qb->expr()->isNull('expires'));
+            }
+
+            if (!empty($filters['expired']) && $filters['expired'] === true) {
+                $qb->where($qb->expr()->lt('expires', $qb->createNamedParameter(new \DateTime(), 'datetime')));
+            }
+
+            $result = $qb->executeQuery();
+            return (int) $result->fetchOne();
+        } catch (\Exception $e) {
+            \OC::$server->getLogger()->error('Failed to count synchronization contracts: ' . $e->getMessage(), [
+                'app' => 'openconnector',
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Calculate total size of synchronization contracts with optional filters.
+     *
+     * @param array $filters Optional filters to apply to the size calculation
+     * @return int The total size in bytes of synchronization contracts matching the filters
+     * @throws \Exception If the size calculation fails
+     */
+    public function size(array $filters = []): int
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->createFunction('COALESCE(SUM(size), 0)'))
+               ->from($this->getTableName());
+
+            // Apply filters if provided
+            if (!empty($filters['withoutExpiry']) && $filters['withoutExpiry'] === true) {
+                $qb->where($qb->expr()->isNull('expires'));
+            }
+
+            if (!empty($filters['expired']) && $filters['expired'] === true) {
+                $qb->where($qb->expr()->lt('expires', $qb->createNamedParameter(new \DateTime(), 'datetime')));
+            }
+
+            $result = $qb->executeQuery();
+            return (int) $result->fetchOne();
+        } catch (\Exception $e) {
+            \OC::$server->getLogger()->error('Failed to calculate synchronization contracts size: ' . $e->getMessage(), [
+                'app' => 'openconnector',
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Clear all synchronization contracts (delete all records).
+     *
+     * @return bool True if the operation was successful
+     * @throws \Exception If the clear operation fails
+     */
+    public function clearSynchronizationContracts(): bool
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->delete($this->getTableName());
+            $qb->executeStatement();
+            return true;
+        } catch (\Exception $e) {
+            \OC::$server->getLogger()->error('Failed to clear synchronization contracts: ' . $e->getMessage(), [
+                'app' => 'openconnector',
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
 }
