@@ -150,6 +150,27 @@ class Rule extends Entity implements JsonSerializable
         return $this;
     }
 
+    /**
+     * Fix for deprecated way of setting synchronizations for synchronization rules
+     *
+     * @deprecated
+     * @TODO: remove before stable 0.2.5
+     *
+     * @param array $configuration
+     * @return array
+     */
+    private function parseConfiguration(array $configuration) {
+        if (isset($configuration['synchronization']) === true && is_array($configuration['synchronization']) === false) {
+            $configuration['synchronization'] = [
+                'synchronization' => $configuration['synchronization'],
+                'retainResponse' => false,
+            ];
+
+        }
+
+        return $configuration;
+    }
+
     public function jsonSerialize(): array
     {
         return [
@@ -163,7 +184,7 @@ class Rule extends Entity implements JsonSerializable
             'timing' => $this->timing,
             'conditions' => $this->conditions,
             'type' => $this->type,
-            'configuration' => $this->configuration,
+            'configuration' => $this->parseConfiguration($this->configuration),
             'order' => $this->order,
             'configurations' => $this->configurations,
             'created' => isset($this->created) ? $this->created->format('c') : null,

@@ -136,13 +136,22 @@ import { Rule } from '../../entities/index.js'
 					:clearable="false" />
 
 				<!-- Add synchronization select -->
-				<NcSelect v-if="typeOptions.value?.id === 'synchronization'"
-					v-bind="syncOptions"
-					v-model="syncOptions.value"
-					:loading="syncOptions.loading"
-					input-label="Select Synchronization"
-					:multiple="false"
-					:clearable="false" />
+				<template v-if="typeOptions.value?.id === 'synchronization'">
+					<NcSelect
+						v-bind="syncOptions"
+						v-model="syncOptions.value"
+						:loading="syncOptions.loading"
+						input-label="Select Synchronization"
+						:multiple="false"
+						:clearable="false" />
+
+					<NcCheckboxRadioSwitch
+						type="checkbox"
+						label="Retain response"
+						:checked.sync="ruleItem.configuration.synchronization.retainResponse">
+						Retain original response
+					</NcCheckboxRadioSwitch>
+				</template>
 
 				<!-- Error Configuration -->
 				<template v-if="typeOptions.value?.id === 'error'">
@@ -166,6 +175,13 @@ import { Rule } from '../../entities/index.js'
 						maxlength="2550"
 						:value.sync="ruleItem.configuration.error.message"
 						placeholder="We encountered an unexpected problem" />
+
+					<NcCheckboxRadioSwitch
+						type="checkbox"
+						label="Include JSON Logic results in errors array"
+						:checked.sync="ruleItem.configuration.error.includeJsonLogicResult">
+						Include JSON Logic results in errors array
+					</NcCheckboxRadioSwitch>
 				</template>
 
 				<!-- JavaScript Configuration -->
@@ -613,11 +629,15 @@ export default {
 				timing: '',
 				configuration: {
 					mapping: null,
-					synchronization: null,
+					synchronization: {
+						synchronization: null,
+						retainResponse: false,
+					},
 					error: {
 						code: 500,
 						name: 'Something went wrong',
 						message: 'We encountered an unexpected problem',
+						includeJsonLogicResult: false,
 					},
 					javascript: '',
 					authentication: {
@@ -732,11 +752,15 @@ export default {
 				...ruleStore.ruleItem,
 				configuration: {
 					mapping: ruleStore.ruleItem.configuration?.mapping ?? null,
-					synchronization: ruleStore.ruleItem.configuration?.synchronization ?? null,
+					synchronization: {
+						synchronization: ruleStore.ruleItem.configuration?.synchronization.synchronization ?? null,
+						retainResponse: ruleStore.ruleItem.configuration?.synchronization.retainResponse ?? false,
+					},
 					error: {
 						code: ruleStore.ruleItem.configuration?.error?.code ?? 500,
 						name: ruleStore.ruleItem.configuration?.error?.name ?? 'Something went wrong',
 						message: ruleStore.ruleItem.configuration?.error?.message ?? 'We encountered an unexpected problem',
+						includeJsonLogicResult: ruleStore.ruleItem.configuration?.error?.includeJsonLogicResult ?? false,
 					},
 					javascript: ruleStore.ruleItem.configuration?.javascript ?? '',
 					authentication: {
@@ -977,9 +1001,9 @@ export default {
 					}))
 
 					// Set active synchronization if editing
-					if (this.IS_EDIT && this.ruleItem.configuration?.synchronization) {
+					if (this.IS_EDIT && this.ruleItem.configuration?.synchronization.synchronization) {
 						const activeSync = this.syncOptions.options.find(
-							option => option.value === this.ruleItem.configuration.synchronization,
+							option => option.value === this.ruleItem.configuration.synchronization.synchronization,
 						)
 						if (activeSync) {
 							this.syncOptions.value = activeSync
@@ -1261,13 +1285,16 @@ export default {
 					code: this.ruleItem.configuration.error.code,
 					name: this.ruleItem.configuration.error.name,
 					message: this.ruleItem.configuration.error.message,
+					includeJsonLogicResult: this.ruleItem.configuration.error.includeJsonLogicResult,
 				}
 				break
 			case 'mapping':
 				configuration.mapping = this.mappingOptions.value?.value
 				break
 			case 'synchronization':
-				configuration.synchronization = this.syncOptions.value?.value
+				configuration.synchronization = {}
+				configuration.synchronization.synchronization = this.syncOptions.value?.value
+				configuration.synchronization.retainResponse = this.ruleItem.configuration.synchronization.retainResponse
 				break
 			case 'javascript':
 				configuration.javascript = this.ruleItem.configuration.javascript
