@@ -466,68 +466,68 @@ class SettingsService
             ];
 
             // Count log warnings (logs without expiry date)
-            $stats['warnings']['callLogsWithoutExpiry'] = $this->callLogMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['callLogsWithoutExpirySize'] = $this->callLogMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['callLogsWithoutExpiry'] = $this->callLogMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['callLogsWithoutExpirySize'] = $this->callLogMapper->size(['expires' => ['IS NULL', '']]);
 
-            $stats['warnings']['jobLogsWithoutExpiry'] = $this->jobLogMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['jobLogsWithoutExpirySize'] = $this->jobLogMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['jobLogsWithoutExpiry'] = $this->jobLogMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['jobLogsWithoutExpirySize'] = $this->jobLogMapper->size(['expires' => ['IS NULL', '']]);
 
-            $stats['warnings']['syncLogsWithoutExpiry'] = $this->synchronizationLogMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['syncLogsWithoutExpirySize'] = $this->synchronizationLogMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['syncLogsWithoutExpiry'] = $this->synchronizationLogMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['syncLogsWithoutExpirySize'] = $this->synchronizationLogMapper->size(['expires' => ['IS NULL', '']]);
 
-            $stats['warnings']['contractLogsWithoutExpiry'] = $this->synchronizationContractLogMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['contractLogsWithoutExpirySize'] = $this->synchronizationContractLogMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['contractLogsWithoutExpiry'] = $this->synchronizationContractLogMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['contractLogsWithoutExpirySize'] = $this->synchronizationContractLogMapper->size(['expires' => ['IS NULL', '']]);
 
             // Count entity warnings (entities without expiry date)
-            $stats['warnings']['sourcesWithoutExpiry'] = $this->sourceMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['sourcesWithoutExpirySize'] = $this->sourceMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['sourcesWithoutExpiry'] = $this->sourceMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['sourcesWithoutExpirySize'] = $this->sourceMapper->size(['expires' => ['IS NULL', '']]);
 
-            $stats['warnings']['synchronizationsWithoutExpiry'] = $this->synchronizationMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['synchronizationsWithoutExpirySize'] = $this->synchronizationMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['synchronizationsWithoutExpiry'] = $this->synchronizationMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['synchronizationsWithoutExpirySize'] = $this->synchronizationMapper->size(['expires' => ['IS NULL', '']]);
 
-            $stats['warnings']['mappingsWithoutExpiry'] = $this->mappingMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['mappingsWithoutExpirySize'] = $this->mappingMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['mappingsWithoutExpiry'] = $this->mappingMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['mappingsWithoutExpirySize'] = $this->mappingMapper->size(['expires' => ['IS NULL', '']]);
 
-            $stats['warnings']['jobsWithoutExpiry'] = $this->jobMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['jobsWithoutExpirySize'] = $this->jobMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['jobsWithoutExpiry'] = $this->jobMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['jobsWithoutExpirySize'] = $this->jobMapper->size(['expires' => ['IS NULL', '']]);
 
-            $stats['warnings']['rulesWithoutExpiry'] = $this->ruleMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['rulesWithoutExpirySize'] = $this->ruleMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['rulesWithoutExpiry'] = $this->ruleMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['rulesWithoutExpirySize'] = $this->ruleMapper->size(['expires' => ['IS NULL', '']]);
 
-            $stats['warnings']['contractsWithoutExpiry'] = $this->synchronizationContractMapper->count(['withoutExpiry' => true]);
-            $stats['warnings']['contractsWithoutExpirySize'] = $this->synchronizationContractMapper->size(['withoutExpiry' => true]);
+            $stats['warnings']['contractsWithoutExpiry'] = $this->synchronizationContractMapper->count(['expires' => ['IS NULL', '']]);
+            $stats['warnings']['contractsWithoutExpirySize'] = $this->synchronizationContractMapper->size(['expires' => ['IS NULL', '']]);
 
-            // Count expired logs
-            $stats['warnings']['expiredCallLogs'] = $this->callLogMapper->count(['expired' => true]);
-            $stats['warnings']['expiredCallLogsSize'] = $this->callLogMapper->size(['expired' => true]);
+            // Count expired logs using mapper methods
+            $stats['warnings']['expiredCallLogs'] = $this->callLogMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredCallLogsSize'] = $this->callLogMapper->size(['expires' => ['<', 'NOW()']]);
 
-            $stats['warnings']['expiredJobLogs'] = $this->jobLogMapper->count(['expired' => true]);
-            $stats['warnings']['expiredJobLogsSize'] = $this->jobLogMapper->size(['expired' => true]);
+            $stats['warnings']['expiredJobLogs'] = $this->jobLogMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredJobLogsSize'] = $this->jobLogMapper->size(['expires' => ['<', 'NOW()']]);
 
-            $stats['warnings']['expiredSyncLogs'] = $this->synchronizationLogMapper->count(['expired' => true]);
-            $stats['warnings']['expiredSyncLogsSize'] = $this->synchronizationLogMapper->size(['expired' => true]);
+            $stats['warnings']['expiredSyncLogs'] = $this->synchronizationLogMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredSyncLogsSize'] = $this->synchronizationLogMapper->size(['expires' => ['<', 'NOW()']]);
 
-            $stats['warnings']['expiredContractLogs'] = $this->synchronizationContractLogMapper->count(['expired' => true]);
-            $stats['warnings']['expiredContractLogsSize'] = $this->synchronizationContractLogMapper->size(['expired' => true]);
+            $stats['warnings']['expiredContractLogs'] = $this->synchronizationContractLogMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredContractLogsSize'] = $this->synchronizationContractLogMapper->size(['expires' => ['<', 'NOW()']]);
 
-            // Count expired entities
-            $stats['warnings']['expiredSources'] = $this->sourceMapper->count(['expired' => true]);
-            $stats['warnings']['expiredSourcesSize'] = $this->sourceMapper->size(['expired' => true]);
+            // Count expired entities using mapper methods
+            $stats['warnings']['expiredSources'] = $this->sourceMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredSourcesSize'] = $this->sourceMapper->size(['expires' => ['<', 'NOW()']]);
 
-            $stats['warnings']['expiredSynchronizations'] = $this->synchronizationMapper->count(['expired' => true]);
-            $stats['warnings']['expiredSynchronizationsSize'] = $this->synchronizationMapper->size(['expired' => true]);
+            $stats['warnings']['expiredSynchronizations'] = $this->synchronizationMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredSynchronizationsSize'] = $this->synchronizationMapper->size(['expires' => ['<', 'NOW()']]);
 
-            $stats['warnings']['expiredMappings'] = $this->mappingMapper->count(['expired' => true]);
-            $stats['warnings']['expiredMappingsSize'] = $this->mappingMapper->size(['expired' => true]);
+            $stats['warnings']['expiredMappings'] = $this->mappingMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredMappingsSize'] = $this->mappingMapper->size(['expires' => ['<', 'NOW()']]);
 
-            $stats['warnings']['expiredJobs'] = $this->jobMapper->count(['expired' => true]);
-            $stats['warnings']['expiredJobsSize'] = $this->jobMapper->size(['expired' => true]);
+            $stats['warnings']['expiredJobs'] = $this->jobMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredJobsSize'] = $this->jobMapper->size(['expires' => ['<', 'NOW()']]);
 
-            $stats['warnings']['expiredRules'] = $this->ruleMapper->count(['expired' => true]);
-            $stats['warnings']['expiredRulesSize'] = $this->ruleMapper->size(['expired' => true]);
+            $stats['warnings']['expiredRules'] = $this->ruleMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredRulesSize'] = $this->ruleMapper->size(['expires' => ['<', 'NOW()']]);
 
-            $stats['warnings']['expiredContracts'] = $this->synchronizationContractMapper->count(['expired' => true]);
-            $stats['warnings']['expiredContractsSize'] = $this->synchronizationContractMapper->size(['expired' => true]);
+            $stats['warnings']['expiredContracts'] = $this->synchronizationContractMapper->count(['expires' => ['<', 'NOW()']]);
+            $stats['warnings']['expiredContractsSize'] = $this->synchronizationContractMapper->size(['expires' => ['<', 'NOW()']']);
 
             // Count total logs and their sizes
             $stats['totals']['totalCallLogs'] = $this->callLogMapper->count();

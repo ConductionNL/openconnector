@@ -332,6 +332,43 @@ class JobMapper extends QBMapper
     }
 
     /**
+     * Apply filters to a query builder.
+     *
+     * @param \OCP\DB\QueryBuilder\IQueryBuilder $qb The query builder to apply filters to
+     * @param array $filters The filters to apply
+     * @return void
+     */
+    private function applyFilters(\OCP\DB\QueryBuilder\IQueryBuilder $qb, array $filters): void
+    {
+        foreach ($filters as $filter => $value) {
+            if ($value === 'IS NOT NULL') {
+                $qb->andWhere($qb->expr()->isNotNull($filter));
+            } elseif ($value === 'IS NULL') {
+                $qb->andWhere($qb->expr()->isNull($filter));
+            } elseif (is_array($value)) {
+                // Handle array values like ['IS NULL', ''] or ['<', 'NOW()']
+                $conditions = [];
+                foreach ($value as $val) {
+                    if ($val === 'IS NULL') {
+                        $conditions[] = $qb->expr()->isNull($filter);
+                    } elseif ($val === 'IS NOT NULL') {
+                        $conditions[] = $qb->expr()->isNotNull($filter);
+                    } elseif ($val === 'NOW()') {
+                        $conditions[] = $qb->expr()->lt($filter, $qb->createFunction('NOW()'));
+                    } else {
+                        $conditions[] = $qb->expr()->eq($filter, $qb->createNamedParameter($val));
+                    }
+                }
+                if (!empty($conditions)) {
+                    $qb->andWhere($qb->expr()->orX(...$conditions));
+                }
+            } else {
+                $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+            }
+        }
+    }
+
+    /**
      * Count jobs with optional filters.
      *
      * @param array $filters Optional filters to apply to the count query
@@ -345,14 +382,8 @@ class JobMapper extends QBMapper
             $qb->select($qb->createFunction('COUNT(*)'))
                ->from($this->getTableName());
 
-            // Apply filters if provided
-            if (!empty($filters['withoutExpiry']) && $filters['withoutExpiry'] === true) {
-                $qb->where($qb->expr()->isNull('expires'));
-            }
-
-            if (!empty($filters['expired']) && $filters['expired'] === true) {
-                $qb->where($qb->expr()->lt('expires', $qb->createNamedParameter(new \DateTime(), 'datetime')));
-            }
+            // Apply filters using the helper method
+            $this->applyFilters($qb, $filters);
 
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
@@ -379,14 +410,8 @@ class JobMapper extends QBMapper
             $qb->select($qb->createFunction('COALESCE(SUM(size), 0)'))
                ->from($this->getTableName());
 
-            // Apply filters if provided
-            if (!empty($filters['withoutExpiry']) && $filters['withoutExpiry'] === true) {
-                $qb->where($qb->expr()->isNull('expires'));
-            }
-
-            if (!empty($filters['expired']) && $filters['expired'] === true) {
-                $qb->where($qb->expr()->lt('expires', $qb->createNamedParameter(new \DateTime(), 'datetime')));
-            }
+            // Apply filters using the helper method
+            $this->applyFilters($qb, $filters);
 
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
