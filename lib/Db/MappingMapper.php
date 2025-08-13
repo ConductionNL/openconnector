@@ -3,10 +3,12 @@
 namespace OCA\OpenConnector\Db;
 
 use OCA\OpenConnector\Db\Mapping;
+use OC\Server;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 
 class MappingMapper extends QBMapper
@@ -14,6 +16,16 @@ class MappingMapper extends QBMapper
 	public function __construct(IDBConnection $db)
 	{
 		parent::__construct($db, 'openconnector_mappings');
+	}
+
+	/**
+	 * Get the logger using lazy resolution
+	 *
+	 * @return LoggerInterface The logger instance
+	 */
+	private function getLogger(): LoggerInterface
+	{
+		return Server::get(LoggerInterface::class);
 	}
 
 	/**
@@ -298,7 +310,7 @@ class MappingMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to count mappings: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to count mappings: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -326,7 +338,7 @@ class MappingMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to calculate mappings size: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to calculate mappings size: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -348,7 +360,7 @@ class MappingMapper extends QBMapper
             $qb->executeStatement();
             return true;
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to clear mappings: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to clear mappings: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);

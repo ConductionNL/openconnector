@@ -6,6 +6,7 @@ use DateInterval;
 use DatePeriod;
 use DateTime;
 use OCA\OpenConnector\Db\SynchronizationContractLog;
+use OC\Server;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
@@ -13,6 +14,7 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use OCP\ISession;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 use OCP\Session\Exceptions\SessionNotAvailableException;
 
@@ -29,6 +31,16 @@ class SynchronizationContractLogMapper extends QBMapper
 		private readonly ISession $session
 	) {
 		parent::__construct($db, 'openconnector_synchronization_contract_logs');
+	}
+
+	/**
+	 * Get the logger using lazy resolution
+	 *
+	 * @return LoggerInterface The logger instance
+	 */
+	private function getLogger(): LoggerInterface
+	{
+		return Server::get(LoggerInterface::class);
 	}
 
 	public function find(int $id): SynchronizationContractLog
@@ -388,7 +400,7 @@ class SynchronizationContractLogMapper extends QBMapper
 			return $result > 0;
 		} catch (\Exception $e) {
 			// Log the error for debugging purposes
-			\OC::$server->getLogger()->error('Failed to clear expired synchronization contract logs: ' . $e->getMessage(), [
+			$this->getLogger()->error('Failed to clear expired synchronization contract logs: ' . $e->getMessage(), [
 				'app' => 'openconnector',
 				'exception' => $e
 			]);
@@ -433,7 +445,7 @@ class SynchronizationContractLogMapper extends QBMapper
 			return $qb->executeStatement();
 		} catch (\Exception $e) {
 			// Log the error for debugging purposes
-			\OC::$server->getLogger()->error('Failed to set expiry dates for synchronization contract logs: ' . $e->getMessage(), [
+			$this->getLogger()->error('Failed to set expiry dates for synchronization contract logs: ' . $e->getMessage(), [
 				'app' => 'openconnector',
 				'exception' => $e
 			]);

@@ -3,12 +3,14 @@
 namespace OCA\OpenConnector\Db;
 
 use DateTime;
+use OC\Server;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use OCP\ISession;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 use OCP\Session\Exceptions\SessionNotAvailableException;
 
@@ -20,6 +22,16 @@ class SynchronizationLogMapper extends QBMapper
 		private readonly ISession $session
 	) {
 		parent::__construct($db, 'openconnector_synchronization_logs');
+	}
+
+	/**
+	 * Get the logger using lazy resolution
+	 *
+	 * @return LoggerInterface The logger instance
+	 */
+	private function getLogger(): LoggerInterface
+	{
+		return Server::get(LoggerInterface::class);
 	}
 
 	public function find(int $id): SynchronizationLog
@@ -363,7 +375,7 @@ class SynchronizationLogMapper extends QBMapper
 			return $result > 0;
 		} catch (\Exception $e) {
 			// Log the error for debugging purposes
-			\OC::$server->getLogger()->error('Failed to clear expired synchronization logs: ' . $e->getMessage(), [
+			$this->getLogger()->error('Failed to clear expired synchronization logs: ' . $e->getMessage(), [
 				'app' => 'openconnector',
 				'exception' => $e
 			]);
@@ -424,7 +436,7 @@ class SynchronizationLogMapper extends QBMapper
 			return $qb->executeStatement();
 		} catch (\Exception $e) {
 			// Log the error for debugging purposes
-			\OC::$server->getLogger()->error('Failed to set expiry dates for synchronization logs: ' . $e->getMessage(), [
+			$this->getLogger()->error('Failed to set expiry dates for synchronization logs: ' . $e->getMessage(), [
 				'app' => 'openconnector',
 				'exception' => $e
 			]);

@@ -3,12 +3,14 @@
 namespace OCA\OpenConnector\Db;
 
 use OCA\OpenConnector\Db\SynchronizationContract;
+use OC\Server;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 /**
  * Mapper class for SynchronizationContract entities
@@ -32,6 +34,16 @@ class SynchronizationContractMapper extends QBMapper
     public function __construct(IDBConnection $db)
     {
         parent::__construct($db, 'openconnector_synchronization_contracts');
+    }
+
+    /**
+     * Get the logger using lazy resolution
+     *
+     * @return LoggerInterface The logger instance
+     */
+    private function getLogger(): LoggerInterface
+    {
+        return Server::get(LoggerInterface::class);
     }
 
     /**
@@ -555,7 +567,7 @@ class SynchronizationContractMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to count synchronization contracts: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to count synchronization contracts: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -583,7 +595,7 @@ class SynchronizationContractMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to calculate synchronization contracts size: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to calculate synchronization contracts size: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -605,7 +617,7 @@ class SynchronizationContractMapper extends QBMapper
             $qb->executeStatement();
             return true;
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to clear synchronization contracts: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to clear synchronization contracts: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);

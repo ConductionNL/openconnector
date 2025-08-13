@@ -5,11 +5,13 @@ namespace OCA\OpenConnector\Db;
 use DateInterval;
 use DatePeriod;
 use DateTime;
+use OC\Server;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 
 class JobLogMapper extends QBMapper
@@ -17,6 +19,16 @@ class JobLogMapper extends QBMapper
     public function __construct(IDBConnection $db)
     {
         parent::__construct($db, 'openconnector_job_logs');
+    }
+
+    /**
+     * Get the logger using lazy resolution
+     *
+     * @return LoggerInterface The logger instance
+     */
+    private function getLogger(): LoggerInterface
+    {
+        return Server::get(LoggerInterface::class);
     }
 
     public function find(int $id): JobLog
@@ -264,7 +276,7 @@ class JobLogMapper extends QBMapper
             return $result > 0;
         } catch (\Exception $e) {
             // Log the error for debugging purposes
-            \OC::$server->getLogger()->error('Failed to clear expired job logs: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to clear expired job logs: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -487,7 +499,7 @@ class JobLogMapper extends QBMapper
 			return $qb->executeStatement();
 		} catch (\Exception $e) {
 			// Log the error for debugging purposes
-			\OC::$server->getLogger()->error('Failed to set expiry dates for job logs: ' . $e->getMessage(), [
+			$this->getLogger()->error('Failed to set expiry dates for job logs: ' . $e->getMessage(), [
 				'app' => 'openconnector',
 				'exception' => $e
 			]);

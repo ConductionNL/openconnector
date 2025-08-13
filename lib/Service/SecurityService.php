@@ -40,18 +40,9 @@ use Psr\Log\LoggerInterface;
 class SecurityService
 {
     /**
-     * Cache instance for storing rate limit data
-     *
-     * @var ICache
+     * Cache instance for storing rate limit data (created from factory)
      */
     private readonly ICache $cache;
-
-    /**
-     * Logger for security events
-     *
-     * @var LoggerInterface
-     */
-    private readonly LoggerInterface $logger;
 
     /**
      * Rate limiting configuration constants
@@ -82,11 +73,10 @@ class SecurityService
      */
     public function __construct(
         ICacheFactory $cacheFactory,
-        LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {
-        // Create distributed cache for rate limiting data
+        // Create distributed cache for rate limiting data - can't be promoted due to method call
         $this->cache = $cacheFactory->createDistributed('openconnector_security');
-        $this->logger = $logger;
     }
 
     /**

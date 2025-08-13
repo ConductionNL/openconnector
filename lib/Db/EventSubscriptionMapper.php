@@ -2,9 +2,11 @@
 
 namespace OCA\OpenConnector\Db;
 
+use OC\Server;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -24,6 +26,16 @@ class EventSubscriptionMapper extends QBMapper
     public function __construct(IDBConnection $db)
     {
         parent::__construct($db, 'openconnector_event_subscriptions');
+    }
+
+    /**
+     * Get the logger using lazy resolution
+     *
+     * @return LoggerInterface The logger instance
+     */
+    private function getLogger(): LoggerInterface
+    {
+        return Server::get(LoggerInterface::class);
     }
 
     /**
@@ -185,7 +197,7 @@ class EventSubscriptionMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to count event subscriptions: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to count event subscriptions: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -213,7 +225,7 @@ class EventSubscriptionMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to calculate event subscriptions size: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to calculate event subscriptions size: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -235,7 +247,7 @@ class EventSubscriptionMapper extends QBMapper
             $qb->executeStatement();
             return true;
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to clear event subscriptions: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to clear event subscriptions: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);

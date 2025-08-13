@@ -3,10 +3,12 @@
 namespace OCA\OpenConnector\Db;
 
 use OCA\OpenConnector\Db\Source;
+use OC\Server;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 
 class SourceMapper extends QBMapper
@@ -14,6 +16,16 @@ class SourceMapper extends QBMapper
 	public function __construct(IDBConnection $db)
 	{
 		parent::__construct($db, 'openconnector_sources');
+	}
+
+	/**
+	 * Get the logger using lazy resolution
+	 *
+	 * @return LoggerInterface The logger instance
+	 */
+	private function getLogger(): LoggerInterface
+	{
+		return Server::get(LoggerInterface::class);
 	}
 
 	/**
@@ -326,7 +338,7 @@ class SourceMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to count sources: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to count sources: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -354,7 +366,7 @@ class SourceMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to calculate sources size: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to calculate sources size: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -376,7 +388,7 @@ class SourceMapper extends QBMapper
             $qb->executeStatement();
             return true;
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to clear sources: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to clear sources: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);

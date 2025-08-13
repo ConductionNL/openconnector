@@ -23,6 +23,7 @@ use OCP\IRequest;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use OCP\AppFramework\Http\JSONResponse;
+use Psr\Log\LoggerInterface;
 use OC_App;
 use OCA\OpenConnector\AppInfo\Application;
 
@@ -85,6 +86,7 @@ class SettingsService
      * @param JobMapper                         $jobMapper                     Job mapper for database operations.
      * @param RuleMapper                        $ruleMapper                    Rule mapper for database operations.
      * @param SynchronizationContractMapper     $synchronizationContractMapper Synchronization contract mapper for database operations.
+     * @param LoggerInterface                   $logger                        PSR-3 logger instance for logging operations.
      */
     public function __construct(
         private readonly IAppConfig $config, 
@@ -100,7 +102,8 @@ class SettingsService
         private readonly MappingMapper $mappingMapper,
         private readonly JobMapper $jobMapper,
         private readonly RuleMapper $ruleMapper,
-        private readonly SynchronizationContractMapper $synchronizationContractMapper
+        private readonly SynchronizationContractMapper $synchronizationContractMapper,
+        private readonly LoggerInterface $logger
     ) {
         // Set the application name for identification and configuration purposes.
         $this->appName = 'openconnector';
@@ -347,7 +350,11 @@ class SettingsService
                 
             } catch (\Exception $e) {
                 $error = 'Failed to set expiry dates for logs: ' . $e->getMessage();
-                error_log('[SettingsService] ' . $error);
+                $this->logger->error('Failed to set expiry dates for logs: ' . $e->getMessage(), [
+                    'app' => 'openconnector',
+                    'service' => 'SettingsService',
+                    'exception' => $e
+                ]);
                 $results['errors'][] = $error;
             }
 

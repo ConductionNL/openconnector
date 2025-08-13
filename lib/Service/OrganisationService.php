@@ -62,48 +62,6 @@ class OrganisationService
     private const APP_NAME = 'openconnector';
 
     /**
-     * Organisation mapper for database operations
-     * 
-     * @var OrganisationMapper
-     */
-    private readonly OrganisationMapper $organisationMapper;
-
-    /**
-     * User session for getting current user
-     * 
-     * @var IUserSession
-     */
-    private readonly IUserSession $userSession;
-
-    /**
-     * Session interface for storing organisation data (cache only)
-     * 
-     * @var ISession
-     */
-    private readonly ISession $session;
-
-    /**
-     * Configuration interface for persistent user settings
-     * 
-     * @var IConfig
-     */
-    private readonly IConfig $config;
-
-    /**
-     * Group manager for accessing Nextcloud groups
-     * 
-     * @var IGroupManager
-     */
-    private readonly IGroupManager $groupManager;
-
-    /**
-     * Logger for debugging and error tracking
-     * 
-     * @var LoggerInterface
-     */
-    private readonly LoggerInterface $logger;
-
-    /**
      * OrganisationService constructor
      * 
      * @param OrganisationMapper $organisationMapper Organisation database mapper
@@ -114,19 +72,13 @@ class OrganisationService
      * @param LoggerInterface $logger Logger service
      */
     public function __construct(
-        OrganisationMapper $organisationMapper,
-        IUserSession $userSession,
-        ISession $session,
-        IConfig $config,
-        IGroupManager $groupManager,
-        LoggerInterface $logger
+        private readonly OrganisationMapper $organisationMapper,
+        private readonly IUserSession $userSession,
+        private readonly ISession $session,
+        private readonly IConfig $config,
+        private readonly IGroupManager $groupManager,
+        private readonly LoggerInterface $logger,
     ) {
-        $this->organisationMapper = $organisationMapper;
-        $this->userSession = $userSession;
-        $this->session = $session;
-        $this->config = $config;
-        $this->groupManager = $groupManager;
-        $this->logger = $logger;
     }
 
     /**

@@ -3,10 +3,12 @@
 namespace OCA\OpenConnector\Db;
 
 use OCA\OpenConnector\Db\Synchronization;
+use OC\Server;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 
 class SynchronizationMapper extends QBMapper
@@ -14,6 +16,16 @@ class SynchronizationMapper extends QBMapper
 	public function __construct(IDBConnection $db)
 	{
 		parent::__construct($db, 'openconnector_synchronizations');
+	}
+
+	/**
+	 * Get the logger using lazy resolution
+	 *
+	 * @return LoggerInterface The logger instance
+	 */
+	private function getLogger(): LoggerInterface
+	{
+		return Server::get(LoggerInterface::class);
 	}
 
 	/**
@@ -379,7 +391,7 @@ class SynchronizationMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to count synchronizations: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to count synchronizations: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -407,7 +419,7 @@ class SynchronizationMapper extends QBMapper
             $result = $qb->executeQuery();
             return (int) $result->fetchOne();
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to calculate synchronizations size: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to calculate synchronizations size: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
@@ -429,7 +441,7 @@ class SynchronizationMapper extends QBMapper
             $qb->executeStatement();
             return true;
         } catch (\Exception $e) {
-            \OC::$server->getLogger()->error('Failed to clear synchronizations: ' . $e->getMessage(), [
+            $this->getLogger()->error('Failed to clear synchronizations: ' . $e->getMessage(), [
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
