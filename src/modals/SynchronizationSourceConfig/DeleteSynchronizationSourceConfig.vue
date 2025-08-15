@@ -113,11 +113,6 @@ export default {
 </script>
 
 <style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
 .zaakDetailsContainer {
     margin-block-start: var(--OC-margin-20);
     margin-inline-start: var(--OC-margin-20);

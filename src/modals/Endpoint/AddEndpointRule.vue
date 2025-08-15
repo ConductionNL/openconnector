@@ -29,16 +29,25 @@ import { Endpoint } from '../../entities/index.js'
 					:clearable="false" />
 			</form>
 
-			<NcButton v-if="!success"
-				:disabled="loading || !ruleOptions.value"
-				type="primary"
-				@click="addRule">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<ContentSaveOutline v-if="!loading" :size="20" />
-				</template>
-				Save
-			</NcButton>
+			<div class="modal-actions">
+				<NcButton v-if="!success"
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
+				<NcButton v-if="!success"
+					:disabled="loading || !ruleOptions.value"
+					type="primary"
+					@click="addRule">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<ContentSaveOutline v-if="!loading" :size="20" />
+					</template>
+					Save
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -52,6 +61,7 @@ import {
 	NcNoteCard,
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'AddEndpointRule',
@@ -61,6 +71,7 @@ export default {
 		NcSelect,
 		NcLoadingIcon,
 		NcNoteCard,
+		CancelIcon,
 	},
 	data() {
 		return {

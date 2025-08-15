@@ -93,6 +93,7 @@ import { mappingStore } from '../../../store/store.js'
 						|| !registers.value?.id // no register selected
 						|| !mappingTest.result?.resultObject /* result object does not exist */"
 					type="primary"
+					class="single-modal-action"
 					@click="saveObject()">
 					<template #icon>
 						<NcLoadingIcon v-if="saveObjectLoading" :size="20" />
