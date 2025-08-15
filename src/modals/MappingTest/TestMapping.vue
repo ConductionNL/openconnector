@@ -17,7 +17,8 @@ import { navigationStore } from '../../store/store.js'
 					:input-object="inputObject"
 					@schema-selected="receiveSchemaSelected"
 					@mapping-selected="receiveMappingSelected"
-					@mapping-test="receiveMappingTest" />
+					@mapping-test="receiveMappingTest"
+					@close-modal="closeModal" />
 				<TestMappingResult ref="mappingResultRef"
 					:mapping-test="mappingTest"
 					:schema="schema" />

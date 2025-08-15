@@ -302,7 +302,7 @@ export default {
 	padding: 15px 0;
 }
 
-.modal-actions {
+modal-actions {
 	display: flex;
 	justify-content: flex-end;
 	gap: 8px;
