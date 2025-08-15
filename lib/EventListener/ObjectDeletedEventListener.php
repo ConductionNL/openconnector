@@ -37,7 +37,8 @@ class ObjectDeletedEventListener implements IEventListener
             return;
         }
 
-        $synchronizations = $this->synchronizationService->findAllBySourceId(register: $object->getRegister(), schema: $object->getSchema());
+        $synchronizations = $this->synchronizationService->findSynchronizationsToRun(object: $object);
+        
         foreach ($synchronizations as $synchronization) {
             try {
                 $this->synchronizationService->synchronize(synchronization: $synchronization, force: true, object: $object, mutationType: 'delete');

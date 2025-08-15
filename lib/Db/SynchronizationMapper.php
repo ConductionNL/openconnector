@@ -76,6 +76,39 @@ class SynchronizationMapper extends QBMapper
 		return $this->findEntities(query: $qb);
 	}
 
+    /**
+     * Find all synchronizations that can be triggered by a given register/schema combo
+     * if it is listed inside the `altSourceIds` field of `sourceConfig`.
+     *
+     * Handles:
+     *  - A single string value (e.g., "1/2")
+     *  - A comma-separated string (e.g., "1/2,1/3,2/4")
+     *  - A JSON array of strings (e.g., ["1/2", "1/3", "2/4"])
+     *
+     * @param string $source The single register/schema identifier to match, e.g. "1/2".
+     * @return array<Synchronization> Array of Synchronization entities where altSourceIds contains the provided source.
+     */
+    public function findAllByAltSourceId(string $source): array
+    {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+        ->from('openconnector_synchronizations');
+
+        $param = $qb->createNamedParameter($source);
+
+        $qb->andWhere(
+            '(' .
+            // Case 1: Exact string match
+            'JSON_UNQUOTE(JSON_EXTRACT(source_config, "$.altSourceIds")) = ' . $param .
+            ' OR ' .
+            // Case 2: Comma-separated string match
+            'FIND_IN_SET(' . $param . ', JSON_UNQUOTE(JSON_EXTRACT(source_config, "$.altSourceIds")))' .
+            ')'
+        );
+
+        return $this->findEntities(query: $qb);
+    }
+
 	/**
 	 * Find all synchronizations matching the given criteria
 	 *
