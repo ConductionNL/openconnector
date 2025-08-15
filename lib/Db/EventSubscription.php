@@ -45,6 +45,8 @@ class EventSubscription extends Entity implements JsonSerializable
     protected ?string $userId = null;
     protected ?DateTime $created = null;
     protected ?DateTime $updated = null;
+    protected ?DateTime $expires = null;
+    protected ?int $size = null;
 
     /**
      * Get the event types to subscribe to
@@ -105,6 +107,8 @@ class EventSubscription extends Entity implements JsonSerializable
         $this->addType('userId', 'string');
         $this->addType('created', 'datetime');
         $this->addType('updated', 'datetime');
+        $this->addType('expires', 'datetime');
+        $this->addType('size', 'integer');
     }
 
     /**
@@ -169,7 +173,9 @@ class EventSubscription extends Entity implements JsonSerializable
             'status' => $this->status,
             'userId' => $this->userId,
             'created' => isset($this->created) ? $this->created->format('c') : null,
-            'updated' => isset($this->updated) ? $this->updated->format('c') : null
+            'updated' => isset($this->updated) ? $this->updated->format('c') : null,
+            'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+            'size' => $this->size
         ];
     }
 }

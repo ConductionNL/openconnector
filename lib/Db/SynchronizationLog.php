@@ -20,6 +20,7 @@ class SynchronizationLog extends Entity implements JsonSerializable
     protected bool $test = false;
     protected bool $force = false;
     protected int $executionTime = 0;
+    protected ?int $size = null;
     protected ?DateTime $created = null;
     protected ?DateTime $expires = null;
 
@@ -43,6 +44,7 @@ class SynchronizationLog extends Entity implements JsonSerializable
         $this->addType('test', 'boolean');
         $this->addType('force', 'boolean');
         $this->addType('executionTime', 'integer');
+        $this->addType('size', 'integer');
         $this->addType('created', 'datetime');
         $this->addType('expires', 'datetime');
     }
@@ -90,6 +92,7 @@ class SynchronizationLog extends Entity implements JsonSerializable
             'test' => $this->test,
             'force' => $this->force,
             'executionTime' => $this->executionTime,
+            'size' => $this->size,
             'created' => isset($this->created) ? $this->created->format('c') : null,
             'expires' => isset($this->expires) ? $this->expires->format('c') : null,
         ];

@@ -3,12 +3,14 @@
 namespace OCA\OpenConnector\Db;
 
 use DateTime;
+use OC\Server;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use OCP\ISession;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 use OCP\Session\Exceptions\SessionNotAvailableException;
 
@@ -20,6 +22,16 @@ class SynchronizationLogMapper extends QBMapper
 		private readonly ISession $session
 	) {
 		parent::__construct($db, 'openconnector_synchronization_logs');
+	}
+
+	/**
+	 * Get the logger using lazy resolution
+	 *
+	 * @return LoggerInterface The logger instance
+	 */
+	private function getLogger(): LoggerInterface
+	{
+		return Server::get(LoggerInterface::class);
 	}
 
 	public function find(int $id): SynchronizationLog
@@ -134,6 +146,11 @@ class SynchronizationLogMapper extends QBMapper
 			$obj->setUuid(Uuid::v4());
 		}
 
+		// Calculate and set size if not provided
+		if ($obj->getSize() === null) {
+			$obj->setSize($this->calculateLogSize($obj));
+		}
+
 		return $this->insert($obj);
 	}
 
@@ -195,8 +212,183 @@ class SynchronizationLogMapper extends QBMapper
 	}
 
 	/**
+	 * Calculate the approximate size of a synchronization log entry.
+	 *
+	 * This method estimates the size by summing the length of all text and JSON fields.
+	 *
+	 * @param SynchronizationLog $log The log entry to calculate size for
+	 *
+	 * @return int The estimated size in bytes
+	 */
+	private function calculateLogSize(SynchronizationLog $log): int
+	{
+		$size = 0;
+		
+		// Add size of string fields
+		$size += strlen($log->getUuid() ?? '');
+		$size += strlen($log->getMessage() ?? '');
+		$size += strlen($log->getSynchronizationId() ?? '');
+		$size += strlen($log->getUserId() ?? '');
+		$size += strlen($log->getSessionId() ?? '');
+		
+		// Add size of JSON fields (result array)
+		$result = $log->getResult();
+		if (!empty($result)) {
+			$size += strlen(json_encode($result));
+		}
+		
+		// Add approximate size of other fields (execution time, booleans, dates)
+		$size += 50; // Rough estimate for integers, booleans, and datetime fields
+		
+		return $size;
+	}//end calculateLogSize()
+
+	/**
+	 * Count synchronization logs with optional filters.
+	 *
+	 * This method provides flexible filtering capabilities similar to findAll
+	 * but returns only the count of matching records.
+	 *
+	 * @param array $filters Optional filters to apply
+	 *
+	 * @return int The count of logs matching the filters
+	 *
+	 * @throws \OCP\DB\Exception Database operation exceptions
+	 */
+	public function count(array $filters = []): int
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select($qb->func()->count('*'))
+			->from('openconnector_synchronization_logs');
+
+		// Apply filters
+		foreach ($filters as $filter => $value) {
+			if ($value === 'IS NOT NULL') {
+				$qb->andWhere($qb->expr()->isNotNull($filter));
+			} elseif ($value === 'IS NULL') {
+				$qb->andWhere($qb->expr()->isNull($filter));
+			} elseif (is_array($value)) {
+				// Handle array values like ['IS NULL', '']
+				$conditions = [];
+				foreach ($value as $val) {
+					if ($val === 'IS NULL') {
+						$conditions[] = $qb->expr()->isNull($filter);
+					} elseif ($val === 'IS NOT NULL') {
+						$conditions[] = $qb->expr()->isNotNull($filter);
+					} else {
+						$conditions[] = $qb->expr()->eq($filter, $qb->createNamedParameter($val));
+					}
+				}
+				if (!empty($conditions)) {
+					$qb->andWhere($qb->expr()->orX(...$conditions));
+				}
+			} else {
+				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+			}
+		}
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+
+		return (int)($row['COUNT(*)'] ?? 0);
+	}//end count()
+
+	/**
+	 * Calculate total size of synchronization logs with optional filters.
+	 *
+	 * This method sums the size field of logs matching the given filters,
+	 * useful for storage management and retention analysis.
+	 *
+	 * @param array $filters Optional filters to apply
+	 *
+	 * @return int The total size of logs matching the filters in bytes
+	 *
+	 * @throws \OCP\DB\Exception Database operation exceptions
+	 */
+	public function size(array $filters = []): int
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select($qb->func()->sum('size'))
+			->from('openconnector_synchronization_logs');
+
+		// Apply filters
+		foreach ($filters as $filter => $value) {
+			if ($value === 'IS NOT NULL') {
+				$qb->andWhere($qb->expr()->isNotNull($filter));
+			} elseif ($value === 'IS NULL') {
+				$qb->andWhere($qb->expr()->isNull($filter));
+			} elseif (is_array($value)) {
+				// Handle array values like ['IS NULL', '']
+				$conditions = [];
+				foreach ($value as $val) {
+					if ($val === 'IS NULL') {
+						$conditions[] = $qb->expr()->isNull($filter);
+					} elseif ($val === 'IS NOT NULL') {
+						$conditions[] = $qb->expr()->isNotNull($filter);
+					} else {
+						$conditions[] = $qb->expr()->eq($filter, $qb->createNamedParameter($val));
+					}
+				}
+				if (!empty($conditions)) {
+					$qb->andWhere($qb->expr()->orX(...$conditions));
+				}
+			} else {
+				$qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+			}
+		}
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+
+		return (int)($row['SUM(size)'] ?? 0);
+	}//end size()
+
+	/**
+	 * Clear expired logs from the database.
+	 *
+	 * This method deletes all synchronization logs that have expired 
+	 * (i.e., their 'expires' date is earlier than the current date and time)
+	 * and have the 'expires' column set. This helps maintain database performance 
+	 * by removing old log entries that are no longer needed.
+	 *
+	 * @return bool True if any logs were deleted, false otherwise.
+	 *
+	 * @throws \Exception Database operation exceptions
+	 */
+	public function clearLogs(): bool
+	{
+		try {
+			// Get the query builder for database operations
+			$qb = $this->db->getQueryBuilder();
+
+			// Build the delete query to remove expired logs that have the 'expires' column set
+			$qb->delete('openconnector_synchronization_logs')
+			   ->where($qb->expr()->isNotNull('expires'))
+			   ->andWhere($qb->expr()->lt('expires', $qb->createFunction('NOW()')));
+
+			// Execute the query and get the number of affected rows
+			$result = $qb->executeStatement();
+
+			// Return true if any rows were affected (i.e., any logs were deleted)
+			return $result > 0;
+		} catch (\Exception $e) {
+			// Log the error for debugging purposes
+			$this->getLogger()->error('Failed to clear expired synchronization logs: ' . $e->getMessage(), [
+				'app' => 'openconnector',
+				'exception' => $e
+			]);
+			
+			// Re-throw the exception so the caller knows something went wrong
+			throw $e;
+		}
+	}//end clearLogs()
+
+	/**
 	 * Cleans up expired log entries
 	 *
+	 * @deprecated Use clearLogs() instead for consistency
 	 * @return int Number of deleted entries
 	 */
 	public function cleanupExpired(): int
@@ -208,4 +400,49 @@ class SynchronizationLogMapper extends QBMapper
 
 		return $qb->executeStatement();
 	}
+
+	/**
+	 * Set expiry dates for synchronization logs based on retention period in milliseconds.
+	 *
+	 * Updates the expires column for synchronization logs based on their creation date plus the retention period.
+	 * Only affects synchronization logs that don't already have an expiry date set.
+	 *
+	 * @param int $retentionMs Retention period in milliseconds
+	 *
+	 * @return int Number of synchronization logs updated
+	 *
+	 * @throws \Exception Database operation exceptions
+	 *
+	 * @psalm-return int
+	 * @phpstan-return int
+	 */
+	public function setExpiryDate(int $retentionMs): int
+	{
+		try {
+			// Convert milliseconds to seconds for DateTime calculation
+			$retentionSeconds = intval($retentionMs / 1000);
+			
+			// Get the query builder
+			$qb = $this->db->getQueryBuilder();
+			
+			// Update synchronization logs that don't have an expiry date set
+			$qb->update('openconnector_synchronization_logs')
+			   ->set('expires', $qb->createFunction(
+				   sprintf('DATE_ADD(created, INTERVAL %d SECOND)', $retentionSeconds)
+			   ))
+			   ->where($qb->expr()->isNull('expires'));
+			
+			// Execute the update and return number of affected rows
+			return $qb->executeStatement();
+		} catch (\Exception $e) {
+			// Log the error for debugging purposes
+			$this->getLogger()->error('Failed to set expiry dates for synchronization logs: ' . $e->getMessage(), [
+				'app' => 'openconnector',
+				'exception' => $e
+			]);
+			
+			// Re-throw the exception so the caller knows something went wrong
+			throw $e;
+		}
+	}//end setExpiryDate()
 }

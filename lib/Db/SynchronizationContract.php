@@ -36,6 +36,8 @@ class SynchronizationContract extends Entity implements JsonSerializable
 	// General
 	protected ?DateTime $created = null; // the date and time the synchronization was created
 	protected ?DateTime $updated = null; // the date and time the synchronization was updated
+	protected ?DateTime $expires = null; // Expiration date for this entity
+	protected ?int $size = null; // Size of this entity in bytes
 
 
 	public function __construct() {
@@ -55,6 +57,8 @@ class SynchronizationContract extends Entity implements JsonSerializable
 		$this->addType('targetLastAction', 'string');
 		$this->addType('created', 'datetime');
 		$this->addType('updated', 'datetime');
+		$this->addType('expires', 'datetime');
+		$this->addType('size', 'integer');
 
 		// @todo can be removed when migrations are merged
 		$this->addType('sourceId', 'string');
@@ -111,6 +115,8 @@ class SynchronizationContract extends Entity implements JsonSerializable
 			'targetLastAction' => $this->targetLastAction,
 			'created' => isset($this->created) ? $this->created->format('c') : null,
 			'updated' => isset($this->updated) ? $this->updated->format('c') : null,
+			'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+			'size' => $this->size,
 			// @todo these 2 can be removed when migrations are merged
 			'sourceId' => $this->sourceId,
 			'sourceHash' => $this->sourceHash
