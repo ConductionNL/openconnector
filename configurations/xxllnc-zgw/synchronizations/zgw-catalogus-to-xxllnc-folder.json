@@ -1,0 +1,48 @@
+{
+    "@type": "synchronization",
+    "name": "Catalogus to Xxllnc Folder",
+    "slug": "catalogus-to-xxllnc-folder",
+    "description": "Zaaksysteem V2",
+    "version": "0.0.1",
+    "sourceId": "catalogi/catalogus",
+    "sourceType": "register\/schema",
+    "sourceHash": "",
+    "sourceHashMapping": "",
+    "sourceTargetMapping": "catalogus-to-xxllnc-folder-mapping",
+    "sourceConfig": {},
+    "currentPage": 1,
+    "targetId": "xxllnc-zaaksysteem-v2",
+    "targetType": "api",
+    "targetHash": "",
+    "targetSourceMapping": "",
+    "targetConfig": {
+        "endpoint": "/admin/catalog/create_folder",
+        "idPosition": "uuid"
+    },
+    "followUps": [],
+    "conditions": {
+        "or": [
+            {
+                "==": [
+                    {
+                        "var": "originId"
+                    },
+                    null
+                ]
+            },
+            {
+                "==": [
+                    {
+                        "var": "originId"
+                    },
+                    ""
+                ]
+            },
+            {
+                "missing": [
+                    "originId"
+                ]
+            }
+        ]
+    }
+}

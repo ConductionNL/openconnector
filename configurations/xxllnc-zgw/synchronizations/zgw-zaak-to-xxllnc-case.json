@@ -1,39 +1,28 @@
 {
-    "name": "ZGW Zaak to Xxllnc Case",
+    "@type": "synchronization",
+    "name": "Zaak to Xxllnc Case",
+    "slug": "zaak-to-xxllnc-case",
     "description": "",
     "version": "0.0.1",
     "sourceId": "1/1",
     "sourceType": "register\/schema",
     "sourceHash": "",
     "sourceHashMapping": "",
-    "sourceTargetMapping": "1",
-    "sourceConfig": {},
+    "sourceTargetMapping": "zaak-to-xxllnc-case-mapping",
+    "sourceConfig": {
+        "altSourceIds": "zaken/zaakeigenschap,zaken/resultaat,zaken/rol,zaken/status"
+    },
     "currentPage": 1,
-    "targetId": "1",
+    "targetId": "xxllnc-zaaksysteem-v1",
     "targetType": "api",
     "targetHash": "",
     "targetSourceMapping": "",
     "targetConfig": {
-        "endpoint": "/case/create",
+        "endpoint": "/api/v1/case/create",
         "updateEndpoint": "/case/{{ originId }}/update",
         "idPosition": "reference",
         "resultsPosition": "result"
     },
     "followUps": [],
-    "conditions": {
-        "and": [
-            {
-              "!": { "has": [ { "var": "" }, "originId" ] }
-            },
-            {
-              "!": { "!!": { "var": "originId" } }
-            },
-            {
-              "and": [
-                { "has": [ { "var": "zaaktype" }, "originId" ] },
-                { "!!": { "var": "zaaktype.originId" } }
-              ]
-            }
-        ]
-    }
+    "conditions": []
 }

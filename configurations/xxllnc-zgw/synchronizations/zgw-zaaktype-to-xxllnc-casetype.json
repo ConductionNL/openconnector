@@ -1,0 +1,30 @@
+{
+    "@type": "synchronization",
+    "name": "ZaakType to Xxllnc Casetype",
+    "slug": "zaaktype-to-xxllnc-casetype",
+    "description": "",
+    "version": "0.0.1",
+    "sourceId": "catalogi/zaaktype",
+    "sourceType": "register\/schema",
+    "sourceHash": "",
+    "sourceHashMapping": "",
+    "sourceTargetMapping": "zaaktype-to-xxllnc-casetype-mapping",
+    "sourceConfig": {
+        "altSourceIds": "catalogi/statustype,catalogi/resultaattype,catalogi/eigenschap,catalogi/informatieobjecttype,catalogi/roltype"
+    },
+    "currentPage": 1,
+    "targetId": "xxllnc-zaaksysteem-v2",
+    "targetType": "api",
+    "targetHash": "",
+    "targetSourceMapping": "",
+    "targetConfig": {
+        "endpoint": "/admin/catalog/create_versioned_casetype",
+        "updateEndpoint": "/admin/catalog/update_versioned_casetype",
+        "updateMapping": "",
+        "updateMethod": "POST",
+        "idPosition": "reference",
+        "resultsPosition": "result"
+    },
+    "followUps": [],
+    "conditions": []
+}

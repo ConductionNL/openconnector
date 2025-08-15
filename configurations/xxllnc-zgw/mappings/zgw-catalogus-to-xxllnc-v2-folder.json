@@ -1,0 +1,16 @@
+{
+    "@type": "mapping",
+    "name": "Catalogus to Xxllnc Folder",
+    "slug": "catalogus-to-xxllnc-folder-mapping",
+    "version": "0.0.1",
+    "mapping": {
+        "folder_uuid": "",
+        "name": "naam",
+        "parent_uuid": "null"
+    },
+    "unset": [],
+    "cast": {
+        "parent_uuid": "nullStringToNull"
+    },
+    "passTrough": false
+}

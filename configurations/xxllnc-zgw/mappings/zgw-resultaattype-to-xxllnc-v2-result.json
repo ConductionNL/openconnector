@@ -1,0 +1,35 @@
+{
+    "@type": "mapping",
+    "name": "ZGW ResultaatType to Xxllnc Result",
+    "slug": "zgw-resultaattype-to-xxllnc-result",
+    "version": "0.0.1",
+    "mapping": {
+        "name": "omschrijving",
+        "result_type": "aangegaan",
+        "is_default": "true",
+        "selection_list": "14077_selectielijst",
+        "selection_list_number": "14077_selectielijst_nummer",
+        "selection_list_source_date": "2024-10-14",
+        "selection_list_end_date": "2024-10-15",
+        "archival_trigger": "true",
+        "archival_nomination": "Bewaren (B)",
+        "retention_period": "28",
+        "archival_nomination_valuation": "vervallen",
+        "comments": "14077_toelichting",
+        "processtype_name": "14077_processnaam",
+        "processtype_number": "14077_process_nummer",
+        "processtype_description": "14077_processomschrijving",
+        "processtype_explanation": "14077_processtype toelichting",
+        "processtype_object": "14077_process objecttype",
+        "procestype_generic": "Generiek",
+        "origin": "Risicoanalyse",
+        "process_period": "A"
+    },
+    "unset": [],
+    "cast": {
+        "archival_trigger": "bool",
+        "is_default": "bool",
+        "retention_period": "int"
+    },
+    "passTrough": false
+}
