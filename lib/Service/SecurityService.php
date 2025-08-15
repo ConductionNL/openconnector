@@ -500,16 +500,14 @@ class SecurityService
         $context['event'] = $event;
         $context['timestamp'] = (new DateTime())->format('Y-m-d H:i:s');
         
-        // Log with appropriate level based on event type
-        $level = match ($event) {
-            'user_locked_out', 'ip_locked_out' => 'warning',
-            'login_attempt_during_lockout', 'login_attempt_from_blocked_ip' => 'warning',
-            'rate_limit_exceeded' => 'info',
-            'failed_login_attempt' => 'info',
-            'successful_login' => 'info',
-            default => 'info'
+        // Use specific PSR-3 logging methods based on event type
+        match ($event) {
+            'user_locked_out', 'ip_locked_out' => $this->logger->warning("Security event: {$event}", $context),
+            'login_attempt_during_lockout', 'login_attempt_from_blocked_ip' => $this->logger->warning("Security event: {$event}", $context),
+            'rate_limit_exceeded' => $this->logger->info("Security event: {$event}", $context),
+            'failed_login_attempt' => $this->logger->info("Security event: {$event}", $context),
+            'successful_login' => $this->logger->info("Security event: {$event}", $context),
+            default => $this->logger->info("Security event: {$event}", $context)
         };
-
-        $this->logger->log($level, "Security event: {$event}", $context);
     }
 } 

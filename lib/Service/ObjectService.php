@@ -266,6 +266,28 @@ class ObjectService
 	}
 
 	/**
+	 * Gets the OpenRegister ObjectEntityMapper directly.
+	 * This is more efficient than going through the OpenRegister service.
+	 *
+	 * @return \OCA\OpenRegister\Db\ObjectEntityMapper|null The ObjectEntityMapper if available, null otherwise.
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 */
+	public function getOpenRegisterObjectEntityMapper(): ?\OCA\OpenRegister\Db\ObjectEntityMapper
+	{
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			try {
+				// Attempt to get the ObjectEntityMapper directly from the container
+				return $this->container->get('OCA\OpenRegister\Db\ObjectEntityMapper');
+			} catch (Exception $e) {
+				// If the mapper is not available, return null
+				return null;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Gets the appropriate mapper based on the object type.
 	 * (This can be a objectType for OpenRegister, by using an instantiation of the objectService of OpenRegister).
 	 *
@@ -280,24 +302,43 @@ class ObjectService
 	 */
 	public function getMapper(?string $objectType = null, ?int $schema = null, ?int $register = null): mixed
 	{
+		// If register and schema are provided, use OpenRegister's new API
 		if ($register !== null && $schema !== null && $objectType === null) {
-			return $this->getOpenRegisters()->getMapper(register: $register, schema: $schema);
+			$openRegisterService = $this->getOpenRegisters();
+			if ($openRegisterService === null) {
+				throw new InvalidArgumentException("OpenRegister service is not available");
+			}
+			return $openRegisterService->getMapper(register: $register, schema: $schema);
 		}
 
-		$objectTypeLower = strtolower($objectType);
+		// If objectType is provided, handle internal OpenConnector mappers
+		if ($objectType !== null) {
+			$objectTypeLower = strtolower($objectType);
 
-		// If the source is internal, return the appropriate mapper based on the object type
-		return match ($objectTypeLower) {
-			'endpoint' 			=> $this->endpointMapper,
-			'eventSubscription'	=> $this->eventSubscriptionMapper,
-			'job' 	   			=> $this->jobMapper,
-			'mapping'  			=> $this->mappingMapper,
-			'rule'     			=> $this->ruleMapper,
-			'source'   			=> $this->sourceMapper,
-			'synchronization' 	=> $this->synchronizationMapper,
-			default => throw new InvalidArgumentException("Unknown object type: $objectType"),
-		};
+			// Handle OpenRegister ObjectEntityMapper requests
+			if ($objectTypeLower === 'objectentity') {
+				$objectEntityMapper = $this->getOpenRegisterObjectEntityMapper();
+				if ($objectEntityMapper === null) {
+					throw new InvalidArgumentException("OpenRegister ObjectEntityMapper is not available");
+				}
+				return $objectEntityMapper;
+			}
 
+			// If the source is internal, return the appropriate mapper based on the object type
+			return match ($objectTypeLower) {
+				'endpoint' 			=> $this->endpointMapper,
+				'eventSubscription'	=> $this->eventSubscriptionMapper,
+				'job' 	   			=> $this->jobMapper,
+				'mapping'  			=> $this->mappingMapper,
+				'rule'     			=> $this->ruleMapper,
+				'source'   			=> $this->sourceMapper,
+				'synchronization' 	=> $this->synchronizationMapper,
+				default => throw new InvalidArgumentException("Unknown object type: $objectType"),
+			};
+		}
+
+		// If no parameters provided, throw an error
+		throw new InvalidArgumentException("Either objectType or both register and schema must be provided");
 	}
 
 }
