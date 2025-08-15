@@ -33,7 +33,7 @@ import { jobStore, navigationStore } from '../../store/store.js'
 							name="view_mode_radio"
 							type="radio"
 							button-variant-grouped="horizontal"
-							@click="setViewMode('cards')">
+							@update:checked="checked => checked && setViewMode('cards')">
 							Cards
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
@@ -44,7 +44,7 @@ import { jobStore, navigationStore } from '../../store/store.js'
 							name="view_mode_radio"
 							type="radio"
 							button-variant-grouped="horizontal"
-							@click="setViewMode('table')">
+							@update:checked="checked => checked && setViewMode('table')">
 							Table
 						</NcCheckboxRadioSwitch>
 					</div>
