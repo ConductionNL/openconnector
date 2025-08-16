@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * SecurityService
- * 
+ *
  * Service for handling security measures including rate limiting and XSS protection
  *
  * @category   Service
@@ -107,7 +107,7 @@ class SecurityService
                 'ip_address' => $ipAddress,
                 'lockout_until' => $userLockoutUntil
             ]);
-            
+
             return [
                 'allowed' => false,
                 'lockout_until' => $userLockoutUntil,
@@ -124,7 +124,7 @@ class SecurityService
                 'ip_address' => $ipAddress,
                 'lockout_until' => $ipLockoutUntil
             ]);
-            
+
             return [
                 'allowed' => false,
                 'lockout_until' => $ipLockoutUntil,
@@ -145,7 +145,7 @@ class SecurityService
             // Implement progressive delay for repeated attempts
             $delayKey = self::CACHE_PREFIX_PROGRESSIVE_DELAY . $username . '_' . $ipAddress;
             $currentDelay = $this->cache->get($delayKey) ?? self::PROGRESSIVE_DELAY_BASE;
-            
+
             // Calculate next delay with exponential backoff
             $nextDelay = min($currentDelay * 2, self::MAX_PROGRESSIVE_DELAY);
             $this->cache->set($delayKey, $nextDelay, self::RATE_LIMIT_WINDOW);
@@ -201,7 +201,7 @@ class SecurityService
             $lockoutUntil = time() + self::LOCKOUT_DURATION;
             $userLockoutKey = self::CACHE_PREFIX_USER_LOCKOUT . $username;
             $this->cache->set($userLockoutKey, $lockoutUntil, self::LOCKOUT_DURATION);
-            
+
             $this->logSecurityEvent('user_locked_out', [
                 'username' => $username,
                 'ip_address' => $ipAddress,
@@ -215,7 +215,7 @@ class SecurityService
             $lockoutUntil = time() + self::LOCKOUT_DURATION;
             $ipLockoutKey = self::CACHE_PREFIX_IP_LOCKOUT . $ipAddress;
             $this->cache->set($ipLockoutKey, $lockoutUntil, self::LOCKOUT_DURATION);
-            
+
             $this->logSecurityEvent('ip_locked_out', [
                 'username' => $username,
                 'ip_address' => $ipAddress,
@@ -346,7 +346,7 @@ class SecurityService
 
         // Sanitize username (but preserve original for authentication)
         $sanitizedUsername = $this->sanitizeInput($credentials['username'], 320); // Max email length
-        
+
         // Validate username format (basic checks)
         if (strlen($sanitizedUsername) < 2) {
             return [
@@ -394,19 +394,19 @@ class SecurityService
     {
         // Prevent clickjacking
         $response->addHeader('X-Frame-Options', 'DENY');
-        
+
         // Prevent MIME type sniffing
         $response->addHeader('X-Content-Type-Options', 'nosniff');
-        
+
         // Enable XSS protection
         $response->addHeader('X-XSS-Protection', '1; mode=block');
-        
+
         // Referrer policy
         $response->addHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-        
+
         // Content Security Policy for API responses
         $response->addHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none';");
-        
+
         // Prevent caching of sensitive responses
         $response->addHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
         $response->addHeader('Pragma', 'no-cache');
@@ -445,7 +445,7 @@ class SecurityService
                 // Handle comma-separated IPs (take the first one)
                 $ips = explode(',', $headerValue);
                 $ip = trim($ips[0]);
-                
+
                 // Validate IP address format and use if valid
                 if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
                     $ipAddress = $ip;
@@ -470,7 +470,7 @@ class SecurityService
     {
         // Remove or replace characters that could be problematic in cache keys
         $sanitized = preg_replace('/[^a-zA-Z0-9._@-]/', '_', $input);
-        
+
         // Limit length to prevent extremely long cache keys
         return substr($sanitized, 0, 64);
     }
@@ -489,15 +489,19 @@ class SecurityService
         // Add timestamp and event type to context
         $context['event'] = $event;
         $context['timestamp'] = (new DateTime())->format('Y-m-d H:i:s');
-        
-        // Use specific PSR-3 logging methods based on event type
-        match ($event) {
-            'user_locked_out', 'ip_locked_out' => $this->logger->warning("Security event: {$event}", $context),
-            'login_attempt_during_lockout', 'login_attempt_from_blocked_ip' => $this->logger->warning("Security event: {$event}", $context),
-            'rate_limit_exceeded' => $this->logger->info("Security event: {$event}", $context),
-            'failed_login_attempt' => $this->logger->info("Security event: {$event}", $context),
-            'successful_login' => $this->logger->info("Security event: {$event}", $context),
-            default => $this->logger->info("Security event: {$event}", $context)
-        };
+
+        // Log with appropriate level based on event type
+        switch($event) {
+            case 'user_locked_out':
+            case 'login_attempt_during_lockout':
+                $this->logger->warning("Security event: {$event}", $context);
+                break;
+            case 'rate_limit_exceeded':
+            case 'failed_login_attempt':
+            case 'succesful_login':
+            default:
+                $this->logger->info("Security event: {$event}", $context);
+                break;
+        }
     }
-} 
+}
