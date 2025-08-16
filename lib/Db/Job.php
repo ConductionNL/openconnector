@@ -46,6 +46,8 @@ class Job extends Entity implements JsonSerializable
 	protected ?array $configurations = []; // Array of configuration IDs that this job belongs to
 	protected ?string $status = null;
 	protected ?string $slug = null;
+	protected ?DateTime $expires = null; // Expiration date for this entity
+	protected ?int $size = null; // Size of this entity in bytes
 
 	/**
 	 * Get the job arguments
@@ -83,6 +85,8 @@ class Job extends Entity implements JsonSerializable
 		$this->addType('configurations', 'json');
 		$this->addType('status', 'string');
 		$this->addType('slug', 'string');
+		$this->addType('expires', 'datetime');
+		$this->addType('size', 'integer');
 	}
 
 	public function getJsonFields(): array
@@ -172,6 +176,8 @@ class Job extends Entity implements JsonSerializable
 			'configurations' => $this->configurations,
 			'status' => $this->status,
 			'slug' => $this->slug,
+			'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+			'size' => $this->size,
 		];
 	}
 }

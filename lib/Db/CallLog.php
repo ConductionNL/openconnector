@@ -38,6 +38,9 @@ class CallLog extends Entity implements JsonSerializable
     /** @var string|null $sessionId Session identifier associated with this call */
     protected ?string $sessionId = null;
 
+    /** @var int|null $size Size of the log entry in bytes for retention management */
+    protected ?int $size = null;
+
     /** @var DateTime|null $expires When this log entry should expire/be deleted */
     protected ?DateTime $expires = null;
 
@@ -75,6 +78,7 @@ class CallLog extends Entity implements JsonSerializable
         $this->addType('synchronizationId', 'integer');
         $this->addType('userId', 'string');
         $this->addType('sessionId', 'string');
+        $this->addType('size', 'integer');
         $this->addType('expires', 'datetime');
         $this->addType('created', 'datetime');
     }
@@ -123,6 +127,7 @@ class CallLog extends Entity implements JsonSerializable
             'synchronizationId' => $this->synchronizationId,            
             'userId' => $this->userId,
             'sessionId' => $this->sessionId,
+            'size' => $this->size,
             'expires' => isset($this->expires) ? $this->expires->format('c') : null,
             'created' => isset($this->created) ? $this->created->format('c') : null,
             

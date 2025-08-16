@@ -34,6 +34,8 @@ class Mapping extends Entity implements JsonSerializable
 	protected ?DateTime $dateModified = null;
 	protected ?array $configurations = []; // Array of configuration IDs that this mapping belongs to
 	protected ?string $slug = null;
+	protected ?DateTime $expires = null; // Expiration date for this entity
+	protected ?int $size = null; // Size of this entity in bytes
 
 	/**
 	 * Get the mapping configuration
@@ -79,6 +81,8 @@ class Mapping extends Entity implements JsonSerializable
 		$this->addType('dateModified', 'datetime');
 		$this->addType('configurations', 'json');
 		$this->addType('slug', 'string');
+		$this->addType('expires', 'datetime');
+		$this->addType('size', 'integer');
 	}
 
 	public function getJsonFields(): array
@@ -161,6 +165,8 @@ class Mapping extends Entity implements JsonSerializable
 			'dateCreated' => isset($this->dateCreated) ? $this->dateCreated->format('c') : null,
 			'dateModified' => isset($this->dateModified) ? $this->dateModified->format('c') : null,
 			'slug' => $this->getSlug(),
+			'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+			'size' => $this->size,
 		];
 	}
 }

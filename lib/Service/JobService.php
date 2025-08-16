@@ -45,41 +45,6 @@ use OCP\BackgroundJob\IJob;
 class JobService
 {
     /**
-     * Job list manager for background job operations
-     */
-    private readonly IJobList $jobList;
-
-    /**
-     * Job mapper for database operations
-     */
-    private readonly JobMapper $jobMapper;
-
-    /**
-     * Database connection for direct queries
-     */
-    private readonly IDBConnection $connection;
-
-    /**
-     * Job log mapper for logging operations
-     */
-    private readonly JobLogMapper $jobLogMapper;
-
-    /**
-     * Container interface for dependency injection
-     */
-    private readonly ContainerInterface $containerInterface;
-
-    /**
-     * User session manager
-     */
-    private readonly IUserSession $userSession;
-
-    /**
-     * User manager for user operations
-     */
-    private readonly IUserManager $userManager;
-
-    /**
      * JobService constructor
      *
      * Initializes the job service with required dependencies for job execution
@@ -102,21 +67,14 @@ class JobService
      * @psalm-param IUserManager $userManager
      */
     public function __construct(
-        IJobList $jobList,
-        JobMapper $jobMapper,
-        IDBConnection $connection,
-        JobLogMapper $jobLogMapper,
-        ContainerInterface $containerInterface,
-        IUserSession $userSession,
-        IUserManager $userManager
+        private readonly IJobList $jobList,
+        private readonly JobMapper $jobMapper,
+        private readonly IDBConnection $connection,
+        private readonly JobLogMapper $jobLogMapper,
+        private readonly ContainerInterface $containerInterface,
+        private readonly IUserSession $userSession,
+        private readonly IUserManager $userManager,
     ) {
-        $this->jobList = $jobList;
-        $this->jobMapper = $jobMapper;
-        $this->connection = $connection;
-        $this->jobLogMapper = $jobLogMapper;
-        $this->containerInterface = $containerInterface;
-        $this->userSession = $userSession;
-        $this->userManager = $userManager;
     }
 
     /**

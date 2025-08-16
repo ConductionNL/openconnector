@@ -54,6 +54,8 @@ class Synchronization extends Entity implements JsonSerializable
 	protected array $followUps = [];
     protected array $actions = [];
     protected ?array $configurations = []; // Array of configuration IDs that this synchronization belongs to
+	protected ?DateTime $expires = null; // Expiration date for this entity
+	protected ?int $size = null; // Size of this entity in bytes
 
 	/**
 	 * @var string|null The status of the synchronization
@@ -147,6 +149,8 @@ class Synchronization extends Entity implements JsonSerializable
         $this->addType(fieldName: 'configurations', type: 'json');
 		$this->addType('status', 'string');
 		$this->addType('slug', 'string');
+		$this->addType('expires', 'datetime');
+		$this->addType('size', 'integer');
 	}
 
     /**
@@ -257,6 +261,8 @@ class Synchronization extends Entity implements JsonSerializable
 			'configurations' => $this->configurations,
 			'status' => $this->status,
 			'slug' => $this->getSlug(),
+			'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+			'size' => $this->size,
 		];
 	}
 }

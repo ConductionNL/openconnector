@@ -3,12 +3,14 @@
 namespace OCA\OpenConnector\Db;
 
 use OCA\OpenConnector\Db\SynchronizationContract;
+use OC\Server;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Uid\Uuid;
 /**
  * Mapper class for SynchronizationContract entities
@@ -32,6 +34,16 @@ class SynchronizationContractMapper extends QBMapper
     public function __construct(IDBConnection $db)
     {
         parent::__construct($db, 'openconnector_synchronization_contracts');
+    }
+
+    /**
+     * Get the logger using lazy resolution
+     *
+     * @return LoggerInterface The logger instance
+     */
+    private function getLogger(): LoggerInterface
+    {
+        return Server::get(LoggerInterface::class);
     }
 
     /**
@@ -495,6 +507,121 @@ class SynchronizationContractMapper extends QBMapper
 
         } catch (Exception $e) {
             throw new Exception('Failed to handle object removal: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Apply filters to a query builder.
+     *
+     * @param \OCP\DB\QueryBuilder\IQueryBuilder $qb The query builder to apply filters to
+     * @param array $filters The filters to apply
+     * @return void
+     */
+    private function applyFilters(\OCP\DB\QueryBuilder\IQueryBuilder $qb, array $filters): void
+    {
+        foreach ($filters as $filter => $value) {
+            if ($value === 'IS NOT NULL') {
+                $qb->andWhere($qb->expr()->isNotNull($filter));
+            } elseif ($value === 'IS NULL') {
+                $qb->andWhere($qb->expr()->isNull($filter));
+            } elseif (is_array($value)) {
+                // Handle array values like ['IS NULL', ''] or ['<', 'NOW()']
+                $conditions = [];
+                foreach ($value as $val) {
+                    if ($val === 'IS NULL') {
+                        $conditions[] = $qb->expr()->isNull($filter);
+                    } elseif ($val === 'IS NOT NULL') {
+                        $conditions[] = $qb->expr()->isNotNull($filter);
+                    } elseif ($val === 'NOW()') {
+                        $conditions[] = $qb->expr()->lt($filter, $qb->createFunction('NOW()'));
+                    } else {
+                        $conditions[] = $qb->expr()->eq($filter, $qb->createNamedParameter($val));
+                    }
+                }
+                if (!empty($conditions)) {
+                    $qb->andWhere($qb->expr()->orX(...$conditions));
+                }
+            } else {
+                $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+            }
+        }
+    }
+
+    /**
+     * Count synchronization contracts with optional filters.
+     *
+     * @param array $filters Optional filters to apply to the count query
+     * @return int The number of synchronization contracts matching the filters
+     * @throws \Exception If the count query fails
+     */
+    public function count(array $filters = []): int
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->createFunction('COUNT(*)'))
+               ->from($this->getTableName());
+
+            // Apply filters using the helper method
+            $this->applyFilters($qb, $filters);
+
+            $result = $qb->executeQuery();
+            return (int) $result->fetchOne();
+        } catch (\Exception $e) {
+            $this->getLogger()->error('Failed to count synchronization contracts: ' . $e->getMessage(), [
+                'app' => 'openconnector',
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Calculate total size of synchronization contracts with optional filters.
+     *
+     * @param array $filters Optional filters to apply to the size calculation
+     * @return int The total size in bytes of synchronization contracts matching the filters
+     * @throws \Exception If the size calculation fails
+     */
+    public function size(array $filters = []): int
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select($qb->createFunction('COALESCE(SUM(size), 0)'))
+               ->from($this->getTableName());
+
+            // Apply filters using the helper method
+            $this->applyFilters($qb, $filters);
+
+            $result = $qb->executeQuery();
+            return (int) $result->fetchOne();
+        } catch (\Exception $e) {
+            $this->getLogger()->error('Failed to calculate synchronization contracts size: ' . $e->getMessage(), [
+                'app' => 'openconnector',
+                'exception' => $e
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * Clear all synchronization contracts (delete all records).
+     *
+     * @return bool True if the operation was successful
+     * @throws \Exception If the clear operation fails
+     */
+    public function clearSynchronizationContracts(): bool
+    {
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->delete($this->getTableName());
+            $qb->executeStatement();
+            return true;
+        } catch (\Exception $e) {
+            $this->getLogger()->error('Failed to clear synchronization contracts: ' . $e->getMessage(), [
+                'app' => 'openconnector',
+                'exception' => $e
+            ]);
+            throw $e;
         }
     }
 }

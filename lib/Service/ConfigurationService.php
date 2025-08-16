@@ -39,46 +39,6 @@ use OCA\OpenConnector\Service\ConfigurationHandlers\RuleHandler;
 class ConfigurationService
 {
     /**
-     * @var SourceMapper
-     */
-    private SourceMapper $sourceMapper;
-
-    /**
-     * @var EndpointMapper
-     */
-    private EndpointMapper $endpointMapper;
-
-    /**
-     * @var MappingMapper
-     */
-    private MappingMapper $mappingMapper;
-
-    /**
-     * @var RuleMapper
-     */
-    private RuleMapper $ruleMapper;
-
-    /**
-     * @var JobMapper
-     */
-    private JobMapper $jobMapper;
-
-    /**
-     * @var SynchronizationMapper
-     */
-    private SynchronizationMapper $synchronizationMapper;
-
-    /**
-     * @var RegisterMapper
-     */
-    private RegisterMapper $registerMapper;
-
-    /**
-     * @var SchemaMapper
-     */
-    private SchemaMapper $schemaMapper;
-
-    /**
      * @var array<string,ConfigurationHandlerInterface>
      */
     private array $handlers = [];
@@ -139,29 +99,21 @@ class ConfigurationService
      * @param RuleHandler $ruleHandler
      */
     public function __construct(
-        SourceMapper $sourceMapper,
-        EndpointMapper $endpointMapper,
-        MappingMapper $mappingMapper,
-        RuleMapper $ruleMapper,
-        JobMapper $jobMapper,
-        SynchronizationMapper $synchronizationMapper,
-        RegisterMapper $registerMapper,
-        SchemaMapper $schemaMapper,
+        private readonly SourceMapper $sourceMapper,
+        private readonly EndpointMapper $endpointMapper,
+        private readonly MappingMapper $mappingMapper,
+        private readonly RuleMapper $ruleMapper,
+        private readonly JobMapper $jobMapper,
+        private readonly SynchronizationMapper $synchronizationMapper,
+        private readonly RegisterMapper $registerMapper,
+        private readonly SchemaMapper $schemaMapper,
         EndpointHandler $endpointHandler,
         SynchronizationHandler $synchronizationHandler,
         MappingHandler $mappingHandler,
         JobHandler $jobHandler,
         SourceHandler $sourceHandler,
-        RuleHandler $ruleHandler
+        RuleHandler $ruleHandler,
     ) {
-        $this->sourceMapper = $sourceMapper;
-        $this->endpointMapper = $endpointMapper;
-        $this->mappingMapper = $mappingMapper;
-        $this->ruleMapper = $ruleMapper;
-        $this->jobMapper = $jobMapper;
-        $this->synchronizationMapper = $synchronizationMapper;
-        $this->registerMapper = $registerMapper;
-        $this->schemaMapper = $schemaMapper;
 
         // Register handlers
         $this->handlers['endpoint'] = $endpointHandler;

@@ -25,6 +25,7 @@ class SynchronizationContractLog extends Entity implements JsonSerializable
     protected ?string $sessionId = null;
     protected ?bool $test = false;
     protected ?bool $force = false;
+    protected ?int $size = null;
     protected ?DateTime $expires = null;
     protected ?DateTime $created = null;
 
@@ -61,6 +62,7 @@ class SynchronizationContractLog extends Entity implements JsonSerializable
         $this->addType('sessionId', 'string');
         $this->addType('test', 'boolean');
         $this->addType('force', 'boolean');
+        $this->addType('size', 'integer');
         $this->addType('expires', 'datetime');
         $this->addType('created', 'datetime');
     }
@@ -111,6 +113,7 @@ class SynchronizationContractLog extends Entity implements JsonSerializable
             'sessionId' => $this->sessionId,
             'test' => $this->test,
             'force' => $this->force,
+            'size' => $this->size,
             'expires' => isset($this->expires) ? $this->expires->format('c') : null,
             'created' => isset($this->created) ? $this->created->format('c') : null,
         ];

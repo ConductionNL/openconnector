@@ -42,6 +42,8 @@ class Rule extends Entity implements JsonSerializable
      * @var string|null URL-friendly identifier for the rule
      */
     protected ?string $slug = null;
+    protected ?DateTime $expires = null; // Expiration date for this entity
+    protected ?int $size = null; // Size of this entity in bytes
 
     /**
      * Get the conditions array
@@ -79,6 +81,8 @@ class Rule extends Entity implements JsonSerializable
         $this->addType('created', 'datetime');
         $this->addType('updated', 'datetime');
         $this->addType('slug', 'string');
+        $this->addType('expires', 'datetime');
+        $this->addType('size', 'integer');
     }
 
     /**
@@ -190,6 +194,8 @@ class Rule extends Entity implements JsonSerializable
             'created' => isset($this->created) ? $this->created->format('c') : null,
             'updated' => isset($this->updated) ? $this->updated->format('c') : null,
             'slug' => $this->getSlug(),
+            'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+            'size' => $this->size,
         ];
     }
 }
