@@ -551,8 +551,8 @@ class UserController extends Controller
                 return $this->addCorsHeaders($response);
             }
 
-            // Build user data array for response (sanitized)
-            $userData = $this->userService->buildUserDataArray($user);
+            // Build user data array for response (sanitized) - commented out for performance testing
+            // $userData = $this->userService->buildUserDataArray($user);
 
             // MEMORY MONITORING: Check memory usage after building user data
             $finalMemoryUsage = memory_get_usage(true);
@@ -576,7 +576,7 @@ class UserController extends Controller
             // Create successful response with security headers and session info
             $response = new JSONResponse([
                 'message' => 'Login successful',
-                'user' => $userData,
+                // 'user' => $userData, // Commented out for performance testing - full user data slows down frontend
                 'session_created' => true,
                 'session' => [
                     'id' => $sessionId,
