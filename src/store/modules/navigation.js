@@ -12,6 +12,8 @@ export const useNavigationStore = defineStore(
 			// Sidebar state management
 			sidebarState: {
 				sourceLogs: true,
+				endpointLogs: true,
+				jobLogs: true,
 				contracts: true,
 				logs: true,
 			},
