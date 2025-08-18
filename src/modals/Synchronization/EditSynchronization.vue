@@ -8,12 +8,10 @@ import { Synchronization } from '../../entities/index.js'
 		label-id="editSynchronization"
 		size="large"
 		:can-close="true"
-		:width="1000"
+		:width="1200"
 		:name="synchronizationItem.id ? 'Edit Synchronization' : 'Create New Synchronization'"
 		@close="closeModal">
 		<div class="modalContent">
-			<h2>{{ synchronizationItem.id ? 'Edit Synchronization' : 'Create New Synchronization' }}</h2>
-
 			<!-- ====================== -->
 			<!-- Open Register notecard -->
 			<!-- ====================== -->
@@ -863,7 +861,8 @@ export default {
 }
 
 :deep(.modal-container) {
-	max-width: 1000px !important;
+	width: unset !important;
+	max-width: 1200px !important;
 }
 
 .modalContent h2 {
