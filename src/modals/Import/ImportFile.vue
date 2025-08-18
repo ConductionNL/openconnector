@@ -37,7 +37,7 @@ import { navigationStore, importExportStore } from '../../store/store.js'
 							</h3>
 
 							<div class="filesListDragDropNoticeTitle">
-								<NcButton v-if="success === null && !files"
+								<NcButton v-if="success === null && (!files || !files.length)"
 									:disabled="loading"
 									type="primary"
 									@click="openFileUpload()">
@@ -47,15 +47,28 @@ import { navigationStore, importExportStore } from '../../store/store.js'
 									Add file
 								</NcButton>
 
-								<NcButton v-if="success === null && files"
-									:disabled=" loading"
-									type="primary"
-									@click="reset()">
-									<template #icon>
-										<Minus :size="20" />
-									</template>
-									<span v-for="file of files" :key="file.name">{{ file.name }}</span>
-								</NcButton>
+								<div v-if="success === null && files && files.length"
+									class="fileCardCustom"
+									role="group"
+									aria-label="Selected file">
+									<div class="fileCardCustom__left">
+										<div class="fileCardCustom__name" :title="files[0].name">
+											{{ files[0].name }}
+										</div>
+										<div class="fileCardCustom__meta">
+											<span class="fileCardCustom__metaItem">{{ files[0].name.split('.').pop() }}</span>
+											<span class="fileCardCustom__dot">•</span>
+											<span class="fileCardCustom__metaItem">{{ formatBytes(files[0].size) }}</span>
+										</div>
+									</div>
+									<button class="fileCardCustom__remove"
+										type="button"
+										:disabled="loading"
+										aria-label="Remove file"
+										@click="reset()">
+										<TrashCanOutline :size="18" />
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -68,16 +81,16 @@ import { navigationStore, importExportStore } from '../../store/store.js'
 						</template>
 						Cancel
 					</NcButton>
-					<NcButton v-if="success === null"
-						type="primary"
-						:disabled="!files"
-						@click="importFile()">
-						<template #icon>
-							<NcLoadingIcon v-if="loading" :size="20" />
-							<FileImportOutline v-if="!loading" :size="20" />
-						</template>
-						Import
-					</NcButton>
+				<NcButton v-if="success === null"
+					type="primary"
+					:disabled="!files || !files.length"
+					@click="importFile()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<FileImportOutline v-if="!loading" :size="20" />
+					</template>
+					Import
+				</NcButton>
 				</div>
 			</div>
 		</div>
@@ -85,16 +98,16 @@ import { navigationStore, importExportStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcModal, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcLoadingIcon, NcModal } from '@nextcloud/vue'
 import { useFileSelection } from '../../composables/UseFileSelection.js'
 
 import { ref } from 'vue'
 
-import Minus from 'vue-material-design-icons/Minus.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
 import FileImportOutline from 'vue-material-design-icons/FileImportOutline.vue'
 import CancelIcon from 'vue-material-design-icons/Cancel.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 const dropZoneRef = ref()
 const { openFileUpload, files, reset, setFiles } = useFileSelection({ allowMultiple: false, dropzone: dropZoneRef, allowedFileTypes: ['.json', '.yaml', '.yml'] })
@@ -144,6 +157,20 @@ export default {
 			reset()
 
 		},
+		formatBytes(bytes) {
+			// handle empty or invalid values
+			if (!bytes && bytes !== 0) {
+				return ''
+			}
+			const units = ['B', 'KB', 'MB', 'GB', 'TB']
+			let size = bytes
+			let unitIndex = 0
+			while (size >= 1024 && unitIndex < units.length - 1) {
+				size = size / 1024
+				unitIndex++
+			}
+			return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
+		},
 		importFile() {
 			this.loading = true
 			this.errorMessage = false
@@ -180,5 +207,61 @@ export default {
 
 .success {
     color: green;
+}
+
+.fileCardCustom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    text-align: left;
+}
+.fileCardCustom__left {
+    min-width: 0;
+    flex: 1;
+}
+.fileCardCustom__name {
+    font-weight: 600;
+    line-height: 1.3;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+.fileCardCustom__meta {
+    margin-top: 4px;
+    color: #5f6c7b;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.fileCardCustom__dot {
+    opacity: 0.6;
+}
+.fileCardCustom__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 8px;
+    background: #f7f8fa;
+    cursor: pointer;
+    transition: background 150ms ease, transform 50ms ease;
+}
+.fileCardCustom__remove:hover {
+    background: #eef1f5;
+}
+.fileCardCustom__remove:active {
+    transform: translateY(1px);
+}
+.fileCardCustom__remove:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 </style>

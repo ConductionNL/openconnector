@@ -4,7 +4,8 @@ import { Synchronization } from '../../entities/index.js'
 </script>
 
 <template>
-	<NcModal ref="modalRef"
+	<NcModal
+		ref="modalRef"
 		label-id="editSourceConfig"
 		@close="closeModal">
 		<div class="modalContent">
@@ -27,12 +28,10 @@ import { Synchronization } from '../../entities/index.js'
 						:value.sync="sourceConfig.key" />
 					<NcTextField
 						id="sourceConfigValue"
-						label="Source Config Value*"
-						required
+						label="Source Config Value"
 						:value.sync="sourceConfig.value" />
 				</div>
 			</form>
-
 			<div class="modal-actions">
 				<NcButton v-if="!success"
 					@click="closeModal">
@@ -41,22 +40,21 @@ import { Synchronization } from '../../entities/index.js'
 					</template>
 					Cancel
 				</NcButton>
-				<NcButton v-if="!success"
-					:disabled="loading
-						|| !sourceConfig.key
-						|| !sourceConfig.value
-						/// checks if the key is unique, ignores if the key is not changed
-						|| isTaken(sourceConfig.key)
-						/// checks if the value is the same as the one in the source config, only works if the key is not changed
-						|| synchronizationStore.synchronizationItem.sourceConfig[sourceConfig.key] === sourceConfig.value"
-					type="primary"
-					@click="editSourceConfig()">
-					<template #icon>
-						<NcLoadingIcon v-if="loading" :size="20" />
-						<ContentSaveOutline v-if="!loading" :size="20" />
-					</template>
-					Save
-				</NcButton>
+        <NcButton v-if="!success"
+				:disabled="loading
+					|| !sourceConfig.key
+					/// checks if the key is unique, ignores if the key is not changed
+					|| isTaken(sourceConfig.key)
+					/// checks if the value is the same as the one in the source config, only works if the key is not changed
+					|| (synchronizationStore.synchronizationItem?.sourceConfig && synchronizationStore.synchronizationItem.sourceConfig[sourceConfig.key] === sourceConfig.value)"
+				type="primary"
+				@click="editSourceConfig()">
+				<template #icon>
+					<NcLoadingIcon v-if="loading" :size="20" />
+					<ContentSaveOutline v-if="!loading" :size="20" />
+				</template>
+				Save
+			</NcButton>
 			</div>
 		</div>
 	</NcModal>
