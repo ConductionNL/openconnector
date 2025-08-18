@@ -358,6 +358,11 @@
   color: var(--color-error);
 }
 
+.single-modal-action {
+  margin-block-start: 10px;
+  margin-inline-start: auto;
+}
+
 /* File drag and drop */
 
 .filesListDragDropNotice {

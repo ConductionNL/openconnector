@@ -32,22 +32,30 @@ import { Synchronization } from '../../entities/index.js'
 						:value.sync="sourceConfig.value" />
 				</div>
 			</form>
-
-			<NcButton v-if="!success"
-				:disabled="loading
-					|| !sourceConfig.key
-					/// checks if the key is unique, ignores if the key is not changed
-					|| isTaken(sourceConfig.key)
-					/// checks if the value is the same as the one in the source config, only works if the key is not changed
-					|| (synchronizationStore.synchronizationItem?.sourceConfig && synchronizationStore.synchronizationItem.sourceConfig[sourceConfig.key] === sourceConfig.value)"
-				type="primary"
-				@click="editSourceConfig()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<ContentSaveOutline v-if="!loading" :size="20" />
-				</template>
-				Save
-			</NcButton>
+			<div class="modal-actions">
+				<NcButton v-if="!success"
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
+				<NcButton v-if="!success"
+					:disabled="loading
+						|| !sourceConfig.key
+						/// checks if the key is unique, ignores if the key is not changed
+						|| isTaken(sourceConfig.key)
+						/// checks if the value is the same as the one in the source config, only works if the key is not changed
+						|| (synchronizationStore.synchronizationItem?.sourceConfig && synchronizationStore.synchronizationItem.sourceConfig[sourceConfig.key] === sourceConfig.value)"
+					type="primary"
+					@click="editSourceConfig()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<ContentSaveOutline v-if="!loading" :size="20" />
+					</template>
+					Save
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -62,6 +70,7 @@ import {
 } from '@nextcloud/vue'
 
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'EditSynchronizationSourceConfig',
@@ -73,6 +82,7 @@ export default {
 		NcTextField,
 		// Icons
 		ContentSaveOutline,
+		CancelIcon,
 	},
 	data() {
 		return {

@@ -281,6 +281,13 @@ import { Synchronization } from '../../entities/index.js'
 
 			<!-- Action Buttons -->
 			<div v-if="!success" class="modal-actions">
+				<NcButton v-if="!success"
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
 				<NcButton type="secondary" @click="testSynchronization">
 					<template #icon>
 						<PlayCircleOutline :size="20" />
@@ -331,6 +338,7 @@ import DatabaseArrowLeftOutline from 'vue-material-design-icons/DatabaseArrowLef
 import ArrowRight from 'vue-material-design-icons/ArrowRight.vue'
 import SwapHorizontal from 'vue-material-design-icons/SwapHorizontal.vue'
 import PlayCircleOutline from 'vue-material-design-icons/PlayCircleOutline.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'EditSynchronization',
@@ -350,6 +358,7 @@ export default {
 		ArrowRight,
 		SwapHorizontal,
 		PlayCircleOutline,
+		CancelIcon,
 	},
 	data() {
 		return {
@@ -1020,16 +1029,6 @@ export default {
 .flow-arrow {
 	margin: 0 10px;
 	color: var(--color-text-maxcontrast);
-}
-
-/* Action Buttons */
-.modal-actions {
-	display: flex;
-	justify-content: flex-end;
-	gap: 10px;
-	margin-top: 20px;
-	padding-top: 15px;
-	border-top: 1px solid var(--color-border);
 }
 
 /* Responsive Design */

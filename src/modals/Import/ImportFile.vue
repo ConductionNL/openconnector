@@ -7,7 +7,7 @@ import { navigationStore, importExportStore } from '../../store/store.js'
 		ref="modalRef"
 		label-id="ImportFileModal"
 		@close="closeModal()">
-		<div class="modal__content">
+		<div class="modalContent">
 			<h2>Import {{ importExportStore.importFileName }}</h2>
 
 			<div v-if="success !== null || error">
@@ -73,23 +73,32 @@ import { navigationStore, importExportStore } from '../../store/store.js'
 						</div>
 					</div>
 				</div>
-				<NcButton v-if="success === null"
-					type="primary"
-					:disabled="!files || !files.length"
-					@click="importFile()">
-					<template #icon>
-						<NcLoadingIcon v-if="loading" :size="20" />
-						<FileImportOutline v-if="!loading" :size="20" />
-					</template>
-					Import
-				</NcButton>
+				<div class="modal-actions">
+					<NcButton v-if="success === null"
+						@click="closeModal">
+						<template #icon>
+							<CancelIcon size="20" />
+						</template>
+						Cancel
+					</NcButton>
+					<NcButton v-if="success === null"
+						type="primary"
+						:disabled="!files || !files.length"
+						@click="importFile()">
+						<template #icon>
+							<NcLoadingIcon v-if="loading" :size="20" />
+							<FileImportOutline v-if="!loading" :size="20" />
+						</template>
+						Import
+					</NcButton>
+				</div>
 			</div>
 		</div>
 	</NcModal>
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcModal } from '@nextcloud/vue'
+import { NcButton, NcLoadingIcon, NcModal, NcNoteCard } from '@nextcloud/vue'
 import { useFileSelection } from '../../composables/UseFileSelection.js'
 
 import { ref } from 'vue'
@@ -97,6 +106,7 @@ import { ref } from 'vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
 import FileImportOutline from 'vue-material-design-icons/FileImportOutline.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 const dropZoneRef = ref()
@@ -108,6 +118,8 @@ export default {
 		NcModal,
 		NcButton,
 		NcLoadingIcon,
+		NcNoteCard,
+		CancelIcon,
 	},
 	props: {
 		dropFiles: {
@@ -179,12 +191,7 @@ export default {
 }
 </script>
 
-<style>
-.modal__content {
-    margin: var(--OC-margin-50);
-    text-align: center;
-}
-
+<style scoped>
 .addFileContainer{
 	margin-block-end: var(--OC-margin-20);
 }
