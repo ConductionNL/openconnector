@@ -275,15 +275,6 @@ export default {
 	padding: 15px 0;
 }
 
-modal-actions {
-	display: flex;
-	justify-content: flex-end;
-	gap: 8px;
-	margin-top: 20px;
-	padding-top: 20px;
-	border-top: 1px solid var(--color-border);
-}
-
 .selectedIcon {
 	color: var(--color-primary);
 }

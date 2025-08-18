@@ -81,16 +81,16 @@ import { navigationStore, importExportStore } from '../../store/store.js'
 						</template>
 						Cancel
 					</NcButton>
-				<NcButton v-if="success === null"
-					type="primary"
-					:disabled="!files || !files.length"
-					@click="importFile()">
-					<template #icon>
-						<NcLoadingIcon v-if="loading" :size="20" />
-						<FileImportOutline v-if="!loading" :size="20" />
-					</template>
-					Import
-				</NcButton>
+					<NcButton v-if="success === null"
+						type="primary"
+						:disabled="!files || !files.length"
+						@click="importFile()">
+						<template #icon>
+							<NcLoadingIcon v-if="loading" :size="20" />
+							<FileImportOutline v-if="!loading" :size="20" />
+						</template>
+						Import
+					</NcButton>
 				</div>
 			</div>
 		</div>
@@ -98,7 +98,7 @@ import { navigationStore, importExportStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcButton, NcLoadingIcon, NcModal } from '@nextcloud/vue'
+import { NcButton, NcLoadingIcon, NcModal, NcNoteCard } from '@nextcloud/vue'
 import { useFileSelection } from '../../composables/UseFileSelection.js'
 
 import { ref } from 'vue'
