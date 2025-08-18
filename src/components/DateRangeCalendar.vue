@@ -1,17 +1,31 @@
 <template>
 	<div class="calendarPopup" @mousedown.stop>
 		<div class="calHeader">
-			<button class="navBtn" @click="prevMonth">
+			<button class="navBtn" @click="prev">
 				«
 			</button>
-			<div class="title">
-				{{ formatMonthYear(viewStartMonth) }}
-			</div>
-			<button class="navBtn" @click="nextMonthNav">
+			<button class="titleBtn" @click="toggleView">
+				<span v-if="viewMode === 'month'">{{ formatMonthYear(viewStartMonth) }}</span>
+				<span v-else>{{ viewStartMonth.getFullYear() }}</span>
+			</button>
+			<button class="navBtn" @click="next">
 				»
 			</button>
 		</div>
-		<div class="oneCal">
+
+		<!-- Year view: quick month choose -->
+		<div v-if="viewMode === 'year'" class="yearGrid">
+			<button
+				v-for="m in 12"
+				:key="m"
+				class="monthCell"
+				@click="chooseMonth(m - 1)">
+				{{ monthLabel(m - 1) }}
+			</button>
+		</div>
+
+		<!-- Month view: days grid -->
+		<div v-else class="oneCal">
 			<div class="dow">
 				<span v-for="d in dows" :key="d">{{ d }}</span>
 			</div>
@@ -29,6 +43,7 @@
 				</button>
 			</div>
 		</div>
+
 		<div class="actions">
 			<button class="secondary" @click="$emit('cancel')">
 				{{ t('openconnector', 'Cancel') }}
@@ -59,11 +74,17 @@ export default {
 			tempEnd: this.end ? new Date(this.end) : null,
 			viewStartMonth: this.startOfMonth(this.anchorMonth || this.start || new Date()),
 			hoverDate: null,
+			viewMode: 'month',
 		}
 	},
 	computed: {
 		dows() {
 			return this.firstDayMonday ? ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] : ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+		},
+		today() {
+			const d = new Date()
+			d.setHours(0, 0, 0, 0)
+			return d
 		},
 	},
 	watch: {
@@ -84,11 +105,19 @@ export default {
 		nextMonth(d) {
 			return new Date(d.getFullYear(), d.getMonth() + 1, 1)
 		},
-		prevMonth() {
-			this.viewStartMonth = new Date(this.viewStartMonth.getFullYear(), this.viewStartMonth.getMonth() - 1, 1)
+		prev() {
+			if (this.viewMode === 'year') {
+				this.viewStartMonth = new Date(this.viewStartMonth.getFullYear() - 1, this.viewStartMonth.getMonth(), 1)
+			} else {
+				this.viewStartMonth = new Date(this.viewStartMonth.getFullYear(), this.viewStartMonth.getMonth() - 1, 1)
+			}
 		},
-		nextMonthNav() {
-			this.viewStartMonth = new Date(this.viewStartMonth.getFullYear(), this.viewStartMonth.getMonth() + 1, 1)
+		next() {
+			if (this.viewMode === 'year') {
+				this.viewStartMonth = new Date(this.viewStartMonth.getFullYear() + 1, this.viewStartMonth.getMonth(), 1)
+			} else {
+				this.viewStartMonth = new Date(this.viewStartMonth.getFullYear(), this.viewStartMonth.getMonth() + 1, 1)
+			}
 		},
 		formatMonthYear(d) {
 			return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
@@ -129,6 +158,7 @@ export default {
 			if (day.getMonth() !== this.viewStartMonth.getMonth()) {
 				classes.push('otherMonth')
 			}
+			if (this.isSameDay(day, this.today)) classes.push('today')
 			if (this.isSameDay(day, this.tempStart)) classes.push('start')
 			const endRef = this.tempEnd || (this.tempStart && this.hoverDate && this.hoverDate > this.tempStart ? this.hoverDate : null)
 			if (this.isSameDay(day, this.tempEnd)) classes.push('end')
@@ -155,6 +185,16 @@ export default {
 		apply() {
 			this.$emit('apply', { start: this.tempStart, end: this.tempEnd })
 		},
+		toggleView() {
+			this.viewMode = this.viewMode === 'month' ? 'year' : 'month'
+		},
+		chooseMonth(monthIdx) {
+			this.viewStartMonth = new Date(this.viewStartMonth.getFullYear(), monthIdx, 1)
+			this.viewMode = 'month'
+		},
+		monthLabel(monthIdx) {
+			return new Date(2000, monthIdx, 1).toLocaleString(undefined, { month: 'short' })
+		},
 	},
 }
 </script>
@@ -173,7 +213,7 @@ export default {
 	box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 .calHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.title { font-weight: 600; font-size: 14px; }
+.titleBtn { background: transparent; border: none; font-weight: 600; font-size: 14px; cursor: pointer; }
 .navBtn { background: transparent; border: none; cursor: pointer; padding: 2px 6px; }
 .oneCal { width: 100%; }
 .dow { display: grid; grid-template-columns: repeat(7, 1fr); font-size: 11px; color: var(--color-text-lighter); margin-bottom: 2px; }
@@ -181,9 +221,13 @@ export default {
 .grid { display: grid; grid-template-columns: repeat(7, minmax(36px, 1fr)); gap: 2px; }
 .cell { height: 28px; border-radius: 6px; border: none; background: transparent; cursor: pointer; font-size: 12px; }
 .cell.otherMonth { opacity: 0.5; }
-.cell.inRange { background: var(--color-background-hover); }
+.cell.inRange, .cell.today { background: var(--color-background-hover); }
 .cell.start, .cell.end { background: var(--color-primary); color: #fff; }
 .actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
 .actions .secondary { background: transparent; border: 1px solid var(--color-border); padding: 4px 8px; border-radius: var(--border-radius); font-size: 12px; }
 .actions .primary { background: var(--color-primary); color: #fff; border: none; padding: 4px 8px; border-radius: var(--border-radius); font-size: 12px; }
+
+.yearGrid { display: grid; grid-template-columns: repeat(4, minmax(48px, 1fr)); gap: 6px; width: 100%; padding: 4px 0; }
+.monthCell { border: 1px solid var(--color-border); background: var(--color-background-hover); border-radius: 6px; padding: 6px; font-size: 12px; cursor: pointer; }
+.monthCell:hover { background: var(--color-primary); color: #fff; }
 </style>
