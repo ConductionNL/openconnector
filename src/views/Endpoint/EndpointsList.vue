@@ -15,7 +15,7 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
-				<NcActions>
+				<NcActions class="listHeaderActions">
 					<NcActionButton close-after-click @click="endpointStore.refreshEndpointList()">
 						<template #icon>
 							<Refresh :size="20" />

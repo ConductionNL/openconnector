@@ -15,7 +15,7 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
-				<NcActions>
+				<NcActions class="listHeaderActions">
 					<NcActionButton close-after-click @click="ruleStore.refreshRuleList()">
 						<template #icon>
 							<Refresh :size="20" />
