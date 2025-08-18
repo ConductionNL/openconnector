@@ -47,18 +47,13 @@ import { logStore, navigationStore, jobStore } from '../../store/store.js'
 				</div>
 				<div class="filterGroup">
 					<label>{{ t('openconnector', 'Date Range') }}</label>
-					<NcDateTimePickerNative
-						id="dateFromPicker"
-						v-model="dateFrom"
-						:label="t('openconnector', 'From date')"
-						type="datetime-local"
-						@input="applyFilters" />
-					<NcDateTimePickerNative
-						id="dateToPicker"
-						v-model="dateTo"
-						:label="t('openconnector', 'To date')"
-						type="datetime-local"
-						@input="applyFilters" />
+					<DateRangeInput
+						:start="dateFrom"
+						:end="dateTo"
+						:max-start="new Date()"
+						@update:start="(v) => { dateFrom = v }"
+						@update:end="(v) => { dateTo = v }"
+						@change="applyFilters" />
 				</div>
 				<div class="filterGroup">
 					<label for="messageFilter">{{ t('openconnector', 'Message') }}</label>
@@ -195,7 +190,6 @@ import {
 	NcNoteCard,
 	NcButton,
 	NcListItem,
-	NcDateTimePickerNative,
 	NcTextField,
 	NcCheckboxRadioSwitch,
 } from '@nextcloud/vue'
@@ -208,6 +202,7 @@ import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import FilterOffOutline from 'vue-material-design-icons/FilterOffOutline.vue'
 import { translate as t } from '@nextcloud/l10n'
+import DateRangeInput from '../../components/DateRangeInput.vue'
 
 export default {
 	name: 'JobLogSideBar',
@@ -218,7 +213,6 @@ export default {
 		NcNoteCard,
 		NcButton,
 		NcListItem,
-		NcDateTimePickerNative,
 		NcTextField,
 		NcCheckboxRadioSwitch,
 		FilterOutline,
@@ -229,6 +223,7 @@ export default {
 		CloseCircle,
 		InformationOutline,
 		FilterOffOutline,
+		DateRangeInput,
 	},
 	data() {
 		return {

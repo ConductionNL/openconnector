@@ -43,16 +43,13 @@ import { eventStore } from '../../store/store.js'
 						{{ t('openconnector', 'Date Range') }}
 					</label>
 					<div class="dateRangeContainer">
-						<NcDateTimePickerNative
-							v-model="filters.startDate"
-							type="datetime-local"
-							:placeholder="t('openconnector', 'Start date')"
-							@update:model-value="handleFilterChange" />
-						<NcDateTimePickerNative
-							v-model="filters.endDate"
-							type="datetime-local"
-							:placeholder="t('openconnector', 'End date')"
-							@update:model-value="handleFilterChange" />
+						<DateRangeInput
+							:start="filters.startDate"
+							:end="filters.endDate"
+							:max-start="new Date()"
+							@update:start="(v) => { filters.startDate = v; }"
+							@update:end="(v) => { filters.endDate = v; }"
+							@change="handleFilterChange" />
 					</div>
 				</div>
 
@@ -161,10 +158,11 @@ import { eventStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcAppSidebar, NcSelect, NcTextField, NcButton, NcCheckboxRadioSwitch, NcDateTimePickerNative, NcNoteCard } from '@nextcloud/vue'
+import { NcAppSidebar, NcSelect, NcTextField, NcButton, NcCheckboxRadioSwitch, NcNoteCard } from '@nextcloud/vue'
 import { translate as t } from '@nextcloud/l10n'
 import Close from 'vue-material-design-icons/Close.vue'
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
+import DateRangeInput from '../../components/DateRangeInput.vue'
 
 export default {
 	name: 'EventLogSideBar',
@@ -174,10 +172,10 @@ export default {
 		NcTextField,
 		NcButton,
 		NcCheckboxRadioSwitch,
-		NcDateTimePickerNative,
 		NcNoteCard,
 		Close,
 		InformationOutline,
+		DateRangeInput,
 	},
 	data() {
 		return {
