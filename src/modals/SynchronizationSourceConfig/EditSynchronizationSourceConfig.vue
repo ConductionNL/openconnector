@@ -4,7 +4,8 @@ import { Synchronization } from '../../entities/index.js'
 </script>
 
 <template>
-	<NcModal ref="modalRef"
+	<NcModal
+		ref="modalRef"
 		label-id="editSourceConfig"
 		@close="closeModal">
 		<div class="modalContent">
@@ -27,8 +28,7 @@ import { Synchronization } from '../../entities/index.js'
 						:value.sync="sourceConfig.key" />
 					<NcTextField
 						id="sourceConfigValue"
-						label="Source Config Value*"
-						required
+						label="Source Config Value"
 						:value.sync="sourceConfig.value" />
 				</div>
 			</form>
@@ -36,11 +36,10 @@ import { Synchronization } from '../../entities/index.js'
 			<NcButton v-if="!success"
 				:disabled="loading
 					|| !sourceConfig.key
-					|| !sourceConfig.value
 					/// checks if the key is unique, ignores if the key is not changed
 					|| isTaken(sourceConfig.key)
 					/// checks if the value is the same as the one in the source config, only works if the key is not changed
-					|| synchronizationStore.synchronizationItem.sourceConfig[sourceConfig.key] === sourceConfig.value"
+					|| (synchronizationStore.synchronizationItem?.sourceConfig && synchronizationStore.synchronizationItem.sourceConfig[sourceConfig.key] === sourceConfig.value)"
 				type="primary"
 				@click="editSourceConfig()">
 				<template #icon>
