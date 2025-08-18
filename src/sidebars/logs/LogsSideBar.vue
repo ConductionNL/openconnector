@@ -50,24 +50,13 @@ import { logStore, contractStore, synchronizationStore } from '../../store/store
 			</div>
 
 			<!-- Date Range Filter -->
-			<div class="filter-group">
-				<label>{{ t('openconnector', 'Date Range') }}</label>
-				<div class="date-range">
-					<NcDateTimePickerNative
-						id="logs-date-from"
-						v-model="filters.dateFrom"
-						type="date"
-						:placeholder="t('openconnector', 'From')"
-						@input="applyFilters" />
-					<NcDateTimePickerNative
-						id="logs-date-to"
-						v-model="filters.dateTo"
-						type="date"
-						:placeholder="t('openconnector', 'To')"
-						@input="applyFilters" />
-				</div>
-			</div>
-
+			<DateRangeInput
+				:start="filters.dateFrom"
+				:end="filters.dateTo"
+				:max-start="new Date()"
+				@update:start="(v) => { filters.dateFrom = v; }"
+				@update:end="(v) => { filters.dateTo = v; }"
+				@change="applyFilters" />
 			<!-- Message Filter -->
 			<div class="filter-group">
 				<label>{{ t('openconnector', 'Message') }}</label>
@@ -166,10 +155,10 @@ import {
 	NcTextField,
 	NcButton,
 	NcLoadingIcon,
-	NcDateTimePickerNative,
 } from '@nextcloud/vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Download from 'vue-material-design-icons/Download.vue'
+import DateRangeInput from '../../components/DateRangeInput.vue'
 
 export default {
 	name: 'LogsSideBar',
@@ -178,9 +167,9 @@ export default {
 		NcTextField,
 		NcButton,
 		NcLoadingIcon,
-		NcDateTimePickerNative,
 		Delete,
 		Download,
+		DateRangeInput,
 	},
 	data() {
 		return {
