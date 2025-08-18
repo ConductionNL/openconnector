@@ -4,7 +4,7 @@ import { Synchronization } from '../../entities/index.js'
 </script>
 
 <template>
-	<NcModal v-if="navigationStore.modal === 'editSynchronizationSourceConfig'"
+	<NcModal
 		ref="modalRef"
 		label-id="editSourceConfig"
 		@close="closeModal">
