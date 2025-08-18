@@ -66,6 +66,12 @@
   font-size: 1.1em;
 }
 
+.listHeaderActions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  margin: 0 5px 5px auto !important;
+}
+
 /* Chart Card Specific */
 .chartCard {
   background: var(--color-main-background);
