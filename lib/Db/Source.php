@@ -64,6 +64,8 @@ class Source extends Entity implements JsonSerializable
 	protected ?DateTime $dateModified = null;
 	protected ?array $configurations = []; // Array of configuration IDs that this source belongs to
 	protected ?string $slug = null; // URL-friendly identifier for the source
+	protected ?DateTime $expires = null; // Expiration date for this entity
+	protected ?int $size = null; // Size of this entity in bytes
 
 	/**
 	 * Get the authentication configuration
@@ -179,6 +181,8 @@ class Source extends Entity implements JsonSerializable
 		$this->addType('dateModified', 'datetime');
 		$this->addType('configurations', 'json');
 		$this->addType('slug', 'string');
+		$this->addType('expires', 'datetime');
+		$this->addType('size', 'integer');
 	}
 
 	public function getJsonFields(): array
@@ -286,6 +290,8 @@ class Source extends Entity implements JsonSerializable
 			'dateModified' => isset($this->dateModified) ? $this->dateModified->format('c') : null,
 			'configurations' => $this->configurations,
 			'slug' => $this->getSlug(),
+			'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+			'size' => $this->size,
 		];
 	}
 }

@@ -40,6 +40,8 @@ class Endpoint extends Entity implements JsonSerializable
 	protected ?array 	$rules = []; // Array of rules to be applied
 	protected ?array    $configurations = []; // Array of configuration IDs that this endpoint belongs to
 	protected ?string   $slug = null;
+	protected ?DateTime $expires = null; // When this endpoint expires
+	protected ?int      $size = null; // Size of this endpoint in bytes
 
 	/**
 	 * Get the endpoint array representation
@@ -91,6 +93,8 @@ class Endpoint extends Entity implements JsonSerializable
 		$this->addType(fieldName:'rules', type: 'json');
 		$this->addType(fieldName:'configurations', type: 'json');
 		$this->addType(fieldName:'slug', type: 'string');
+		$this->addType(fieldName:'expires', type: 'datetime');
+		$this->addType(fieldName:'size', type: 'integer');
 	}
 
 	public function getJsonFields(): array
@@ -178,7 +182,9 @@ class Endpoint extends Entity implements JsonSerializable
             'configurations' => $this->configurations,
             'slug' => $this->getSlug(),
             'created' => isset($this->created) ? $this->created->format('c') : null,
-            'updated' => isset($this->updated) ? $this->updated->format('c') : null
+            'updated' => isset($this->updated) ? $this->updated->format('c') : null,
+            'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+            'size' => $this->size
         ];
     }
 }

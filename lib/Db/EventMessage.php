@@ -28,6 +28,8 @@ class EventMessage extends Entity implements JsonSerializable
     protected ?DateTime $nextAttempt = null; // Scheduled time for next attempt
     protected ?DateTime $created = null; // Creation timestamp
     protected ?DateTime $updated = null; // Last update timestamp
+    protected ?DateTime $expires = null; // When this message expires
+    protected ?int $size = null; // Size of this message in bytes
 
     /**
      * Get the message payload
@@ -65,6 +67,8 @@ class EventMessage extends Entity implements JsonSerializable
         $this->addType('nextAttempt', 'datetime');
         $this->addType('created', 'datetime');
         $this->addType('updated', 'datetime');
+        $this->addType('expires', 'datetime');
+        $this->addType('size', 'integer');
     }
 
     /**
@@ -141,7 +145,9 @@ class EventMessage extends Entity implements JsonSerializable
             'lastAttempt' => isset($this->lastAttempt) ? $this->lastAttempt->format('c') : null,
             'nextAttempt' => isset($this->nextAttempt) ? $this->nextAttempt->format('c') : null,
             'created' => isset($this->created) ? $this->created->format('c') : null,
-            'updated' => isset($this->updated) ? $this->updated->format('c') : null
+            'updated' => isset($this->updated) ? $this->updated->format('c') : null,
+            'expires' => isset($this->expires) ? $this->expires->format('c') : null,
+            'size' => $this->size
         ];
     }
 } 
