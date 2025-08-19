@@ -21,7 +21,7 @@ import { eventStore } from '../../store/store.js'
 						:options="eventOptions"
 						:clearable="true"
 						:placeholder="t('openconnector', 'Select event')"
-						@update:model-value="handleFilterChange" />
+						@input="handleFilterChange" />
 				</div>
 
 				<!-- Log Level Filter -->
@@ -34,7 +34,7 @@ import { eventStore } from '../../store/store.js'
 						:options="logLevelOptions"
 						:clearable="true"
 						:placeholder="t('openconnector', 'Select level')"
-						@update:model-value="handleFilterChange" />
+						@input="handleFilterChange" />
 				</div>
 
 				<!-- Date Range Filter -->
@@ -59,10 +59,10 @@ import { eventStore } from '../../store/store.js'
 						{{ t('openconnector', 'Message') }}
 					</label>
 					<NcTextField
-						v-model="filters.message"
+						:value="filters.message"
 						type="text"
 						:placeholder="t('openconnector', 'Search in messages')"
-						@update:model-value="handleFilterChange" />
+						@input="handleMessageFilterChange" />
 				</div>
 
 				<!-- Additional Filters -->
@@ -72,15 +72,15 @@ import { eventStore } from '../../store/store.js'
 					</label>
 					<div class="filterOptions">
 						<NcCheckboxRadioSwitch
-							v-model="filters.showOnlyErrors"
+							:checked="filters.showOnlyErrors"
 							:title="t('openconnector', 'Show only errors')"
-							@update:model-value="handleFilterChange">
+							@update:checked="(v) => { filters.showOnlyErrors = v; handleFilterChange() }">
 							{{ t('openconnector', 'Show only errors') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
-							v-model="filters.showOnlySlow"
+							:checked="filters.showOnlySlow"
 							:title="t('openconnector', 'Show only slow executions')"
-							@update:model-value="handleFilterChange">
+							@update:checked="(v) => { filters.showOnlySlow = v; handleFilterChange() }">
 							{{ t('openconnector', 'Show only slow executions') }}
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -230,6 +230,11 @@ export default {
 		handleFilterChange() {
 			this.$root.$emit('event-log-filters-changed', this.filters)
 			this.updateStatistics()
+		},
+		handleMessageFilterChange(value) {
+			const nextValue = typeof value === 'string' ? value : (value && value.target ? value.target.value : '')
+			this.filters.message = nextValue
+			this.handleFilterChange()
 		},
 		clearFilters() {
 			this.filters = {
