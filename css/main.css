@@ -1,7 +1,8 @@
 :root {
-  --OR-margin-10: 10px;
-  --OR-margin-20: 20px;
-  --OR-margin-50: 50px;
+  --OC-margin-10: 10px;
+  --OC-margin-20: 20px;
+  --OC-margin-30: 30px;
+  --OC-margin-50: 50px;
 }
 
 /* Card Components */
@@ -266,9 +267,9 @@
 /* Detail pages */
 
 .detailContainer {
-  margin-block-start: var(--OR-margin-20);
-  margin-inline-start: var(--OR-margin-20);
-  margin-inline-end: var(--OR-margin-20);
+  margin-block-start: var(--OC-margin-20);
+  margin-inline-start: var(--OC-margin-20);
+  margin-inline-end: var(--OC-margin-20);
 }
 
 .tabContainer > * ul > li {
@@ -306,7 +307,7 @@
 }
 
 .tabContainer > * div[role="tabpanel"] {
-  margin-block-start: var(--OR-margin-10);
+  margin-block-start: var(--OC-margin-10);
 }
 
 .tabPanel {
@@ -1333,4 +1334,16 @@
 	justify-content: flex-end;
 	gap: 12px;
 	margin-top: 20px;
+}
+
+.logModalContent {
+  margin: var(--OC-margin-30);
+}
+
+.logModalContentHeader {
+  text-align: center;
+}
+
+.logModalContent > *:not(:last-child) {
+  margin-block-end: 1rem;
 }

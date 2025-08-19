@@ -120,19 +120,6 @@ div[class='modal-container']:has(.TestMappingMainModal) {
 .content > *:not(:last-child) {
     border-right: 1px solid gray;
 }
-.content > *:first-child {
-    width: 25%;
-    padding-right: var(--OC-margin-30);
-}
-.content > *:nth-child(2) {
-    width: 50%;
-     padding: 0 var(--OC-margin-30);
-}
-.content > *:last-child {
-    width: 25%;
-	 padding-left: var(--OC-margin-30);
-
-}
 
 .content > :deep(h4) {
     margin-top: 0;
