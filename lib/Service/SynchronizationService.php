@@ -825,21 +825,33 @@ class SynchronizationService
 		return $deletedObjectsCount;
 	}
 
-    public function sortNestedArrayAssoc(&$a)
+    /**
+     * Recursively sort an associative array by key.
+     *
+     * @param $array array The array to sort.
+     * @return bool Whether or not the sort is successful.
+     */
+    public function sortNestedArray(array &$array): bool
     {
-        if (!is_array($a)) {
+        if (!is_array($array)) {
             return false;
         }
-        ksort($a);
-        foreach ($a as $k=>$v) {
-            $this->sortNestedArrayAssoc($a[$k]);
+        ksort($array);
+        foreach ($array as $k=> $v) {
+            $this->sortNestedArray($array[$k]);
         }
         return true;
     }
 
+    /**
+     * Hash an object in a unified order, so the order in which keys are given does not influence the hash.
+     *
+     * @param array $object The object to hash.
+     * @return string The object hash.
+     */
     private function hashObject (array $object): string
     {
-        $this->sortNestedArrayAssoc($object);
+        $this->sortNestedArray($object);
 
         return md5(serialize($object));
     }
@@ -1069,7 +1081,7 @@ class SynchronizationService
 				// Get the id form the target object
 				$synchronizationContract->setTargetId($target->getUuid());
 
-//                //@TODO: This should be done in the fetch file rule _after_ syncing the documents and when all filenames are known
+                //@TODO: Orphan cleanup is done also in the fetch file rule, this can be removed after a succesful test.
 //				// Clean up orphaned files based on the attachments array
 //				if (isset($targetObject['attachments']) && is_array($targetObject['attachments'])) {
 //					try {
