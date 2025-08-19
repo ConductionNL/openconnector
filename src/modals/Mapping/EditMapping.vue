@@ -556,6 +556,13 @@ import { Mapping } from '../../entities/index.js'
 
 			<!-- Action Buttons -->
 			<div v-if="!success" class="modal-actions">
+				<NcButton v-if="!success"
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
 				<NcButton :disabled="testLoading || !validJson(inputObject.value) || !validJson(mappingItem.mapping) || !validJson(mappingItem.cast, true)"
 					type="secondary"
 					@click="testMapping">
@@ -614,6 +621,7 @@ import Close from 'vue-material-design-icons/Close.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 import openLink from '../../services/openLink.js'
 
@@ -650,6 +658,7 @@ export default {
 		Pencil,
 		Delete,
 		Plus,
+		CancelIcon,
 	},
 	setup() {
 		return {

@@ -93,6 +93,7 @@ import { mappingStore } from '../../../store/store.js'
 						|| !registers.value?.id // no register selected
 						|| !mappingTest.result?.resultObject /* result object does not exist */"
 					type="primary"
+					class="single-modal-action"
 					@click="saveObject()">
 					<template #icon>
 						<NcLoadingIcon v-if="saveObjectLoading" :size="20" />
@@ -230,6 +231,9 @@ export default {
 <style scoped>
 .content {
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 .result {
     color: var(--color-main-text);
@@ -242,7 +246,9 @@ export default {
     margin: 20px 0.5rem;
 }
 .result pre {
-	white-space: break-spaces;
+	white-space: pre-wrap;
+	word-break: break-word;
+	overflow-wrap: anywhere;
 }
 
 .valid {
@@ -281,5 +287,17 @@ export default {
 }
 .custom-select-option > h6 {
     line-height: 0.8;
+}
+/* truncate long option labels/descriptions */
+.custom-select-option > span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.custom-select-option > span h6,
+.custom-select-option > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 </style>

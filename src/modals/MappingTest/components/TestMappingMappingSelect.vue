@@ -81,7 +81,7 @@ import { mappingStore } from '../../../store/store.js'
 								{{ summary }}
 							</span>
 							<!-- custom style is disabled -->
-							<p v-if="removeStyle">
+							<p v-if="removeStyle" class="truncate">
 								{{ label }}
 							</p>
 						</div>
@@ -116,7 +116,7 @@ import { mappingStore } from '../../../store/store.js'
 								{{ fullSchema.summary }}
 							</span>
 							<!-- custom style is disabled -->
-							<p v-if="removeStyle">
+							<p v-if="removeStyle" class="truncate">
 								{{ label }}
 							</p>
 						</div>
@@ -155,7 +155,14 @@ import { mappingStore } from '../../../store/store.js'
 					label="unset"
 					helper-text="Enter a comma-separated list of keys." />
 
-				<div class="buttons">
+				<div class="modal-actions">
+					<NcButton v-if="!success"
+						@click="closeModal">
+						<template #icon>
+							<CancelIcon size="20" />
+						</template>
+						Cancel
+					</NcButton>
 					<NcButton class="reset-button"
 						type="secondary"
 						@click="setupEditFields(mappings.value?.id)">
@@ -164,16 +171,6 @@ import { mappingStore } from '../../../store/store.js'
 						</template>
 						Reset
 					</NcButton>
-					<NcButton class="save-button"
-						type="primary"
-						@click="saveMappingChanges()">
-						<template #icon>
-							<NcLoadingIcon v-if="savingMapping" :size="20" />
-							<ContentSaveOutline v-if="!savingMapping" :size="20" />
-						</template>
-						Save
-					</NcButton>
-
 					<NcButton :disabled="mappingTest.loading || !mappings.value || !inputObject.isValid || !validJson(mappingItem.mapping) || !validJson(mappingItem.cast, true)"
 						class="test-button"
 						type="success"
@@ -183,6 +180,15 @@ import { mappingStore } from '../../../store/store.js'
 							<TestTube v-if="!mappingTest.loading" :size="20" />
 						</template>
 						Test
+					</NcButton>
+					<NcButton class="save-button"
+						type="primary"
+						@click="saveMappingChanges()">
+						<template #icon>
+							<NcLoadingIcon v-if="savingMapping" :size="20" />
+							<ContentSaveOutline v-if="!savingMapping" :size="20" />
+						</template>
+						Save
 					</NcButton>
 				</div>
 			</div>
@@ -205,6 +211,7 @@ import {
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 import SitemapOutline from 'vue-material-design-icons/SitemapOutline.vue'
 import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
@@ -227,6 +234,7 @@ export default {
 		NcActionButton,
 		NcLoadingIcon,
 		NcNoteCard,
+		CancelIcon,
 	},
 	props: {
 		inputObject: {
@@ -294,6 +302,9 @@ export default {
 		this.fetchSchemas()
 	},
 	methods: {
+		closeModal() {
+			this.$emit('close-modal')
+		},
 		emitMappingSelected(event) {
 			this.$emit('mapping-selected', {
 				selected: event,
@@ -542,6 +553,9 @@ export default {
 
 .content {
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .textarea :deep(textarea) {
@@ -552,7 +566,7 @@ export default {
 .mapping-select {
     display: grid;
 	grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 12px;
 }
 
 .mapping-select > .v-select {
@@ -574,12 +588,30 @@ export default {
     display: flex;
     align-items: center;
     gap: 10px;
+    overflow: hidden;
 }
 .mapping-option > .material-design-icon {
     margin-block-start: 2px;
 }
 .mapping-option > h6 {
     line-height: 0.8;
+}
+/* truncate long labels and summaries */
+.mapping-option > span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.mapping-option > span h6,
+.mapping-option > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* select style */
@@ -593,13 +625,12 @@ export default {
     margin-block-end: 1rem !important;
 }
 
-.buttons {
+/* modal action buttons layout */
+.modal-actions {
     display: flex;
-    gap: 0.5rem;
-    margin-block-start: var(--OC-margin-10);
-}
-
-.test-button {
-    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
 }
 </style>

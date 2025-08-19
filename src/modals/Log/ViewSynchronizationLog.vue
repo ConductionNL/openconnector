@@ -117,17 +117,4 @@ export default {
 .keyColumn {
     padding-inline-end: 10px;
 }
-
-.logModalContent {
-    margin: var(--OC-margin-30);
-}
-
-.logModalContentHeader {
-    text-align: center;
-}
-
-.logModalContent > *:not(:last-child) {
-    margin-block-end: 1rem;
-}
-
 </style>
