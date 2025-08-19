@@ -109,10 +109,13 @@ div[class='modal-container']:has(.TestMappingMainModal) {
     height: 600px;
     display: flex;
     flex-direction: row;
+    gap: 12px;
 }
 .content > * {
     height: 100%;
     overflow: auto;
+    padding-top: var(--OC-margin-20);
+    padding-bottom: var(--OC-margin-20);
 }
 .content > *:not(:last-child) {
     border-right: 1px solid gray;

@@ -81,7 +81,7 @@ import { mappingStore } from '../../../store/store.js'
 								{{ summary }}
 							</span>
 							<!-- custom style is disabled -->
-							<p v-if="removeStyle">
+							<p v-if="removeStyle" class="truncate">
 								{{ label }}
 							</p>
 						</div>
@@ -116,7 +116,7 @@ import { mappingStore } from '../../../store/store.js'
 								{{ fullSchema.summary }}
 							</span>
 							<!-- custom style is disabled -->
-							<p v-if="removeStyle">
+							<p v-if="removeStyle" class="truncate">
 								{{ label }}
 							</p>
 						</div>
@@ -553,6 +553,9 @@ export default {
 
 .content {
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .textarea :deep(textarea) {
@@ -563,7 +566,7 @@ export default {
 .mapping-select {
     display: grid;
 	grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 12px;
 }
 
 .mapping-select > .v-select {
@@ -585,12 +588,30 @@ export default {
     display: flex;
     align-items: center;
     gap: 10px;
+    overflow: hidden;
 }
 .mapping-option > .material-design-icon {
     margin-block-start: 2px;
 }
 .mapping-option > h6 {
     line-height: 0.8;
+}
+/* truncate long labels and summaries */
+.mapping-option > span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.mapping-option > span h6,
+.mapping-option > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* select style */
@@ -602,5 +623,14 @@ export default {
 .edit-mapping > h4 {
     margin-block-start: 2rem !important;
     margin-block-end: 1rem !important;
+}
+
+/* modal action buttons layout */
+.modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
 }
 </style>
