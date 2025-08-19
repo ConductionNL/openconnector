@@ -202,19 +202,6 @@ export default {
     color: var(--color-text-lighter);
 }
 
-.logModalContent {
-    margin: var(--OC-margin-30);
-}
-
-.logModalContentHeader {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.logModalContent > *:not(:last-child) {
-    margin-block-end: 1rem;
-}
-
 /* modal */
 div[class='modal-container']:has(.ViewSourceLog) {
     width: clamp(150px, 100%, 800px) !important;
