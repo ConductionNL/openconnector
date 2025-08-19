@@ -224,6 +224,11 @@ import { Synchronization } from '../../entities/index.js'
 										v-model="sourceTargetMappingOptions.targetValue"
 										:loading="sourceTargetMappingLoading"
 										input-label="Target → Source Mapping" />
+
+									<NcSelect v-bind="sourceTargetMappingOptions"
+										v-model="sourceTargetMappingOptions.hashValue"
+										:loading="sourceTargetMappingLoading"
+										input-label="Source → Hash Mapping" />
 								</div>
 							</div>
 						</div>
