@@ -40,11 +40,7 @@ import { logStore, navigationStore, sourceStore } from '../../store/store.js'
 						:input-label="t('openconnector', 'Status Codes')"
 						:multiple="true"
 						:clearable="true"
-						@input="applyFilters">
-						<template #option="{ option }">
-							{{ option && option.label ? option.label : option }}
-						</template>
-					</NcSelect>
+						@input="applyFilters" />
 				</div>
 				<div class="filterGroup">
 					<label for="methodSelect">{{ t('openconnector', 'HTTP Methods') }}</label>
@@ -56,11 +52,7 @@ import { logStore, navigationStore, sourceStore } from '../../store/store.js'
 						:input-label="t('openconnector', 'HTTP Methods')"
 						:multiple="true"
 						:clearable="true"
-						@input="applyFilters">
-						<template #option="{ option }">
-							{{ option && option.label ? option.label : option }}
-						</template>
-					</NcSelect>
+						@input="applyFilters" />
 				</div>
 				<div class="filterGroup">
 					<label>{{ t('openconnector', 'Date Range') }}</label>
@@ -76,22 +68,22 @@ import { logStore, navigationStore, sourceStore } from '../../store/store.js'
 					<label for="endpointFilter">{{ t('openconnector', 'Endpoint') }}</label>
 					<NcTextField
 						id="endpointFilter"
-						v-model="endpointFilter"
+						:value="endpointFilter"
 						:label="t('openconnector', 'Filter by endpoint')"
 						:placeholder="t('openconnector', 'Enter endpoint URL')"
-						@update:value="handleEndpointFilterChange" />
+						@input="handleEndpointFilterChange" />
 				</div>
 				<div class="filterGroup">
 					<NcCheckboxRadioSwitch
-						v-model="showOnlyErrors"
-						@update:checked="applyFilters">
+						:checked="showOnlyErrors"
+						@update:checked="(v) => { showOnlyErrors = v; applyFilters() }">
 						{{ t('openconnector', 'Show only errors (4xx, 5xx)') }}
 					</NcCheckboxRadioSwitch>
 				</div>
 				<div class="filterGroup">
 					<NcCheckboxRadioSwitch
-						v-model="showSlowRequests"
-						@update:checked="applyFilters">
+						:checked="showSlowRequests"
+						@update:checked="(v) => { showSlowRequests = v; applyFilters() }">
 						{{ t('openconnector', 'Show slow requests (>5s)') }}
 					</NcCheckboxRadioSwitch>
 				</div>
@@ -366,7 +358,8 @@ export default {
 		 * @param {string} value - The endpoint filter value
 		 */
 		handleEndpointFilterChange(value) {
-			this.endpointFilter = value
+			const nextValue = typeof value === 'string' ? value : (value && value.target ? value.target.value : '')
+			this.endpointFilter = nextValue
 			this.debouncedApplyFilters()
 		},
 		/**
@@ -552,7 +545,7 @@ export default {
 }
 
 .actionGroup {
-	padding: 0 16px;
+	padding: 12px;
 	margin-bottom: 12px;
 }
 
