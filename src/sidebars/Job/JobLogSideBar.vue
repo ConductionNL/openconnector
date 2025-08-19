@@ -25,9 +25,9 @@ import { logStore, navigationStore, jobStore } from '../../store/store.js'
 						id="jobSelect"
 						v-model="selectedJob"
 						:options="jobOptions"
-						label="Job"
+						:input-label="t('openconnector', 'Job')"
 						placeholder="Select a job"
-						@update:modelValue="onJobSelected" />
+						@input="onJobSelected" />
 				</div>
 				<div class="filterGroup">
 					<label for="levelSelect">{{ t('openconnector', 'Log Levels') }}</label>
@@ -39,11 +39,7 @@ import { logStore, navigationStore, jobStore } from '../../store/store.js'
 						:input-label="t('openconnector', 'Log Levels')"
 						:multiple="true"
 						:clearable="true"
-						@input="applyFilters">
-						<template #option="{ option }">
-							{{ option && option.label ? option.label : option }}
-						</template>
-					</NcSelect>
+						@input="applyFilters" />
 				</div>
 				<div class="filterGroup">
 					<label>{{ t('openconnector', 'Date Range') }}</label>
@@ -59,33 +55,25 @@ import { logStore, navigationStore, jobStore } from '../../store/store.js'
 					<label for="messageFilter">{{ t('openconnector', 'Message') }}</label>
 					<NcTextField
 						id="messageFilter"
-						v-model="messageFilter"
+						:value="messageFilter"
 						:label="t('openconnector', 'Filter by message')"
 						:placeholder="t('openconnector', 'Enter message text')"
-						@update:value="handleMessageFilterChange" />
+						@input="handleMessageFilterChange" />
 				</div>
-				<div class="filterGroup">
-					<NcCheckboxRadioSwitch
-						v-model="filters.showOnlyErrors"
-						:checked="filters.showOnlyErrors"
-						:button-variant="true"
-						name="show_only_errors"
-						type="checkbox"
-						@update:checked="(val) => { filters.showOnlyErrors = val; applyFilters() }">
-						{{ t('openconnector', 'Show only errors') }}
-					</NcCheckboxRadioSwitch>
-				</div>
-				<div class="filterGroup">
-					<NcCheckboxRadioSwitch
-						v-model="filters.showOnlySlow"
-						:checked="filters.showOnlySlow"
-						:button-variant="true"
-						name="show_only_slow"
-						type="checkbox"
-						@update:checked="(val) => { filters.showOnlySlow = val; applyFilters() }">
-						{{ t('openconnector', 'Show only slow executions') }}
-					</NcCheckboxRadioSwitch>
-				</div>
+				<NcCheckboxRadioSwitch
+					:checked="filters.showOnlyErrors"
+					name="show_only_errors"
+					type="checkbox"
+					@update:checked="(val) => { filters.showOnlyErrors = val; applyFilters() }">
+					{{ t('openconnector', 'Show only errors') }}
+				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch
+					:checked="filters.showOnlySlow"
+					name="show_only_slow"
+					type="checkbox"
+					@update:checked="(val) => { filters.showOnlySlow = val; applyFilters() }">
+					{{ t('openconnector', 'Show only slow executions') }}
+				</NcCheckboxRadioSwitch>
 			</div>
 
 			<div class="actionGroup">
@@ -275,7 +263,8 @@ export default {
 		},
 		selectedJobValue() {
 			if (!jobStore.jobItem) return null
-			return jobStore.jobList?.find(j => j.id === jobStore.jobItem.id) || null
+			const found = jobStore.jobList?.find(j => j.id === jobStore.jobItem.id) || null
+			return found ? { value: found, label: found.name, title: found.name } : null
 		},
 	},
 	watch: {
@@ -356,7 +345,8 @@ export default {
 		 * @param {string} value - The message filter value
 		 */
 		handleMessageFilterChange(value) {
-			this.messageFilter = value
+			const nextValue = typeof value === 'string' ? value : (value && value.target ? value.target.value : '')
+			this.messageFilter = nextValue
 			this.debouncedApplyFilters()
 		},
 		/**
@@ -367,15 +357,20 @@ export default {
 
 			// Build level filter
 			if (Array.isArray(this.selectedLevels) && this.selectedLevels.length > 0) {
-				const levels = this.selectedLevels.filter(l => l && l.value).map(l => l.value)
+				const levels = this.selectedLevels
+					.filter(l => (l && (l.value || typeof l === 'string')))
+					.map(l => (typeof l === 'string' ? l : l.value))
 				if (levels.length > 0) {
 					filters.level = levels.join(',')
 				}
 			}
 
 			// Build job filter
-			if (this.selectedJob && this.selectedJob.value) {
-				filters.job_id = this.selectedJob.value.id.toString()
+			if (this.selectedJob) {
+				const jobObj = this.selectedJob.value ? this.selectedJob.value : this.selectedJob
+				if (jobObj && jobObj.id) {
+					filters.job_id = jobObj.id.toString()
+				}
 			}
 
 			// Date filters
@@ -502,9 +497,12 @@ export default {
 		 * @param {object} job - The selected job object
 		 */
 		onJobSelected(job) {
-			this.selectedJob = job
-			this.filters.jobId = job?.id || null
-			jobStore.selectedJobId = job?.id || null
+			// NcSelect (vue2) may emit either the option object or its raw value
+			const jobObj = job && job.value ? job.value : job
+			this.selectedJob = job && job.value ? job : (jobObj ? { value: jobObj, label: jobObj.name, title: jobObj.name } : null)
+			const jobId = jobObj && jobObj.id ? jobObj.id : null
+			this.filters.jobId = jobId
+			jobStore.selectedJobId = jobId
 			this.loadLogData()
 		},
 	},
@@ -546,12 +544,27 @@ export default {
 }
 
 .actionGroup {
-	padding: 0 16px;
+	padding-top: 12px;
 	margin-bottom: 12px;
 }
 
 .filter-hint {
 	margin: 8px 16px;
+}
+
+/* Ensure select dropdown is readable and above the sidebar */
+:deep(.v-select .vs__dropdown-menu) {
+	background: var(--color-main-background);
+	border: 1px solid var(--color-border);
+	z-index: 9999;
+}
+:deep(.v-select .vs__dropdown-menu .vs__dropdown-option) {
+	color: var(--color-text-maxcontrast);
+}
+:deep(.v-select .vs__dropdown-menu .vs__dropdown-option--highlight),
+:deep(.v-select .vs__dropdown-menu .vs__dropdown-option--selected) {
+	background: var(--color-primary-element-light);
+	color: var(--color-primary-text);
 }
 
 .statsSection {
