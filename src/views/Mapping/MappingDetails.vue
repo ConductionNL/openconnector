@@ -204,18 +204,18 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 											:size="44" />
 									</template>
 									<template #actions>
-																			<NcActionButton close-after-click @click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(value); navigationStore.setDialog('editMappingItem')">
-										<template #icon>
-											<Pencil :size="20" />
-										</template>
-										Edit
-									</NcActionButton>
-																			<NcActionButton close-after-click @click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(value); navigationStore.setDialog('deleteMappingItem')">
-										<template #icon>
-											<Delete :size="20" />
-										</template>
-										Delete
-									</NcActionButton>
+										<NcActionButton close-after-click @click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(value); navigationStore.setDialog('editMappingItem')">
+											<template #icon>
+												<Pencil :size="20" />
+											</template>
+											Edit
+										</NcActionButton>
+										<NcActionButton close-after-click @click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(value); navigationStore.setDialog('deleteMappingItem')">
+											<template #icon>
+												<Delete :size="20" />
+											</template>
+											Delete
+										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>

@@ -187,13 +187,13 @@ import { Mapping } from '../../entities/index.js'
 													</td>
 													<td class="actions-cell">
 														<NcActions>
-															<NcActionButton @click="openEditMappingItemDialog('mapping', property)" close-after-click>
+															<NcActionButton close-after-click @click="openEditMappingItemDialog('mapping', property)">
 																<template #icon>
 																	<Pencil :size="20" />
 																</template>
 																Edit
 															</NcActionButton>
-															<NcActionButton @click="openDeleteMappingItemDialog('mapping', property)" close-after-click>
+															<NcActionButton close-after-click @click="openDeleteMappingItemDialog('mapping', property)">
 																<template #icon>
 																	<Delete :size="20" />
 																</template>
@@ -234,13 +234,13 @@ import { Mapping } from '../../entities/index.js'
 													</td>
 													<td class="actions-cell">
 														<NcActions>
-															<NcActionButton @click="openEditMappingItemDialog('cast', property)" close-after-click>
+															<NcActionButton close-after-click @click="openEditMappingItemDialog('cast', property)">
 																<template #icon>
 																	<Pencil :size="20" />
 																</template>
 																Edit
 															</NcActionButton>
-															<NcActionButton @click="openDeleteMappingItemDialog('cast', property)" close-after-click>
+															<NcActionButton close-after-click @click="openDeleteMappingItemDialog('cast', property)">
 																<template #icon>
 																	<Delete :size="20" />
 																</template>
@@ -277,13 +277,13 @@ import { Mapping } from '../../entities/index.js'
 													</td>
 													<td class="actions-cell">
 														<NcActions>
-															<NcActionButton @click="openEditMappingItemDialog('unset', property)" close-after-click>
+															<NcActionButton close-after-click @click="openEditMappingItemDialog('unset', property)">
 																<template #icon>
 																	<Pencil :size="20" />
 																</template>
 																Edit
 															</NcActionButton>
-															<NcActionButton @click="openDeleteMappingItemDialog('unset', property)" close-after-click>
+															<NcActionButton close-after-click @click="openDeleteMappingItemDialog('unset', property)">
 																<template #icon>
 																	<Delete :size="20" />
 																</template>
