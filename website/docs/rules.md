@@ -223,3 +223,8 @@ The rule addition process includes:
 - Error catching and display if the save fails
 - Loading state management during the save process
 - Success/error message display to the user
+
+The error handling rule takes three parameters:
+- `name`: The name/title of the error
+- `message`: The more detailed explanation of the error
+- `includeJsonLogicResult`: When the conditions of the error are properly defined, the result of the json logic will be included in the field `errors`. When ZGW-style error reporting is enabled (it is by default on endpoints at this moment in time), this means that the result will be included in the field `invalidParams`.  
