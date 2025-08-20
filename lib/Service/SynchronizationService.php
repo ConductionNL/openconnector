@@ -828,10 +828,10 @@ class SynchronizationService
     /**
      * Recursively sort an associative array by key.
      *
-     * @param $array array The array to sort.
+     * @param $array mixed The array to sort.
      * @return bool Whether or not the sort is successful.
      */
-    public function sortNestedArray(array &$array): bool
+    public function sortNestedArray(mixed &$array): bool
     {
         if (!is_array($array)) {
             return false;
