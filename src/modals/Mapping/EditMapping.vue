@@ -6,6 +6,7 @@ import { Mapping } from '../../entities/index.js'
 <template>
 	<NcModal v-if="navigationStore.modal === 'editMapping'"
 		ref="modalRef"
+		class="EditMappingMainModal"
 		label-id="editMapping"
 		size="large"
 		:can-close="true"
@@ -123,6 +124,8 @@ import { Mapping } from '../../entities/index.js'
 										:value.sync="mappingItem.name"
 										label="Name"
 										placeholder="Enter mapping name"
+										:error="!isValidName"
+										:helper-text="!isValidName ? 'Name must contain at least one letter or number' : ''"
 										required />
 
 									<NcTextArea
@@ -160,33 +163,37 @@ import { Mapping } from '../../entities/index.js'
 							<h3>Transform</h3>
 						</div>
 						<div class="section-content">
-							<BTabs content-class="mt-3" justified>
+							<BTabs content-class="transform-tab-content"
+								justified
+								class="transform-tabs">
 								<!-- Mapping Tab -->
 								<BTab title="Mapping">
-									<div class="table-container">
-										<table class="statisticsTable">
+									<div class="table-container mapping-property-table">
+										<table v-if="Object.keys(mappingRules).length" class="statisticsTable">
 											<thead>
 												<tr>
-													<th>Target Property</th>
-													<th>Source Property/Template</th>
-													<th>Actions</th>
+													<th>Target</th>
+													<th>Source</th>
+													<th />
 												</tr>
 											</thead>
 											<tbody>
 												<tr v-for="(template, property) in mappingRules" :key="property">
-													<td>{{ property }}</td>
+													<td class="property-cell">
+														<span v-tooltip="property" class="mapping-property">{{ property }}</span>
+													</td>
 													<td class="template-cell">
-														{{ template }}
+														<span v-tooltip="String(template)" class="mapping-template">{{ template }}</span>
 													</td>
 													<td class="actions-cell">
 														<NcActions>
-															<NcActionButton @click="editMappingRule(property, template)">
+															<NcActionButton @click="openEditMappingItemDialog('mapping', property)" close-after-click>
 																<template #icon>
 																	<Pencil :size="20" />
 																</template>
 																Edit
 															</NcActionButton>
-															<NcActionButton @click="deleteMappingRule(property)">
+															<NcActionButton @click="openDeleteMappingItemDialog('mapping', property)" close-after-click>
 																<template #icon>
 																	<Delete :size="20" />
 																</template>
@@ -197,7 +204,7 @@ import { Mapping } from '../../entities/index.js'
 												</tr>
 											</tbody>
 										</table>
-										<NcButton type="primary" @click="addMappingRule">
+										<NcButton type="primary" @click="openEditMappingItemDialog('mapping', null)">
 											<template #icon>
 												<Plus :size="20" />
 											</template>
@@ -208,28 +215,32 @@ import { Mapping } from '../../entities/index.js'
 
 								<!-- Cast Tab -->
 								<BTab title="Cast">
-									<div class="table-container">
-										<table class="statisticsTable">
+									<div class="table-container mapping-property-table">
+										<table v-if="Object.keys(castRules).length" class="statisticsTable">
 											<thead>
 												<tr>
 													<th>Property</th>
 													<th>Cast Type</th>
-													<th>Actions</th>
+													<th />
 												</tr>
 											</thead>
 											<tbody>
 												<tr v-for="(castType, property) in castRules" :key="property">
-													<td>{{ property }}</td>
-													<td>{{ castType }}</td>
+													<td class="property-cell">
+														<span v-tooltip="property" class="mapping-property">{{ property }}</span>
+													</td>
+													<td>
+														<span v-tooltip="String(castType)" class="mapping-template">{{ castType }}</span>
+													</td>
 													<td class="actions-cell">
 														<NcActions>
-															<NcActionButton @click="editCastRule(property, castType)">
+															<NcActionButton @click="openEditMappingItemDialog('cast', property)" close-after-click>
 																<template #icon>
 																	<Pencil :size="20" />
 																</template>
 																Edit
 															</NcActionButton>
-															<NcActionButton @click="deleteCastRule(property)">
+															<NcActionButton @click="openDeleteMappingItemDialog('cast', property)" close-after-click>
 																<template #icon>
 																	<Delete :size="20" />
 																</template>
@@ -240,7 +251,7 @@ import { Mapping } from '../../entities/index.js'
 												</tr>
 											</tbody>
 										</table>
-										<NcButton type="primary" @click="addCastRule">
+										<NcButton type="primary" @click="openEditMappingItemDialog('cast', null)">
 											<template #icon>
 												<Plus :size="20" />
 											</template>
@@ -251,26 +262,28 @@ import { Mapping } from '../../entities/index.js'
 
 								<!-- Unset Tab -->
 								<BTab title="Unset">
-									<div class="table-container">
-										<table class="statisticsTable">
+									<div class="table-container mapping-property-table">
+										<table v-if="unsetRules.length" class="statisticsTable">
 											<thead>
 												<tr>
 													<th>Property</th>
-													<th>Actions</th>
+													<th />
 												</tr>
 											</thead>
 											<tbody>
 												<tr v-for="(property, index) in unsetRules" :key="index">
-													<td>{{ property }}</td>
+													<td class="property-cell">
+														{{ property }}
+													</td>
 													<td class="actions-cell">
 														<NcActions>
-															<NcActionButton @click="editUnsetRule(index, property)">
+															<NcActionButton @click="openEditMappingItemDialog('unset', property)" close-after-click>
 																<template #icon>
 																	<Pencil :size="20" />
 																</template>
 																Edit
 															</NcActionButton>
-															<NcActionButton @click="deleteUnsetRule(index)">
+															<NcActionButton @click="openDeleteMappingItemDialog('unset', property)" close-after-click>
 																<template #icon>
 																	<Delete :size="20" />
 																</template>
@@ -283,7 +296,7 @@ import { Mapping } from '../../entities/index.js'
 										</table>
 										<NcButton type="primary"
 											:disabled="!mappingItem.passThrough"
-											@click="addUnsetRule">
+											@click="openEditMappingItemDialog('unset', null)">
 											<template #icon>
 												<Plus :size="20" />
 											</template>
@@ -301,7 +314,8 @@ import { Mapping } from '../../entities/index.js'
 										<div class="form-group">
 											<span class="flex-container">
 												<NcCheckboxRadioSwitch
-													:checked.sync="mappingItem.passThrough">
+													:checked="passThroughLocal"
+													@update:checked="onPassThroughChange">
 													Pass Through
 												</NcCheckboxRadioSwitch>
 												<a v-tooltip="'When turning passThrough on, all data from the original object is copied to the new object (passed through the mapper)'"
@@ -559,11 +573,11 @@ import { Mapping } from '../../entities/index.js'
 				<NcButton v-if="!success"
 					@click="closeModal">
 					<template #icon>
-						<CancelIcon size="20" />
+						<CancelIcon :size="20" />
 					</template>
 					Cancel
 				</NcButton>
-				<NcButton :disabled="testLoading || !validJson(inputObject.value) || !validJson(mappingItem.mapping) || !validJson(mappingItem.cast, true)"
+				<NcButton :disabled="testLoading || !isValidName || !validJson(inputObject.value) || !validJson(mappingItem.mapping) || !validJson(mappingItem.cast, true)"
 					type="secondary"
 					@click="testMapping">
 					<template #icon>
@@ -572,7 +586,7 @@ import { Mapping } from '../../entities/index.js'
 					</template>
 					Test
 				</NcButton>
-				<NcButton :disabled="loading || !mappingItem.name || !validJson(mappingItem.mapping) || !validJson(mappingItem.cast, true)"
+				<NcButton :disabled="loading || !isValidName || !validJson(mappingItem.mapping) || !validJson(mappingItem.cast, true)"
 					type="primary"
 					@click="editMapping">
 					<template #icon>
@@ -677,11 +691,13 @@ export default {
 				unset: '',
 				passThrough: false,
 			},
+			passThroughLocal: false,
 			success: null,
 			loading: false,
 			error: false,
 			hasUpdated: false,
 			closeTimeoutFunc: null,
+			storeUnsubscribe: null,
 
 			// Test functionality
 			inputObject: {
@@ -750,40 +766,93 @@ export default {
 		}
 	},
 	computed: {
+		isValidName() {
+			const n = this.mappingItem?.name
+			if (!n || typeof n !== 'string') return false
+			return /[\p{L}\p{N}]/u.test(n)
+		},
 		/**
-		 * Parse mapping JSON into object for table display
+		 * Normalized mapping rules as an object regardless of source type
 		 */
 		mappingRules() {
-			try {
-				return JSON.parse(this.mappingItem.mapping || '{}')
-			} catch {
-				return {}
+			const raw = this.mappingItem?.mapping
+			if (!raw) return {}
+			if (typeof raw === 'string') {
+				try {
+					const parsed = JSON.parse(raw)
+					return parsed && typeof parsed === 'object' ? parsed : {}
+				} catch (e) {
+					return {}
+				}
 			}
+			if (typeof raw === 'object') return raw
+			return {}
 		},
-
 		/**
-		 * Parse cast JSON into object for table display
+		 * Normalized cast rules as an object regardless of source type
 		 */
 		castRules() {
-			try {
-				return JSON.parse(this.mappingItem.cast || '{}')
-			} catch {
-				return {}
+			const raw = this.mappingItem?.cast
+			if (!raw) return {}
+			if (typeof raw === 'string') {
+				try {
+					const parsed = JSON.parse(raw)
+					return parsed && typeof parsed === 'object' ? parsed : {}
+				} catch (e) {
+					return {}
+				}
 			}
+			if (typeof raw === 'object') return raw
+			return {}
 		},
-
 		/**
-		 * Parse unset string into array for table display
+		 * Normalized unset rules as an array regardless of source type
 		 */
 		unsetRules() {
-			if (!this.mappingItem.unset) return []
-			return this.mappingItem.unset.split(',').map(item => item.trim()).filter(item => item)
+			const raw = this.mappingItem?.unset
+			if (!raw) return []
+			if (Array.isArray(raw)) return raw
+			if (typeof raw === 'string') {
+				return raw.split(/ *, */g).filter(Boolean)
+			}
+			return []
+		},
+	},
+	watch: {
+		// Keep local mapping fields in sync with store after edits/deletions from dialogs
+		'mappingStore.mappingItem': {
+			deep: true,
+			handler(newItem) {
+				// Only sync when the edit modal is open and a mapping exists
+				if (navigationStore.modal !== 'editMapping' || !newItem) return
+
+				// Update only the fields modified by item dialogs to avoid clobbering user input
+				this.mappingItem = {
+					...this.mappingItem,
+					mapping: newItem.mapping ?? '{}',
+					cast: newItem.cast ?? '{}',
+					unset: newItem.unset ?? '',
+					passThrough: !!newItem.passThrough,
+				}
+				this.passThroughLocal = !!newItem.passThrough
+			},
 		},
 	},
 	mounted() {
 		this.initializeMappingItem()
 		this.fetchSchemas()
 		this.fetchRegisters()
+		this.storeUnsubscribe = mappingStore.$subscribe(() => {
+			if (navigationStore.modal !== 'editMapping' || !mappingStore.mappingItem) return
+			this.mappingItem = {
+				...this.mappingItem,
+				mapping: mappingStore.mappingItem.mapping ?? '{}',
+				cast: mappingStore.mappingItem.cast ?? '{}',
+				unset: mappingStore.mappingItem.unset ?? '',
+				passThrough: !!mappingStore.mappingItem.passThrough,
+			}
+			this.passThroughLocal = !!mappingStore.mappingItem.passThrough
+		})
 	},
 	updated() {
 		if (navigationStore.modal === 'editMapping' && !this.hasUpdated) {
@@ -791,20 +860,29 @@ export default {
 			this.hasUpdated = true
 		}
 	},
+	unmounted() {
+		this.storeUnsubscribe && this.storeUnsubscribe()
+	},
+	destroyed() {
+		this.storeUnsubscribe && this.storeUnsubscribe()
+	},
 	methods: {
 		/**
 		 * Initialize the mapping item with data from the store or default values
 		 */
 		initializeMappingItem() {
 			if (mappingStore.mappingItem?.id) {
+				// Clone into a plain, mutable object to avoid readonly assignments from entity instances
+				const src = mappingStore.mappingItem
 				this.mappingItem = {
-					...mappingStore.mappingItem,
-					mapping: JSON.stringify(mappingStore.mappingItem.mapping || {}, null, 2),
-					cast: JSON.stringify(mappingStore.mappingItem.cast || {}, null, 2),
-					unset: Array.isArray(mappingStore.mappingItem.unset)
-						? mappingStore.mappingItem.unset.join(', ')
-						: (mappingStore.mappingItem.unset || ''),
+					name: src.name || '',
+					description: src.description || '',
+					mapping: src.mapping ?? '{}',
+					cast: src.cast ?? '{}',
+					unset: src.unset ?? '',
+					passThrough: !!src.passThrough,
 				}
+				this.passThroughLocal = !!this.mappingItem.passThrough
 			} else {
 				this.mappingItem = {
 					name: '',
@@ -814,6 +892,7 @@ export default {
 					unset: '',
 					passThrough: false,
 				}
+				this.passThroughLocal = false
 			}
 		},
 
@@ -979,9 +1058,9 @@ export default {
 					...mappingStore.mappingItem,
 					name: this.mappingItem.name,
 					description: this.mappingItem.description,
-					mapping: JSON.parse(this.mappingItem.mapping),
-					cast: this.mappingItem.cast ? JSON.parse(this.mappingItem.cast) : null,
-					unset: this.mappingItem.unset.split(/ *, */g).filter(Boolean),
+					mapping: this.mappingRules,
+					cast: Object.keys(this.castRules).length ? this.castRules : null,
+					unset: this.unsetRules,
 					passThrough: this.mappingItem.passThrough,
 				}
 
@@ -1062,6 +1141,8 @@ export default {
 			this.error = false
 			this.hasUpdated = false
 			this.resetMapping()
+			// also clear any editing context for dialogs
+			mappingStore.clearEditingContext && mappingStore.clearEditingContext()
 		},
 
 		/**
@@ -1072,10 +1153,11 @@ export default {
 
 			try {
 				const mappingItem = new Mapping({
+					...mappingStore.mappingItem,
 					...this.mappingItem,
-					mapping: JSON.parse(this.mappingItem.mapping),
-					cast: JSON.parse(this.mappingItem.cast),
-					unset: this.mappingItem.unset.split(/ *, */g).filter(Boolean),
+					mapping: this.mappingRules,
+					cast: this.castRules,
+					unset: this.unsetRules,
 				})
 
 				const { response } = await mappingStore.saveMapping(mappingItem)
@@ -1093,12 +1175,17 @@ export default {
 
 		/**
 		 * Validate JSON string
-		 * @param {string} jsonString - The JSON string to validate
+		 * @param {string|object} jsonString - The JSON value to validate
 		 * @param {boolean} optional - Whether the field is optional
 		 * @return {boolean} - Whether the JSON is valid
 		 */
 		validJson(jsonString, optional = false) {
 			if (optional && !jsonString) {
+				return true
+			}
+
+			// Treat non-strings (already objects/arrays) as valid
+			if (typeof jsonString !== 'string') {
 				return true
 			}
 
@@ -1115,9 +1202,10 @@ export default {
 		 * Open dialog to add a new mapping rule
 		 */
 		addMappingRule() {
-			this.mappingDialogData = { property: '', template: '' }
-			this.editingMappingRule = false
-			this.showMappingDialog = true
+			mappingStore.setEditingMode('mapping')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
+			mappingStore.setMappingMappingKey(null)
+			navigationStore.setDialog('editMappingItem')
 		},
 
 		/**
@@ -1171,7 +1259,10 @@ export default {
 		addCastRule() {
 			this.castDialogData = { property: '', castType: '' }
 			this.editingCastRule = false
-			this.showCastDialog = true
+			mappingStore.setEditingMode('cast')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
+			mappingStore.setMappingCastKey(null)
+			navigationStore.setDialog('editMappingItem')
 		},
 
 		/**
@@ -1218,6 +1309,15 @@ export default {
 			this.editingCastRule = false
 		},
 
+		onPassThroughChange(val) {
+			// update local and backing object; mappingItem is a plain object now
+			this.passThroughLocal = !!val
+			this.mappingItem = {
+				...this.mappingItem,
+				passThrough: !!val,
+			}
+		},
+
 		// Unset Rule Dialog Methods
 		/**
 		 * Open dialog to add a new unset property
@@ -1225,7 +1325,10 @@ export default {
 		addUnsetRule() {
 			this.unsetDialogData = { property: '' }
 			this.editingUnsetRule = null
-			this.showUnsetDialog = true
+			mappingStore.setEditingMode('unset')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
+			mappingStore.setMappingUnsetKey(null)
+			navigationStore.setDialog('editMappingItem')
 		},
 
 		/**
@@ -1275,8 +1378,150 @@ export default {
 			this.unsetDialogData = { property: '' }
 			this.editingUnsetRule = null
 		},
+
+		openEditMappingItemDialog(mode, key) {
+			mappingStore.setEditingMode(mode)
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
+			if (mode === 'mapping') {
+				mappingStore.setMappingMappingKey(key)
+			} else if (mode === 'cast') {
+				mappingStore.setMappingCastKey(key)
+			} else if (mode === 'unset') {
+				mappingStore.setMappingUnsetKey(key)
+			}
+			navigationStore.setDialog('editMappingItem')
+		},
+
+		openDeleteMappingItemDialog(mode, key) {
+			mappingStore.setEditingMode(mode)
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
+			if (mode === 'mapping') {
+				mappingStore.setMappingMappingKey(key)
+			} else if (mode === 'cast') {
+				mappingStore.setMappingCastKey(key)
+			} else if (mode === 'unset') {
+				mappingStore.setMappingUnsetKey(key)
+			}
+			navigationStore.setDialog('deleteMappingItem')
+		},
 	},
 }
 </script>
 
 <!-- All CSS is provided by main.css -->
+<style scoped>
+:deep(.modal-container) {
+	width: unset !important;
+	max-width: 1200px !important;
+}
+
+/* Transform tabs styling and spacing */
+:deep(.transform-tabs .nav) {
+	display: flex;
+	justify-content: center;
+	gap: 8px;
+	margin-bottom: 12px;
+	padding-bottom: 12px;
+	padding-top: 12px;
+	border-bottom: 1px solid var(--color-border);
+}
+
+:deep(.transform-tabs .nav-link) {
+	padding: 8px;
+	font-weight: 700;
+	transition: .2s;
+}
+
+:deep(.transform-tabs .nav-link.active) {
+	background: var(--color-background-hover);
+	border-bottom: 2px solid var(--color-primary);
+	color: var(--color-primary);
+}
+
+/* Nice table styling similar to a log/source view */
+.mapping-property-table {
+	margin-top: 8px;
+}
+.statisticsTable {
+	width: 100%;
+	table-layout: fixed;
+	margin-bottom: 12px;
+}
+.statisticsTable thead tr th {
+	text-align: left;
+	font-weight: 700;
+	padding: 10px 12px;
+	background-color: var(--color-background-hover);
+}
+.statisticsTable tbody tr td {
+	padding: 10px 12px;
+	background-color: var(--color-background);
+	vertical-align: middle;
+}
+
+.statisticsTable tbody tr:nth-child(even) td {
+	background-color: var(--color-background-hover);
+}
+.statisticsTable tbody tr {
+	transition: background 0.15s ease-in-out;
+}
+.statisticsTable tbody tr:hover td {
+	background-color: var(--color-background-hover);
+}
+
+/* Cells */
+.property-cell {
+	align-items: center;
+	gap: 6px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.mapping-property {
+	flex: 1 1 auto;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.template-cell {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.actions-cell {
+	width: 120px;
+	text-align: right;
+	white-space: nowrap;
+}
+
+/* Inline icon button for quick edit */
+.icon-inline {
+	background: transparent;
+	border: none;
+	padding: 2px;
+	cursor: pointer;
+	border-radius: 6px;
+	color: inherit;
+	transition: background 0.15s ease-in-out, opacity 0.15s ease-in-out;
+}
+.icon-inline:hover {
+	background: rgba(255, 255, 255, 0.12);
+	opacity: 0.95;
+}
+
+/* Spacing for section content */
+.center-card .section-content {
+	padding: 12px 14px 6px 14px;
+}
+
+/* Add button spacing */
+.table-container .nc-button {
+	margin-top: 8px;
+}
+
+.unset-disabled-note {
+	margin-top: 6px;
+	opacity: 0.8;
+}
+</style>
