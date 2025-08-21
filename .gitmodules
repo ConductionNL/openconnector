@@ -1,0 +1,2 @@
+[submodule "3rdparty"]
+	shallow = true
