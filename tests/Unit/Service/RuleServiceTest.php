@@ -298,6 +298,187 @@ class RuleServiceTest extends TestCase
     }
 
     /**
+     * Test processCustomRule with connectRelations type and complex configuration
+     *
+     * This test verifies that the processCustomRule method correctly
+     * processes connection rules with complex configuration including relationType.
+     *
+     * @covers ::processCustomRule
+     * @return void
+     */
+    public function testProcessCustomRuleWithConnectRelationsComplexConfig(): void
+    {
+        $rule = $this->createMock(Rule::class);
+        $rule->method('getConfiguration')->willReturn([
+            'type' => 'connectRelations',
+            'configuration' => [
+                'sourceType' => 'api',
+                'targetType' => 'database',
+                'relationType' => 'depends_on',
+                'additionalConfig' => 'test-value'
+            ]
+        ]);
+
+        $data = [
+            'path' => '/test/path/550e8400-e29b-41d4-a716-446655440000',
+            'elements' => [
+                [
+                    'identifier' => 'api-service-1',
+                    'type' => 'ApplicationService',
+                    'name' => 'API Service 1'
+                ],
+                [
+                    'identifier' => 'database-service-1',
+                    'type' => 'ApplicationService',
+                    'name' => 'Database Service 1'
+                ]
+            ]
+        ];
+
+        // Mock the catalogue service's extendModel method
+        $this->catalogueService->expects($this->once())
+            ->method('extendModel')
+            ->with('550e8400-e29b-41d4-a716-446655440000');
+
+        $result = $this->ruleService->processCustomRule($rule, $data);
+
+        $this->assertInstanceOf(JSONResponse::class, $result);
+        $this->assertEquals(200, $result->getStatus());
+    }
+
+    /**
+     * Test processCustomRule with connectRelations type and minimal data
+     *
+     * This test verifies that the processCustomRule method correctly
+     * processes connection rules with minimal data structure.
+     *
+     * @covers ::processCustomRule
+     * @return void
+     */
+    public function testProcessCustomRuleWithConnectRelationsMinimalData(): void
+    {
+        $rule = $this->createMock(Rule::class);
+        $rule->method('getConfiguration')->willReturn([
+            'type' => 'connectRelations',
+            'configuration' => [
+                'sourceType' => 'api',
+                'targetType' => 'database'
+            ]
+        ]);
+
+        $data = [
+            'path' => '/test/path/550e8400-e29b-41d4-a716-446655440000'
+        ];
+
+        // Mock the catalogue service's extendModel method
+        $this->catalogueService->expects($this->once())
+            ->method('extendModel')
+            ->with('550e8400-e29b-41d4-a716-446655440000');
+
+        $result = $this->ruleService->processCustomRule($rule, $data);
+
+        $this->assertInstanceOf(JSONResponse::class, $result);
+        $this->assertEquals(200, $result->getStatus());
+    }
+
+    /**
+     * Test processCustomRule with connectRelations type and empty elements
+     *
+     * This test verifies that the processCustomRule method correctly
+     * processes connection rules with empty elements array.
+     *
+     * @covers ::processCustomRule
+     * @return void
+     */
+    public function testProcessCustomRuleWithConnectRelationsEmptyElements(): void
+    {
+        $rule = $this->createMock(Rule::class);
+        $rule->method('getConfiguration')->willReturn([
+            'type' => 'connectRelations',
+            'configuration' => [
+                'sourceType' => 'api',
+                'targetType' => 'database'
+            ]
+        ]);
+
+        $data = [
+            'path' => '/test/path/550e8400-e29b-41d4-a716-446655440000',
+            'elements' => []
+        ];
+
+        // Mock the catalogue service's extendModel method
+        $this->catalogueService->expects($this->once())
+            ->method('extendModel')
+            ->with('550e8400-e29b-41d4-a716-446655440000');
+
+        $result = $this->ruleService->processCustomRule($rule, $data);
+
+        $this->assertInstanceOf(JSONResponse::class, $result);
+        $this->assertEquals(200, $result->getStatus());
+    }
+
+    /**
+     * Test processCustomRule with connectRelations type and complex data structure
+     *
+     * This test verifies that the processCustomRule method correctly
+     * processes connection rules with complex data structures including properties.
+     *
+     * @covers ::processCustomRule
+     * @return void
+     */
+    public function testProcessCustomRuleWithConnectRelationsComplexData(): void
+    {
+        $rule = $this->createMock(Rule::class);
+        $rule->method('getConfiguration')->willReturn([
+            'type' => 'connectRelations',
+            'configuration' => [
+                'sourceType' => 'api',
+                'targetType' => 'database',
+                'relationType' => 'depends_on'
+            ]
+        ]);
+
+        $data = [
+            'path' => '/test/path/550e8400-e29b-41d4-a716-446655440000',
+            'elements' => [
+                [
+                    'identifier' => 'api-service-1',
+                    'type' => 'ApplicationService',
+                    'name' => 'API Service 1',
+                    'properties' => [
+                        [
+                            'propertyDefinitionRef' => 'source-type',
+                            'value' => 'api'
+                        ]
+                    ]
+                ],
+                [
+                    'identifier' => 'database-service-1',
+                    'type' => 'ApplicationService',
+                    'name' => 'Database Service 1',
+                    'properties' => [
+                        [
+                            'propertyDefinitionRef' => 'target-type',
+                            'value' => 'database'
+                        ]
+                    ]
+                ]
+            ],
+            'relationships' => []
+        ];
+
+        // Mock the catalogue service's extendModel method
+        $this->catalogueService->expects($this->once())
+            ->method('extendModel')
+            ->with('550e8400-e29b-41d4-a716-446655440000');
+
+        $result = $this->ruleService->processCustomRule($rule, $data);
+
+        $this->assertInstanceOf(JSONResponse::class, $result);
+        $this->assertEquals(200, $result->getStatus());
+    }
+
+    /**
      * Test processCustomRule with unsupported type
      *
      * This test verifies that the processCustomRule method throws an exception
