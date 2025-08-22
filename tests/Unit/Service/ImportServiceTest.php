@@ -52,8 +52,8 @@ class ImportServiceTest extends TestCase
     {
         parent::setUp();
 
-        // Create real instances for the constructor
-        $this->client = new Client();
+        // Create mock instances for the constructor
+        $this->client = $this->createMock(Client::class);
         $this->objectService = $this->createMock(ObjectService::class);
         $this->urlGenerator = $this->createMock(IURLGenerator::class);
 
@@ -97,11 +97,60 @@ class ImportServiceTest extends TestCase
      */
     public function testImportWithJsonData(): void
     {
-        $data = ['json' => '{"@type": "test", "name": "Test Object"}'];
+        $data = ['json' => '{"@type": "endpoint", "name": "Test Object", "reference": "https://example.com/endpoint/1"}'];
         $uploadedFiles = null;
 
-        // Skip this test due to complex mocking requirements with named parameters
-        $this->markTestSkipped('Complex mocking of createFromArray with named parameters not supported in current PHPUnit version');
+        // Create a custom mock mapper that can handle named parameters
+        $mockMapper = new class {
+            public function createFromArray($object = null, $id = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function updateFromArray($id = null, $object = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function findByRef($ref) {
+                return [];
+            }
+            
+            public function find($id) {
+                $entity = new class extends \OCP\AppFramework\Db\Entity {
+                    public function getId(): int { return 1; }
+                    public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                    public function getVersion(): ?string { return '1.0.0'; }
+                };
+                return $entity;
+            }
+        };
+        
+        $this->objectService->method('getMapper')->willReturn($mockMapper);
+
+        $result = $this->importService->import($data, $uploadedFiles);
+
+        $this->assertInstanceOf(JSONResponse::class, $result);
+        $this->assertEquals(201, $result->getStatus());
+        $responseData = $result->getData();
+        $this->assertArrayHasKey('message', $responseData);
+        $this->assertArrayHasKey('object', $responseData);
     }
 
     /**
@@ -115,8 +164,70 @@ class ImportServiceTest extends TestCase
      */
     public function testImportWithUrlData(): void
     {
-        // Skip this test due to complex mocking requirements with named parameters and HTTP response
-        $this->markTestSkipped('Complex mocking of HTTP client and createFromArray with named parameters not supported');
+        $data = ['url' => 'https://example.com/api/data'];
+        $uploadedFiles = null;
+
+        // Create a custom mock mapper that can handle named parameters
+        $mockMapper = new class {
+            public function createFromArray($object = null, $id = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function updateFromArray($id = null, $object = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function findByRef($ref) {
+                return [];
+            }
+            
+            public function find($id) {
+                $entity = new class extends \OCP\AppFramework\Db\Entity {
+                    public function getId(): int { return 1; }
+                    public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                    public function getVersion(): ?string { return '1.0.0'; }
+                };
+                return $entity;
+            }
+        };
+        
+        $this->objectService->method('getMapper')->willReturn($mockMapper);
+
+        // Mock HTTP response with proper StreamInterface
+        $mockStream = $this->createMock(\Psr\Http\Message\StreamInterface::class);
+        $mockStream->method('getContents')->willReturn('{"@type": "endpoint", "name": "Test Object", "reference": "https://example.com/endpoint/1"}');
+        
+        $mockResponse = $this->createMock(\GuzzleHttp\Psr7\Response::class);
+        $mockResponse->method('getBody')->willReturn($mockStream);
+        $mockResponse->method('getHeaderLine')->willReturn('application/json');
+        
+        $this->client->method('request')->willReturn($mockResponse);
+
+        $result = $this->importService->import($data, $uploadedFiles);
+
+        $this->assertInstanceOf(JSONResponse::class, $result);
+        $this->assertEquals(201, $result->getStatus());
+        $responseData = $result->getData();
+        $this->assertArrayHasKey('message', $responseData);
+        $this->assertArrayHasKey('object', $responseData);
     }
 
     /**
@@ -130,8 +241,63 @@ class ImportServiceTest extends TestCase
      */
     public function testImportWithSingleUploadedFile(): void
     {
-        // Skip this test due to file system dependencies and complex mocking requirements
-        $this->markTestSkipped('File system dependencies and complex mocking not supported in current test environment');
+        $data = [];
+        $uploadedFiles = [
+            'file' => [
+                'name' => 'test.json',
+                'type' => 'application/json',
+                'tmp_name' => '/tmp/test.json',
+                'error' => 0,
+                'size' => 1024
+            ]
+        ];
+
+        // Create a custom mock mapper that can handle named parameters
+        $mockMapper = new class {
+            public function createFromArray($object = null, $id = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function updateFromArray($id = null, $object = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function findByRef($ref) {
+                return [];
+            }
+            
+            public function find($id) {
+                $entity = new class extends \OCP\AppFramework\Db\Entity {
+                    public function getId(): int { return 1; }
+                    public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                    public function getVersion(): ?string { return '1.0.0'; }
+                };
+                return $entity;
+            }
+        };
+        
+        $this->objectService->method('getMapper')->willReturn($mockMapper);
+
+        // Mock file_get_contents to return valid JSON
+        $this->markTestSkipped('File system mocking requires more complex setup - keeping skipped for now');
     }
 
     /**
@@ -145,8 +311,63 @@ class ImportServiceTest extends TestCase
      */
     public function testImportWithMultipleUploadedFiles(): void
     {
-        // Skip this test due to file system dependencies and complex mocking requirements
-        $this->markTestSkipped('File system dependencies and complex mocking not supported in current test environment');
+        $data = [];
+        $uploadedFiles = [
+            'files' => [
+                'name' => ['test1.json', 'test2.json'],
+                'type' => ['application/json', 'application/json'],
+                'tmp_name' => ['/tmp/test1.json', '/tmp/test2.json'],
+                'error' => [0, 0],
+                'size' => [1024, 2048]
+            ]
+        ];
+
+        // Create a custom mock mapper that can handle named parameters
+        $mockMapper = new class {
+            public function createFromArray($object = null, $id = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function updateFromArray($id = null, $object = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function findByRef($ref) {
+                return [];
+            }
+            
+            public function find($id) {
+                $entity = new class extends \OCP\AppFramework\Db\Entity {
+                    public function getId(): int { return 1; }
+                    public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                    public function getVersion(): ?string { return '1.0.0'; }
+                };
+                return $entity;
+            }
+        };
+        
+        $this->objectService->method('getMapper')->willReturn($mockMapper);
+
+        // Mock file_get_contents to return valid JSON
+        $this->markTestSkipped('File system mocking requires more complex setup - keeping skipped for now');
     }
 
     /**
@@ -283,8 +504,60 @@ class ImportServiceTest extends TestCase
      */
     public function testGetJSONfromBodyWithValidJsonString(): void
     {
-        // Skip this test due to complex mocking requirements with named parameters
-        $this->markTestSkipped('Complex mocking of createFromArray with named parameters not supported in current PHPUnit version');
+        $validJson = '{"@type": "endpoint", "name": "Test Object", "reference": "https://example.com/endpoint/1"}';
+        $type = null;
+
+        // Create a custom mock mapper that can handle named parameters
+        $mockMapper = new class {
+            public function createFromArray($object = null, $id = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function updateFromArray($id = null, $object = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function findByRef($ref) {
+                return [];
+            }
+            
+            public function find($id) {
+                $entity = new class extends \OCP\AppFramework\Db\Entity {
+                    public function getId(): int { return 1; }
+                    public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                    public function getVersion(): ?string { return '1.0.0'; }
+                };
+                return $entity;
+            }
+        };
+        
+        $this->objectService->method('getMapper')->willReturn($mockMapper);
+
+        $reflection = new \ReflectionClass($this->importService);
+        $method = $reflection->getMethod('getJSONfromBody');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->importService, $validJson, $type);
+
+        $this->assertInstanceOf(JSONResponse::class, $result);
     }
 
     /**
@@ -298,8 +571,60 @@ class ImportServiceTest extends TestCase
      */
     public function testGetJSONfromBodyWithValidArray(): void
     {
-        // Skip this test due to complex mocking requirements with named parameters
-        $this->markTestSkipped('Complex mocking of createFromArray with named parameters not supported in current PHPUnit version');
+        $validArray = ['@type' => 'endpoint', 'name' => 'Test Object', 'reference' => 'https://example.com/endpoint/1'];
+        $type = null;
+
+        // Create a custom mock mapper that can handle named parameters
+        $mockMapper = new class {
+            public function createFromArray($object = null, $id = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function updateFromArray($id = null, $object = null) {
+                // Handle both named and positional parameters
+                if (is_array($object)) {
+                    $entity = new class extends \OCP\AppFramework\Db\Entity {
+                        public function getId(): int { return 1; }
+                        public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                        public function getVersion(): ?string { return '1.0.0'; }
+                    };
+                    return $entity;
+                }
+                return null;
+            }
+            
+            public function findByRef($ref) {
+                return [];
+            }
+            
+            public function find($id) {
+                $entity = new class extends \OCP\AppFramework\Db\Entity {
+                    public function getId(): int { return 1; }
+                    public function jsonSerialize(): array { return ['id' => 1, 'name' => 'Test Object']; }
+                    public function getVersion(): ?string { return '1.0.0'; }
+                };
+                return $entity;
+            }
+        };
+        
+        $this->objectService->method('getMapper')->willReturn($mockMapper);
+
+        $reflection = new \ReflectionClass($this->importService);
+        $method = $reflection->getMethod('getJSONfromBody');
+        $method->setAccessible(true);
+
+        $result = $method->invoke($this->importService, $validArray, $type);
+
+        $this->assertInstanceOf(JSONResponse::class, $result);
     }
 
     /**
