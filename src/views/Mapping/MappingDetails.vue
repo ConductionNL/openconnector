@@ -33,7 +33,7 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 							</template>
 							Add Cast
 						</NcActionButton>
-						<NcActionButton close-after-click @click="mappingStore.setMappingUnsetKey(null); navigationStore.setModal('editMappingUnset')">
+						<NcActionButton close-after-click @click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(null); navigationStore.setDialog('editMappingItem')">
 							<template #icon>
 								<Eraser :size="20" />
 							</template>
@@ -184,7 +184,7 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 								<NcButton type="primary"
 									class="fullWidthButton"
 									aria-label="Add Unset"
-									@click="mappingStore.setMappingUnsetKey(null); navigationStore.setModal('editMappingUnset')">
+									@click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(null); navigationStore.setDialog('editMappingItem')">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
@@ -204,13 +204,13 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 											:size="44" />
 									</template>
 									<template #actions>
-										<NcActionButton close-after-click @click="mappingStore.setMappingUnsetKey(value); navigationStore.setModal('editMappingUnset')">
+										<NcActionButton close-after-click @click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(value); navigationStore.setDialog('editMappingItem')">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
 											Edit
 										</NcActionButton>
-										<NcActionButton close-after-click @click="mappingStore.setMappingUnsetKey(value); navigationStore.setModal('deleteMappingUnset')">
+										<NcActionButton close-after-click @click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(value); navigationStore.setDialog('deleteMappingItem')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
@@ -258,16 +258,22 @@ export default {
 	},
 	methods: {
 		deleteMappingMapping(key) {
+			mappingStore.setEditingMode('mapping')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingMappingKey(key)
-			navigationStore.setModal('deleteMappingMapping')
+			navigationStore.setDialog('deleteMappingItem')
 		},
 		editMappingMapping(key) {
+			mappingStore.setEditingMode('mapping')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingMappingKey(key)
-			navigationStore.setModal('editMappingMapping')
+			navigationStore.setDialog('editMappingItem')
 		},
 		addMappingMapping() {
+			mappingStore.setEditingMode('mapping')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingMappingKey(null)
-			navigationStore.setModal('editMappingMapping')
+			navigationStore.setDialog('editMappingItem')
 		},
 		setActiveMappingMappingKey(mappingMappingKey) {
 			if (mappingStore.mappingMappingKey === mappingMappingKey) {
@@ -275,16 +281,22 @@ export default {
 			} else { mappingStore.setMappingMappingKey(mappingMappingKey) }
 		},
 		deleteMappingCast(key) {
+			mappingStore.setEditingMode('cast')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingCastKey(key)
-			navigationStore.setModal('deleteMappingCast')
+			navigationStore.setDialog('deleteMappingItem')
 		},
 		editMappingCast(key) {
+			mappingStore.setEditingMode('cast')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingCastKey(key)
-			navigationStore.setModal('editMappingCast')
+			navigationStore.setDialog('editMappingItem')
 		},
 		addMappingCast() {
+			mappingStore.setEditingMode('cast')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingCastKey(null)
-			navigationStore.setModal('editMappingCast')
+			navigationStore.setDialog('editMappingItem')
 		},
 		setActiveMappingCastKey(mappingCastKey) {
 			if (mappingStore.mappingCastKey === mappingCastKey) {
