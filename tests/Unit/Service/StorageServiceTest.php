@@ -26,6 +26,9 @@ use OCP\ICache;
 use OCP\ICacheFactory;
 use OCP\IUserManager;
 use OCP\IUserSession;
+use OCP\IUser;
+use OCP\Files\Folder;
+use OCP\Files\File;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -46,6 +49,7 @@ class StorageServiceTest extends TestCase
     private MockObject $cacheFactory;
     private MockObject $cache;
     private MockObject $userManager;
+    private MockObject $userSession;
 
     protected function setUp(): void
     {
@@ -56,6 +60,7 @@ class StorageServiceTest extends TestCase
         $this->cacheFactory = $this->createMock(ICacheFactory::class);
         $this->cache = $this->createMock(ICache::class);
         $this->userManager = $this->createMock(IUserManager::class);
+        $this->userSession = $this->createMock(IUserSession::class);
 
         $this->cacheFactory
             ->method('createDistributed')
@@ -127,13 +132,13 @@ class StorageServiceTest extends TestCase
             ->willReturn(1000000);
 
         // Mock the user manager
-        $mockUser = $this->createMock(\OCP\IUser::class);
+        $mockUser = $this->createMock(IUser::class);
         $mockUser->method('getUID')->willReturn('test-user');
         $this->userManager->method('get')->willReturn($mockUser);
 
         // Mock the root folder and its methods
-        $mockFolder = $this->createMock(\OCP\Files\Folder::class);
-        $mockFile = $this->createMock(\OCP\Files\File::class);
+        $mockFolder = $this->createMock(Folder::class);
+        $mockFile = $this->createMock(File::class);
         $mockFile->method('getId')->willReturn(1);
         $mockFolder->method('newFile')->willReturn($mockFile);
         $mockFolder->method('newFolder')->willReturn($mockFolder);
@@ -151,45 +156,107 @@ class StorageServiceTest extends TestCase
     }
 
     /**
-     * Test file upload processing
+     * Test file upload creation with large file
      *
-     * This test verifies that the storage service can process
-     * uploaded files correctly.
+     * This test verifies that the storage service can create
+     * uploads for large files that require multiple parts.
      *
-     * @covers ::processUpload
+     * @covers ::createUpload
      * @return void
      */
-    public function testProcessUploadWithValidFile(): void
+    public function testCreateUploadWithLargeFile(): void
     {
-        $this->markTestSkipped('File upload processing requires file system operations');
+        $path = '/uploads';
+        $fileName = 'large-file.txt';
+        $fileSize = 2500000; // 2.5MB, should create 3 parts with 1MB part size
+
+        // Mock the config to return a valid part size
+        $this->config
+            ->method('getValueInt')
+            ->with('openconnector', 'part-size', 1000000)
+            ->willReturn(1000000);
+
+        // Mock the user manager
+        $mockUser = $this->createMock(IUser::class);
+        $mockUser->method('getUID')->willReturn('test-user');
+        $this->userManager->method('get')->willReturn($mockUser);
+
+        // Mock the root folder and its methods
+        $mockFolder = $this->createMock(Folder::class);
+        $mockFile = $this->createMock(File::class);
+        $mockFile->method('getId')->willReturn(1);
+        $mockFolder->method('newFile')->willReturn($mockFile);
+        $mockFolder->method('newFolder')->willReturn($mockFolder);
+        $this->rootFolder->method('get')->willReturn($mockFolder);
+
+        $this->cache
+            ->expects($this->exactly(3)) // Should create 3 parts
+            ->method('set')
+            ->willReturn(true);
+
+        $result = $this->storageService->createUpload($path, $fileName, $fileSize);
+
+        $this->assertIsArray($result);
+        $this->assertCount(3, $result); // Should have 3 parts
+        
+        // Verify part structure
+        foreach ($result as $part) {
+            $this->assertArrayHasKey('id', $part);
+            $this->assertArrayHasKey('size', $part);
+            $this->assertArrayHasKey('order', $part);
+            $this->assertArrayHasKey('object', $part);
+            $this->assertArrayHasKey('successful', $part);
+            $this->assertFalse($part['successful']); // Initially false
+        }
     }
 
     /**
-     * Test file storage operations
+     * Test file upload creation with object ID
      *
-     * This test verifies that the storage service can store
-     * files in the appropriate locations.
+     * This test verifies that the storage service can create
+     * uploads with an optional object ID parameter.
      *
-     * @covers ::storeFile
+     * @covers ::createUpload
      * @return void
      */
-    public function testStoreFileWithValidData(): void
+    public function testCreateUploadWithObjectId(): void
     {
-        $this->markTestSkipped('File storage requires Nextcloud file system setup');
-    }
+        $path = '/uploads';
+        $fileName = 'test-file.txt';
+        $fileSize = 1024;
+        $objectId = 'test-object-123';
 
-    /**
-     * Test file retrieval operations
-     *
-     * This test verifies that the storage service can retrieve
-     * stored files correctly.
-     *
-     * @covers ::retrieveFile
-     * @return void
-     */
-    public function testRetrieveFileWithValidId(): void
-    {
-        $this->markTestSkipped('File retrieval requires Nextcloud file system setup');
+        // Mock the config to return a valid part size
+        $this->config
+            ->method('getValueInt')
+            ->with('openconnector', 'part-size', 1000000)
+            ->willReturn(1000000);
+
+        // Mock the user manager
+        $mockUser = $this->createMock(IUser::class);
+        $mockUser->method('getUID')->willReturn('test-user');
+        $this->userManager->method('get')->willReturn($mockUser);
+
+        // Mock the root folder and its methods
+        $mockFolder = $this->createMock(Folder::class);
+        $mockFile = $this->createMock(File::class);
+        $mockFile->method('getId')->willReturn(1);
+        $mockFolder->method('newFile')->willReturn($mockFile);
+        $mockFolder->method('newFolder')->willReturn($mockFolder);
+        $this->rootFolder->method('get')->willReturn($mockFolder);
+
+        $this->cache
+            ->expects($this->atLeastOnce())
+            ->method('set')
+            ->willReturn(true);
+
+        $result = $this->storageService->createUpload($path, $fileName, $fileSize, $objectId);
+
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+        
+        // Verify object ID is set in the first part
+        $this->assertEquals($objectId, $result[0]['object']);
     }
 
     /**
@@ -203,7 +270,10 @@ class StorageServiceTest extends TestCase
      */
     public function testWriteFileWithValidContent(): void
     {
-        $this->markTestSkipped('File writing requires Nextcloud file system setup');
+        // Note: This test is skipped because the StorageService has a bug
+        // where it tries to use $this->userSession in writeFile() but
+        // userSession is not in the constructor
+        $this->markTestSkipped('StorageService::writeFile has a bug - missing userSession dependency in constructor');
     }
 
     /**
@@ -221,6 +291,91 @@ class StorageServiceTest extends TestCase
         $partUuid = 'uuid-123';
         $data = 'test content';
 
-        $this->markTestSkipped('Part writing requires complex upload context setup');
+        // Mock cache to return upload data
+        $uploadData = [
+            StorageService::UPLOAD_TARGET_ID => 123,
+            StorageService::UPLOAD_TARGET_PATH => '/uploads/test-file.txt_parts',
+            StorageService::NUMBER_OF_PARTS => 2
+        ];
+        $this->cache->method('get')->with("upload_$partUuid")->willReturn($uploadData);
+
+        // Mock user folder
+        $mockUserFolder = $this->createMock(Folder::class);
+        $this->rootFolder->method('getUserFolder')->willReturn($mockUserFolder);
+
+        // Mock target file
+        $mockTargetFile = $this->createMock(File::class);
+        $mockTargetFile->method('getExtension')->willReturn('txt');
+        $mockUserFolder->method('getFirstNodeById')->with(123)->willReturn($mockTargetFile);
+
+        // Mock parts folder
+        $mockPartsFolder = $this->createMock(Folder::class);
+        $mockPartsFolder->method('getPath')->willReturn('/uploads/test-file.txt_parts');
+        $this->rootFolder->method('get')->willReturn($mockPartsFolder);
+        $mockPartsFolder->method('newFile')->willReturn($mockTargetFile);
+        $mockPartsFolder->method('getDirectoryListing')->willReturn([]);
+
+        $result = $this->storageService->writePart($partId, $partUuid, $data);
+
+        $this->assertTrue($result);
+    }
+
+    /**
+     * Test part writing with complete upload
+     *
+     * This test verifies that the storage service can handle
+     * completing an upload when all parts are present.
+     *
+     * @covers ::writePart
+     * @return void
+     */
+    public function testWritePartWithCompleteUpload(): void
+    {
+        $partId = 2;
+        $partUuid = 'uuid-456';
+        $data = 'test content part 2';
+
+        // Mock cache to return upload data for a 2-part upload
+        $uploadData = [
+            StorageService::UPLOAD_TARGET_ID => 123,
+            StorageService::UPLOAD_TARGET_PATH => '/uploads/test-file.txt_parts',
+            StorageService::NUMBER_OF_PARTS => 2
+        ];
+        $this->cache->method('get')->with("upload_$partUuid")->willReturn($uploadData);
+
+        // Mock user folder
+        $mockUserFolder = $this->createMock(Folder::class);
+        $this->rootFolder->method('getUserFolder')->willReturn($mockUserFolder);
+
+        // Mock target file
+        $mockTargetFile = $this->createMock(File::class);
+        $mockTargetFile->method('getExtension')->willReturn('txt');
+        $mockUserFolder->method('getFirstNodeById')->with(123)->willReturn($mockTargetFile);
+
+        // Mock parts folder with existing parts
+        $mockPartsFolder = $this->createMock(Folder::class);
+        $mockPartsFolder->method('getPath')->willReturn('/uploads/test-file.txt_parts');
+        $this->rootFolder->method('get')->willReturn($mockPartsFolder);
+        $mockPartsFolder->method('newFile')->willReturn($mockTargetFile);
+        
+        // Mock existing part files
+        $mockPartFile1 = $this->createMock(File::class);
+        $mockPartFile1->method('getName')->willReturn('1.part.txt');
+        $mockPartFile1->method('getContent')->willReturn('part 1 content');
+        $mockPartFile1->method('delete')->willReturn(true);
+        $mockPartFile1->method('getParent')->willReturn($mockPartsFolder);
+        
+        $mockPartFile2 = $this->createMock(File::class);
+        $mockPartFile2->method('getName')->willReturn('2.part.txt');
+        $mockPartFile2->method('getContent')->willReturn('part 2 content');
+        $mockPartFile2->method('delete')->willReturn(true);
+        $mockPartFile2->method('getParent')->willReturn($mockPartsFolder);
+        
+        $mockPartsFolder->method('getDirectoryListing')->willReturn([$mockPartFile1, $mockPartFile2]);
+        $mockPartsFolder->method('getDirectoryListing')->willReturn([]); // After deletion
+
+        $result = $this->storageService->writePart($partId, $partUuid, $data);
+
+        $this->assertTrue($result);
     }
 }
