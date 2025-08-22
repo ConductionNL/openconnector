@@ -36,7 +36,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @package OCA\OpenConnector\Tests\Unit\Service
  * @category Test
- * @author OpenConnector Team
+ * @author Conduction <info@conduction.nl>
  * @copyright 2024 OpenConnector
  * @license AGPL-3.0
  * @version 1.0.0
