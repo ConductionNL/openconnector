@@ -714,11 +714,11 @@ export default defineComponent({
 				appVersion: '0.2.0',
 			},
 			retentionOptions: {
-				callLogRetention: 2592000000,       // 1 month default
-				eventMessageRetention: 604800000,   // 1 week default
-				jobLogRetention: 2592000000,        // 1 month default
+				callLogRetention: 2592000000, // 1 month default
+				eventMessageRetention: 604800000, // 1 week default
+				jobLogRetention: 2592000000, // 1 month default
 				syncContractLogRetention: 7776000000, // 3 months default
-				syncLogRetention: 2592000000,       // 1 month default
+				syncLogRetention: 2592000000, // 1 month default
 			},
 		}
 	},
@@ -1309,4 +1309,3 @@ export default defineComponent({
 	margin-top: 1rem;
 }
 </style>
-
