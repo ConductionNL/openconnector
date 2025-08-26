@@ -157,12 +157,73 @@ class EventServiceTest extends TestCase
      * This test verifies that the event service correctly delivers
      * event messages to webhook endpoints.
      *
-     * @covers ::deliverEvent
+     * @covers ::deliverMessage
      * @return void
      */
     public function testDeliverEventToWebhook(): void
     {
-        $this->markTestSkipped('Event delivery requires HTTP client setup and is better suited for integration tests');
+        // Create a mock HTTP client
+        $mockClient = $this->createMock(\OCP\Http\Client\IClient::class);
+        
+        // Create a mock response
+        $mockResponse = $this->createMock(\OCP\Http\Client\IResponse::class);
+        $mockResponse->method('getStatusCode')->willReturn(200);
+        $mockResponse->method('getBody')->willReturn('OK');
+        
+        // Mock the client service to return our mock client
+        $this->clientService
+            ->expects($this->once())
+            ->method('newClient')
+            ->willReturn($mockClient);
+        
+        // Mock the client to return our mock response
+        $mockClient
+            ->expects($this->once())
+            ->method('post')
+            ->with(
+                $this->equalTo('https://example.com/webhook'),
+                $this->callback(function ($options) {
+                    return isset($options['body']) && 
+                           isset($options['headers']['Content-Type']) &&
+                           $options['headers']['Content-Type'] === 'application/cloudevents+json';
+                })
+            )
+            ->willReturn($mockResponse);
+        
+        // Create a mock subscription
+        $subscription = new class extends EventSubscription {
+            public function getId(): int { return 1; }
+            public function getStyle(): string { return 'push'; }
+            public function getSink(): string { return 'https://example.com/webhook'; }
+            public function getProtocolSettings(): array { return ['headers' => []]; }
+        };
+        
+        // Mock the subscription mapper to return our subscription
+        $this->subscriptionMapper
+            ->expects($this->once())
+            ->method('find')
+            ->with(1)
+            ->willReturn($subscription);
+        
+        // Mock the message mapper to handle markDelivered call
+        $this->messageMapper
+            ->expects($this->once())
+            ->method('markDelivered')
+            ->with(1, $this->callback(function ($data) {
+                return isset($data['statusCode']) && $data['statusCode'] === 200;
+            }));
+        
+        // Create a mock event message
+        $message = new class extends EventMessage {
+            public function getId(): int { return 1; }
+            public function getSubscriptionId(): int { return 1; }
+            public function getPayload(): array { return ['test' => 'data']; }
+            public function jsonSerialize(): array { return ['id' => 1, 'payload' => ['test' => 'data']]; }
+        };
+        
+        $result = $this->eventService->deliverMessage($message);
+        
+        $this->assertTrue($result);
     }
 
     /**

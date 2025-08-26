@@ -297,7 +297,29 @@ class ImportServiceTest extends TestCase
         $this->objectService->method('getMapper')->willReturn($mockMapper);
 
         // Mock file_get_contents to return valid JSON
-        $this->markTestSkipped('File system mocking requires more complex setup - keeping skipped for now');
+        $validJson = '{"@type": "endpoint", "reference": "test-ref", "name": "Test Object", "value": 123}';
+        
+        // Use runkit7 or similar to mock file_get_contents, but for now we'll test the logic
+        // by creating a temporary file and using it
+        $tempFile = tempnam(sys_get_temp_dir(), 'test_import_');
+        file_put_contents($tempFile, $validJson);
+        
+        // Update the tmp_name to use our temp file
+        $uploadedFiles['file']['tmp_name'] = $tempFile;
+        
+        $result = $this->importService->import($data, $uploadedFiles);
+        
+        // Clean up
+        unlink($tempFile);
+        
+        // The import method returns a JSONResponse object, not an array
+        $this->assertInstanceOf(\OCP\AppFramework\Http\JSONResponse::class, $result);
+        $this->assertEquals(201, $result->getStatus()); // Single file returns 201
+        
+        $responseData = $result->getData();
+        $this->assertIsArray($responseData);
+        $this->assertArrayHasKey('message', $responseData);
+        $this->assertArrayHasKey('object', $responseData);
     }
 
     /**
@@ -313,12 +335,19 @@ class ImportServiceTest extends TestCase
     {
         $data = [];
         $uploadedFiles = [
-            'files' => [
-                'name' => ['test1.json', 'test2.json'],
-                'type' => ['application/json', 'application/json'],
-                'tmp_name' => ['/tmp/test1.json', '/tmp/test2.json'],
-                'error' => [0, 0],
-                'size' => [1024, 2048]
+            'file1' => [
+                'name' => 'test1.json',
+                'type' => 'application/json',
+                'tmp_name' => '/tmp/test1.json',
+                'error' => 0,
+                'size' => 1024
+            ],
+            'file2' => [
+                'name' => 'test2.json',
+                'type' => 'application/json',
+                'tmp_name' => '/tmp/test2.json',
+                'error' => 0,
+                'size' => 2048
             ]
         ];
 
@@ -366,8 +395,34 @@ class ImportServiceTest extends TestCase
         
         $this->objectService->method('getMapper')->willReturn($mockMapper);
 
-        // Mock file_get_contents to return valid JSON
-        $this->markTestSkipped('File system mocking requires more complex setup - keeping skipped for now');
+        // Mock file_get_contents to return valid JSON for multiple files
+        $validJson1 = '{"@type": "endpoint", "reference": "test-ref-1", "name": "Test Object 1", "value": 123}';
+        $validJson2 = '{"@type": "endpoint", "reference": "test-ref-2", "name": "Test Object 2", "value": 456}';
+        
+        // Create temporary files for testing
+        $tempFile1 = tempnam(sys_get_temp_dir(), 'test_import_1_');
+        $tempFile2 = tempnam(sys_get_temp_dir(), 'test_import_2_');
+        file_put_contents($tempFile1, $validJson1);
+        file_put_contents($tempFile2, $validJson2);
+        
+        // Update the tmp_name to use our temp files
+        $uploadedFiles['file1']['tmp_name'] = $tempFile1;
+        $uploadedFiles['file2']['tmp_name'] = $tempFile2;
+        
+        $result = $this->importService->import($data, $uploadedFiles);
+        
+        // Clean up
+        unlink($tempFile1);
+        unlink($tempFile2);
+        
+        // The import method returns a JSONResponse object, not an array
+        $this->assertInstanceOf(\OCP\AppFramework\Http\JSONResponse::class, $result);
+        $this->assertEquals(200, $result->getStatus()); // Multiple files return 200, not 201
+        
+        $responseData = $result->getData();
+        $this->assertIsArray($responseData);
+        $this->assertArrayHasKey('message', $responseData);
+        $this->assertArrayHasKey('details', $responseData); // Multiple files return 'details' instead of 'object'
     }
 
     /**

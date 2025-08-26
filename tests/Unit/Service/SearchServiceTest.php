@@ -487,9 +487,17 @@ class SearchServiceTest extends TestCase
      */
     public function testParseQueryString(): void
     {
-        // Note: This test is skipped because the parseQueryString method has a bug
-        // where it tries to use an undefined $vars variable
-        $this->markTestSkipped('SearchService::parseQueryString has a bug - undefined $vars variable');
+        $queryString = 'name=test&category=active&limit=10';
+
+        $result = $this->searchService->parseQueryString($queryString);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('name', $result);
+        $this->assertArrayHasKey('category', $result);
+        $this->assertArrayHasKey('limit', $result);
+        $this->assertEquals('test', $result['name']);
+        $this->assertEquals('active', $result['category']);
+        $this->assertEquals('10', $result['limit']);
     }
 
     /**
@@ -503,9 +511,13 @@ class SearchServiceTest extends TestCase
      */
     public function testParseQueryStringWithEmptyString(): void
     {
-        // Note: This test is skipped because the parseQueryString method has a bug
-        // where it tries to use an undefined $vars variable
-        $this->markTestSkipped('SearchService::parseQueryString has a bug - undefined $vars variable');
+        $result = $this->searchService->parseQueryString('');
+
+        $this->assertIsArray($result);
+        // When empty string is passed, it creates one element with empty key
+        $this->assertCount(1, $result);
+        $this->assertArrayHasKey('', $result);
+        $this->assertEquals('', $result['']);
     }
 
     /**
@@ -519,8 +531,16 @@ class SearchServiceTest extends TestCase
      */
     public function testParseQueryStringWithUrlEncoding(): void
     {
-        // Note: This test is skipped because the parseQueryString method has a bug
-        // where it tries to use an undefined $vars variable
-        $this->markTestSkipped('SearchService::parseQueryString has a bug - undefined $vars variable');
+        $queryString = 'name=test%20user&category=active%20status&limit=10';
+
+        $result = $this->searchService->parseQueryString($queryString);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('name', $result);
+        $this->assertArrayHasKey('category', $result);
+        $this->assertArrayHasKey('limit', $result);
+        $this->assertEquals('test user', $result['name']);
+        $this->assertEquals('active status', $result['category']);
+        $this->assertEquals('10', $result['limit']);
     }
 }

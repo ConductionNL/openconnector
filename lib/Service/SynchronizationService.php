@@ -2832,7 +2832,7 @@ class SynchronizationService
 //		}
 
         // Start fire-and-forget file fetching based on endpoint type
-        $this->startAsyncFileFetching(source: $source, config: $config, endpoint: $endpoint, objectId: $objectId, ruleId: $rule->getId());
+        $this->startAsyncFileFetching(source: $source, config: $config, endpoint: $endpoint, ruleId: $rule->getId(), objectId: $objectId);
 
         // Return data immediately with placeholder values
         if (isset($config['setPlaceholder']) === false || (isset($config['setPlaceholder']) === true && $config['setPlaceholder'] != false)) {
@@ -2858,11 +2858,11 @@ class SynchronizationService
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 */
-	private function startAsyncFileFetching(Source $source, array $config, mixed $endpoint, ?string $objectId = null, int $ruleId): void
+	private function startAsyncFileFetching(Source $source, array $config, mixed $endpoint, int $ruleId, ?string $objectId = null): void
 	{
         // Execute file fetching immediately but with error isolation
         // This provides "fire-and-forget" behavior without complex ReactPHP setup
-        $this->executeAsyncFileFetching(source: $source, config: $config, endpoint: $endpoint, objectId: $objectId, ruleId: $ruleId);
+        $this->executeAsyncFileFetching(source: $source, config: $config, endpoint: $endpoint, ruleId: $ruleId, objectId: $objectId);
 	}
 
 	/**
@@ -2882,7 +2882,7 @@ class SynchronizationService
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 */
-	private function executeAsyncFileFetching(Source $source, array $config, mixed $endpoint, ?string $objectId = null, int $ruleId): void
+	private function executeAsyncFileFetching(Source $source, array $config, mixed $endpoint, int $ruleId, ?string $objectId = null): void
 	{
         try {
             $filename = null;

@@ -70,7 +70,8 @@ class StorageServiceTest extends TestCase
             $this->rootFolder,
             $this->config,
             $this->cacheFactory,
-            $this->userManager
+            $this->userManager,
+            $this->userSession
         );
     }
 
@@ -270,10 +271,31 @@ class StorageServiceTest extends TestCase
      */
     public function testWriteFileWithValidContent(): void
     {
-        // Note: This test is skipped because the StorageService has a bug
-        // where it tries to use $this->userSession in writeFile() but
-        // userSession is not in the constructor
-        $this->markTestSkipped('StorageService::writeFile has a bug - missing userSession dependency in constructor');
+        $path = '/test/path';
+        $fileName = 'test.txt';
+        $content = 'test content';
+
+        // Mock user
+        $mockUser = $this->createMock(IUser::class);
+        $mockUser->method('getUID')->willReturn('test-user');
+        $this->userSession->method('getUser')->willReturn($mockUser);
+
+        // Mock user folder
+        $mockUserFolder = $this->createMock(Folder::class);
+        $this->rootFolder->method('getUserFolder')->willReturn($mockUserFolder);
+
+        // Mock upload folder
+        $mockUploadFolder = $this->createMock(Folder::class);
+        $mockUserFolder->method('get')->with($path)->willReturn($mockUploadFolder);
+
+        // Mock target file - simulate file not found, so it creates a new one
+        $mockTargetFile = $this->createMock(File::class);
+        $mockUploadFolder->method('get')->with($fileName)->willThrowException(new \OCP\Files\NotFoundException());
+        $mockUploadFolder->method('newFile')->with($fileName, $content)->willReturn($mockTargetFile);
+
+        $result = $this->storageService->writeFile($path, $fileName, $content);
+
+        $this->assertInstanceOf(File::class, $result);
     }
 
     /**
