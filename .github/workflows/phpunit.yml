@@ -60,6 +60,7 @@ jobs:
 
       - name: Copy openconnector app to server
         run: |
+          mkdir -p server/apps-extra
           cp -r . server/apps-extra/openconnector
 
       - name: Set up Nextcloud

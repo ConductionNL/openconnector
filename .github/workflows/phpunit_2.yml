@@ -57,18 +57,24 @@ jobs:
           // Simple bootstrap for unit tests
           require_once __DIR__ . '/../vendor/autoload.php';
           
-          // Mock Nextcloud classes if needed
-          if (!class_exists('OCP\IRequest')) {
-              class_alias('PHPUnit\Framework\MockObject\MockObject', 'OCP\IRequest');
+          // Create simple mock classes for Nextcloud interfaces
+          if (!interface_exists('OCP\IRequest')) {
+              interface OCP\IRequest {}
           }
-          if (!class_exists('OCP\IUserManager')) {
-              class_alias('PHPUnit\Framework\MockObject\MockObject', 'OCP\IUserManager');
+          if (!interface_exists('OCP\IUserManager')) {
+              interface OCP\IUserManager {}
           }
-          if (!class_exists('OCP\IUserSession')) {
-              class_alias('PHPUnit\Framework\MockObject\MockObject', 'OCP\IUserSession');
+          if (!interface_exists('OCP\IUserSession')) {
+              interface OCP\IUserSession {}
           }
-          if (!class_exists('OCP\ICacheFactory')) {
-              class_alias('PHPUnit\Framework\MockObject\MockObject', 'OCP\ICacheFactory');
+          if (!interface_exists('OCP\ICacheFactory')) {
+              interface OCP\ICacheFactory {}
+          }
+          if (!interface_exists('OCP\IUser')) {
+              interface OCP\IUser {}
+          }
+          if (!interface_exists('Psr\Log\LoggerInterface')) {
+              interface Psr\Log\LoggerInterface {}
           }
           EOF
 
