@@ -52,6 +52,25 @@ class SourceMapper extends QBMapper
 	}
 
 	/**
+	 * Find all sources that belong to a specific reference.
+	 *
+	 * @param string $reference The reference to find sources for
+	 * @return array<Source> Array of Source entities
+	 */
+	public function findByRef(string $reference): array
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select('*')
+			->from('openconnector_sources')
+			->where(
+				$qb->expr()->eq('reference', $qb->createNamedParameter($reference))
+			);
+
+		return $this->findEntities(query: $qb);
+	}
+
+	/**
 	 * Find all sources matching the given criteria
 	 *
 	 * @param int|null $limit Maximum number of results to return
