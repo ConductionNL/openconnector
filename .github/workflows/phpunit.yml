@@ -61,7 +61,12 @@ jobs:
       - name: Copy openconnector app to server
         run: |
           mkdir -p server/apps-extra/openconnector
-          cp -r * server/apps-extra/openconnector/
+          # Copy all files and directories except server directory
+          for item in *; do
+            if [ "$item" != "server" ]; then
+              cp -r "$item" server/apps-extra/openconnector/
+            fi
+          done
 
       - name: Set up Nextcloud
         run: |
