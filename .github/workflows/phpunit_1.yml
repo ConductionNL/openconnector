@@ -1,0 +1,88 @@
+# This workflow runs PHPUnit tests for the openconnector app using Docker
+#
+# SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
+# SPDX-License-Identifier: MIT
+
+name: PHPUnit Tests (Docker Approach)
+
+on:
+  pull_request:
+    paths:
+      - '**'
+  push:
+    branches: [main, master, development]
+    paths:
+      - '**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phpunit-openconnector-docker-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  phpunit-openconnector-docker:
+    runs-on: ubuntu-latest
+
+    name: OpenConnector (Docker - PHP 8.3)
+
+    steps:
+      - name: Checkout openconnector
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          submodules: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start Nextcloud container
+        run: |
+          # Create a simple docker-compose file for testing
+          cat > docker-compose.test.yml << 'EOF'
+          version: '3.8'
+          services:
+            nextcloud:
+              image: nextcloud:latest
+              container_name: master-nextcloud-1
+              environment:
+                - MYSQL_HOST=db
+                - MYSQL_DATABASE=nextcloud
+                - MYSQL_USER=nextcloud
+                - MYSQL_PASSWORD=nextcloud
+                - NEXTCLOUD_ADMIN_USER=admin
+                - NEXTCLOUD_ADMIN_PASSWORD=admin
+              ports:
+                - "8080:80"
+              volumes:
+                - ./:/var/www/html/apps-extra/openconnector
+              depends_on:
+                - db
+            db:
+              image: mariadb:10.6
+              container_name: master-db-1
+              environment:
+                - MYSQL_ROOT_PASSWORD=rootpassword
+                - MYSQL_DATABASE=nextcloud
+                - MYSQL_USER=nextcloud
+                - MYSQL_PASSWORD=nextcloud
+              volumes:
+                - db_data:/var/lib/mysql
+          volumes:
+            db_data:
+          EOF
+          
+          # Start the containers
+          docker-compose -f docker-compose.test.yml up -d
+          
+          # Wait for Nextcloud to be ready
+          docker-compose -f docker-compose.test.yml exec -T nextcloud bash -c "until curl -f http://localhost/status.php; do sleep 5; done"
+
+      - name: Run OpenConnector PHPUnit tests
+        run: |
+          docker exec master-nextcloud-1 bash -c "cd /var/www/html && phpunit --bootstrap tests/bootstrap.php apps-extra/openconnector/tests"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down -v
