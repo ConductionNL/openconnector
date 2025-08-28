@@ -58,23 +58,23 @@ jobs:
           require_once __DIR__ . '/../vendor/autoload.php';
           
           // Create simple mock classes for Nextcloud interfaces
-          if (!interface_exists('OCP\IRequest')) {
-              interface OCP\IRequest {}
+          if (!interface_exists('OCP\\IRequest')) {
+              interface OCP\\IRequest {}
           }
-          if (!interface_exists('OCP\IUserManager')) {
-              interface OCP\IUserManager {}
+          if (!interface_exists('OCP\\IUserManager')) {
+              interface OCP\\IUserManager {}
           }
-          if (!interface_exists('OCP\IUserSession')) {
-              interface OCP\IUserSession {}
+          if (!interface_exists('OCP\\IUserSession')) {
+              interface OCP\\IUserSession {}
           }
-          if (!interface_exists('OCP\ICacheFactory')) {
-              interface OCP\ICacheFactory {}
+          if (!interface_exists('OCP\\ICacheFactory')) {
+              interface OCP\\ICacheFactory {}
           }
-          if (!interface_exists('OCP\IUser')) {
-              interface OCP\IUser {}
+          if (!interface_exists('OCP\\IUser')) {
+              interface OCP\\IUser {}
           }
-          if (!interface_exists('Psr\Log\LoggerInterface')) {
-              interface Psr\Log\LoggerInterface {}
+          if (!interface_exists('Psr\\Log\\LoggerInterface')) {
+              interface Psr\\Log\\LoggerInterface {}
           }
           EOF
 
