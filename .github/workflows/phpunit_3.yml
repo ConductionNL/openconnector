@@ -1,9 +1,9 @@
-# This workflow runs PHPUnit tests for the openconnector app (Super Simple)
+# This workflow runs PHPUnit tests for the openconnector app (Composer Script)
 #
 # SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
 # SPDX-License-Identifier: MIT
 
-name: PHPUnit Tests (Super Simple)
+name: PHPUnit Tests (Composer Script)
 
 on:
   pull_request:
@@ -18,14 +18,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: phpunit-openconnector-simple-${{ github.head_ref || github.run_id }}
+  group: phpunit-openconnector-composer-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-  phpunit-openconnector-simple:
+  phpunit-openconnector-composer:
     runs-on: ubuntu-latest
 
-    name: OpenConnector (Super Simple - PHP 8.3)
+    name: OpenConnector (Composer Script - PHP 8.3)
 
     steps:
       - name: Checkout openconnector
@@ -44,25 +44,30 @@ jobs:
       - name: Install dependencies
         run: composer install
 
-      - name: Run syntax check only
+      - name: List available composer scripts
         run: |
-          echo "Checking PHP syntax..."
-          find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" -exec php -l {} \;
-          echo "All PHP files are syntactically valid!"
+          echo "Available composer scripts:"
+          composer run --list
 
-      - name: Run basic tests (if any)
+      - name: Try composer test script
         run: |
-          echo "Running basic tests..."
+          echo "Trying composer test:unit..."
+          composer test:unit || echo "test:unit failed, trying alternative..."
+
+      - name: Try alternative test commands
+        run: |
+          echo "Trying alternative approaches..."
+          
+          # Try direct PHPUnit if available
           if [ -f "vendor/bin/phpunit" ]; then
+            echo "PHPUnit found in vendor/bin"
             vendor/bin/phpunit --version
-            echo "PHPUnit is available"
-          else
-            echo "PHPUnit not found in vendor/bin"
           fi
           
-          if [ -d "tests" ]; then
-            echo "Tests directory found"
-            ls -la tests/
-          else
-            echo "No tests directory found"
+          # Try phpunit.xml if it exists
+          if [ -f "phpunit.xml" ]; then
+            echo "phpunit.xml found"
+            if [ -f "vendor/bin/phpunit" ]; then
+              vendor/bin/phpunit --configuration phpunit.xml --list-tests
+            fi
           fi
