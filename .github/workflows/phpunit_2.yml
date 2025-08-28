@@ -88,7 +88,10 @@ jobs:
               phpunit --configuration phpunit.xml --list-tests || echo "Tests failed but continuing..."
             elif [ -f "./phpunit" ]; then
               echo "Running tests with local phpunit..."
-              ./phpunit --configuration phpunit.xml --list-tests || echo "Tests failed but continuing..."
+              # Try different bootstrap paths
+              ./phpunit --configuration phpunit.xml --list-tests || \
+              ./phpunit --bootstrap tests/bootstrap.php --list-tests || \
+              ./phpunit --list-tests || echo "Tests failed but continuing..."
             fi
           else
             echo "No tests directory found"

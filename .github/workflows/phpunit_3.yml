@@ -83,6 +83,9 @@ jobs:
               vendor/bin/phpunit --configuration phpunit.xml --list-tests || echo "Tests failed but continuing..."
             elif command -v phpunit >/dev/null 2>&1; then
               echo "Running tests with global phpunit..."
-              phpunit --configuration phpunit.xml --list-tests || echo "Tests failed but continuing..."
+              # Try different bootstrap paths
+              phpunit --configuration phpunit.xml --list-tests || \
+              phpunit --bootstrap tests/bootstrap.php --list-tests || \
+              phpunit --list-tests || echo "Tests failed but continuing..."
             fi
           fi

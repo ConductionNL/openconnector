@@ -80,5 +80,11 @@ jobs:
       - name: Enable OpenConnector app
         run: cd server && ./occ app:enable openconnector
 
+      - name: Install PHPUnit in server
+        run: |
+          cd server
+          wget -O phpunit https://phar.phpunit.de/phpunit-9.6.phar
+          chmod +x phpunit
+
       - name: Run PHPUnit tests
-        run: cd server && phpunit --bootstrap tests/bootstrap.php apps-extra/openconnector/tests
+        run: cd server && ./phpunit --bootstrap tests/bootstrap.php apps-extra/openconnector/tests
