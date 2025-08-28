@@ -184,23 +184,62 @@ class SynchronizationMapper extends QBMapper
 	}
 
     /**
-     * Get the total count of all call logs.
+     * Get the total count of synchronizations with optional filters
      *
-     * @return int The total number of call logs in the database.
+     * This method returns the total number of synchronizations in the database
+     * that match the provided filters. It supports the same filtering capabilities
+     * as the findAll method for consistent behavior.
+     *
+     * @param array<string, mixed> $filters Optional filters to apply to the count query
+     * @return int The total number of synchronizations matching the filters
+     *
+     * @psalm-param array<string, mixed> $filters
+     * @psalm-return int
+     * @phpstan-param array<string, mixed> $filters
+     * @phpstan-return int
      */
-    public function getTotalCallCount(): int
+    public function getTotalCount(array $filters = []): int
     {
         $qb = $this->db->getQueryBuilder();
 
-        // Select count of all logs
+        // Select count of all synchronizations
         $qb->select($qb->createFunction('COUNT(*) as count'))
            ->from('openconnector_synchronizations');
 
-        $result = $qb->execute();
+        // Apply filters if provided (same logic as findAll method)
+        foreach ($filters as $filter => $value) {
+            if ($value === 'IS NOT NULL') {
+                $qb->andWhere($qb->expr()->isNotNull($filter));
+            } elseif ($value === 'IS NULL') {
+                $qb->andWhere($qb->expr()->isNull($filter));
+            } else {
+                $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+            }
+        }
+
+        $result = $qb->executeQuery();
         $row = $result->fetch();
+        $result->closeCursor();
 
         // Return the total count
-        return (int)$row['count'];
+        return (int)($row['count'] ?? 0);
+    }
+
+    /**
+     * Get the total count of all call logs.
+     *
+     * This method provides backward compatibility for existing code
+     * that uses getTotalCallCount. New code should use getTotalCount instead.
+     *
+     * @return int The total number of call logs in the database.
+     * @deprecated Use getTotalCount() instead
+     * 
+     * @psalm-return int
+     * @phpstan-return int
+     */
+    public function getTotalCallCount(): int
+    {
+        return $this->getTotalCount();
     }
 
     /**

@@ -261,23 +261,29 @@ export default {
 		 * @param {string} key - The mapping key to delete
 		 */
 		deleteMappingMapping(key) {
+			mappingStore.setEditingMode('mapping')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingMappingKey(key)
-			navigationStore.setModal('deleteMappingMapping')
+			navigationStore.setDialog('deleteMappingItem')
 		},
 		/**
 		 * Edit mapping mapping
 		 * @param {string} key - The mapping key to edit
 		 */
 		editMappingMapping(key) {
+			mappingStore.setEditingMode('mapping')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingMappingKey(key)
-			navigationStore.setModal('editMappingMapping')
+			navigationStore.setDialog('editMappingItem')
 		},
 		/**
 		 * Add mapping mapping
 		 */
 		addMappingMapping() {
+			mappingStore.setEditingMode('mapping')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingMappingKey(null)
-			navigationStore.setModal('editMappingMapping')
+			navigationStore.setDialog('editMappingItem')
 		},
 		/**
 		 * Set active mapping mapping key
@@ -295,23 +301,29 @@ export default {
 		 * @param {string} key - The cast key to delete
 		 */
 		deleteMappingCast(key) {
+			mappingStore.setEditingMode('cast')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingCastKey(key)
-			navigationStore.setModal('deleteMappingCast')
+			navigationStore.setDialog('deleteMappingItem')
 		},
 		/**
 		 * Edit mapping cast
 		 * @param {string} key - The cast key to edit
 		 */
 		editMappingCast(key) {
+			mappingStore.setEditingMode('cast')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingCastKey(key)
-			navigationStore.setModal('editMappingCast')
+			navigationStore.setDialog('editMappingItem')
 		},
 		/**
 		 * Add mapping cast
 		 */
 		addMappingCast() {
+			mappingStore.setEditingMode('cast')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingCastKey(null)
-			navigationStore.setModal('editMappingCast')
+			navigationStore.setDialog('editMappingItem')
 		},
 		/**
 		 * Set active mapping cast key
@@ -329,23 +341,29 @@ export default {
 		 * @param {string} value - The unset value to edit
 		 */
 		editMappingUnset(value) {
+			mappingStore.setEditingMode('unset')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingUnsetKey(value)
-			navigationStore.setModal('editMappingUnset')
+			navigationStore.setDialog('editMappingItem')
 		},
 		/**
 		 * Delete mapping unset
 		 * @param {string} value - The unset value to delete
 		 */
 		deleteMappingUnset(value) {
+			mappingStore.setEditingMode('unset')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingUnsetKey(value)
-			navigationStore.setModal('deleteMappingUnset')
+			navigationStore.setDialog('deleteMappingItem')
 		},
 		/**
 		 * Add mapping unset
 		 */
 		addMappingUnset() {
+			mappingStore.setEditingMode('unset')
+			mappingStore.setEditingMappingId(mappingStore.mappingItem?.id)
 			mappingStore.setMappingUnsetKey(null)
-			navigationStore.setModal('editMappingUnset')
+			navigationStore.setDialog('editMappingItem')
 		},
 	},
 }

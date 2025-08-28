@@ -21,12 +21,8 @@ import { navigationStore } from '../store/store.js'
 		<DeleteMapping />
 		<EditMapping />
 		<TestMapping v-if="navigationStore.modal === 'testMapping'" />
-		<EditMappingMapping />
-		<DeleteMappingMapping />
-		<EditMappingCast />
-		<DeleteMappingCast />
-		<EditMappingUnset v-if="navigationStore.modal === 'editMappingUnset'" />
-		<DeleteMappingUnset v-if="navigationStore.modal === 'deleteMappingUnset'" />
+		<EditMappingItem />
+		<DeleteMappingItem />
 		<DeleteSynchronization />
 		<EditSynchronization v-if="navigationStore.modal === 'editSynchronization'" />
 		<TestSynchronization v-if="navigationStore.modal === 'testSynchronization'" />
@@ -85,15 +81,9 @@ import DeleteSourceConfiguration from './SourceConfiguration/DeleteSourceConfigu
 import EditSourceConfigurationAuthentication from './SourceConfigurationAuthentication/EditSourceConfigurationAuthentication.vue'
 import DeleteSourceConfigurationAuthentication from './SourceConfigurationAuthentication/DeleteSourceConfigurationAuthentication.vue'
 import ViewSourceLog from './Log/ViewSourceLog.vue'
-import EditMappingMapping from './mappingMapping/EditMappingMapping.vue'
-import DeleteMappingMapping from './mappingMapping/DeleteMappingMapping.vue'
-import EditMappingCast from './mappingCast/EditMappingCast.vue'
-import DeleteMappingCast from './mappingCast/DeleteMappingCast.vue'
 import ViewJobLog from './Log/ViewJobLog.vue'
 import ViewSynchronizationLog from './Log/ViewSynchronizationLog.vue'
 import ViewSynchronizationContract from './Log/ViewSynchronizationContract.vue'
-import EditMappingUnset from './mappingUnset/EditMappingUnset.vue'
-import DeleteMappingUnset from './mappingUnset/DeleteMappingUnset.vue'
 import EditSynchronizationSourceConfig from './SynchronizationSourceConfig/EditSynchronizationSourceConfig.vue'
 import DeleteSynchronizationSourceConfig from './SynchronizationSourceConfig/DeleteSynchronizationSourceConfig.vue'
 import EditSynchronizationTargetConfig from './SynchronizationTargetConfig/EditSynchronizationTargetConfig.vue'
@@ -106,6 +96,8 @@ import ViewJob from './Job/ViewJob.vue'
 import ViewEndpoint from './Endpoint/ViewEndpoint.vue'
 import ViewSynchronization from './Synchronization/ViewSynchronization.vue'
 import ViewMapping from './Mapping/ViewMapping.vue'
+import EditMappingItem from './Mapping/mappingItem/EditMappingItem.vue'
+import DeleteMappingItem from './Mapping/mappingItem/DeleteMappingItem.vue'
 
 export default {
 	name: 'Modals',
@@ -138,15 +130,9 @@ export default {
 		EditSourceConfigurationAuthentication,
 		DeleteSourceConfigurationAuthentication,
 		ViewSourceLog,
-		EditMappingMapping,
-		DeleteMappingMapping,
-		EditMappingCast,
-		DeleteMappingCast,
 		ViewJobLog,
 		ViewSynchronizationLog,
 		ViewSynchronizationContract,
-		EditMappingUnset,
-		DeleteMappingUnset,
 		EditSynchronizationSourceConfig,
 		DeleteSynchronizationSourceConfig,
 		EditSynchronizationTargetConfig,
@@ -159,6 +145,8 @@ export default {
 		ViewEndpoint,
 		ViewSynchronization,
 		ViewMapping,
+		EditMappingItem,
+		DeleteMappingItem,
 	},
 	setup() {
 		return {

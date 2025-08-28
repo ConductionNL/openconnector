@@ -116,22 +116,38 @@ import { logStore, contractStore, synchronizationStore, navigationStore } from '
 			<div class="statsSection">
 				<h3>{{ t('openconnector', 'Statistics') }}</h3>
 				<div class="statCard">
-					<div class="statNumber">{{ filteredCount }}</div>
-					<div class="statLabel">{{ t('openconnector', 'Total Logs') }}</div>
+					<div class="statNumber">
+						{{ filteredCount }}
+					</div>
+					<div class="statLabel">
+						{{ t('openconnector', 'Total Logs') }}
+					</div>
 				</div>
 
 				<div class="statRow">
 					<div class="statItem">
-						<div class="statLabel">{{ t('openconnector', 'Error Logs') }}</div>
-						<div class="statValue error">{{ statistics.errorCount || 0 }}</div>
+						<div class="statLabel">
+							{{ t('openconnector', 'Error Logs') }}
+						</div>
+						<div class="statValue error">
+							{{ statistics.errorCount || 0 }}
+						</div>
 					</div>
 					<div class="statItem">
-						<div class="statLabel">{{ t('openconnector', 'Warning Logs') }}</div>
-						<div class="statValue warning">{{ statistics.warningCount || 0 }}</div>
+						<div class="statLabel">
+							{{ t('openconnector', 'Warning Logs') }}
+						</div>
+						<div class="statValue warning">
+							{{ statistics.warningCount || 0 }}
+						</div>
 					</div>
 					<div class="statItem">
-						<div class="statLabel">{{ t('openconnector', 'Info Logs') }}</div>
-						<div class="statValue success">{{ statistics.infoCount || 0 }}</div>
+						<div class="statLabel">
+							{{ t('openconnector', 'Info Logs') }}
+						</div>
+						<div class="statValue success">
+							{{ statistics.infoCount || 0 }}
+						</div>
 					</div>
 				</div>
 
@@ -140,7 +156,9 @@ import { logStore, contractStore, synchronizationStore, navigationStore } from '
 				</div>
 
 				<div v-if="statistics.levelDistribution" class="chart-container">
-					<h4 class="subTitle">{{ t('openconnector', 'Level Distribution') }}</h4>
+					<h4 class="subTitle">
+						{{ t('openconnector', 'Level Distribution') }}
+					</h4>
 					<div class="level-chart">
 						<div v-for="(count, level) in statistics.levelDistribution"
 							:key="level"
