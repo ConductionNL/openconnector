@@ -110,6 +110,11 @@ class EventSubscriptionMapper extends QBMapper
             $obj->setUuid(Uuid::v4());
         }
 
+        // Set created and updated timestamps
+        $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+        $obj->setCreated(new \DateTime($now));
+        $obj->setUpdated(new \DateTime($now));
+
         return $this->insert(entity: $obj);
     }
 
@@ -124,6 +129,10 @@ class EventSubscriptionMapper extends QBMapper
     {
         $obj = $this->find($id);
         $obj->hydrate($data);
+
+        // Update the modified timestamp
+        $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+        $obj->setUpdated(new \DateTime($now));
 
         return $this->update($obj);
     }

@@ -117,7 +117,9 @@ class SynchronizationLogMapper extends QBMapper
 			$object['sessionId'] = null;
 		}
 
-		$object['created'] = $object['created'] ?? new DateTime();
+		// Set created and expires timestamps using recommended pattern
+		$now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+		$object['created'] = $object['created'] ?? new DateTime($now);
 		$object['expires'] = $object['expires'] ?? new DateTime('+30 days');
 		$object['test'] = $object['test'] ?? false;
 		$object['force'] = $object['force'] ?? false;

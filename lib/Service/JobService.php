@@ -338,9 +338,9 @@ class JobService
         $this->jobMapper->update($job);
 
         // Create initial job log entry with success status
+        // The message will default to 'success' in the mapper if not provided
         $jobLog = $this->jobLogMapper->createForJob($job, [
             'level'			=> 'SUCCESS',
-            'message'		=> 'Success',
             'executionTime' => $executionTime
         ]);
 

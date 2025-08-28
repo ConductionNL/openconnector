@@ -20,7 +20,7 @@ namespace OCA\OpenConnector\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Types;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 

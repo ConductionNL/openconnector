@@ -11,7 +11,7 @@ namespace OCA\OpenConnector\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Types;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
@@ -52,8 +52,8 @@ class Version1Date20250118124025 extends SimpleMigrationStep {
 			$table->addColumn('test', Types::BOOLEAN, ['notnull' => true, 'default' => false]);
 			$table->addColumn('force', Types::BOOLEAN, ['notnull' => true, 'default' => false]);
 			$table->addColumn('execution_time', Types::INTEGER, ['notnull' => true, 'default' => 3600]);
-			$table->addColumn('created', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
-			$table->addColumn('expires', Types::DATETIME, ['notnull' => false]);
+			$table->addColumn('created', Types::DATETIME_MUTABLE, ['notnull' => true]);
+			$table->addColumn('expires', Types::DATETIME_MUTABLE, ['notnull' => false]);
 
 			$table->setPrimaryKey(['id']);
 			$table->addIndex(['uuid'], 'openconnector_sync_logs_uuid_index');

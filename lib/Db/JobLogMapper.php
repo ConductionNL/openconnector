@@ -83,6 +83,10 @@ class JobLogMapper extends QBMapper
 			$object['executionTime'] = 0;
 		}
 
+        // Handle default message
+        $message = $object['message'] ?? 'success';
+        $object['message'] = $message;
+
         $obj = new JobLog();
 		$obj->hydrate($object);
 		// Set uuid

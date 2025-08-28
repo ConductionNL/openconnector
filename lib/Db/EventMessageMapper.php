@@ -116,9 +116,10 @@ class EventMessageMapper extends QBMapper
             $obj->setUuid(Uuid::v4());
         }
         
-        // Set timestamps
-        $obj->setCreated(new DateTime());
-        $obj->setUpdated(new DateTime());
+        // Set created and updated timestamps using recommended pattern
+        $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+        $obj->setCreated(new DateTime($now));
+        $obj->setUpdated(new DateTime($now));
 
         return $this->insert(entity: $obj);
     }
@@ -135,8 +136,9 @@ class EventMessageMapper extends QBMapper
         $obj = $this->find($id);
         $obj->hydrate($data);
         
-        // Update timestamp
-        $obj->setUpdated(new DateTime());
+        // Update the modified timestamp using recommended pattern
+        $now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+        $obj->setUpdated(new DateTime($now));
 
         return $this->update($obj);
     }

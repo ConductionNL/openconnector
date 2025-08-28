@@ -20,7 +20,7 @@ namespace OCA\OpenConnector\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Types;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
@@ -99,8 +99,7 @@ class Version1Date20250826103500 extends SimpleMigrationStep
                 // In Nextcloud migrations, we use changeColumn to modify existing columns
                 $table->changeColumn('message', [
                     'type' => Types::TEXT,
-                    'notnull' => true,
-                    'default' => 'success'
+                    'notnull' => true
                 ]);
                 
                 $output->info('Updated message column in openconnector_job_logs table to TEXT type');
