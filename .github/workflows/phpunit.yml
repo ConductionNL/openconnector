@@ -8,13 +8,11 @@ name: PHPUnit Tests
 on:
   pull_request:
     paths:
-      - 'apps-extra/openconnector/**'
-      - '.github/workflows/phpunit.yml'
+      - '**'
   push:
     branches: [main, master, development]
     paths:
-      - 'apps-extra/openconnector/**'
-      - '.github/workflows/phpunit.yml'
+      - '**'
 
 permissions:
   contents: read
@@ -29,19 +27,11 @@ jobs:
 
     name: OpenConnector (PHP 8.3)
 
-    services:
-      cache:
-        image: ghcr.io/nextcloud/continuous-integration-redis:latest
-        ports:
-          - 6379:6379/tcp
-        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
     steps:
-      - name: Checkout server
+      - name: Checkout openconnector
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           submodules: true
-          path: server
 
       - name: Set up php 8.3
         uses: shivammathur/setup-php@2e947f1f6932d141d076ca441d0e1e881775e95b #v2.31.0
@@ -50,31 +40,9 @@ jobs:
           extensions: bz2, ctype, curl, dom, fileinfo, gd, iconv, intl, json, libxml, mbstring, openssl, pcntl, posix, redis, session, simplexml, xmlreader, xmlwriter, zip, zlib, sqlite, pdo_sqlite
           coverage: none
           ini-file: development
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up dependencies
-        run: cd server && composer i
+      - name: Install dependencies
+        run: composer install
 
-      - name: Set up Nextcloud
-        run: |
-          cd server
-          mkdir data
-          cp tests/redis.config.php config/
-          cp tests/preseed-config.php config/config.php
-          ./occ maintenance:install --verbose --database=sqlite --database-name=nextcloud --database-user=root --database-pass=rootpassword --admin-user admin --admin-pass admin
-          php -f tests/enable_all.php | grep -i -C9999 error && echo "Error during app setup" && exit 1 || exit 0
-
-      - name: Enable OpenConnector app
-        run: cd server && ./occ app:enable openconnector
-
-      - name: Nextcloud debug information
-        run: cd server && ./occ app:list && echo "======= System config =======" && ./occ config:list system
-
-      - name: Run OpenConnector PHPUnit tests
-        run: cd server && phpunit --bootstrap tests/bootstrap.php apps-extra/openconnector/tests
-
-      - name: Print logs
-        if: always()
-        run: |
-          cd server && cat data/nextcloud.log
+      - name: Run PHPUnit tests
+        run: vendor/bin/phpunit tests/
