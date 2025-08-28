@@ -6,6 +6,9 @@
 // Include Composer autoloader
 require_once __DIR__ . '/../vendor/autoload.php';
 
+// tests/bootstrap.php inside your app
+require_once __DIR__ . '/../../tests/bootstrap.php';
+
 // Set up basic test environment
 if (!defined('PHPUNIT_RUN')) {
     define('PHPUNIT_RUN', 1);

@@ -51,6 +51,7 @@
 	},
 	"require-dev": {
 		"nextcloud/ocp": "dev-stable29",
+		"phpunit/phpunit": "^10 || ^11 || ^12",
 		"roave/security-advisories": "dev-latest"
 	},
 	"config": {
