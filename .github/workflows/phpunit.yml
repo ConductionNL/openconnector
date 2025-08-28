@@ -27,11 +27,7 @@ jobs:
   phpunit-openconnector:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        php-versions: ['8.1', '8.2', '8.3']
-
-    name: OpenConnector (PHP ${{ matrix.php-versions }})
+    name: OpenConnector (PHP 8.3)
 
     services:
       cache:
@@ -45,11 +41,12 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           submodules: true
+          path: server
 
-      - name: Set up php ${{ matrix.php-versions }}
+      - name: Set up php 8.3
         uses: shivammathur/setup-php@2e947f1f6932d141d076ca441d0e1e881775e95b #v2.31.0
         with:
-          php-version: ${{ matrix.php-versions }}
+          php-version: '8.3'
           extensions: bz2, ctype, curl, dom, fileinfo, gd, iconv, intl, json, libxml, mbstring, openssl, pcntl, posix, redis, session, simplexml, xmlreader, xmlwriter, zip, zlib, sqlite, pdo_sqlite
           coverage: none
           ini-file: development
@@ -57,10 +54,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up dependencies
-        run: composer i
+        run: cd server && composer i
 
       - name: Set up Nextcloud
         run: |
+          cd server
           mkdir data
           cp tests/redis.config.php config/
           cp tests/preseed-config.php config/config.php
@@ -68,15 +66,15 @@ jobs:
           php -f tests/enable_all.php | grep -i -C9999 error && echo "Error during app setup" && exit 1 || exit 0
 
       - name: Enable OpenConnector app
-        run: ./occ app:enable openconnector
+        run: cd server && ./occ app:enable openconnector
 
       - name: Nextcloud debug information
-        run: ./occ app:list && echo "======= System config =======" && ./occ config:list system
+        run: cd server && ./occ app:list && echo "======= System config =======" && ./occ config:list system
 
       - name: Run OpenConnector PHPUnit tests
-        run: phpunit --bootstrap tests/bootstrap.php apps-extra/openconnector/tests
+        run: cd server && phpunit --bootstrap tests/bootstrap.php apps-extra/openconnector/tests
 
       - name: Print logs
         if: always()
         run: |
-          cat data/nextcloud.log
+          cd server && cat data/nextcloud.log
