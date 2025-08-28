@@ -78,6 +78,9 @@ jobs:
           }
           EOF
 
+      - name: Test bootstrap file syntax
+        run: php -l tests/bootstrap.php
+
       - name: Run PHPUnit tests
         run: phpunit --bootstrap tests/bootstrap.php tests/Unit/
 

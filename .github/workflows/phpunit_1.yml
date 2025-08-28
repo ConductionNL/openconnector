@@ -85,11 +85,15 @@ jobs:
           # Wait for Nextcloud to be ready
           docker-compose -f docker-compose.test.yml exec -T nextcloud bash -c "until curl -f http://localhost/status.php; do sleep 10; done"
 
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ -f docker-compose.test.yml ]; then
+            docker-compose -f docker-compose.test.yml down -v
+          fi
+
       - name: Run OpenConnector PHPUnit tests
         run: |
           docker exec master-nextcloud-1 bash -c "cd /var/www/html && phpunit --bootstrap tests/bootstrap.php apps-extra/openconnector/tests"
 
-      - name: Cleanup
-        if: always()
-        run: |
-          docker-compose -f docker-compose.test.yml down -v
+
