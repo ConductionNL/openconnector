@@ -36,17 +36,25 @@ import { sourceStore, navigationStore } from '../../store/store.js'
 				</div>
 			</form>
 
-			<NcButton
-				:disabled="loading"
-				type="primary"
-				@click="testSource()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<Sync v-if="!loading" :size="20" />
-				</template>
-				Test connection
-			</NcButton>
-
+			<div class="modal-actions">
+				<NcButton
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
+				<NcButton
+					:disabled="loading"
+					type="primary"
+					@click="testSource()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<Sync v-if="!loading" :size="20" />
+					</template>
+					Test connection
+				</NcButton>
+			</div>
 			<NcNoteCard v-if="sourceStore.sourceTest && sourceStore.sourceTest.response.statusCode.toString().startsWith('2')" type="success">
 				<p>The connection to the source was successful.</p>
 			</NcNoteCard>
@@ -79,6 +87,7 @@ import {
 	NcNoteCard,
 } from '@nextcloud/vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'TestSource',
@@ -90,6 +99,7 @@ export default {
 		NcTextField,
 		NcTextArea,
 		NcNoteCard,
+		CancelIcon,
 	},
 	data() {
 		return {

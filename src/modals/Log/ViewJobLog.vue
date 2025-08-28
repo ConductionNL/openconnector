@@ -7,51 +7,55 @@ import { logStore, navigationStore } from '../../store/store.js'
 		ref="modalRef"
 		label-id="viewJobLog"
 		@close="closeModal">
-		<div class="logModalContent">
+		<div class="logModalContent ViewJobLog">
 			<div class="logModalContentHeader">
 				<h2>View Job Log</h2>
 			</div>
 
-			<strong>Standard</strong>
-			<table>
-				<tr v-for="(value, key) in standardItems"
+			<div class="dataTable">
+				<strong class="tableTitle">Standard</strong>
+				<table>
+					<tr v-for="(value, key) in standardItems"
 
-					:key="key">
-					<td class="keyColumn">
-						{{ key }}
-					</td>
-					<td v-if="typeof value === 'string' && (key === 'created' || key === 'updated' || key === 'expires' || key === 'lastRun' || key === 'nextRun')">
-						{{ new Date(value).toLocaleString() }}
-					</td>
-					<td v-else>
-						{{ value }}
-					</td>
-				</tr>
-			</table>
-			<br>
+						:key="key">
+						<td class="keyColumn">
+							{{ key }}
+						</td>
+						<td v-if="typeof value === 'string' && (key === 'created' || key === 'updated' || key === 'expires' || key === 'lastRun' || key === 'nextRun')">
+							{{ new Date(value).toLocaleString() }}
+						</td>
+						<td v-else>
+							{{ value }}
+						</td>
+					</tr>
+				</table>
+			</div>
 
-			<strong>Arguments</strong>
-			<table>
-				<tr v-for="(value, key) in argumentsItems"
-					:key="key">
-					<td class="keyColumn">
-						{{ key }}
-					</td>
-					<td>{{ value }}</td>
-				</tr>
-			</table>
-			<br>
+			<div class="dataTable">
+				<strong class="tableTitle">Arguments</strong>
+				<table>
+					<tr v-for="(value, key) in argumentsItems"
+						:key="key">
+						<td class="keyColumn">
+							{{ key }}
+						</td>
+						<td>{{ value }}</td>
+					</tr>
+				</table>
+			</div>
 
-			<strong>Stack Trace</strong>
-			<table>
-				<tr v-for="(value, key) in stackTraceItems"
-					:key="key">
-					<td class="keyColumn">
-						{{ key }}
-					</td>
-					<td>{{ value }}</td>
-				</tr>
-			</table>
+			<div class="dataTable">
+				<strong class="tableTitle">Stack Trace</strong>
+				<table>
+					<tr v-for="(value, key) in stackTraceItems"
+						:key="key">
+						<td class="keyColumn">
+							{{ key }}
+						</td>
+						<td>{{ value }}</td>
+					</tr>
+				</table>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -98,7 +102,7 @@ export default {
 			this.hasUpdated = false
 			this.standardItems = {}
 			this.stackTraceItems = {}
-			this.headersItems = {}
+			this.argumentsItems = {}
 		},
 	},
 
@@ -118,16 +122,67 @@ export default {
     padding-inline-end: 10px;
 }
 
-.logModalContent {
-    margin: var(--OC-margin-30);
+/* modal */
+div[class='modal-container']:has(.ViewJobLog) {
+    width: clamp(150px, 100%, 800px) !important;
 }
 
-.logModalContentHeader {
-    text-align: center;
+</style>
+
+<style scoped>
+.dataTable {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	max-width: 100%;
+	overflow: hidden;
+}
+.dataTable table {
+  table-layout: fixed;
+  width: 100%;
+}
+.tableTitle {
+	margin-block-end: 10px;
+}
+.dataTable td {
+  white-space: normal !important;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.dataTable td:not(.keyColumn) {
+  width: calc(100% - 200px); /* Remaining width after keyColumn */
+}
+.keyColumn {
+	width: 200px; /* Fixed width for first column */
+	padding-inline-end: 10px;
+	font-weight: bold;
+	color: var(--color-text-lighter);
 }
 
-.logModalContent > *:not(:last-child) {
-    margin-block-end: 1rem;
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
 }
 
+td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    white-space: inherit;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+tr {
+	background-color: var(--color-background) !important;
+}
+
+tr:nth-child(odd) td {
+	background-color: var(--color-background-hover);
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
 </style>

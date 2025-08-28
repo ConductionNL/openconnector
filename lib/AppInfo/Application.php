@@ -10,6 +10,7 @@ use OCA\OpenConnector\EventListener\ObjectUpdatedEventListener;
 use OCA\OpenConnector\EventListener\ViewDeletedEventListener;
 use OCA\OpenConnector\EventListener\ViewUpdatedOrCreatedEventListener; // @todo: remove this temporary listener to the software catalog application
 use OCA\OpenConnector\Service\OrganisationBridgeService;
+use OCA\OpenConnector\Service\SettingsService;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
@@ -29,6 +30,15 @@ class Application extends App implements IBootstrap {
 
 	public function register(IRegistrationContext $context): void {
 		include_once __DIR__ . '/../../vendor/autoload.php';
+
+		// Register services
+		$context->registerService(SettingsService::class, function($c) {
+			return new SettingsService(
+				$c->get('OCP\IDBConnection'),
+				$c->get('OCP\IAppConfig'),
+				$c->get('Psr\Log\LoggerInterface')
+			);
+		});
 
 		/* @var IEventDispatcher $dispatcher */
 		$dispatcher = $this->getContainer()->get(IEventDispatcher::class);

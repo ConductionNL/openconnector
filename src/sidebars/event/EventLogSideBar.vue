@@ -21,7 +21,7 @@ import { eventStore } from '../../store/store.js'
 						:options="eventOptions"
 						:clearable="true"
 						:placeholder="t('openconnector', 'Select event')"
-						@update:model-value="handleFilterChange" />
+						@input="handleFilterChange" />
 				</div>
 
 				<!-- Log Level Filter -->
@@ -34,7 +34,7 @@ import { eventStore } from '../../store/store.js'
 						:options="logLevelOptions"
 						:clearable="true"
 						:placeholder="t('openconnector', 'Select level')"
-						@update:model-value="handleFilterChange" />
+						@input="handleFilterChange" />
 				</div>
 
 				<!-- Date Range Filter -->
@@ -43,16 +43,13 @@ import { eventStore } from '../../store/store.js'
 						{{ t('openconnector', 'Date Range') }}
 					</label>
 					<div class="dateRangeContainer">
-						<NcDateTimePickerNative
-							v-model="filters.startDate"
-							type="datetime-local"
-							:placeholder="t('openconnector', 'Start date')"
-							@update:model-value="handleFilterChange" />
-						<NcDateTimePickerNative
-							v-model="filters.endDate"
-							type="datetime-local"
-							:placeholder="t('openconnector', 'End date')"
-							@update:model-value="handleFilterChange" />
+						<DateRangeInput
+							:start="filters.startDate"
+							:end="filters.endDate"
+							:max-start="new Date()"
+							@update:start="(v) => { filters.startDate = v; }"
+							@update:end="(v) => { filters.endDate = v; }"
+							@change="handleFilterChange" />
 					</div>
 				</div>
 
@@ -62,10 +59,10 @@ import { eventStore } from '../../store/store.js'
 						{{ t('openconnector', 'Message') }}
 					</label>
 					<NcTextField
-						v-model="filters.message"
+						:value="filters.message"
 						type="text"
 						:placeholder="t('openconnector', 'Search in messages')"
-						@update:model-value="handleFilterChange" />
+						@input="handleMessageFilterChange" />
 				</div>
 
 				<!-- Additional Filters -->
@@ -75,15 +72,15 @@ import { eventStore } from '../../store/store.js'
 					</label>
 					<div class="filterOptions">
 						<NcCheckboxRadioSwitch
-							v-model="filters.showOnlyErrors"
+							:checked="filters.showOnlyErrors"
 							:title="t('openconnector', 'Show only errors')"
-							@update:model-value="handleFilterChange">
+							@update:checked="(v) => { filters.showOnlyErrors = v; handleFilterChange() }">
 							{{ t('openconnector', 'Show only errors') }}
 						</NcCheckboxRadioSwitch>
 						<NcCheckboxRadioSwitch
-							v-model="filters.showOnlySlow"
+							:checked="filters.showOnlySlow"
 							:title="t('openconnector', 'Show only slow executions')"
-							@update:model-value="handleFilterChange">
+							@update:checked="(v) => { filters.showOnlySlow = v; handleFilterChange() }">
 							{{ t('openconnector', 'Show only slow executions') }}
 						</NcCheckboxRadioSwitch>
 					</div>
@@ -161,10 +158,11 @@ import { eventStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcAppSidebar, NcSelect, NcTextField, NcButton, NcCheckboxRadioSwitch, NcDateTimePickerNative, NcNoteCard } from '@nextcloud/vue'
+import { NcAppSidebar, NcSelect, NcTextField, NcButton, NcCheckboxRadioSwitch, NcNoteCard } from '@nextcloud/vue'
 import { translate as t } from '@nextcloud/l10n'
 import Close from 'vue-material-design-icons/Close.vue'
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
+import DateRangeInput from '../../components/DateRangeInput.vue'
 
 export default {
 	name: 'EventLogSideBar',
@@ -174,10 +172,10 @@ export default {
 		NcTextField,
 		NcButton,
 		NcCheckboxRadioSwitch,
-		NcDateTimePickerNative,
 		NcNoteCard,
 		Close,
 		InformationOutline,
+		DateRangeInput,
 	},
 	data() {
 		return {
@@ -232,6 +230,11 @@ export default {
 		handleFilterChange() {
 			this.$root.$emit('event-log-filters-changed', this.filters)
 			this.updateStatistics()
+		},
+		handleMessageFilterChange(value) {
+			const nextValue = typeof value === 'string' ? value : (value && value.target ? value.target.value : '')
+			this.filters.message = nextValue
+			this.handleFilterChange()
 		},
 		clearFilters() {
 			this.filters = {

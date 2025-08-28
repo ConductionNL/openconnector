@@ -825,6 +825,37 @@ class SynchronizationService
 		return $deletedObjectsCount;
 	}
 
+    /**
+     * Recursively sort an associative array by key.
+     *
+     * @param $array mixed The array to sort.
+     * @return bool Whether or not the sort is successful.
+     */
+    public function sortNestedArray(mixed &$array): bool
+    {
+        if (!is_array($array)) {
+            return false;
+        }
+        ksort($array);
+        foreach ($array as $k=> $v) {
+            $this->sortNestedArray($array[$k]);
+        }
+        return true;
+    }
+
+    /**
+     * Hash an object in a unified order, so the order in which keys are given does not influence the hash.
+     *
+     * @param array $object The object to hash.
+     * @return string The object hash.
+     */
+    private function hashObject (array $object): string
+    {
+        $this->sortNestedArray($object);
+
+        return md5(serialize($object));
+    }
+
 	/**
 	 * Synchronize a contract
 	 *
@@ -883,7 +914,7 @@ class SynchronizationService
 		// Get mapped hash object (some fields can make it look the object has changed even if it hasn't)
 		$hashObject = $this->mapHashObject(synchronization: $synchronization, object: $object);
 		// Let create a source hash for the object
-		$originHash = md5(serialize($hashObject));
+		$originHash = $this->hashObject($hashObject);
 
 		// If no source target mapping is defined, use original object
 		if (empty($synchronization->getSourceTargetMapping()) === true) {
@@ -1050,17 +1081,18 @@ class SynchronizationService
 				// Get the id form the target object
 				$synchronizationContract->setTargetId($target->getUuid());
 
-				// Clean up orphaned files based on the attachments array
-				if (isset($targetObject['attachments']) && is_array($targetObject['attachments'])) {
-					try {
-						$deletedCount = $this->cleanupFilesFromAttachments($target->getUuid(), $targetObject['attachments']);
-						if ($deletedCount > 0) {
-							error_log("Cleaned up {$deletedCount} orphaned files for object {$target->getUuid()}");
-						}
-					} catch (Exception $e) {
-						error_log("Failed to cleanup orphaned files for object {$target->getUuid()}: " . $e->getMessage());
-					}
-				}
+                //@TODO: Orphan cleanup is done also in the fetch file rule, this can be removed after a succesful test.
+//				// Clean up orphaned files based on the attachments array
+//				if (isset($targetObject['attachments']) && is_array($targetObject['attachments'])) {
+//					try {
+//						$deletedCount = $this->cleanupFilesFromAttachments($target->getUuid(), $targetObject['attachments']);
+//						if ($deletedCount > 0) {
+//							error_log("Cleaned up {$deletedCount} orphaned files for object {$target->getUuid()}");
+//						}
+//					} catch (Exception $e) {
+//						error_log("Failed to cleanup orphaned files for object {$target->getUuid()}: " . $e->getMessage());
+//					}
+//				}
 
 				// Handle sub-objects synchronization if sourceConfig is defined
 				if (isset($sourceConfig['subObjects']) === true) {

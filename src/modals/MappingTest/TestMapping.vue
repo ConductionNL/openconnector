@@ -17,7 +17,8 @@ import { navigationStore } from '../../store/store.js'
 					:input-object="inputObject"
 					@schema-selected="receiveSchemaSelected"
 					@mapping-selected="receiveMappingSelected"
-					@mapping-test="receiveMappingTest" />
+					@mapping-test="receiveMappingTest"
+					@close-modal="closeModal" />
 				<TestMappingResult ref="mappingResultRef"
 					:mapping-test="mappingTest"
 					:schema="schema" />
@@ -108,26 +109,16 @@ div[class='modal-container']:has(.TestMappingMainModal) {
     height: 600px;
     display: flex;
     flex-direction: row;
+    gap: 12px;
 }
 .content > * {
     height: 100%;
     overflow: auto;
+    padding-top: var(--OC-margin-20);
+    padding-bottom: var(--OC-margin-20);
 }
 .content > *:not(:last-child) {
     border-right: 1px solid gray;
-}
-.content > *:first-child {
-    width: 25%;
-    padding-right: var(--OC-margin-30);
-}
-.content > *:nth-child(2) {
-    width: 50%;
-     padding: 0 var(--OC-margin-30);
-}
-.content > *:last-child {
-    width: 25%;
-	 padding-left: var(--OC-margin-30);
-
 }
 
 .content > :deep(h4) {

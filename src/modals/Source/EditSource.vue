@@ -42,18 +42,27 @@ import { Source } from '../../entities/index.js'
 						:helper-text="`The location of the source will never end on a /. If a / is added it will be removed on saving.`" />
 				</div>
 			</form>
-
-			<NcButton
-				v-if="!success"
-				:disabled="loading || !sourceItem.name || !sourceItem.location || !typeOptions.value"
-				type="primary"
-				@click="editSource()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<ContentSaveOutline v-if="!loading" :size="20" />
-				</template>
-				Save
-			</NcButton>
+			<div class="modal-actions">
+				<NcButton
+					v-if="!success"
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
+				<NcButton
+					v-if="!success"
+					:disabled="loading || !sourceItem.name || !sourceItem.location || !typeOptions.value"
+					type="primary"
+					@click="editSource()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<ContentSaveOutline v-if="!loading" :size="20" />
+					</template>
+					Save
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -69,6 +78,7 @@ import {
 	NcTextArea,
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'EditSource',
@@ -80,6 +90,7 @@ export default {
 		NcNoteCard,
 		NcTextField,
 		NcTextArea,
+		CancelIcon,
 	},
 	data() {
 		return {

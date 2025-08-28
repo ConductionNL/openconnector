@@ -23,6 +23,9 @@ class JobLog extends Entity implements JsonSerializable
     protected ?DateTime $lastRun = null;
     protected ?DateTime $nextRun = null;
     protected ?DateTime $created = null;
+    
+    /** @var int $size Size of this log entry in bytes (calculated from serialized object) */
+    protected int $size = 4096;
 
     /**
      * Get the job arguments
@@ -44,6 +47,15 @@ class JobLog extends Entity implements JsonSerializable
         return $this->stackTrace ?? [];
     }
 
+    /**
+     * JobLog constructor
+     *
+     * Initializes field types and sets default values for expires and size properties.
+     * The expires date is set to one week from creation, and size defaults to 4KB.
+     *
+     * @psalm-api
+     * @phpstan-api
+     */
     public function __construct() {
         $this->addType('uuid', 'string');
         $this->addType('level', 'string');
@@ -60,6 +72,15 @@ class JobLog extends Entity implements JsonSerializable
         $this->addType('lastRun', 'datetime');
         $this->addType('nextRun', 'datetime');
         $this->addType('created', 'datetime');
+        $this->addType('size', 'integer');
+
+        // Set default expires to next week
+        if ($this->expires === null) {
+            $this->expires = new DateTime('+1 week');
+        }
+        
+        // Calculate and set object size
+        $this->calculateSize();
     }
 
     public function getJsonFields(): array
@@ -89,7 +110,63 @@ class JobLog extends Entity implements JsonSerializable
             }
         }
 
+        // Recalculate size after hydration to ensure it reflects current data
+        $this->calculateSize();
+
         return $this;
+    }
+
+    /**
+     * Calculate and set the size of this log entry
+     *
+     * This method calculates the size of the log entry by serializing the object
+     * and measuring its byte size. This helps with storage management and cleanup.
+     *
+     * @return void
+     *
+     * @psalm-return void
+     * @phpstan-return void
+     */
+    public function calculateSize(): void
+    {
+        // Serialize the current object to calculate its size
+        $serialized = json_encode($this->jsonSerialize());
+        $this->size = strlen($serialized);
+        
+        // Ensure minimum size of 4KB if calculated size is smaller
+        if ($this->size < 4096) {
+            $this->size = 4096;
+        }
+    }
+
+    /**
+     * Get the size of this log entry in bytes
+     *
+     * @return int The size in bytes
+     *
+     * @psalm-return int
+     * @phpstan-return int
+     */
+    public function getSize(): int
+    {
+        return $this->size;
+    }
+
+    /**
+     * Set the size of this log entry in bytes
+     *
+     * @param int $size The size in bytes
+     *
+     * @return void
+     *
+     * @psalm-param int $size
+     * @psalm-return void
+     * @phpstan-param int $size
+     * @phpstan-return void
+     */
+    public function setSize(int $size): void
+    {
+        $this->size = $size;
     }
 
     public function jsonSerialize(): array
@@ -111,7 +188,7 @@ class JobLog extends Entity implements JsonSerializable
             'lastRun' => isset($this->lastRun) ? $this->lastRun->format('c') : null,
             'nextRun' => isset($this->nextRun) ? $this->nextRun->format('c') : null,
             'created' => isset($this->created) ? $this->created->format('c') : null,
-            
+            'size' => $this->size,
         ];
     }
 }

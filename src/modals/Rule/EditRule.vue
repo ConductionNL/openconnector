@@ -513,23 +513,32 @@ import { Rule } from '../../entities/index.js'
 				</template>
 			</form>
 
-			<NcButton v-if="!success"
-				:disabled="loading
-					|| !ruleItem.name
-					|| !isValidJson(ruleItem.conditions)
-					|| typeOptions.value?.id === 'fetch_file' && (!sourceOptions.sourceValue)
-					|| typeOptions.value?.id === 'save_object' && (!ruleItem.configuration.save_object.schema || !ruleItem.configuration.save_object.register)
-					|| typeOptions.value?.id === 'write_file' && (!ruleItem.configuration.write_file.filePath || !ruleItem.configuration.write_file.fileNamePath)
-					|| typeOptions.value?.id === 'fileparts_create' && (!schemaOptions.value || !ruleItem.configuration.fileparts_create.sizeLocation)
-					|| typeOptions.value?.id === 'filepart_upload' && !filepartUploadMappingOptions.value"
-				type="primary"
-				@click="editRule()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<ContentSaveOutline v-if="!loading" :size="20" />
-				</template>
-				Save
-			</NcButton>
+			<div class="modal-actions">
+				<NcButton v-if="!success"
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
+				<NcButton v-if="!success"
+					:disabled="loading
+						|| !ruleItem.name
+						|| !isValidJson(ruleItem.conditions)
+						|| typeOptions.value?.id === 'fetch_file' && (!sourceOptions.sourceValue)
+						|| typeOptions.value?.id === 'save_object' && (!ruleItem.configuration.save_object.schema || !ruleItem.configuration.save_object.register)
+						|| typeOptions.value?.id === 'write_file' && (!ruleItem.configuration.write_file.filePath || !ruleItem.configuration.write_file.fileNamePath)
+						|| typeOptions.value?.id === 'fileparts_create' && (!schemaOptions.value || !ruleItem.configuration.fileparts_create.sizeLocation)
+						|| typeOptions.value?.id === 'filepart_upload' && !filepartUploadMappingOptions.value"
+					type="primary"
+					@click="editRule()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<ContentSaveOutline v-if="!loading" :size="20" />
+					</template>
+					Save
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -557,6 +566,7 @@ import Drag from 'vue-material-design-icons/Drag.vue'
 import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
 import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 import openLink from '../../services/openLink.js'
 
@@ -575,6 +585,7 @@ export default {
 		NcActionButton,
 		NcCheckboxRadioSwitch,
 		VueDraggable,
+		CancelIcon,
 	},
 	data() {
 		return {

@@ -53,6 +53,8 @@ export default {
 .input-object-container {
     display: flex;
     flex-direction: column;
+    gap: 8px;
+	padding-right: 12px !important;
 }
 .input-object-container .textarea {
     display: flex;

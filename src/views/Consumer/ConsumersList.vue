@@ -15,7 +15,7 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
-				<NcActions>
+				<NcActions class="listHeaderActions">
 					<NcActionButton close-after-click @click="consumerStore.refreshConsumerList()">
 						<template #icon>
 							<Refresh :size="20" />
