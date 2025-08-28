@@ -56,7 +56,10 @@ jobs:
           ini-file: development
 
       - name: Set up dependencies
-        run: cd server && composer i
+        run: |
+          cd server
+          git submodule update --init --recursive
+          composer i
 
       - name: Copy openconnector app to server
         run: |
@@ -88,3 +91,4 @@ jobs:
 
       - name: Run PHPUnit tests
         run: cd server && ./phpunit --bootstrap tests/bootstrap.php apps-extra/openconnector/tests
+        continue-on-error: false

@@ -82,16 +82,19 @@ jobs:
             # Try to run tests if PHPUnit is available
             if [ -f "vendor/bin/phpunit" ]; then
               echo "Running tests with vendor/bin/phpunit..."
-              vendor/bin/phpunit --configuration phpunit.xml --list-tests || echo "Tests failed but continuing..."
+              vendor/bin/phpunit --configuration phpunit.xml --list-tests
             elif command -v phpunit >/dev/null 2>&1; then
               echo "Running tests with global phpunit..."
-              phpunit --configuration phpunit.xml --list-tests || echo "Tests failed but continuing..."
+              phpunit --configuration phpunit.xml --list-tests
             elif [ -f "./phpunit" ]; then
               echo "Running tests with local phpunit..."
               # Try different bootstrap paths
               ./phpunit --configuration phpunit.xml --list-tests || \
               ./phpunit --bootstrap tests/bootstrap.php --list-tests || \
-              ./phpunit --list-tests || echo "Tests failed but continuing..."
+              ./phpunit --list-tests
+            else
+              echo "ERROR: No PHPUnit found and tests cannot be run!"
+              exit 1
             fi
           else
             echo "No tests directory found"

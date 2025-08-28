@@ -80,12 +80,18 @@ jobs:
             echo "phpunit.xml found"
             if [ -f "vendor/bin/phpunit" ]; then
               echo "Running tests with vendor/bin/phpunit..."
-              vendor/bin/phpunit --configuration phpunit.xml --list-tests || echo "Tests failed but continuing..."
+              vendor/bin/phpunit --configuration phpunit.xml --list-tests
             elif command -v phpunit >/dev/null 2>&1; then
               echo "Running tests with global phpunit..."
               # Try different bootstrap paths
               phpunit --configuration phpunit.xml --list-tests || \
               phpunit --bootstrap tests/bootstrap.php --list-tests || \
-              phpunit --list-tests || echo "Tests failed but continuing..."
+              phpunit --list-tests
+            else
+              echo "ERROR: No PHPUnit found and tests cannot be run!"
+              exit 1
             fi
+          else
+            echo "ERROR: phpunit.xml not found - cannot run tests!"
+            exit 1
           fi
