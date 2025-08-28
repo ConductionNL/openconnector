@@ -113,16 +113,51 @@ class SynchronizationService
 	}
 
     /**
+     * Find all Synchronization entities that should run for a given object.
+     *
+     * This method first searches for Synchronizations whose `source` matches
+     * the given object's register and schema via {@see self::findAllBySourceId()}.
+     *
+     * If no Synchronizations are found, it falls back to searching for
+     * Synchronizations whose `sourceConfig['altSourceIds']` matches
+     * the object's register and schema via {@see self::findByAltSourceId()}.
+     *
+     * @param ObjectEntity $object The object entity for which to find matching Synchronizations.
+     *
+     * @return array<Synchronization> Array of Synchronization entities to run.
+     */
+    public function findSynchronizationsToRun(ObjectEntity $object)
+    {
+        return array_merge(
+            $this->findAllBySourceId(register: $object->getRegister(), schema: $object->getSchema()),
+            $this->findAllByAltSourceId(register: $object->getRegister(), schema: $object->getSchema())
+        );
+    }
+
+    /**
 	 * Finds all synchronizations by the given source ID, which is a combination of register and schema.
 	 *
-	 * @param $register The register id.
-	 * @param $schema The schema id.
+	 * @param string|int $register The register id.
+	 * @param string|int $schema The schema id.
 	 *
 	 * @return array The list of records matching the source ID.
 	 */
-	public function findAllBySourceId($register, $schema) {
+	private function findAllBySourceId(string|int $register, string|int $schema) {
 		$sourceId = "$register/$schema";
 		return $this->synchronizationMapper->findAll(limit: null, offset: null, filters: ['source_id' => $sourceId]);
+	}
+
+    /**
+	 * Finds all synchronizations by alternate source/register combo's than normal.
+	 *
+	 * @param string|int $register The register id.
+	 * @param string|int $schema The schema id.
+	 *
+	 * @return array The list of records matching the source ID.
+	 */
+	private function findAllByAltSourceId(string|int $register, string|int $schema) {
+		$sourceId = "$register/$schema";
+		return $this->synchronizationMapper->findAllByAltSourceId(source: $sourceId);
 	}
 
 	/**
