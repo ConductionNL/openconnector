@@ -24,7 +24,7 @@ class MappingMapper extends QBMapper
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException
 	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
 	 */
-	public function find(int|string $id): Mapping
+	public function find($id): Mapping
 	{
 		$qb = $this->db->getQueryBuilder();
 

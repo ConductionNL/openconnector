@@ -24,7 +24,7 @@ class SynchronizationMapper extends QBMapper
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException
 	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
 	 */
-	public function find(int|string $id): Synchronization
+	public function find($id): Synchronization
 	{
 		$qb = $this->db->getQueryBuilder();
 

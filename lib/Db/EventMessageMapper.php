@@ -33,7 +33,7 @@ class EventMessageMapper extends QBMapper
      * @param int $id The message ID
      * @return EventMessage
      */
-    public function find(int $id): EventMessage
+    public function find($id): EventMessage
     {
         $qb = $this->db->getQueryBuilder();
 

@@ -32,7 +32,7 @@ class EventMapper extends QBMapper
 	 * @param int $id The event ID
 	 * @return Event The found event
 	 */
-	public function find(int $id): Event
+	public function find($id): Event
 	{
 		$qb = $this->db->getQueryBuilder();
 

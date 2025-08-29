@@ -24,7 +24,7 @@ class SourceMapper extends QBMapper
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException
 	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
 	 */
-	public function find(int|string $id): Source
+	public function find($id): Source
 	{
 		$qb = $this->db->getQueryBuilder();
 

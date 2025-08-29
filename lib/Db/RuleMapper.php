@@ -33,7 +33,7 @@ class RuleMapper extends QBMapper
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException
 	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
 	 */
-	public function find(int|string $id): Rule
+	public function find($id): Rule
 	{
 		$qb = $this->db->getQueryBuilder();
 

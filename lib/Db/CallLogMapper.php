@@ -19,7 +19,7 @@ class CallLogMapper extends QBMapper
         parent::__construct($db, 'openconnector_call_logs');
     }
 
-    public function find(int $id): CallLog
+    public function find($id): CallLog
     {
         $qb = $this->db->getQueryBuilder();
 

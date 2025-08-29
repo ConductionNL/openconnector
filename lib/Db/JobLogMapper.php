@@ -19,7 +19,7 @@ class JobLogMapper extends QBMapper
         parent::__construct($db, 'openconnector_job_logs');
     }
 
-    public function find(int $id): JobLog
+    	public function find($id): JobLog
     {
         $qb = $this->db->getQueryBuilder();
 

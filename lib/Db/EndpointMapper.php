@@ -27,7 +27,7 @@ class EndpointMapper extends QBMapper
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException
 	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
 	 */
-	public function find(int|string $id): Endpoint
+	public function find($id): Endpoint
 	{
 		$qb = $this->db->getQueryBuilder();
 

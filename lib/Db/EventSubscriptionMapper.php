@@ -32,7 +32,7 @@ class EventSubscriptionMapper extends QBMapper
      * @param int $id The subscription ID
      * @return EventSubscription
      */
-    public function find(int $id): EventSubscription
+    public function find($id): EventSubscription
     {
         $qb = $this->db->getQueryBuilder();
 

@@ -25,7 +25,7 @@
 		"cs:check": "php-cs-fixer fix --dry-run --diff",
 		"cs:fix": "php-cs-fixer fix",
 		"psalm": "psalm --threads=1 --no-cache",
-		"test:unit": "phpunit tests -c tests/phpunit.xml --colors=always --fail-on-warning --fail-on-risky",
+		"test:unit": "phpunit --bootstrap tests/bootstrap.php tests --colors=always --fail-on-warning --fail-on-risky",
 		"openapi": "generate-spec"
 	},
 	"require": {
@@ -51,7 +51,7 @@
 	},
 	"require-dev": {
 		"nextcloud/ocp": "dev-stable29",
-		"phpunit/phpunit": "^10 || ^11 || ^12",
+		"phpunit/phpunit": "^9.6 || ^10",
 		"roave/security-advisories": "dev-latest"
 	},
 	"config": {

@@ -22,7 +22,7 @@ class SynchronizationLogMapper extends QBMapper
 		parent::__construct($db, 'openconnector_synchronization_logs');
 	}
 
-	public function find(int $id): SynchronizationLog
+	public function find($id): SynchronizationLog
 	{
 		$qb = $this->db->getQueryBuilder();
 
