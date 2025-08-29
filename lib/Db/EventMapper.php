@@ -32,7 +32,7 @@ class EventMapper extends QBMapper
 	 * @param int $id The event ID
 	 * @return Event The found event
 	 */
-	public function find(int $id): Event
+	public function find($id): Event
 	{
 		$qb = $this->db->getQueryBuilder();
 
@@ -105,6 +105,11 @@ class EventMapper extends QBMapper
 			$obj->setVersion('0.0.1');
 		}
 
+		// Set created and updated timestamps
+		$now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+		$obj->setCreated(new \DateTime($now));
+		$obj->setUpdated(new \DateTime($now));
+
 		return $this->insert(entity: $obj);
 	}
 
@@ -132,6 +137,10 @@ class EventMapper extends QBMapper
 		}
 
 		$obj->hydrate($object);
+
+		// Update the modified timestamp
+		$now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+		$obj->setUpdated(new \DateTime($now));
 
 		return $this->update($obj);
 	}

@@ -1,0 +1,109 @@
+# This workflow runs PHPUnit tests for the openconnector app (Simple)
+#
+# SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
+# SPDX-License-Identifier: MIT
+
+name: PHPUnit Tests (Simple)
+
+on:
+  pull_request:
+    paths:
+      - '**'
+  push:
+    branches: [main, master, development]
+    paths:
+      - '**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phpunit-openconnector-simple-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  phpunit-openconnector:
+    runs-on: ubuntu-latest
+
+    name: OpenConnector (Simple - PHP 8.3)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup PHP Composer Environment
+        uses: php-actions/composer@v6
+        with:
+          php_version: "8.3"
+          php_extensions: redis exif intl zip pcntl gd gmp
+          version: 2.x
+          command: install
+
+      - name: Check migration files for string types
+        run: |
+          echo "Checking migration files for string type usage..."
+          
+          # Check for string type patterns that should be converted to Types constants
+          if grep -r "'type' => '" lib/Migration/; then
+            echo "ERROR: Found migration files using string types instead of Types constants"
+            exit 1
+          fi
+          
+          # Check for addColumn with string types
+          if grep -r "addColumn.*'text'" lib/Migration/; then
+            echo "ERROR: Found addColumn with 'text' - should use Types::TEXT"
+            exit 1
+          fi
+          
+          if grep -r "addColumn.*'string'" lib/Migration/; then
+            echo "ERROR: Found addColumn with 'string' - should use Types::STRING"
+            exit 1
+          fi
+          
+          if grep -r "addColumn.*'varchar'" lib/Migration/; then
+            echo "ERROR: Found addColumn with 'varchar' - should use Types::STRING"
+            exit 1
+          fi
+          
+          if grep -r "addColumn.*'integer'" lib/Migration/; then
+            echo "ERROR: Found addColumn with 'integer' - should use Types::INTEGER"
+            exit 1
+          fi
+          
+          if grep -r "addColumn.*'int'" lib/Migration/; then
+            echo "ERROR: Found addColumn with 'int' - should use Types::INTEGER"
+            exit 1
+          fi
+          
+          if grep -r "addColumn.*'boolean'" lib/Migration/; then
+            echo "ERROR: Found addColumn with 'boolean' - should use Types::BOOLEAN"
+            exit 1
+          fi
+          
+          if grep -r "addColumn.*'bool'" lib/Migration/; then
+            echo "ERROR: Found addColumn with 'bool' - should use Types::BOOLEAN"
+            exit 1
+          fi
+          
+          if grep -r "addColumn.*'datetime'" lib/Migration/; then
+            echo "ERROR: Found addColumn with 'datetime' - should use Types::DATETIME_MUTABLE"
+            exit 1
+          fi
+          
+          if grep -r "addColumn.*'json'" lib/Migration/; then
+            echo "ERROR: Found addColumn with 'json' - should use Types::JSON"
+            exit 1
+          fi
+          
+          # Check for correct import
+          if ! grep -r "use Doctrine\\\\DBAL\\\\Types\\\\Types" lib/Migration/; then
+            echo "ERROR: Migration files missing correct Types import"
+            exit 1
+          fi
+          
+          echo "All migration files are using Types constants correctly"
+
+      - name: Run tests
+        run: php vendor/bin/phpunit --configuration phpunit.xml --coverage-text

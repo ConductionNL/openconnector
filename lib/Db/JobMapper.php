@@ -24,7 +24,7 @@ class JobMapper extends QBMapper
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException
 	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
 	 */
-	public function find(int|string $id): Job
+	public function find($id): Job
 	{
 		$qb = $this->db->getQueryBuilder();
 

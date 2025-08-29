@@ -284,12 +284,12 @@ class ObjectService
 			return $this->getOpenRegisters()->getMapper(register: $register, schema: $schema);
 		}
 
-		$objectTypeLower = strtolower($objectType);
+		$objectTypeLower = strtolower($objectType ?? '');
 
 		// If the source is internal, return the appropriate mapper based on the object type
 		return match ($objectTypeLower) {
 			'endpoint' 			=> $this->endpointMapper,
-			'eventSubscription'	=> $this->eventSubscriptionMapper,
+			'eventsubscription'	=> $this->eventSubscriptionMapper,
 			'job' 	   			=> $this->jobMapper,
 			'mapping'  			=> $this->mappingMapper,
 			'rule'     			=> $this->ruleMapper,

@@ -33,7 +33,7 @@ class RuleMapper extends QBMapper
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException
 	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
 	 */
-	public function find(int|string $id): Rule
+	public function find($id): Rule
 	{
 		$qb = $this->db->getQueryBuilder();
 
@@ -176,6 +176,11 @@ class RuleMapper extends QBMapper
 			$obj->setOrder($maxOrder + 1);
 		}
 
+		// Set created and updated timestamps
+		$now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+		$obj->setCreated(new \DateTime($now));
+		$obj->setUpdated(new \DateTime($now));
+
 		return $this->insert(entity: $obj);
 	}
 
@@ -203,6 +208,10 @@ class RuleMapper extends QBMapper
 		}
 
 		$obj->hydrate($object);
+
+		// Update the modified timestamp
+		$now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+		$obj->setUpdated(new \DateTime($now));
 
 		return $this->update($obj);
 	}
@@ -313,4 +322,5 @@ class RuleMapper extends QBMapper
 
 		return $map;
 	}
+
 }

@@ -19,7 +19,7 @@ class JobLogMapper extends QBMapper
         parent::__construct($db, 'openconnector_job_logs');
     }
 
-    public function find(int $id): JobLog
+    	public function find($id): JobLog
     {
         $qb = $this->db->getQueryBuilder();
 
@@ -82,6 +82,10 @@ class JobLogMapper extends QBMapper
 		if (isset($object['executionTime']) === false) {
 			$object['executionTime'] = 0;
 		}
+
+        // Handle default message
+        $message = $object['message'] ?? 'success';
+        $object['message'] = $message;
 
         $obj = new JobLog();
 		$obj->hydrate($object);

@@ -1,0 +1,76 @@
+name: PHPUnit (Nextcloud + SQLite)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phpunit-sqlite-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  APP_NAME: openconnector
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Nextcloud server
+        uses: actions/checkout@v4
+        with:
+          repository: nextcloud/server
+          submodules: true
+
+      - name: Checkout this app into server/apps
+        uses: actions/checkout@v4
+        with:
+          path: apps/${{ env.APP_NAME }}
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: >
+            bz2, ctype, curl, dom, fileinfo, gd, iconv, intl, json, libxml, mbstring,
+            openssl, pcntl, posix, session, simplexml, xmlreader, xmlwriter, zip, zlib,
+            sqlite3, pdo_sqlite
+          ini-file: development
+          coverage: none
+
+      - name: Install app dev dependencies
+        working-directory: apps/${{ env.APP_NAME }}
+        run: |
+          # If a dev template added nextcloud/ocp, remove it to avoid conflicts with server
+          composer remove nextcloud/ocp --dev --no-scripts || true
+          composer install --no-interaction --prefer-dist
+
+      - name: Install Nextcloud (SQLite) and enable app
+        run: |
+          mkdir -p data
+          php occ maintenance:install \
+            --verbose \
+            --database=sqlite \
+            --database-name=nextcloud \
+            --database-host=127.0.0.1 \
+            --database-user=root \
+            --database-pass=rootpassword \
+            --admin-user admin \
+            --admin-pass admin
+          php occ app:enable --force "${APP_NAME}"
+
+      - name: Run unit tests (composer script)
+        working-directory: apps/${{ env.APP_NAME }}
+        run: |
+          composer run test:unit
+
+      - name: Print Nextcloud log (always)
+        if: always()
+        run: |
+          if [ -f data/nextcloud.log ]; then
+            echo "==== nextcloud.log ===="
+            cat data/nextcloud.log
+          fi

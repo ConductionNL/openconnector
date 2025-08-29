@@ -24,7 +24,7 @@ class SourceMapper extends QBMapper
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException
 	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
 	 */
-	public function find(int|string $id): Source
+	public function find($id): Source
 	{
 		$qb = $this->db->getQueryBuilder();
 
@@ -49,6 +49,25 @@ class SourceMapper extends QBMapper
 		}
 
 		return $this->findEntity(query: $qb);
+	}
+
+	/**
+	 * Find all sources that belong to a specific reference.
+	 *
+	 * @param string $reference The reference to find sources for
+	 * @return array<Source> Array of Source entities
+	 */
+	public function findByRef(string $reference): array
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select('*')
+			->from('openconnector_sources')
+			->where(
+				$qb->expr()->eq('reference', $qb->createNamedParameter($reference))
+			);
+
+		return $this->findEntities(query: $qb);
 	}
 
 	/**
@@ -134,6 +153,11 @@ class SourceMapper extends QBMapper
 			$obj->setVersion('0.0.1');
 		}
 
+		// Set created and updated timestamps
+		$now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+		$obj->setDateCreated(new \DateTime($now));
+		$obj->setDateModified(new \DateTime($now));
+
 		return $this->insert(entity: $obj);
 	}
 
@@ -154,6 +178,10 @@ class SourceMapper extends QBMapper
 		}
 
 		$obj->hydrate($object);
+
+		// Update the modified timestamp
+		$now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+		$obj->setDateModified(new \DateTime($now));
 
 		return $this->update($obj);
 	}

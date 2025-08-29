@@ -11,7 +11,7 @@ namespace OCA\OpenConnector\Migration;
 
 use Closure;
 use OCP\DB\ISchemaWrapper;
-use OCP\DB\Types;
+use Doctrine\DBAL\Types\Types;
 use OCP\Migration\IOutput;
 use OCP\Migration\SimpleMigrationStep;
 
@@ -42,16 +42,16 @@ class Version1Date20250109093325 extends SimpleMigrationStep {
 			$table->addColumn('source', Types::STRING, ['notnull' => true, 'length' => 255]);
 			$table->addColumn('type', Types::STRING, ['notnull' => true, 'length' => 255]);
 			$table->addColumn('specversion', Types::STRING, ['notnull' => true, 'length' => 10, 'default' => '1.0']);
-			$table->addColumn('time', Types::DATETIME, ['notnull' => true]);
+			$table->addColumn('time', Types::DATETIME_MUTABLE, ['notnull' => true]);
 			$table->addColumn('datacontenttype', Types::STRING, ['notnull' => true, 'length' => 255, 'default' => 'application/json']);
 			$table->addColumn('dataschema', Types::STRING, ['notnull' => false, 'length' => 255]);
 			$table->addColumn('subject', Types::STRING, ['notnull' => false, 'length' => 255]);
 			$table->addColumn('data', Types::JSON, ['notnull' => false]);
 			$table->addColumn('user_id', Types::STRING, ['notnull' => false, 'length' => 255]);
-			$table->addColumn('processed', Types::DATETIME, ['notnull' => false]);
+			$table->addColumn('processed', Types::DATETIME_MUTABLE, ['notnull' => false]);
 			$table->addColumn('status', Types::STRING, ['notnull' => true, 'length' => 255, 'default' => 'pending']);
-			$table->addColumn('created', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
-			$table->addColumn('updated', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
+			$table->addColumn('created', Types::DATETIME_MUTABLE, ['notnull' => true]);
+			$table->addColumn('updated', Types::DATETIME_MUTABLE, ['notnull' => true]);
 			$table->setPrimaryKey(['id']);
 			$table->addIndex(['uuid'], 'openconnector_events_uuid_index');
 		}
@@ -73,8 +73,8 @@ class Version1Date20250109093325 extends SimpleMigrationStep {
 			$table->addColumn('status', Types::STRING, ['notnull' => true, 'length' => 20, 'default' => 'active']);
 			$table->addColumn('user_id', Types::STRING, ['notnull' => false, 'length' => 255]);
 			$table->addColumn('consumer_id', Types::BIGINT, ['notnull' => true, 'length' => 20]);
-			$table->addColumn('created', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
-			$table->addColumn('updated', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
+			$table->addColumn('created', Types::DATETIME_MUTABLE, ['notnull' => true]);
+			$table->addColumn('updated', Types::DATETIME_MUTABLE, ['notnull' => true]);
 
 			$table->setPrimaryKey(['id']);
 			$table->addIndex(['uuid'], 'openconnector_event_subs_uuid_index');
@@ -94,10 +94,10 @@ class Version1Date20250109093325 extends SimpleMigrationStep {
 			$table->addColumn('payload', Types::JSON, ['notnull' => true]);
 			$table->addColumn('last_response', Types::JSON, ['notnull' => false]);
 			$table->addColumn('retry_count', Types::INTEGER, ['notnull' => true, 'default' => 0]);
-			$table->addColumn('last_attempt', Types::DATETIME, ['notnull' => false]);
-			$table->addColumn('next_attempt', Types::DATETIME, ['notnull' => false]);
-			$table->addColumn('created', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
-			$table->addColumn('updated', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
+			$table->addColumn('last_attempt', Types::DATETIME_MUTABLE, ['notnull' => false]);
+			$table->addColumn('next_attempt', Types::DATETIME_MUTABLE, ['notnull' => false]);
+			$table->addColumn('created', Types::DATETIME_MUTABLE, ['notnull' => true]);
+			$table->addColumn('updated', Types::DATETIME_MUTABLE, ['notnull' => true]);
 
 			$table->setPrimaryKey(['id']);
 			$table->addIndex(['uuid'], 'openconnector_event_msg_uuid_index');
@@ -122,8 +122,8 @@ class Version1Date20250109093325 extends SimpleMigrationStep {
 			$table->addColumn('type', Types::STRING, ['notnull' => true, 'length' => 50]); // mapping, error, script, synchronization
 			$table->addColumn('configuration', Types::JSON, ['notnull' => false]);
 			$table->addColumn('order', Types::INTEGER, ['notnull' => true, 'default' => 0]);
-			$table->addColumn('created', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
-			$table->addColumn('updated', Types::DATETIME, ['notnull' => true, 'default' => 'CURRENT_TIMESTAMP']);
+			$table->addColumn('created', Types::DATETIME_MUTABLE, ['notnull' => true]);
+			$table->addColumn('updated', Types::DATETIME_MUTABLE, ['notnull' => true]);
 
 			$table->setPrimaryKey(['id']);
 			$table->addIndex(['uuid'], 'openconnector_rules_uuid_index');

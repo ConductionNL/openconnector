@@ -24,7 +24,7 @@ class SynchronizationMapper extends QBMapper
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException
 	 * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException
 	 */
-	public function find(int|string $id): Synchronization
+	public function find($id): Synchronization
 	{
 		$qb = $this->db->getQueryBuilder();
 
@@ -159,6 +159,11 @@ class SynchronizationMapper extends QBMapper
 			$obj->setVersion('0.0.1');
 		}
 
+		// Set created and updated timestamps
+		$now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+		$obj->setCreated(new \DateTime($now));
+		$obj->setUpdated(new \DateTime($now));
+
 		return $this->insert(entity: $obj);
 	}
 
@@ -179,6 +184,10 @@ class SynchronizationMapper extends QBMapper
 		}
 
 		$obj->hydrate($object);
+
+		// Update the modified timestamp
+		$now = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d H:i:s');
+		$obj->setUpdated(new \DateTime($now));
 
 		return $this->update($obj);
 	}
@@ -360,4 +369,5 @@ class SynchronizationMapper extends QBMapper
         }
         return $mappings;
     }
+
 }

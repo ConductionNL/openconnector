@@ -35,7 +35,7 @@ class ConsumerMapper extends QBMapper
 	 * @param int $id The ID of the Consumer
 	 * @return Consumer The found Consumer entity
 	 */
-	public function find(int $id): Consumer
+	public function find($id): Consumer
 	{
 		$qb = $this->db->getQueryBuilder();
 
