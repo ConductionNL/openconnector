@@ -160,6 +160,11 @@ class EndpointHandler implements ConfigurationHandlerInterface
             $data['outputMapping'] = $mappings['mapping']['slugToId'][$data['outputMapping']];
         }
 
+		// Ensure rules is always an array before processing
+		if (!isset($data['rules']) || !is_array($data['rules'])) {
+			$data['rules'] = [];
+		}
+		
 		$data['rules'] = array_filter(array_map(function(int|string $rule) use ($mappings) {
 			if(isset($mappings['rule']['slugToId'][$rule]) === true) {
 

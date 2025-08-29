@@ -891,6 +891,5 @@ class RuleService
 
 		return $data;
 
-
 	}
 }
