@@ -21,6 +21,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling endpoint related operations
@@ -59,6 +60,7 @@ class EndpointsController extends Controller
 	 * @param AuthorizationService $authorizationService Service for handling authorization
 	 * @param ObjectService $objectService Service for direct ObjectService operations
 	 * @param EndpointCacheService $endpointCacheService Service for cached endpoint lookups
+	 * @param LoggerInterface $logger Service for logging
 	 */
 	public function __construct(
 		$appName,
@@ -69,6 +71,7 @@ class EndpointsController extends Controller
 		private AuthorizationService $authorizationService,
 		private ObjectService $objectService,
 		private EndpointCacheService $endpointCacheService,
+		private LoggerInterface $logger,
 //		private EndpointLogMapper $endpointLogMapper,
 		$corsMethods = 'PUT, POST, GET, DELETE, PATCH',
 		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
@@ -446,7 +449,22 @@ class EndpointsController extends Controller
 	{
 		try {
 			// Parse target register and schema from targetId (e.g., "20/111")
-			$target = explode('/', $endpoint->getTargetId());
+			$targetId = $endpoint->getTargetId();
+			if (empty($targetId)) {
+				$this->logger->error('Simple endpoint has empty targetId', ['endpoint' => $endpoint->getEndpoint()]);
+				return new JSONResponse(['error' => 'Endpoint misconfigured: empty targetId'], 500);
+			}
+
+			$target = explode('/', $targetId);
+			if (count($target) !== 2 || !is_numeric($target[0]) || !is_numeric($target[1])) {
+				$this->logger->error('Simple endpoint has invalid targetId format', [
+					'endpoint' => $endpoint->getEndpoint(),
+					'targetId' => $targetId,
+					'parsed' => $target
+				]);
+				return new JSONResponse(['error' => 'Endpoint misconfigured: invalid targetId format. Expected "register/schema"'], 500);
+			}
+
 			$register = (int)$target[0];
 			$schema = (int)$target[1];
 
@@ -456,7 +474,17 @@ class EndpointsController extends Controller
 			$method = $this->request->getMethod();
 
 			// Get the ObjectService mapper for this register/schema
-			$mapper = $this->objectService->getMapper(schema: $schema, register: $register);
+			try {
+				$mapper = $this->objectService->getMapper(schema: $schema, register: $register);
+			} catch (\Exception $e) {
+				$this->logger->error('Failed to get ObjectService mapper', [
+					'endpoint' => $endpoint->getEndpoint(),
+					'register' => $register,
+					'schema' => $schema,
+					'error' => $e->getMessage()
+				]);
+				return new JSONResponse(['error' => 'Schema or register not found: ' . $e->getMessage()], 404);
+			}
 
 			// Handle different HTTP methods
 			switch ($method) {
@@ -467,14 +495,24 @@ class EndpointsController extends Controller
 						return new JSONResponse($object->jsonSerialize());
 					}
 
-					// Handle collection request (list objects)
-					$result = $mapper->findAllPaginated(requestParams: $parameters);
+									// Handle collection request (list objects)
+				$result = $mapper->findAllPaginated(requestParams: $parameters);
 
-					// Format response similar to EndpointService
-					$returnArray = [
-						'count' => $result['total'],
-						'results' => array_map(fn($obj) => $obj->jsonSerialize(), $result['results'])
-					];
+				// Debug: log the register and schema we're querying
+				$this->logger->info('Simple endpoint query', [
+					'endpoint' => $endpoint->getEndpoint(),
+					'register' => $register,
+					'schema' => $schema,
+					'targetId' => $endpoint->getTargetId(),
+					'parameters' => $parameters,
+					'result_total' => $result['total'] ?? 0
+				]);
+
+				// Use the existing structure with minimal changes: serialize objects and rename 'total' to 'count'
+				$returnArray = $result;
+				$returnArray['count'] = $result['total'];
+				$returnArray['results'] = array_map(fn($obj) => $obj->jsonSerialize(), $result['results']);
+				unset($returnArray['total']); // Remove 'total' since we renamed it to 'count'
 
 					// Add pagination links if needed
 					if ($result['page'] < $result['pages']) {
