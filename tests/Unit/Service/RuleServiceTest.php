@@ -207,12 +207,16 @@ class RuleServiceTest extends TestCase
         $objectEntityMapper->method('findAll')->willReturn([$voorzieningGebruik]);
 
         // Mock register and schema
-        $register = $this->createMock(\OCA\OpenRegister\Db\Register::class);
-        $register->id = 'test-register-id';
+        // Create anonymous classes to avoid deprecation warnings while maintaining type compatibility
+        $register = new class extends \OCA\OpenRegister\Db\Register {
+            public $id = 'test-register-id';
+        };
         $this->registerMapper->method('find')->willReturn($register);
 
-        $schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
-        $schema->id = 'test-schema-id';
+        $schema = new class extends \OCA\OpenRegister\Db\Schema {
+            public $id = 'test-schema-id';
+            public $propertyDefinitions = [];
+        };
         // Create a simple object with id property instead of mocking non-existent class
         $publishPropertyDefinition = new \stdClass();
         $publishPropertyDefinition->id = 'publish-property-id';
@@ -235,14 +239,6 @@ class RuleServiceTest extends TestCase
 
         // Mock the findAll method to return the added view
         $openRegisterService->method('findAll')->willReturn([$addedView]);
-        
-        // Mock the register and schema to have proper IDs
-        $register->id = 'vng-gemma';
-        $schema->id = 'extendview';
-        
-        // Mock the register and schema to have proper IDs
-        $register->id = 'vng-gemma';
-        $schema->id = 'extendview';
 
         $result = $this->ruleService->processCustomRule($rule, $data);
 
@@ -629,12 +625,16 @@ class RuleServiceTest extends TestCase
         $objectEntityMapper->method('findAll')->willReturn([]);
 
         // Mock register and schema
-        $register = $this->createMock(\OCA\OpenRegister\Db\Register::class);
-        $register->id = 'test-register-id';
+        // Create anonymous classes to avoid deprecation warnings while maintaining type compatibility
+        $register = new class extends \OCA\OpenRegister\Db\Register {
+            public $id = 'test-register-id';
+        };
         $this->registerMapper->method('find')->willReturn($register);
 
-        $schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
-        $schema->id = 'test-schema-id';
+        $schema = new class extends \OCA\OpenRegister\Db\Schema {
+            public $id = 'test-schema-id';
+            public $propertyDefinitions = [];
+        };
         // Create a simple object with id property instead of mocking non-existent class
         $publishPropertyDefinition = new \stdClass();
         $publishPropertyDefinition->id = 'publish-property-id';
@@ -772,12 +772,16 @@ class RuleServiceTest extends TestCase
         $objectEntityMapper->method('findAll')->willReturn([]);
 
         // Mock register and schema
-        $register = $this->createMock(\OCA\OpenRegister\Db\Register::class);
-        $register->id = 'test-register-id';
+        // Create anonymous classes to avoid deprecation warnings while maintaining type compatibility
+        $register = new class extends \OCA\OpenRegister\Db\Register {
+            public $id = 'test-register-id';
+        };
         $this->registerMapper->method('find')->willReturn($register);
 
-        $schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
-        $schema->id = 'test-schema-id';
+        $schema = new class extends \OCA\OpenRegister\Db\Schema {
+            public $id = 'test-schema-id';
+            public $propertyDefinitions = [];
+        };
         // Create a simple object with id property instead of mocking non-existent class
         $publishPropertyDefinition = new \stdClass();
         $publishPropertyDefinition->id = 'publish-property-id';
