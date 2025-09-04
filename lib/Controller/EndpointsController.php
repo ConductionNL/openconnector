@@ -8,6 +8,8 @@ use OCA\OpenConnector\Service\AuthorizationService;
 use OCA\OpenConnector\Service\ObjectService;
 use OCA\OpenConnector\Service\SearchService;
 use OCA\OpenConnector\Service\EndpointService;
+use OCA\OpenConnector\Service\EndpointCacheService;
+use OCA\OpenConnector\Db\Endpoint;
 use OCA\OpenConnector\Db\EndpointMapper;
 use OCA\OpenConnector\Db\EndpointLogMapper;
 use OCP\AppFramework\Controller;
@@ -19,6 +21,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling endpoint related operations
@@ -54,7 +57,10 @@ class EndpointsController extends Controller
 	 * @param IAppConfig $config The app configuration object
 	 * @param EndpointMapper $endpointMapper The endpoint mapper object
 	 * @param EndpointService $endpointService Service for handling endpoint operations
-	 * @param EndpointLogMapper $endpointLogMapper The endpoint log mapper object
+	 * @param AuthorizationService $authorizationService Service for handling authorization
+	 * @param ObjectService $objectService Service for direct ObjectService operations
+	 * @param EndpointCacheService $endpointCacheService Service for cached endpoint lookups
+	 * @param LoggerInterface $logger Service for logging
 	 */
 	public function __construct(
 		$appName,
@@ -63,6 +69,9 @@ class EndpointsController extends Controller
 		private EndpointMapper $endpointMapper,
 		private EndpointService $endpointService,
 		private AuthorizationService $authorizationService,
+		private ObjectService $objectService,
+		private EndpointCacheService $endpointCacheService,
+		private LoggerInterface $logger,
 //		private EndpointLogMapper $endpointLogMapper,
 		$corsMethods = 'PUT, POST, GET, DELETE, PATCH',
 		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
@@ -229,33 +238,35 @@ class EndpointsController extends Controller
 	 */
 	public function handlePath(string $_path): Response
 	{
-		// Find matching endpoints for the given path and method
-		$matchingEndpoints = $this->endpointMapper->findByPathRegex(
-			path: $_path,
-			method: $this->request->getMethod()
-		);
-
-		// If no matching endpoints found, return 404
-		if (empty($matchingEndpoints) === true) {
-			return new JSONResponse(
-				data: ['error' => 'No matching endpoint found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
-				statusCode: 404
+		try {
+			// Find matching endpoint for the given path and method (using cache)
+			$endpoint = $this->endpointCacheService->findByPathRegex(
+				path: $_path,
+				method: $this->request->getMethod()
 			);
-		}
 
-		// If no matching endpoints found, return 404
-		if (count($matchingEndpoints) > 1) {
+			// If no matching endpoint found, return 404
+			if ($endpoint === null) {
+				return new JSONResponse(
+					data: ['error' => 'No matching endpoint found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
+					statusCode: 404
+				);
+			}
+		} catch (\Exception $e) {
+			// Multiple endpoints found (handled by cache service)
 			return new JSONResponse(
-				data: ['error' => 'Multiple endpoints found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
+				data: ['error' => $e->getMessage()],
 				statusCode: 409
 			);
 		}
 
-		// Get the first matching endpoint since we have already filtered by method
-		$endpoint = reset($matchingEndpoints);
-
-		// Forward the request to the endpoint service
-		$response = $this->endpointService->handleRequest($endpoint, $this->request, $_path);
+		// OPTIMIZATION: For simple endpoints with no rules/conditions/mappings, bypass EndpointService
+		if ($this->isSimpleEndpoint($endpoint)) {
+			$response = $this->handleSimpleSchemaRequest($endpoint, $_path);
+		} else {
+			// Forward complex requests to the endpoint service
+			$response = $this->endpointService->handleRequest($endpoint, $this->request, $_path);
+		}
 
 		// Check if the Accept header is set to XML
 		$acceptHeader = $this->request->getHeader('Accept');
@@ -407,5 +418,193 @@ class EndpointsController extends Controller
 //            return new JSONResponse(['error' => 'Failed to retrieve logs: ' . $e->getMessage()], 500);
 //        }
     }
+
+	/**
+	 * Check if an endpoint is simple (no rules, conditions, mappings, configurations)
+	 *
+	 * @param Endpoint $endpoint The endpoint to check
+	 * @return bool True if the endpoint is simple and can be optimized
+	 */
+	private function isSimpleEndpoint(Endpoint $endpoint): bool
+	{
+		// Check if endpoint has no complex processing requirements
+		$allowedMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+		return empty($endpoint->getRules()) && 
+		       empty($endpoint->getConditions()) && 
+		       $endpoint->getInputMapping() === null && 
+		       $endpoint->getOutputMapping() === null && 
+		       empty($endpoint->getConfigurations()) &&
+		       $endpoint->getTargetType() === 'register/schema' &&
+		       in_array($this->request->getMethod(), $allowedMethods);
+	}
+
+	/**
+	 * Handle simple schema requests directly without EndpointService overhead
+	 *
+	 * @param Endpoint $endpoint The endpoint configuration
+	 * @param string $path The request path
+	 * @return JSONResponse The direct response from ObjectService
+	 */
+	private function handleSimpleSchemaRequest(Endpoint $endpoint, string $path): JSONResponse
+	{
+		try {
+			// Parse target register and schema from targetId (e.g., "20/111")
+			$targetId = $endpoint->getTargetId();
+			if (empty($targetId)) {
+				$this->logger->error('Simple endpoint has empty targetId', ['endpoint' => $endpoint->getEndpoint()]);
+				return new JSONResponse(['error' => 'Endpoint misconfigured: empty targetId'], 500);
+			}
+
+			$target = explode('/', $targetId);
+			if (count($target) !== 2 || !is_numeric($target[0]) || !is_numeric($target[1])) {
+				$this->logger->error('Simple endpoint has invalid targetId format', [
+					'endpoint' => $endpoint->getEndpoint(),
+					'targetId' => $targetId,
+					'parsed' => $target
+				]);
+				return new JSONResponse(['error' => 'Endpoint misconfigured: invalid targetId format. Expected "register/schema"'], 500);
+			}
+
+			$register = (int)$target[0];
+			$schema = (int)$target[1];
+
+			// Get path parameters and request data
+			$pathParams = $this->getPathParameters($endpoint->getEndpointArray(), $path);
+			$parameters = $this->request->getParams();
+			$method = $this->request->getMethod();
+
+			// Get the ObjectService mapper for this register/schema
+			try {
+				$mapper = $this->objectService->getMapper(schema: $schema, register: $register);
+			} catch (\Exception $e) {
+				$this->logger->error('Failed to get ObjectService mapper', [
+					'endpoint' => $endpoint->getEndpoint(),
+					'register' => $register,
+					'schema' => $schema,
+					'error' => $e->getMessage()
+				]);
+				return new JSONResponse(['error' => 'Schema or register not found: ' . $e->getMessage()], 404);
+			}
+
+			// Handle different HTTP methods
+			switch ($method) {
+				case 'GET':
+					// Handle single object request (has ID in path)
+					if (isset($pathParams['id']) && $pathParams['id'] === end($pathParams)) {
+						$object = $mapper->find($pathParams['id']);
+						return new JSONResponse($object->jsonSerialize());
+					}
+
+									// Handle collection request (list objects)
+				$result = $mapper->findAllPaginated(requestParams: $parameters);
+
+				// Debug: log the register and schema we're querying
+				$this->logger->info('Simple endpoint query', [
+					'endpoint' => $endpoint->getEndpoint(),
+					'register' => $register,
+					'schema' => $schema,
+					'targetId' => $endpoint->getTargetId(),
+					'parameters' => $parameters,
+					'result_total' => $result['total'] ?? 0
+				]);
+
+				// Use the existing structure with minimal changes: serialize objects and rename 'total' to 'count'
+				$returnArray = $result;
+				$returnArray['count'] = $result['total'];
+				$returnArray['results'] = array_map(fn($obj) => $obj->jsonSerialize(), $result['results']);
+				unset($returnArray['total']); // Remove 'total' since we renamed it to 'count'
+
+					// Add pagination links if needed
+					if ($result['page'] < $result['pages']) {
+						$parameters['page'] = $result['page'] + 1;
+						$returnArray['next'] = $this->buildPaginationUrl($parameters, $path);
+					}
+					if ($result['page'] > 1) {
+						$parameters['page'] = $result['page'] - 1;
+						$returnArray['previous'] = $this->buildPaginationUrl($parameters, $path);
+					}
+
+					return new JSONResponse($returnArray);
+
+				case 'POST':
+					// Create new object
+					$object = $mapper->createFromArray(object: $parameters);
+					return new JSONResponse($object->jsonSerialize(), 201);
+
+				case 'PUT':
+					// Full update of existing object
+					if (!isset($pathParams['id'])) {
+						return new JSONResponse(['error' => 'ID required for PUT request'], 400);
+					}
+					$object = $mapper->updateFromArray($pathParams['id'], $parameters, true, false);
+					return new JSONResponse($object->jsonSerialize());
+
+				case 'PATCH':
+					// Partial update of existing object
+					if (!isset($pathParams['id'])) {
+						return new JSONResponse(['error' => 'ID required for PATCH request'], 400);
+					}
+					$object = $mapper->updateFromArray($pathParams['id'], $parameters, true, true);
+					return new JSONResponse($object->jsonSerialize());
+
+				case 'DELETE':
+					// Delete object
+					if (!isset($pathParams['id'])) {
+						return new JSONResponse(['error' => 'ID required for DELETE request'], 400);
+					}
+					$success = $mapper->delete(['id' => $pathParams['id']]);
+					if (!$success) {
+						return new JSONResponse(['error' => 'Failed to delete object'], 500);
+					}
+					return new JSONResponse([], 204);
+
+				default:
+					return new JSONResponse(['error' => 'Method not supported'], 405);
+			}
+
+		} catch (Exception $e) {
+			return new JSONResponse(['error' => 'Simple endpoint error: ' . $e->getMessage()], 500);
+		}
+	}
+
+	/**
+	 * Parse path parameters from endpoint pattern and actual path
+	 *
+	 * @param array $endpointArray The endpoint pattern array
+	 * @param string $path The actual request path
+	 * @return array The parsed parameters
+	 */
+	private function getPathParameters(array $endpointArray, string $path): array
+	{
+		$pathParts = explode('/', $path);
+		$params = [];
+
+		foreach ($endpointArray as $index => $pattern) {
+			if (str_starts_with($pattern, '{{') && str_ends_with($pattern, '}}')) {
+				$key = trim($pattern, '{}');
+				if (isset($pathParts[$index])) {
+					$params[$key] = $pathParts[$index];
+				}
+			}
+		}
+
+		return $params;
+	}
+
+	/**
+	 * Build pagination URL for simple endpoints
+	 *
+	 * @param array $parameters Query parameters
+	 * @param string $path The request path
+	 * @return string The pagination URL
+	 */
+	private function buildPaginationUrl(array $parameters, string $path): string
+	{
+		$baseUrl = $this->request->getServerProtocol() . '://' . 
+		          $this->request->getServerHost() . 
+		          '/apps/openconnector/api/endpoint/' . $path;
+
+		return $baseUrl . '?' . http_build_query($parameters);
+	}
 
 }
