@@ -13,5 +13,6 @@
     "cast": {
         "data": "jsonToArray"
     },
-    "passTrough": false
+    "passTrough": false,
+    "slug": "xxllnc-event-to-cloud-event"
 }

@@ -10,7 +10,8 @@
     "sourceHashMapping": "",
     "sourceTargetMapping": "zaak-to-xxllnc-case-mapping",
     "sourceConfig": {
-        "altSourceIds": "zaken/zaakeigenschap,zaken/resultaat,zaken/rol,zaken/status"
+        "altSourceIds": "zaken/zaakeigenschap,zaken/resultaat,zaken/rol,zaken/status",
+        "pathToParent": "zaak"
     },
     "currentPage": 1,
     "targetId": "xxllnc-zaaksysteem-v1",

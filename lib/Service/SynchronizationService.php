@@ -48,7 +48,6 @@ use React\Promise\Timer;
 use React\Async;
 use React\Promise\Deferred;
 use function React\Promise\resolve;
-
 /**
  * SynchronizationService
  *
@@ -113,7 +112,7 @@ class SynchronizationService
 	}
 
     /**
-     * Find all Synchronization entities that should run for a given object.
+     * Find all Synchronization entities that should run for a given object for EventListeners.
      *
      * This method first searches for Synchronizations whose `source` matches
      * the given object's register and schema via {@see self::findAllBySourceId()}.
@@ -126,12 +125,28 @@ class SynchronizationService
      *
      * @return array<Synchronization> Array of Synchronization entities to run.
      */
-    public function findSynchronizationsToRun(ObjectEntity $object)
+    public function findSynchronizationsToRun(ObjectEntity &$object)
     {
-        return array_merge(
-            $this->findAllBySourceId(register: $object->getRegister(), schema: $object->getSchema()),
-            $this->findAllByAltSourceId(register: $object->getRegister(), schema: $object->getSchema())
-        );
+        $synchronizations = $this->findAllBySourceId(register: $object->getRegister(), schema: $object->getSchema());
+        $altSynchroniziations = $this->findAllByAltSourceId(register: $object->getRegister(), schema: $object->getSchema());
+
+
+        // Synchronize from parent object if configured. 
+        if (empty($altSynchroniziations) === false && isset($sourceConfig['pathToParent']) === true) {
+            foreach ($altSynchroniziations as $altSync) {
+                $sourceConfig = $altSync->getSourceConfig();
+                $dotObject = new Dot($object->jsonSerialize());
+                $parentObject = $dotObject->get($sourceConfig['pathToParent']);
+                if ($parentObject !== null && Uuid::isValid($parentObject) === true) {
+                    $objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
+                    // Assigning found object to $object returns it to $object in the caller function by reference.
+                    $object = $objectService->find($parentObject);
+                    break;
+                }
+            }
+        }
+
+        return array_merge($synchronizations, $altSynchroniziations);
     }
 
     /**
@@ -672,8 +687,7 @@ class SynchronizationService
 				$originId = $this->getOriginId($synchronization, $object);
 			}
 
-			$endpoint = str_replace(search: '{{ originId }}', replace: $originId, subject: $endpoint);
-			$endpoint = str_replace(search: '{{originId}}', replace: $originId, subject: $endpoint);
+            $endpoint = $this->replaceEndpointIdPlaceholder(endpoint: $endpoint, id: $originId);
 
 			if (isset($extraDataConfig['subObjectId']) === true) {
 				$objectDot = new Dot($object);
@@ -1525,7 +1539,26 @@ class SynchronizationService
 
 		// Extract source configuration
 		$sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig()); // TODO; This is the second time this function is called in the synchonysation flow, needs further refactoring investigation
-		$endpoint = $sourceConfig['endpoint'] ?? '';
+		$endpoint = $originalEndpoint = $sourceConfig['endpoint'] ?? '';
+
+        if (isset($sourceConfig['endpointIdLocation']) === true) {
+            $dotData = new Dot($data);
+            $originId = $dotData->get($sourceConfig['endpointIdLocation']);
+
+            if (isset($originId) === true) {
+                $endpoint = $this->replaceEndpointIdPlaceholder(endpoint: $endpoint, id: $originId);
+
+                // If endpoint has not changed means there is no {{originId}} in the endpoint to replace so we just append the originId to the endpoint.
+                if ($endpoint === $originalEndpoint) {
+                     // Ensure trailing slash
+                    if (str_ends_with($endpoint, '/') === false) {
+                        $endpoint .= '/';
+                    }
+                    $endpoint .= $originId;
+                }
+            }
+        }
+
 		$headers = $sourceConfig['headers'] ?? [];
 		$query = $sourceConfig['query'] ?? [];
         $usesPagination = true;
@@ -2050,6 +2083,21 @@ class SynchronizationService
 		throw new Exception("Cannot determine the position of objects in the return body.");
 	}
 
+    /**
+     * Replace the placeholder `{{originId}}` (with or without space) in the given endpoint
+     * with the actual provided ID value.
+     *
+     * @param string     $endpoint The endpoint string that may contain the placeholder.
+     * @param string|int $id       The ID value to insert in place of the placeholder.
+     *
+     * @return string The endpoint with the placeholder replaced by the actual ID.
+     */
+    private function replaceEndpointIdPlaceholder(string $endpoint, string|int $id) 
+    {
+			$endpoint = str_replace(search: '{{ originId }}', replace: $id, subject: $endpoint);
+			return str_replace(search: '{{originId}}', replace: $id, subject: $endpoint);
+    }
+
 	/**
      * Write an created, updated or deleted object to an external target.
      *
@@ -2109,8 +2157,7 @@ class SynchronizationService
 			// @todo check for {{targetId}} in endpoint and replace
 			if (isset($targetConfig['deleteEndpoint']) === true) {
 				$endpoint = $targetConfig['deleteEndpoint'];
-				$endpoint = str_replace(search: '{{ originId }}', replace: $sourceId, subject: $endpoint);
-				$endpoint = str_replace(search: '{{originId}}', replace: $sourceId, subject: $endpoint);
+                $endpoint = $this->replaceEndpointIdPlaceholder(endpoint: $endpoint, id: $sourceId);
 			} else {
 				$endpoint .= "/$targetId";
 			}
@@ -2162,8 +2209,7 @@ class SynchronizationService
 
 		if (isset($targetConfig['updateEndpoint']) === true) {
 			$endpoint = $targetConfig['updateEndpoint'];
-			$endpoint = str_replace(search: '{{ originId }}', replace: $targetId, subject: $endpoint);
-			$endpoint = str_replace(search: '{{originId}}', replace: $targetId, subject: $endpoint);
+            $endpoint = $this->replaceEndpointIdPlaceholder(endpoint: $endpoint, id: $targetId);
 		} else {
 			$endpoint .= "/$targetId";
 		}
