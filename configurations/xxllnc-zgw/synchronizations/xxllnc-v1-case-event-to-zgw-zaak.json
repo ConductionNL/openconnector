@@ -1,0 +1,31 @@
+{
+    "name": "Xxllnc case event to ZGW zaak",
+    "description": "",
+    "version": "0.0.1",
+    "sourceId": "1",
+    "sourceType": "api",
+    "sourceHash": "",
+    "sourceHashMapping": "",
+    "sourceTargetMapping": "1",
+    "sourceConfig": {
+        "endpointIdLocation": "data.case_uuid",
+        "idPosition": "reference",
+        "resultsPosition": "_object",
+        "endpoint": "\/case/{{originId}}",
+        "extraDataConfigs.0.staticEndpoint": "/case/{{ originId }}/document",
+        "extraDataConfigs.0.mergeExtraData": "true",
+        "extraDataConfigs.0.keyToSetExtraData": "documents",
+        "extraDataConfigs.1.staticEndpoint": "/casetype/{{ originId }}",
+        "extraDataConfigs.1.endpointIdLocation": "instance.casetype.reference",
+        "extraDataConfigs.1.mergeExtraData": "true",
+        "extraDataConfigs.1.keyToSetExtraData": "casetype"
+    },
+    "currentPage": 1,
+    "targetId": "1\/1",
+    "targetType": "register\/schema",
+    "targetHash": "",
+    "targetSourceMapping": "",
+    "targetConfig": [],
+    "followUps": [],
+    "slug": "xxllnc-case-event-to-zgw-zaak"
+}

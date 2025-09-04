@@ -1,0 +1,26 @@
+{
+    "@context": {
+        "schema": "http:\/\/schema.org",
+        "register": "Not Implemented"
+    },
+    "@type": "endpoint",
+    "name": "CloudEvent",
+    "description": "",
+    "version": "0.0.1",
+    "endpoint": "cloud-event",
+    "endpointArray": [
+        "cloud-event"
+    ],
+    "endpointRegex": "#^cloud-event$#",
+    "method": "POST",
+    "targetType": "register\/schema",
+    "targetId": "cloudevents\/cloudevent",
+    "conditions": [],
+    "inputMapping": null,
+    "outputMapping": null,
+    "rules": [
+        "sync-case-by-event"
+    ],
+    "configurations": [],
+    "slug": "cloud-event"
+}

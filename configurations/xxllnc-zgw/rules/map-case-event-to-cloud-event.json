@@ -1,0 +1,21 @@
+{
+    "@context": {
+        "schema": "http:\/\/schema.org",
+        "register": "Not Implemented"
+    },
+    "@type": "rule",
+    "@id": "http:\/\/nextcloud.local\/index.php\/apps\/openconnector\/api\/rules\/15",
+    "name": "Map case event to cloud event",
+    "description": "",
+    "reference": "http:\/\/nextcloud.local\/index.php\/apps\/openconnector\/api\/rules\/15",
+    "version": "0.0.1",
+    "action": "post",
+    "timing": "before",
+    "conditions": "{ \"!!\": { \"var\": \"case_uuid\" } }",
+    "type": "mapping",
+    "configuration": {
+        "mapping": "xxllnc-event-to-cloud-event"
+    },
+    "order": 1,
+    "slug": "map-case-event-to-cloud-event"
+}

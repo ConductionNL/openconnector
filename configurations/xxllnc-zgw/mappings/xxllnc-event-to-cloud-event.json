@@ -1,0 +1,17 @@
+{
+    "name": "Xxllnc Event to Cloud Event",
+    "version": "0.0.1",
+    "mapping": {
+        "specversion": "1.0",
+        "source": "xxllnc-zaaksysteem",
+        "type": "xxllnc.case.event",
+        "datacontenttype": "application/json",
+        "time": "{{ \"now\"|date(\"Y-m-d\\TH:i:s\\Z\") }}",
+        "data": "{{ _context|json_encode }}"
+    },
+    "unset": [],
+    "cast": {
+        "data": "jsonToArray"
+    },
+    "passTrough": false
+}

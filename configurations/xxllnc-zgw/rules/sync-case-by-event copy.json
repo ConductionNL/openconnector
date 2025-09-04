@@ -1,0 +1,21 @@
+{
+    "@context": {
+        "schema": "http:\/\/schema.org",
+        "register": "Not Implemented"
+    },
+    "@type": "rule",
+    "@id": "http:\/\/nextcloud.local\/index.php\/apps\/openconnector\/api\/rules\/15",
+    "name": "Sync case by event",
+    "description": "",
+    "reference": "http:\/\/nextcloud.local\/index.php\/apps\/openconnector\/api\/rules\/15",
+    "version": "0.0.1",
+    "action": "post",
+    "timing": "after",
+    "conditions": "{\"in\": [\"case_uuid\", { \"var\": \"data\" }]}",
+    "type": "synchronization",
+    "configuration": {
+        "synchronization": "xxllnc-case-event-to-zgw-zaak"
+    },
+    "order": 2,
+    "slug": "sync-case-by-event"
+}
