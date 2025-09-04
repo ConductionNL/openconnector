@@ -19,6 +19,7 @@
     "inputMapping": null,
     "outputMapping": null,
     "rules": [
+        "map-case-event-to-cloud-event",
         "sync-case-by-event"
     ],
     "configurations": [],
