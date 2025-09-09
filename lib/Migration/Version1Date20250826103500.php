@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * JobLogMessageColumnMigration
- * 
+ *
  * Migration step to increase the message column size in the openconnector_job_logs table
  * to handle longer job execution messages and prevent truncation errors.
  *
@@ -92,17 +92,16 @@ class Version1Date20250826103500 extends SimpleMigrationStep
         // Check if the job_logs table exists
         if ($schema->hasTable('openconnector_job_logs')) {
             $table = $schema->getTable('openconnector_job_logs');
-            
+
             // Check if the message column exists
             if ($table->hasColumn('message')) {
                 // Change the column to TEXT type to allow longer messages
                 // In Nextcloud migrations, we use changeColumn to modify existing columns
                 $table->changeColumn('message', [
-                    'type' => Types::TEXT,
+                    'type' => \Doctrine\DBAL\Types\Type::getType(Types::TEXT),
                     'notnull' => true,
-                    'default' => 'success'
                 ]);
-                
+
                 $output->info('Updated message column in openconnector_job_logs table to TEXT type');
             } else {
                 $output->warning('Message column not found in openconnector_job_logs table');
