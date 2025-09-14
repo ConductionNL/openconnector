@@ -95,13 +95,12 @@ class Version1Date20250826103500 extends SimpleMigrationStep
             
             // Check if the message column exists
             if ($table->hasColumn('message')) {
-                // Change the column to TEXT type to allow longer messages
-                // In Nextcloud migrations, we use changeColumn to modify existing columns
-                $table->changeColumn('message', [
-                    'type' => Types::TEXT,
-                    'notnull' => true,
-                    'default' => 'success'
-                ]);
+                // Drop the existing column and recreate it with TEXT type
+                // Nextcloud migrations work better with drop/add pattern for type changes
+                $table->dropColumn('message');
+                $table->addColumn('message', Types::TEXT)
+                    ->setNotnull(true)
+                    ->setDefault('success');
                 
                 $output->info('Updated message column in openconnector_job_logs table to TEXT type');
             } else {

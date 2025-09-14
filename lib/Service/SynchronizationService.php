@@ -2851,14 +2851,14 @@ class SynchronizationService
 	 * @param Source $source The source to fetch files from.
 	 * @param array $config The fetch_file rule configuration.
 	 * @param mixed $endpoint The endpoint(s) to fetch files from.
-	 * @param string|null $objectId The UUID of the object to attach files to.
 	 * @param int $ruleId The ID of the rule for error logging.
+	 * @param string|null $objectId The UUID of the object to attach files to.
 	 *
 	 * @return void
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 */
-	private function startAsyncFileFetching(Source $source, array $config, mixed $endpoint, ?string $objectId = null, int $ruleId): void
+	private function startAsyncFileFetching(Source $source, array $config, mixed $endpoint, int $ruleId, ?string $objectId = null): void
 	{
         // Execute file fetching immediately but with error isolation
         // This provides "fire-and-forget" behavior without complex ReactPHP setup
@@ -2875,14 +2875,14 @@ class SynchronizationService
 	 * @param Source $source The source to fetch files from.
 	 * @param array $config The fetch_file rule configuration.
 	 * @param mixed $endpoint The endpoint(s) to fetch files from.
-	 * @param string|null $objectId The UUID of the object to attach files to.
 	 * @param int $ruleId The ID of the rule for error logging.
+	 * @param string|null $objectId The UUID of the object to attach files to.
 	 *
 	 * @return void
 	 *
 	 * @psalm-param array<string, mixed> $config
 	 */
-	private function executeAsyncFileFetching(Source $source, array $config, mixed $endpoint, ?string $objectId = null, int $ruleId): void
+	private function executeAsyncFileFetching(Source $source, array $config, mixed $endpoint, int $ruleId, ?string $objectId = null): void
 	{
         try {
             $filename = null;
