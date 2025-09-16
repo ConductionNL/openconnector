@@ -204,6 +204,28 @@ class EndpointServiceTest extends TestCase
      */
     public function testCheckConditionsWithValidConditions(): void
     {
-        $this->markTestSkipped('Temporarily skipped - IRequest interface complexity and server property access needs proper implementation');
+        // Create a mock endpoint with conditions
+        $endpoint = $this->createMock(Endpoint::class);
+        $endpoint->method('getConditions')->willReturn(['==' => [['var' => 'parameters.test'], 'valid']]);
+        
+        // Create a mock request with server variables and parameters
+        $request = $this->createMock(IRequest::class);
+        $request->method('getParams')->willReturn(['test' => 'valid']);
+        $request->server = [
+            'HTTP_HOST' => 'example.com',
+            'HTTP_USER_AGENT' => 'Test Agent',
+            'HTTP_ACCEPT' => 'application/json'
+        ];
+        
+        // Use reflection to test the private method
+        $reflection = new \ReflectionClass($this->endpointService);
+        $method = $reflection->getMethod('checkConditions');
+        $method->setAccessible(true);
+        
+        $result = $method->invoke($this->endpointService, $endpoint, $request);
+        
+        // Should return empty array for valid conditions
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
     }
 }

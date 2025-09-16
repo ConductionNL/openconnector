@@ -228,10 +228,10 @@ class MappingsController extends Controller
         }
 
         // Decode the input object from JSON
-        $inputObject = $data['inputObject'];
+        $inputObject = json_decode($data['inputObject'], true);
 
         // Decode the mapping from JSON
-		$mapping = $data['mapping'];
+		$mapping = json_decode($data['mapping'], true);
 
         // Initialize schema and validation flags
         $schema = false;
@@ -283,7 +283,7 @@ class MappingsController extends Controller
 
         // Perform schema validation if both schema and validation are provided
         if ($schema !== false && $validation !== false && $openRegisters !== null) {
-			$result = $openRegisters->validateObject(object: $resultObject, schemaObject: $schema->getSchemaObject($urlGenerator));
+			$result = $openRegisters->getValidateHandler()->validateObject(object: $resultObject, schemaObject: $schema->getSchemaObject($urlGenerator));
 
 			$isValid = $result->isValid();
 
@@ -319,7 +319,7 @@ class MappingsController extends Controller
 		$openRegisters = $this->objectService->getOpenRegisters();
 		if ($openRegisters !== null) {
             $data = $this->request->getParams();
-            return new JSONResponse($openRegisters->saveObject($data['register'], $data['schema'], $data['object']));
+            return new JSONResponse($openRegisters->saveObject($data['object'], [], $data['register'], $data['schema']));
 		}
 
 		return null;

@@ -372,7 +372,34 @@ class MappingsControllerTest extends TestCase
      */
     public function testTestSuccessful(): void
     {
-        $this->markTestSkipped('Complex service mocking required for mapping test execution');
+        $testData = [
+            'inputObject' => '{"name":"John Doe","email":"john@example.com"}',
+            'mapping' => '{"name":"{{inputObject.name}}","email":"{{inputObject.email}}"}',
+            'validation' => true
+        ];
+
+        // Mock the request to return test data
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn($testData);
+
+        // Mock ObjectService to return OpenRegisters service
+        $openRegisters = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+        
+        $this->objectService->expects($this->once())
+            ->method('getOpenRegisters')
+            ->willReturn($openRegisters);
+
+        // Mock URLGenerator
+        $urlGenerator = $this->createMock(\OCP\IURLGenerator::class);
+        $urlGenerator->expects($this->any())
+            ->method('linkToRoute')
+            ->willReturn('/test/url');
+
+        $response = $this->controller->test($this->objectService, $urlGenerator);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(200, $response->getStatus());
     }
 
     /**
@@ -420,7 +447,35 @@ class MappingsControllerTest extends TestCase
      */
     public function testSaveObjectSuccessful(): void
     {
-        $this->markTestSkipped('OpenRegisters service mocking required');
+        $objectData = [
+            'register' => '1',
+            'schema' => '1',
+            'object' => ['name' => 'Test Object', 'description' => 'Test Description']
+        ];
+
+        // Mock the request to return test data
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn($objectData);
+
+        // Mock ObjectService to return OpenRegisters service
+        $openRegisters = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+        $objectMapper = $this->createMock(\OCA\OpenRegister\Db\ObjectEntityMapper::class);
+        $object = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+        
+        $this->objectService->expects($this->once())
+            ->method('getOpenRegisters')
+            ->willReturn($openRegisters);
+            
+        $openRegisters->expects($this->once())
+            ->method('saveObject')
+            ->with($objectData['object'], [], $objectData['register'], $objectData['schema'])
+            ->willReturn($object);
+
+        $response = $this->controller->saveObject($this->objectService);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(200, $response->getStatus());
     }
 
     /**
@@ -455,7 +510,26 @@ class MappingsControllerTest extends TestCase
      */
     public function testGetObjectsSuccessful(): void
     {
-        $this->markTestSkipped('OpenRegisters service mocking required');
+        // Mock ObjectService to return OpenRegisters service
+        $openRegisters = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+        $registers = [
+            $this->createMock(\OCA\OpenRegister\Db\Register::class),
+            $this->createMock(\OCA\OpenRegister\Db\Register::class)
+        ];
+        
+        $this->objectService->expects($this->once())
+            ->method('getOpenRegisters')
+            ->willReturn($openRegisters);
+            
+        $openRegisters->expects($this->once())
+            ->method('getRegisters')
+            ->willReturn($registers);
+
+        $response = $this->controller->getObjects($this->objectService);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(200, $response->getStatus());
+        $this->assertTrue($response->getData()['openRegisters']);
     }
 
     /**

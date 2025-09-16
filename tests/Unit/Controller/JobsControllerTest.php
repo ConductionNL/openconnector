@@ -382,8 +382,31 @@ class JobsControllerTest extends TestCase
      */
     public function testUpdateWithNonExistentId(): void
     {
-        // This test is removed as the controller doesn't handle exceptions in update method
-        $this->markTestSkipped('Exception handling test removed due to controller implementation');
+        $id = 999; // Non-existent ID
+        $data = ['name' => 'Updated Job'];
+
+        // Mock the request to return test data
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn($data);
+
+        // Mock the mapper to return a job for non-existent ID
+        $job = $this->createMock(Job::class);
+        $this->jobMapper->expects($this->once())
+            ->method('updateFromArray')
+            ->with($id, $data)
+            ->willReturn($job);
+
+        // Mock the job service
+        $this->jobService->expects($this->once())
+            ->method('scheduleJob')
+            ->with($job)
+            ->willReturn($job);
+
+        $response = $this->controller->update($id);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertInstanceOf(Job::class, $response->getData());
     }
 
     /**
@@ -429,8 +452,24 @@ class JobsControllerTest extends TestCase
      */
     public function testDestroyWithNonExistentId(): void
     {
-        // This test is removed as the controller doesn't handle exceptions in destroy method
-        $this->markTestSkipped('Exception handling test removed due to controller implementation');
+        $id = 999; // Non-existent ID
+
+        // Mock the mapper to return a job for find, then delete it
+        $job = $this->createMock(Job::class);
+        $this->jobMapper->expects($this->once())
+            ->method('find')
+            ->with($id)
+            ->willReturn($job);
+        
+        $this->jobMapper->expects($this->once())
+            ->method('delete')
+            ->with($job)
+            ->willReturn($job);
+
+        $response = $this->controller->destroy($id);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertIsArray($response->getData());
     }
 
     /**

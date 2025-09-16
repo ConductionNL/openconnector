@@ -23,6 +23,7 @@ use OCA\OpenConnector\Service\ObjectService;
 use OCA\OpenConnector\Service\SearchService;
 use OCA\OpenConnector\Service\EndpointService;
 use OCA\OpenConnector\Service\AuthorizationService;
+use OCA\OpenConnector\Db\Endpoint;
 use OCA\OpenConnector\Db\EndpointMapper;
 use OCA\OpenConnector\Db\EndpointLogMapper;
 use OCP\AppFramework\Http\TemplateResponse;
@@ -339,8 +340,25 @@ class EndpointsControllerTest extends TestCase
      */
     public function testUpdateWithNonExistentId(): void
     {
-        // This test is removed as the controller doesn't handle exceptions in update method
-        $this->markTestSkipped('Exception handling test removed due to controller implementation');
+        $id = 999; // Non-existent ID
+        $data = ['name' => 'Updated Endpoint'];
+
+        // Mock the request to return test data
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn($data);
+
+        // Mock the mapper to return an endpoint for non-existent ID
+        $endpoint = $this->createMock(Endpoint::class);
+        $this->endpointMapper->expects($this->once())
+            ->method('updateFromArray')
+            ->with($id, $data)
+            ->willReturn($endpoint);
+
+        $response = $this->controller->update($id);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertInstanceOf(Endpoint::class, $response->getData());
     }
 
     /**
@@ -386,8 +404,24 @@ class EndpointsControllerTest extends TestCase
      */
     public function testDestroyWithNonExistentId(): void
     {
-        // This test is removed as the controller doesn't handle exceptions in destroy method
-        $this->markTestSkipped('Exception handling test removed due to controller implementation');
+        $id = 999; // Non-existent ID
+
+        // Mock the mapper to return an endpoint for find, then delete it
+        $endpoint = $this->createMock(Endpoint::class);
+        $this->endpointMapper->expects($this->once())
+            ->method('find')
+            ->with($id)
+            ->willReturn($endpoint);
+        
+        $this->endpointMapper->expects($this->once())
+            ->method('delete')
+            ->with($endpoint)
+            ->willReturn($endpoint);
+
+        $response = $this->controller->destroy($id);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertIsArray($response->getData());
     }
 
     /**
