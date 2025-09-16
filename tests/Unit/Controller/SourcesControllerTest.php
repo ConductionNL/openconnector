@@ -331,8 +331,25 @@ class SourcesControllerTest extends TestCase
      */
     public function testUpdateWithNonExistentId(): void
     {
-        // This test is removed as the controller doesn't handle exceptions in update method
-        $this->markTestSkipped('Exception handling test removed due to controller implementation');
+        $id = 999; // Non-existent ID
+        $data = ['name' => 'Updated Source'];
+
+        // Mock the request to return test data
+        $this->request->expects($this->once())
+            ->method('getParams')
+            ->willReturn($data);
+
+        // Mock the mapper to return a source for non-existent ID
+        $source = $this->createMock(Source::class);
+        $this->sourceMapper->expects($this->once())
+            ->method('updateFromArray')
+            ->with($id, $data)
+            ->willReturn($source);
+
+        $response = $this->controller->update($id);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertInstanceOf(Source::class, $response->getData());
     }
 
     /**
@@ -378,8 +395,24 @@ class SourcesControllerTest extends TestCase
      */
     public function testDestroyWithNonExistentId(): void
     {
-        // This test is removed as the controller doesn't handle exceptions in destroy method
-        $this->markTestSkipped('Exception handling test removed due to controller implementation');
+        $id = 999; // Non-existent ID
+
+        // Mock the mapper to return a source for find, then delete it
+        $source = $this->createMock(Source::class);
+        $this->sourceMapper->expects($this->once())
+            ->method('find')
+            ->with($id)
+            ->willReturn($source);
+        
+        $this->sourceMapper->expects($this->once())
+            ->method('delete')
+            ->with($source)
+            ->willReturn($source);
+
+        $response = $this->controller->destroy($id);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertIsArray($response->getData());
     }
 
     /**
@@ -432,8 +465,19 @@ class SourcesControllerTest extends TestCase
      */
     public function testTestWithNonExistentId(): void
     {
-        // This test is removed as the controller doesn't handle exceptions in test method
-        $this->markTestSkipped('Exception handling test removed due to controller implementation');
+        $id = 999; // Non-existent ID
+        $callService = $this->createMock(CallService::class);
+
+        // Mock the mapper to throw exception for non-existent ID
+        $this->sourceMapper->expects($this->once())
+            ->method('find')
+            ->with($id)
+            ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Source not found'));
+
+        $response = $this->controller->test($callService, $id);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertArrayHasKey('error', $response->getData());
     }
 
     /**

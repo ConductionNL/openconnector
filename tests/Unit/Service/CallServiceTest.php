@@ -84,7 +84,9 @@ class CallServiceTest extends TestCase
      */
     public function testCallWithSuccessfulResponse(): void
     {
-        $this->markTestSkipped('This test requires network connectivity and is better suited for integration tests');
+        // This test would require mocking the HTTP client, which is complex
+        // For now, we'll skip it as it's better suited for integration tests
+        $this->markTestSkipped('This test requires complex HTTP client mocking and is better suited for integration tests');
     }
 
     /**
@@ -214,7 +216,7 @@ class CallServiceTest extends TestCase
      */
     public function testCallWithCustomEndpoint(): void
     {
-        $this->markTestSkipped('This test requires network connectivity and is better suited for integration tests');
+        $this->markTestSkipped('This test requires complex HTTP client mocking and is better suited for integration tests');
     }
 
     /**
@@ -228,7 +230,7 @@ class CallServiceTest extends TestCase
      */
     public function testCallWithCustomMethod(): void
     {
-        $this->markTestSkipped('This test requires network connectivity and is better suited for integration tests');
+        $this->markTestSkipped('This test requires complex HTTP client mocking and is better suited for integration tests');
     }
 
     /**
@@ -242,7 +244,7 @@ class CallServiceTest extends TestCase
      */
     public function testCallWithConfiguration(): void
     {
-        $this->markTestSkipped('This test requires network connectivity and is better suited for integration tests');
+        $this->markTestSkipped('This test requires complex HTTP client mocking and is better suited for integration tests');
     }
 
     /**
@@ -256,6 +258,6 @@ class CallServiceTest extends TestCase
      */
     public function testCallWithReadFlag(): void
     {
-        $this->markTestSkipped('This test requires network connectivity and is better suited for integration tests');
+        $this->markTestSkipped('This test requires complex HTTP client mocking and is better suited for integration tests');
     }
 }
