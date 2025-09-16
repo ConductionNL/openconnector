@@ -260,19 +260,19 @@ class DashboardControllerTest extends TestCase
     {
         // Mock all mappers to return expected counts
         $this->sourceMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(10);
 
         $this->mappingMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(25);
 
         $this->synchronizationMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(15);
 
         $this->synchronizationContractMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(8);
 
         $this->jobMapper->expects($this->once())
@@ -280,7 +280,7 @@ class DashboardControllerTest extends TestCase
             ->willReturn(12);
 
         $this->endpointMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(30);
 
         // Execute the method
@@ -311,7 +311,7 @@ class DashboardControllerTest extends TestCase
     {
         // Mock source mapper to throw an exception
         $this->sourceMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willThrowException(new \Exception('Database error'));
 
         // Execute the method
@@ -334,19 +334,19 @@ class DashboardControllerTest extends TestCase
     {
         // Mock all mappers to return zero counts
         $this->sourceMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(0);
 
         $this->mappingMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(0);
 
         $this->synchronizationMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(0);
 
         $this->synchronizationContractMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(0);
 
         $this->jobMapper->expects($this->once())
@@ -354,7 +354,7 @@ class DashboardControllerTest extends TestCase
             ->willReturn(0);
 
         $this->endpointMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(0);
 
         // Execute the method
@@ -384,19 +384,19 @@ class DashboardControllerTest extends TestCase
     {
         // Mock all mappers to return large counts
         $this->sourceMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(1000);
 
         $this->mappingMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(2500);
 
         $this->synchronizationMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(1500);
 
         $this->synchronizationContractMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(800);
 
         $this->jobMapper->expects($this->once())
@@ -404,7 +404,7 @@ class DashboardControllerTest extends TestCase
             ->willReturn(1200);
 
         $this->endpointMapper->expects($this->once())
-            ->method('getTotalCallCount')
+            ->method('getTotalCount')
             ->willReturn(3000);
 
         // Execute the method
