@@ -23,6 +23,7 @@ use OCA\OpenConnector\Service\ObjectService;
 use OCA\OpenConnector\Service\SearchService;
 use OCA\OpenConnector\Service\EndpointService;
 use OCA\OpenConnector\Service\AuthorizationService;
+use OCA\OpenConnector\Service\EndpointCacheService;
 use OCA\OpenConnector\Db\Endpoint;
 use OCA\OpenConnector\Db\EndpointMapper;
 use OCA\OpenConnector\Db\EndpointLogMapper;
@@ -31,6 +32,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\AppFramework\Db\DoesNotExistException;
+use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -88,6 +90,27 @@ class EndpointsControllerTest extends TestCase
     private MockObject $authorizationService;
 
     /**
+     * Mock object service
+     *
+     * @var MockObject|ObjectService
+     */
+    private MockObject $objectService;
+
+    /**
+     * Mock endpoint cache service
+     *
+     * @var MockObject|EndpointCacheService
+     */
+    private MockObject $endpointCacheService;
+
+    /**
+     * Mock logger
+     *
+     * @var MockObject|LoggerInterface
+     */
+    private MockObject $logger;
+
+    /**
      * Set up test environment before each test
      *
      * This method initializes all mocks and the controller instance
@@ -105,6 +128,9 @@ class EndpointsControllerTest extends TestCase
         $this->endpointMapper = $this->createMock(EndpointMapper::class);
         $this->endpointService = $this->createMock(EndpointService::class);
         $this->authorizationService = $this->createMock(AuthorizationService::class);
+        $this->objectService = $this->createMock(ObjectService::class);
+        $this->endpointCacheService = $this->createMock(EndpointCacheService::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
         // Initialize the controller with mocked dependencies
         $this->controller = new EndpointsController(
@@ -113,7 +139,10 @@ class EndpointsControllerTest extends TestCase
             $this->config,
             $this->endpointMapper,
             $this->endpointService,
-            $this->authorizationService
+            $this->authorizationService,
+            $this->objectService,
+            $this->endpointCacheService,
+            $this->logger
         );
     }
 
@@ -472,5 +501,158 @@ class EndpointsControllerTest extends TestCase
         // Assert response is successful
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(['results' => $expectedEndpoints], $response->getData());
+    }
+
+    /**
+     * Test handlePath method with cache hit.
+     *
+     * @return void
+     */
+    public function testHandlePathWithCacheHit(): void
+    {
+        $path = '/api/test';
+        $endpoint = $this->createMock(Endpoint::class);
+        $endpoint->method('getEndpoint')->willReturn('/api/test');
+        $endpoint->method('getMethod')->willReturn('GET');
+        $endpoint->method('getRules')->willReturn([]);
+        $endpoint->method('getConditions')->willReturn([]);
+        $endpoint->method('getInputMapping')->willReturn(null);
+        $endpoint->method('getOutputMapping')->willReturn(null);
+        $endpoint->method('getConfigurations')->willReturn([]);
+        $endpoint->method('getTargetType')->willReturn('register/schema');
+        $endpoint->method('getTargetId')->willReturn('20/111');
+        $endpoint->method('getEndpointArray')->willReturn(['api', 'test']);
+
+        $this->request->method('getMethod')->willReturn('GET');
+        $this->request->method('getHeader')->willReturn('application/json');
+        $this->request->method('getParams')->willReturn([]);
+
+        $this->endpointCacheService->expects($this->once())
+            ->method('findByPathRegex')
+            ->with($path, 'GET')
+            ->willReturn($endpoint);
+
+        // Mock ObjectService for simple endpoint handling
+        $mockMapper = $this->createMock(\OCA\OpenConnector\Db\ObjectEntity::class);
+        $mockMapper->method('findAllPaginated')->willReturn([
+            'results' => [],
+            'total' => 0,
+            'page' => 1,
+            'pages' => 1
+        ]);
+
+        $this->objectService->expects($this->once())
+            ->method('getMapper')
+            ->with(111, 20)
+            ->willReturn($mockMapper);
+
+        $this->authorizationService->expects($this->once())
+            ->method('corsAfterController')
+            ->willReturnArgument(1);
+
+        $response = $this->controller->handlePath($path);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+    }
+
+    /**
+     * Test handlePath method with no matching endpoint.
+     *
+     * @return void
+     */
+    public function testHandlePathWithNoMatch(): void
+    {
+        $path = '/api/nonexistent';
+
+        $this->request->method('getMethod')->willReturn('GET');
+
+        $this->endpointCacheService->expects($this->once())
+            ->method('findByPathRegex')
+            ->with($path, 'GET')
+            ->willReturn(null);
+
+        $this->authorizationService->expects($this->once())
+            ->method('corsAfterController')
+            ->willReturnArgument(1);
+
+        $response = $this->controller->handlePath($path);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(404, $response->getStatus());
+        $this->assertStringContainsString('No matching endpoint found', $response->getData()['error']);
+    }
+
+    /**
+     * Test handlePath method with complex endpoint (not simple).
+     *
+     * @return void
+     */
+    public function testHandlePathWithComplexEndpoint(): void
+    {
+        $path = '/api/complex';
+        $endpoint = $this->createMock(Endpoint::class);
+        $endpoint->method('getEndpoint')->willReturn('/api/complex');
+        $endpoint->method('getMethod')->willReturn('GET');
+        $endpoint->method('getRules')->willReturn(['some-rule']); // Not empty, so not simple
+        $endpoint->method('getConditions')->willReturn([]);
+        $endpoint->method('getInputMapping')->willReturn(null);
+        $endpoint->method('getOutputMapping')->willReturn(null);
+        $endpoint->method('getConfigurations')->willReturn([]);
+        $endpoint->method('getTargetType')->willReturn('register/schema');
+
+        $this->request->method('getMethod')->willReturn('GET');
+        $this->request->method('getHeader')->willReturn('application/json');
+
+        $this->endpointCacheService->expects($this->once())
+            ->method('findByPathRegex')
+            ->with($path, 'GET')
+            ->willReturn($endpoint);
+
+        $expectedResponse = new JSONResponse(['data' => 'test']);
+        $this->endpointService->expects($this->once())
+            ->method('handleRequest')
+            ->with($endpoint, $this->request, $path)
+            ->willReturn($expectedResponse);
+
+        $this->authorizationService->expects($this->once())
+            ->method('corsAfterController')
+            ->willReturnArgument(1);
+
+        $response = $this->controller->handlePath($path);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+    }
+
+    /**
+     * Test preflightedCors method.
+     *
+     * @return void
+     */
+    public function testPreflightedCors(): void
+    {
+        $origin = 'https://example.com';
+        $this->request->server = ['HTTP_ORIGIN' => $origin];
+
+        $response = $this->controller->preflightedCors();
+
+        $this->assertInstanceOf(\OCP\AppFramework\Http\Response::class, $response);
+        $this->assertEquals($origin, $response->getHeaders()['Access-Control-Allow-Origin']);
+        $this->assertEquals('PUT, POST, GET, DELETE, PATCH', $response->getHeaders()['Access-Control-Allow-Methods']);
+    }
+
+    /**
+     * Test logs method.
+     *
+     * @return void
+     */
+    public function testLogs(): void
+    {
+        $searchService = $this->createMock(SearchService::class);
+
+        $response = $this->controller->logs($searchService);
+
+        $this->assertInstanceOf(JSONResponse::class, $response);
+        $this->assertEquals(500, $response->getStatus());
+        $this->assertStringContainsString('Endpoint logging is not available', $response->getData()['error']);
     }
 }
