@@ -575,4 +575,31 @@ class SynchronizationServiceTest extends TestCase
         // The nested numeric array should remain unchanged as sortNestedArray only sorts associative arrays
         $this->assertEquals(['b', 'a', 'c'], $array['array']);
     }
+
+    /**
+     * Test replaceRelatedOriginIds method with valid data
+     *
+     * @covers ::replaceRelatedOriginIds
+     * @return void
+     */
+    public function testReplaceRelatedOriginIdsWithValidData(): void
+    {
+        $object = [
+            'id' => 1,
+            'name' => 'Test',
+            'related' => [
+                'originId' => 'old-id-123'
+            ]
+        ];
+
+        $config = [
+            'replaceIdWithTargetId' => true,
+            'targetId' => 'new-id-456'
+        ];
+
+        $result = $this->synchronizationService->replaceRelatedOriginIds($object, $config, true);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('id', $result);
+    }
 }
