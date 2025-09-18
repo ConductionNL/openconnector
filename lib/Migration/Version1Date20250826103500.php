@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * JobLogMessageColumnMigration
- * 
+ *
  * Migration step to increase the message column size in the openconnector_job_logs table
  * to handle longer job execution messages and prevent truncation errors.
  *
@@ -92,7 +92,7 @@ class Version1Date20250826103500 extends SimpleMigrationStep
         // Check if the job_logs table exists
         if ($schema->hasTable('openconnector_job_logs')) {
             $table = $schema->getTable('openconnector_job_logs');
-            
+
             // Check if the message column exists
             if ($table->hasColumn('message')) {
                 // 1) First update existing NULL values to 'success' (data-fix before changeColumn)
@@ -104,8 +104,8 @@ class Version1Date20250826103500 extends SimpleMigrationStep
                 
                 // 2) Then change the column to TEXT type without default (TEXT columns can't have defaults)
                 $table->changeColumn('message', [
-                    'type' => Types::TEXT,
-                    'notnull' => true
+                    'type' => \Doctrine\DBAL\Types\Type::getType(Types::TEXT),
+                    'notnull' => true,
                     // GEEN 'default' hier! TEXT columns cannot have default values in MySQL
                 ]);
                 

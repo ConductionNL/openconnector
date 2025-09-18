@@ -9,11 +9,16 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 use Symfony\Component\Uid\Uuid;
 
-/**
- * Mapper class for handling Endpoint database operations
- */
+	/**
+	 * Mapper class for handling Endpoint database operations
+	 */
 class EndpointMapper extends QBMapper
 {
+	/**
+	 * Cache dirty flag file path
+	 */
+	private const CACHE_DIRTY_FLAG = '/tmp/openconnector_endpoints_cache_dirty';
+
 	public function __construct(IDBConnection $db)
 	{
 		parent::__construct($db, 'openconnector_endpoints');
@@ -180,7 +185,12 @@ class EndpointMapper extends QBMapper
 		}
 		$obj->setEndpointArray(explode('/', $obj->getEndpoint()));
 
-		return $this->insert(entity: $obj);
+		$result = $this->insert(entity: $obj);
+		
+		// Mark cache as dirty - will be refreshed on next request
+		$this->setCacheDirty();
+		
+		return $result;
 	}
 
 	public function updateFromArray(int $id, array $object): Endpoint
@@ -211,7 +221,12 @@ class EndpointMapper extends QBMapper
 		}
 		$obj->setEndpointArray(explode('/', $obj->getEndpoint()));
 
-		return $this->update($obj);
+		$result = $this->update($obj);
+		
+		// Mark cache as dirty - will be refreshed on next request
+		$this->setCacheDirty();
+		
+		return $result;
 	}
 
     /**
@@ -369,4 +384,65 @@ class EndpointMapper extends QBMapper
         }
         return $mappings;
     }
+
+	/**
+	 * Override delete method to invalidate cache
+	 *
+	 * @param Entity $entity The entity to delete
+	 * @return Entity The deleted entity
+	 */
+	public function delete(Entity $entity): Entity
+	{
+		$result = parent::delete($entity);
+		
+		// Mark cache as dirty - will be refreshed on next request
+		$this->setCacheDirty();
+		
+		return $result;
+	}
+
+	/**
+	 * Mark the endpoint cache as dirty
+	 * 
+	 * This creates a flag file that indicates the cache needs to be refreshed.
+	 * This is a lightweight way to signal cache invalidation across requests.
+	 *
+	 * @return void
+	 */
+	private function setCacheDirty(): void
+	{
+		try {
+			file_put_contents(self::CACHE_DIRTY_FLAG, time());
+		} catch (\Exception $e) {
+			// Fail silently - cache invalidation is not critical
+		}
+	}
+
+	/**
+	 * Check if the endpoint cache is dirty (needs refresh)
+	 *
+	 * @return bool True if cache needs refresh
+	 */
+	public function isCacheDirty(): bool
+	{
+		return file_exists(self::CACHE_DIRTY_FLAG);
+	}
+
+	/**
+	 * Mark the cache as clean (after successful refresh)
+	 *
+	 * @return void
+	 */
+	public function setCacheClean(): void
+	{
+		try {
+			if (file_exists(self::CACHE_DIRTY_FLAG)) {
+				unlink(self::CACHE_DIRTY_FLAG);
+			}
+		} catch (\Exception $e) {
+			// Fail silently - cache management is not critical
+		}
+	}
+
+
 }
