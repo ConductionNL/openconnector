@@ -161,7 +161,7 @@ class AuthorizationServiceTest extends TestCase
         try {
             $this->authorizationService->authorizeJwt($header);
             // If it doesn't throw an exception, the test passes (unlikely with invalid signature)
-            $this->assertTrue(true);
+            $this->fail('Expected JWT validation to fail with invalid signature');
         } catch (\Exception $e) {
             // Expected to fail due to JWT signature validation, but the method structure is tested
             // The test validates that the method processes the token and attempts validation
@@ -425,7 +425,8 @@ class AuthorizationServiceTest extends TestCase
         // This should not throw an exception
         $this->authorizationService->validatePayload($payload);
         
-        $this->assertTrue(true); // Test passes if no exception is thrown
+        // Test passes if no exception is thrown
+        $this->addToAssertionCount(1);
     }
 
     /**

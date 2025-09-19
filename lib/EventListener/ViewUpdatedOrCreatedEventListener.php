@@ -63,7 +63,7 @@ class ViewUpdatedOrCreatedEventListener implements IEventListener
 
         // lets make sure that we have the proper register and schema
         $object = $event->getNewObject();
-        if ($object->getRegister() !== self::SOFTWARE_VERSION_SCHEMA_ID || $object->getSchema() !== self::SOFTWARE_ITEM_SCHEMA_ID) {
+        if ((string)$object->getRegister() !== (string)self::SOFTWARE_VERSION_SCHEMA_ID || (string)$object->getSchema() !== (string)self::SOFTWARE_ITEM_SCHEMA_ID) {
             return;
         }
 

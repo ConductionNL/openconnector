@@ -96,8 +96,8 @@ class SoftwareCatalogueServiceTest extends TestCase
         $modelId = 1;
         $expectedResult = ['success' => true, 'modelId' => $modelId];
 
-        // Test requires React\Promise dependency
-        $this->markTestSkipped('Test requires React\Promise dependency');
+        // Test React\Promise functionality
+        $this->markTestSkipped('SoftwareCatalogueService requires React\Promise dependency and complex async mocking');
     }
 
     /**
@@ -115,8 +115,8 @@ class SoftwareCatalogueServiceTest extends TestCase
         $modelPromise = ['id' => 1, 'name' => 'Test Model'];
         $expectedResult = ['success' => true];
 
-        // Test removed - requires React\Promise dependency
-        $this->markTestSkipped('Test requires React\Promise dependency');
+        // Test React\Promise functionality
+        $this->markTestSkipped('SoftwareCatalogueService requires React\Promise dependency and complex async mocking');
     }
 
     /**
@@ -135,8 +135,8 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Mock the object service to return null (simulating unavailable service)
         $this->objectService->method('getOpenRegisters')->willReturn(null);
 
-        // Test removed - requires React\Promise dependency
-        $this->markTestSkipped('Test requires React\Promise dependency');
+        // Test React\Promise functionality
+        $this->markTestSkipped('SoftwareCatalogueService requires React\Promise dependency and complex async mocking');
     }
 
     /**
@@ -156,8 +156,8 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Mock the object service to return null (simulating unavailable service)
         $this->objectService->method('getOpenRegisters')->willReturn(null);
 
-        // Test removed - requires React\Promise dependency
-        $this->markTestSkipped('Test requires React\Promise dependency');
+        // Test React\Promise functionality
+        $this->markTestSkipped('SoftwareCatalogueService requires React\Promise dependency and complex async mocking');
     }
 
     /**
@@ -176,8 +176,8 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Mock the object service to return null (simulating unavailable service)
         $this->objectService->method('getOpenRegisters')->willReturn(null);
 
-        // Test removed - requires React\Promise dependency
-        $this->markTestSkipped('Test requires React\Promise dependency');
+        // Test React\Promise functionality
+        $this->markTestSkipped('SoftwareCatalogueService requires React\Promise dependency and complex async mocking');
     }
 
     /**
@@ -206,8 +206,8 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Mock the object service to return null (simulating unavailable service)
         $this->objectService->method('getOpenRegisters')->willReturn(null);
 
-        // Test removed - requires React\Promise dependency
-        $this->markTestSkipped('Test requires React\Promise dependency');
+        // Test React\Promise functionality
+        $this->markTestSkipped('SoftwareCatalogueService requires React\Promise dependency and complex async mocking');
     }
 
     /**
@@ -226,8 +226,8 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Mock the object service to return null (simulating unavailable service)
         $this->objectService->method('getOpenRegisters')->willReturn(null);
 
-        // Test removed - requires React\Promise dependency
-        $this->markTestSkipped('Test requires React\Promise dependency');
+        // Test React\Promise functionality
+        $this->markTestSkipped('SoftwareCatalogueService requires React\Promise dependency and complex async mocking');
     }
 
     /**
@@ -256,8 +256,8 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Mock the object service to return null (simulating unavailable service)
         $this->objectService->method('getOpenRegisters')->willReturn(null);
 
-        // Test removed - requires React\Promise dependency
-        $this->markTestSkipped('Test requires React\Promise dependency');
+        // Test React\Promise functionality
+        $this->markTestSkipped('SoftwareCatalogueService requires React\Promise dependency and complex async mocking');
     }
 
     /**
@@ -276,7 +276,7 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Mock the object service to return null (simulating unavailable service)
         $this->objectService->method('getOpenRegisters')->willReturn(null);
 
-        // Test removed - requires React\Promise dependency
-        $this->markTestSkipped('Test requires React\Promise dependency');
+        // Test React\Promise functionality
+        $this->markTestSkipped('SoftwareCatalogueService requires React\Promise dependency and complex async mocking');
     }
 }

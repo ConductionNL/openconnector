@@ -87,7 +87,9 @@ class EndpointMapperTest extends TestCase
     {
         // This should not throw an exception
         $this->endpointMapper->setCacheClean();
-        $this->assertTrue(true); // If we get here, the method executed without error
+        
+        // Test passes if no exception is thrown
+        $this->addToAssertionCount(1);
     }
 
     /**
