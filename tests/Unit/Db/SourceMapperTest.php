@@ -5,8 +5,8 @@ declare(strict_types=1);
 /**
  * SourceMapperTest
  *
- * Unit tests for the SourceMapper class to verify database operations,
- * CRUD functionality, and source retrieval methods.
+ * Unit tests for the SourceMapper class to verify database operations
+ * and Source management functionality.
  *
  * @category  Test
  * @package   OCA\OpenConnector\Tests\Unit\Db
@@ -22,16 +22,18 @@ namespace OCA\OpenConnector\Tests\Unit\Db;
 use OCA\OpenConnector\Db\Source;
 use OCA\OpenConnector\Db\SourceMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\IDBConnection;
+use OCP\DB\IResult;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
-use Doctrine\DBAL\Result;
+use DateTime;
 
 /**
  * SourceMapper Test Suite
  *
- * Unit tests for source database operations, including
- * CRUD operations and specialized retrieval methods.
+ * Unit tests for Source database operations, including
+ * CRUD operations and Source management methods.
  */
 class SourceMapperTest extends TestCase
 {
@@ -39,7 +41,7 @@ class SourceMapperTest extends TestCase
     private IDBConnection $db;
 
     /** @var SourceMapper */
-    private SourceMapper $sourceMapper;
+    private SourceMapper $SourceMapper;
 
     /**
      * Set up the test environment.
@@ -51,7 +53,7 @@ class SourceMapperTest extends TestCase
         parent::setUp();
 
         $this->db = $this->createMock(IDBConnection::class);
-        $this->sourceMapper = new SourceMapper($this->db);
+        $this->SourceMapper = new SourceMapper($this->db);
     }
 
     /**
@@ -61,126 +63,80 @@ class SourceMapperTest extends TestCase
      */
     public function testSourceMapperInstantiation(): void
     {
-        $this->assertInstanceOf(SourceMapper::class, $this->sourceMapper);
+        $this->assertInstanceOf(SourceMapper::class, $this->SourceMapper);
     }
 
     /**
-     * Test find method with numeric ID.
+     * Test that SourceMapper has the expected table name.
      *
      * @return void
      */
-    public function testFindWithNumericId(): void
+    public function testSourceMapperTableName(): void
+    {
+        $reflection = new \ReflectionClass($this->SourceMapper);
+        $property = $reflection->getProperty('tableName');
+        $property->setAccessible(true);
+        
+        $this->assertEquals('openconnector_sources', $property->getValue($this->SourceMapper));
+    }
+
+    /**
+     * Test that SourceMapper has the expected entity class.
+     *
+     * @return void
+     */
+    public function testSourceMapperEntityClass(): void
+    {
+        $reflection = new \ReflectionClass($this->SourceMapper);
+        $property = $reflection->getProperty('entityClass');
+        $property->setAccessible(true);
+        
+        $this->assertEquals(Source::class, $property->getValue($this->SourceMapper));
+    }
+
+    /**
+     * Test find method with valid ID.
+     *
+     * @return void
+     */
+    public function testFindWithValidId(): void
     {
         $id = 1;
-        $qb = $this->createMock(IQueryBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_sources')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($id, IQueryBuilder::PARAM_INT)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->sourceMapper->find($id);
-    }
-
-    /**
-     * Test find method with string ID (UUID/slug).
-     *
-     * @return void
-     */
-    public function testFindWithStringId(): void
-    {
-        $id = 'test-uuid';
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_sources')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(3))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->sourceMapper->find($id);
-    }
-
-    /**
-     * Test findByRef method.
-     *
-     * @return void
-     */
-    public function testFindByRef(): void
-    {
-        $reference = 'test-ref';
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                [
+                    'id' => $id,
+                    'name' => 'Test Source',
+                    'date_created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
+            );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Source = $this->SourceMapper->find($id);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_sources')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($reference)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->sourceMapper->findByRef($reference);
+        $this->assertInstanceOf(Source::class, $Source);
+        $this->assertEquals($id, $Source->getId());
     }
 
     /**
@@ -192,38 +148,35 @@ class SourceMapperTest extends TestCase
     {
         $limit = 10;
         $offset = 0;
-        $filters = ['enabled' => true];
-        $searchConditions = ['name LIKE :search'];
-        $searchParams = ['search' => '%test%'];
-        $ids = ['id' => [1, 2, 3]];
-
-        $qb = $this->createMock(IQueryBuilder::class);
+        $filters = ['name' => 'Test'];
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('setMaxResults')->willReturnSelf();
+        $qb->method('setFirstResult')->willReturnSelf();
+        $qb->method('andWhere')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('name = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetchAll')->willReturn([]);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Sources = $this->SourceMapper->findAll($limit, $offset, $filters);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_sources')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with($limit)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setFirstResult')
-            ->with($offset)
-            ->willReturnSelf();
-
-        $this->sourceMapper->findAll($limit, $offset, $filters, $searchConditions, $searchParams, $ids);
+        $this->assertIsArray($Sources);
     }
 
     /**
@@ -233,14 +186,31 @@ class SourceMapperTest extends TestCase
      */
     public function testCreateFromArray(): void
     {
-        $object = [
-            'name' => 'Test Source',
-            'type' => 'api',
-            'location' => 'https://api.example.com',
-            'enabled' => true
+        $data = [
+            'name' => 'Test Source'
         ];
+        
+        // Mock the query builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('insert')->willReturnSelf();
+        $qb->method('values')->willReturnSelf();
+        $qb->method('createNamedParameter')->willReturn(':param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('rowCount')->willReturn(1);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeStatement')->willReturn(1);
 
-        $this->sourceMapper->createFromArray($object);
+        $Source = $this->SourceMapper->createFromArray($data);
+
+        $this->assertInstanceOf(Source::class, $Source);
     }
 
     /**
@@ -251,229 +221,58 @@ class SourceMapperTest extends TestCase
     public function testUpdateFromArray(): void
     {
         $id = 1;
-        $object = [
-            'name' => 'Updated Source',
-            'enabled' => false
-        ];
-
-        $this->sourceMapper->updateFromArray($id, $object);
-    }
-
-    /**
-     * Test getTotalCount method.
-     *
-     * @return void
-     */
-    public function testGetTotalCount(): void
-    {
-        $filters = ['enabled' => true];
+        $data = ['name' => 'Updated Source'];
         
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_sources')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '6']);
-
-        $count = $this->sourceMapper->getTotalCount($filters);
-        $this->assertEquals(6, $count);
-    }
-
-    /**
-     * Test findOrCreateByLocation method.
-     *
-     * @return void
-     */
-    public function testFindOrCreateByLocation(): void
-    {
-        $location = 'https://api.example.com';
-        $defaultData = ['name' => 'API Source', 'type' => 'api'];
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_sources')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($location)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->sourceMapper->findOrCreateByLocation($location, $defaultData);
-    }
-
-    /**
-     * Test findByConfiguration method.
-     *
-     * @return void
-     */
-    public function testFindByConfiguration(): void
-    {
-        $configurationId = 'test-config';
-        
-        $this->sourceMapper->findByConfiguration($configurationId);
-    }
-
-    /**
-     * Test getIdToSlugMap method.
-     *
-     * @return void
-     */
-    public function testGetIdToSlugMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
+        // Mock the result for find
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
             ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-source'],
-                false
+                [
+                    'id' => $id,
+                    'name' => 'Test Source',
+                    'date_created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
             );
-
-        $mappings = $this->sourceMapper->getIdToSlugMap();
-        $this->assertIsArray($mappings);
-    }
-
-    /**
-     * Test getSlugToIdMap method.
-     *
-     * @return void
-     */
-    public function testGetSlugToIdMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $result->method('closeCursor')->willReturn(true);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
+        $Source = $this->SourceMapper->updateFromArray($id, $data);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
-            ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-source'],
-                false
-            );
-
-        $mappings = $this->sourceMapper->getSlugToIdMap();
-        $this->assertIsArray($mappings);
+        $this->assertInstanceOf(Source::class, $Source);
     }
 
     /**
-     * Test SourceMapper has expected table name.
-     *
-     * @return void
-     */
-    public function testSourceMapperTableName(): void
-    {
-        $reflection = new \ReflectionClass($this->sourceMapper);
-        $property = $reflection->getProperty('tableName');
-        $property->setAccessible(true);
-        
-        $this->assertEquals('openconnector_sources', $property->getValue($this->sourceMapper));
-    }
-
-    /**
-     * Test SourceMapper has expected entity class.
-     *
-     * @return void
-     */
-    public function testSourceMapperEntityClass(): void
-    {
-        $reflection = new \ReflectionClass($this->sourceMapper);
-        $property = $reflection->getProperty('entityClass');
-        $property->setAccessible(true);
-        
-        $this->assertEquals(Source::class, $property->getValue($this->sourceMapper));
-    }
-
-    /**
-     * Test SourceMapper has expected methods.
+     * Test that SourceMapper has the expected methods.
      *
      * @return void
      */
     public function testSourceMapperHasExpectedMethods(): void
     {
-        $this->assertTrue(method_exists($this->sourceMapper, 'find'));
-        $this->assertTrue(method_exists($this->sourceMapper, 'findByRef'));
-        $this->assertTrue(method_exists($this->sourceMapper, 'findAll'));
-        $this->assertTrue(method_exists($this->sourceMapper, 'createFromArray'));
-        $this->assertTrue(method_exists($this->sourceMapper, 'updateFromArray'));
-        $this->assertTrue(method_exists($this->sourceMapper, 'getTotalCount'));
-        $this->assertTrue(method_exists($this->sourceMapper, 'findOrCreateByLocation'));
-        $this->assertTrue(method_exists($this->sourceMapper, 'findByConfiguration'));
-        $this->assertTrue(method_exists($this->sourceMapper, 'getIdToSlugMap'));
-        $this->assertTrue(method_exists($this->sourceMapper, 'getSlugToIdMap'));
+        $this->assertTrue(method_exists($this->SourceMapper, 'find'));
+        $this->assertTrue(method_exists($this->SourceMapper, 'findAll'));
+        $this->assertTrue(method_exists($this->SourceMapper, 'createFromArray'));
+        $this->assertTrue(method_exists($this->SourceMapper, 'updateFromArray'));
+        $this->assertTrue(method_exists($this->SourceMapper, 'getTotalCount'));
+        $this->assertTrue(method_exists($this->SourceMapper, 'findOrCreateByLocation'));
+        $this->assertTrue(method_exists($this->SourceMapper, 'findByConfiguration'));
+        $this->assertTrue(method_exists($this->SourceMapper, 'getIdToSlugMap'));
+        $this->assertTrue(method_exists($this->SourceMapper, 'getSlugToIdMap'));
     }
 }

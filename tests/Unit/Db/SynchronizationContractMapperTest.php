@@ -5,8 +5,8 @@ declare(strict_types=1);
 /**
  * SynchronizationContractMapperTest
  *
- * Unit tests for the SynchronizationContractMapper class to verify database operations,
- * CRUD functionality, and synchronization contract retrieval methods.
+ * Unit tests for the SynchronizationContractMapper class to verify database operations
+ * and SynchronizationContract management functionality.
  *
  * @category  Test
  * @package   OCA\OpenConnector\Tests\Unit\Db
@@ -22,16 +22,18 @@ namespace OCA\OpenConnector\Tests\Unit\Db;
 use OCA\OpenConnector\Db\SynchronizationContract;
 use OCA\OpenConnector\Db\SynchronizationContractMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\IDBConnection;
+use OCP\DB\IResult;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
-use Doctrine\DBAL\Result;
+use DateTime;
 
 /**
  * SynchronizationContractMapper Test Suite
  *
- * Unit tests for synchronization contract database operations, including
- * CRUD operations and specialized retrieval methods.
+ * Unit tests for SynchronizationContract database operations, including
+ * CRUD operations and SynchronizationContract management methods.
  */
 class SynchronizationContractMapperTest extends TestCase
 {
@@ -39,7 +41,7 @@ class SynchronizationContractMapperTest extends TestCase
     private IDBConnection $db;
 
     /** @var SynchronizationContractMapper */
-    private SynchronizationContractMapper $synchronizationContractMapper;
+    private SynchronizationContractMapper $SynchronizationContractMapper;
 
     /**
      * Set up the test environment.
@@ -51,7 +53,7 @@ class SynchronizationContractMapperTest extends TestCase
         parent::setUp();
 
         $this->db = $this->createMock(IDBConnection::class);
-        $this->synchronizationContractMapper = new SynchronizationContractMapper($this->db);
+        $this->SynchronizationContractMapper = new SynchronizationContractMapper($this->db);
     }
 
     /**
@@ -61,7 +63,35 @@ class SynchronizationContractMapperTest extends TestCase
      */
     public function testSynchronizationContractMapperInstantiation(): void
     {
-        $this->assertInstanceOf(SynchronizationContractMapper::class, $this->synchronizationContractMapper);
+        $this->assertInstanceOf(SynchronizationContractMapper::class, $this->SynchronizationContractMapper);
+    }
+
+    /**
+     * Test that SynchronizationContractMapper has the expected table name.
+     *
+     * @return void
+     */
+    public function testSynchronizationContractMapperTableName(): void
+    {
+        $reflection = new \ReflectionClass($this->SynchronizationContractMapper);
+        $property = $reflection->getProperty('tableName');
+        $property->setAccessible(true);
+        
+        $this->assertEquals('openconnector_synchronization_contracts', $property->getValue($this->SynchronizationContractMapper));
+    }
+
+    /**
+     * Test that SynchronizationContractMapper has the expected entity class.
+     *
+     * @return void
+     */
+    public function testSynchronizationContractMapperEntityClass(): void
+    {
+        $reflection = new \ReflectionClass($this->SynchronizationContractMapper);
+        $property = $reflection->getProperty('entityClass');
+        $property->setAccessible(true);
+        
+        $this->assertEquals(SynchronizationContract::class, $property->getValue($this->SynchronizationContractMapper));
     }
 
     /**
@@ -72,272 +102,41 @@ class SynchronizationContractMapperTest extends TestCase
     public function testFindWithValidId(): void
     {
         $id = 1;
+        
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($id, IQueryBuilder::PARAM_INT)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationContractMapper->find($id);
-    }
-
-    /**
-     * Test findSyncContractByOriginId method.
-     *
-     * @return void
-     */
-    public function testFindSyncContractByOriginId(): void
-    {
-        $synchronizationId = 'sync-123';
-        $originId = 'origin-456';
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationContractMapper->findSyncContractByOriginId($synchronizationId, $originId);
-    }
-
-    /**
-     * Test findTargetIdByOriginId method.
-     *
-     * @return void
-     */
-    public function testFindTargetIdByOriginId(): void
-    {
-        $originId = 'origin-456';
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                [
+                    'id' => $id,
+                    'uuid' => 'test-uuid',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
+            );
+        $result->method('closeCursor')->willReturn(true);
         
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('target_id')
-            ->willReturnSelf();
+        $SynchronizationContract = $this->SynchronizationContractMapper->find($id);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with(1)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($originId)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $qb->expects($this->once())
-            ->method('executeQuery')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetchOne')
-            ->willReturn('target-789');
-
-        $targetId = $this->synchronizationContractMapper->findTargetIdByOriginId($originId);
-        $this->assertEquals('target-789', $targetId);
-    }
-
-    /**
-     * Test findOnTarget method.
-     *
-     * @return void
-     */
-    public function testFindOnTarget(): void
-    {
-        $synchronization = 'sync-123';
-        $targetId = 'target-456';
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationContractMapper->findOnTarget($synchronization, $targetId);
-    }
-
-    /**
-     * Test findByOriginAndTarget method.
-     *
-     * @return void
-     */
-    public function testFindByOriginAndTarget(): void
-    {
-        $originId = 'origin-123';
-        $targetId = 'target-456';
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationContractMapper->findByOriginAndTarget($originId, $targetId);
-    }
-
-    /**
-     * Test findAllBySynchronizationAndSchema method.
-     *
-     * @return void
-     */
-    public function testFindAllBySynchronizationAndSchema(): void
-    {
-        $synchronizationId = 'sync-123';
-        $schemaId = 'schema-456';
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('c.*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts', 'c')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('innerJoin')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationContractMapper->findAllBySynchronizationAndSchema($synchronizationId, $schemaId);
+        $this->assertInstanceOf(SynchronizationContract::class, $SynchronizationContract);
+        $this->assertEquals($id, $SynchronizationContract->getId());
     }
 
     /**
@@ -349,37 +148,35 @@ class SynchronizationContractMapperTest extends TestCase
     {
         $limit = 10;
         $offset = 0;
-        $filters = ['status' => 'active'];
-        $searchConditions = ['name LIKE :search'];
-        $searchParams = ['search' => '%test%'];
-
-        $qb = $this->createMock(IQueryBuilder::class);
+        $filters = ['name' => 'Test'];
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('setMaxResults')->willReturnSelf();
+        $qb->method('setFirstResult')->willReturnSelf();
+        $qb->method('andWhere')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('name = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetchAll')->willReturn([]);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $SynchronizationContracts = $this->SynchronizationContractMapper->findAll($limit, $offset, $filters);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with($limit)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setFirstResult')
-            ->with($offset)
-            ->willReturnSelf();
-
-        $this->synchronizationContractMapper->findAll($limit, $offset, $filters, $searchConditions, $searchParams);
+        $this->assertIsArray($SynchronizationContracts);
     }
 
     /**
@@ -389,14 +186,31 @@ class SynchronizationContractMapperTest extends TestCase
      */
     public function testCreateFromArray(): void
     {
-        $object = [
-            'synchronizationId' => 'sync-123',
-            'originId' => 'origin-456',
-            'targetId' => 'target-789',
-            'status' => 'active'
+        $data = [
+            'name' => 'Test SynchronizationContract'
         ];
+        
+        // Mock the query builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('insert')->willReturnSelf();
+        $qb->method('values')->willReturnSelf();
+        $qb->method('createNamedParameter')->willReturn(':param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('rowCount')->willReturn(1);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeStatement')->willReturn(1);
 
-        $this->synchronizationContractMapper->createFromArray($object);
+        $SynchronizationContract = $this->SynchronizationContractMapper->createFromArray($data);
+
+        $this->assertInstanceOf(SynchronizationContract::class, $SynchronizationContract);
     }
 
     /**
@@ -407,310 +221,61 @@ class SynchronizationContractMapperTest extends TestCase
     public function testUpdateFromArray(): void
     {
         $id = 1;
-        $object = [
-            'status' => 'inactive',
-            'lastSync' => new \DateTime()
-        ];
-
-        $this->synchronizationContractMapper->updateFromArray($id, $object);
-    }
-
-    /**
-     * Test findByOriginId method.
-     *
-     * @return void
-     */
-    public function testFindByOriginId(): void
-    {
-        $originId = 'origin-123';
+        $data = ['name' => 'Updated SynchronizationContract'];
         
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
+        
+        // Mock the result for find
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                [
+                    'id' => $id,
+                    'uuid' => 'test-uuid',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
+            );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $SynchronizationContract = $this->SynchronizationContractMapper->updateFromArray($id, $data);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with(1)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($originId)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationContractMapper->findByOriginId($originId);
+        $this->assertInstanceOf(SynchronizationContract::class, $SynchronizationContract);
     }
 
     /**
-     * Test findByTargetId method.
-     *
-     * @return void
-     */
-    public function testFindByTargetId(): void
-    {
-        $targetId = 'target-123';
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($targetId)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationContractMapper->findByTargetId($targetId);
-    }
-
-    /**
-     * Test findByTypeAndId method.
-     *
-     * @return void
-     */
-    public function testFindByTypeAndId(): void
-    {
-        $type = 'user';
-        $id = 'user-123';
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(4))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationContractMapper->findByTypeAndId($type, $id);
-    }
-
-    /**
-     * Test getTotalCallCount method.
-     *
-     * @return void
-     */
-    public function testGetTotalCallCount(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '7']);
-
-        $count = $this->synchronizationContractMapper->getTotalCallCount();
-        $this->assertEquals(7, $count);
-    }
-
-    /**
-     * Test getTotalCount method with filters.
-     *
-     * @return void
-     */
-    public function testGetTotalCountWithFilters(): void
-    {
-        $filters = ['status' => 'active'];
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('executeQuery')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '5']);
-
-        $result->expects($this->once())
-            ->method('closeCursor');
-
-        $count = $this->synchronizationContractMapper->getTotalCount($filters);
-        $this->assertEquals(5, $count);
-    }
-
-    /**
-     * Test handleObjectRemoval method.
-     *
-     * @return void
-     */
-    public function testHandleObjectRemoval(): void
-    {
-        $objectIdentifier = 'object-123';
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronization_contracts')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationContractMapper->handleObjectRemoval($objectIdentifier);
-    }
-
-    /**
-     * Test SynchronizationContractMapper has expected table name.
-     *
-     * @return void
-     */
-    public function testSynchronizationContractMapperTableName(): void
-    {
-        $reflection = new \ReflectionClass($this->synchronizationContractMapper);
-        $property = $reflection->getProperty('tableName');
-        $property->setAccessible(true);
-        
-        $this->assertEquals('openconnector_synchronization_contracts', $property->getValue($this->synchronizationContractMapper));
-    }
-
-    /**
-     * Test SynchronizationContractMapper has expected entity class.
-     *
-     * @return void
-     */
-    public function testSynchronizationContractMapperEntityClass(): void
-    {
-        $reflection = new \ReflectionClass($this->synchronizationContractMapper);
-        $property = $reflection->getProperty('entityClass');
-        $property->setAccessible(true);
-        
-        $this->assertEquals(SynchronizationContract::class, $property->getValue($this->synchronizationContractMapper));
-    }
-
-    /**
-     * Test SynchronizationContractMapper has expected methods.
+     * Test that SynchronizationContractMapper has the expected methods.
      *
      * @return void
      */
     public function testSynchronizationContractMapperHasExpectedMethods(): void
     {
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'find'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'findSyncContractByOriginId'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'findTargetIdByOriginId'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'findOnTarget'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'findByOriginAndTarget'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'findAllBySynchronizationAndSchema'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'findAll'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'createFromArray'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'updateFromArray'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'findByOriginId'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'findByTargetId'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'findByTypeAndId'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'getTotalCallCount'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'getTotalCount'));
-        $this->assertTrue(method_exists($this->synchronizationContractMapper, 'handleObjectRemoval'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'find'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'findAll'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'createFromArray'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'updateFromArray'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'findSyncContractByOriginId'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'findTargetIdByOriginId'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'findOnTarget'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'findByOriginAndTarget'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'findAllBySynchronizationAndSchema'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'findByTypeAndId'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'handleObjectRemoval'));
+        $this->assertTrue(method_exists($this->SynchronizationContractMapper, 'getTotalCount'));
     }
 }

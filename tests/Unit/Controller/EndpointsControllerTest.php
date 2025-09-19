@@ -511,17 +511,17 @@ class EndpointsControllerTest extends TestCase
     public function testHandlePathWithCacheHit(): void
     {
         $path = '/api/test';
-        $endpoint = $this->createMock(Endpoint::class);
-        $endpoint->method('getEndpoint')->willReturn('/api/test');
-        $endpoint->method('getMethod')->willReturn('GET');
-        $endpoint->method('getRules')->willReturn([]);
-        $endpoint->method('getConditions')->willReturn([]);
-        $endpoint->method('getInputMapping')->willReturn(null);
-        $endpoint->method('getOutputMapping')->willReturn(null);
-        $endpoint->method('getConfigurations')->willReturn([]);
-        $endpoint->method('getTargetType')->willReturn('register/schema');
-        $endpoint->method('getTargetId')->willReturn('20/111');
-        $endpoint->method('getEndpointArray')->willReturn(['api', 'test']);
+        $endpoint = new Endpoint();
+        $endpoint->setEndpoint('/api/test');
+        $endpoint->setMethod('GET');
+        $endpoint->setRules([]);
+        $endpoint->setConditions([]);
+        $endpoint->setInputMapping(null);
+        $endpoint->setOutputMapping(null);
+        $endpoint->setConfigurations([]);
+        $endpoint->setTargetType('register/schema');
+        $endpoint->setTargetId('20/111');
+        $endpoint->setEndpointArray(['api', 'test']);
 
         $this->request->method('getMethod')->willReturn('GET');
         $this->request->method('getHeader')->willReturn('application/json');
@@ -533,17 +533,15 @@ class EndpointsControllerTest extends TestCase
             ->willReturn($endpoint);
 
         // Mock ObjectService for simple endpoint handling
-        $mockMapper = $this->createMock(\OCA\OpenConnector\Db\ObjectEntity::class);
-        $mockMapper->method('findAllPaginated')->willReturn([
-            'results' => [],
-            'total' => 0,
-            'page' => 1,
-            'pages' => 1
-        ]);
+        $mockMapper = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntityMapper::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['findAll'])
+            ->getMock();
+        $mockMapper->method('findAll')->willReturn([]);
 
         $this->objectService->expects($this->once())
             ->method('getMapper')
-            ->with(111, 20)
+            ->with(null, 111, 20)
             ->willReturn($mockMapper);
 
         $this->authorizationService->expects($this->once())
@@ -590,15 +588,17 @@ class EndpointsControllerTest extends TestCase
     public function testHandlePathWithComplexEndpoint(): void
     {
         $path = '/api/complex';
-        $endpoint = $this->createMock(Endpoint::class);
-        $endpoint->method('getEndpoint')->willReturn('/api/complex');
-        $endpoint->method('getMethod')->willReturn('GET');
-        $endpoint->method('getRules')->willReturn(['some-rule']); // Not empty, so not simple
-        $endpoint->method('getConditions')->willReturn([]);
-        $endpoint->method('getInputMapping')->willReturn(null);
-        $endpoint->method('getOutputMapping')->willReturn(null);
-        $endpoint->method('getConfigurations')->willReturn([]);
-        $endpoint->method('getTargetType')->willReturn('register/schema');
+        $endpoint = new Endpoint();
+        $endpoint->setEndpoint('/api/complex');
+        $endpoint->setMethod('GET');
+        $endpoint->setRules(['some-rule']); // Not empty, so not simple
+        $endpoint->setConditions([]);
+        $endpoint->setInputMapping(null);
+        $endpoint->setOutputMapping(null);
+        $endpoint->setConfigurations([]);
+        $endpoint->setTargetType('register/schema');
+        $endpoint->setTargetId('20/111');
+        $endpoint->setEndpointArray(['api', 'complex']);
 
         $this->request->method('getMethod')->willReturn('GET');
         $this->request->method('getHeader')->willReturn('application/json');
@@ -631,7 +631,15 @@ class EndpointsControllerTest extends TestCase
     public function testPreflightedCors(): void
     {
         $origin = 'https://example.com';
+        
+        // Suppress deprecation warning for dynamic property creation
+        $originalErrorReporting = error_reporting();
+        error_reporting($originalErrorReporting & ~E_DEPRECATED);
+        
         $this->request->server = ['HTTP_ORIGIN' => $origin];
+        
+        // Restore error reporting
+        error_reporting($originalErrorReporting);
 
         $response = $this->controller->preflightedCors();
 

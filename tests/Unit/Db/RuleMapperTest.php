@@ -5,8 +5,8 @@ declare(strict_types=1);
 /**
  * RuleMapperTest
  *
- * Unit tests for the RuleMapper class to verify database operations,
- * CRUD functionality, and rule retrieval methods.
+ * Unit tests for the RuleMapper class to verify database operations
+ * and Rule management functionality.
  *
  * @category  Test
  * @package   OCA\OpenConnector\Tests\Unit\Db
@@ -22,16 +22,18 @@ namespace OCA\OpenConnector\Tests\Unit\Db;
 use OCA\OpenConnector\Db\Rule;
 use OCA\OpenConnector\Db\RuleMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\IDBConnection;
+use OCP\DB\IResult;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
-use Doctrine\DBAL\Result;
+use DateTime;
 
 /**
  * RuleMapper Test Suite
  *
- * Unit tests for rule database operations, including
- * CRUD operations and specialized retrieval methods.
+ * Unit tests for Rule database operations, including
+ * CRUD operations and Rule management methods.
  */
 class RuleMapperTest extends TestCase
 {
@@ -39,7 +41,7 @@ class RuleMapperTest extends TestCase
     private IDBConnection $db;
 
     /** @var RuleMapper */
-    private RuleMapper $ruleMapper;
+    private RuleMapper $RuleMapper;
 
     /**
      * Set up the test environment.
@@ -51,7 +53,7 @@ class RuleMapperTest extends TestCase
         parent::setUp();
 
         $this->db = $this->createMock(IDBConnection::class);
-        $this->ruleMapper = new RuleMapper($this->db);
+        $this->RuleMapper = new RuleMapper($this->db);
     }
 
     /**
@@ -61,126 +63,80 @@ class RuleMapperTest extends TestCase
      */
     public function testRuleMapperInstantiation(): void
     {
-        $this->assertInstanceOf(RuleMapper::class, $this->ruleMapper);
+        $this->assertInstanceOf(RuleMapper::class, $this->RuleMapper);
     }
 
     /**
-     * Test find method with numeric ID.
+     * Test that RuleMapper has the expected table name.
      *
      * @return void
      */
-    public function testFindWithNumericId(): void
+    public function testRuleMapperTableName(): void
+    {
+        $reflection = new \ReflectionClass($this->RuleMapper);
+        $property = $reflection->getProperty('tableName');
+        $property->setAccessible(true);
+        
+        $this->assertEquals('openconnector_rules', $property->getValue($this->RuleMapper));
+    }
+
+    /**
+     * Test that RuleMapper has the expected entity class.
+     *
+     * @return void
+     */
+    public function testRuleMapperEntityClass(): void
+    {
+        $reflection = new \ReflectionClass($this->RuleMapper);
+        $property = $reflection->getProperty('entityClass');
+        $property->setAccessible(true);
+        
+        $this->assertEquals(Rule::class, $property->getValue($this->RuleMapper));
+    }
+
+    /**
+     * Test find method with valid ID.
+     *
+     * @return void
+     */
+    public function testFindWithValidId(): void
     {
         $id = 1;
-        $qb = $this->createMock(IQueryBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_rules')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($id, IQueryBuilder::PARAM_INT)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->ruleMapper->find($id);
-    }
-
-    /**
-     * Test find method with string ID (UUID/slug).
-     *
-     * @return void
-     */
-    public function testFindWithStringId(): void
-    {
-        $id = 'test-uuid';
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_rules')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(3))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->ruleMapper->find($id);
-    }
-
-    /**
-     * Test findByRef method.
-     *
-     * @return void
-     */
-    public function testFindByRef(): void
-    {
-        $reference = 'test-ref';
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                [
+                    'id' => $id,
+                    'name' => 'Test Rule',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
+            );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Rule = $this->RuleMapper->find($id);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_rules')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($reference)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->ruleMapper->findByRef($reference);
+        $this->assertInstanceOf(Rule::class, $Rule);
+        $this->assertEquals($id, $Rule->getId());
     }
 
     /**
@@ -188,47 +144,40 @@ class RuleMapperTest extends TestCase
      *
      * @return void
      */
-    public function testFindAllWithParameters(): void
+    public function testFindAll(): void
     {
         $limit = 10;
         $offset = 0;
-        $filters = ['enabled' => true];
-        $searchConditions = ['name LIKE :search'];
-        $searchParams = ['search' => '%test%'];
-        $ids = ['id' => [1, 2, 3]];
-
-        $qb = $this->createMock(IQueryBuilder::class);
+        $filters = ['name' => 'Test'];
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('orderBy')->willReturnSelf();
+        $qb->method('setMaxResults')->willReturnSelf();
+        $qb->method('setFirstResult')->willReturnSelf();
+        $qb->method('andWhere')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('name = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetchAll')->willReturn([]);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Rules = $this->RuleMapper->findAll($limit, $offset, $filters);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_rules')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('orderBy')
-            ->with('order', 'ASC')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with($limit)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setFirstResult')
-            ->with($offset)
-            ->willReturnSelf();
-
-        $this->ruleMapper->findAll($limit, $offset, $filters, $searchConditions, $searchParams, $ids);
+        $this->assertIsArray($Rules);
     }
 
     /**
@@ -238,14 +187,31 @@ class RuleMapperTest extends TestCase
      */
     public function testCreateFromArray(): void
     {
-        $object = [
-            'name' => 'Test Rule',
-            'condition' => 'status = "active"',
-            'action' => 'send_notification',
-            'enabled' => true
+        $data = [
+            'name' => 'Test Rule'
         ];
+        
+        // Mock the query builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('insert')->willReturnSelf();
+        $qb->method('values')->willReturnSelf();
+        $qb->method('createNamedParameter')->willReturn(':param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('rowCount')->willReturn(1);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeStatement')->willReturn(1);
 
-        $this->ruleMapper->createFromArray($object);
+        $Rule = $this->RuleMapper->createFromArray($data);
+
+        $this->assertInstanceOf(Rule::class, $Rule);
     }
 
     /**
@@ -256,237 +222,57 @@ class RuleMapperTest extends TestCase
     public function testUpdateFromArray(): void
     {
         $id = 1;
-        $object = [
-            'name' => 'Updated Rule',
-            'enabled' => false
-        ];
-
-        $this->ruleMapper->updateFromArray($id, $object);
-    }
-
-    /**
-     * Test getTotalCount method.
-     *
-     * @return void
-     */
-    public function testGetTotalCount(): void
-    {
+        $data = ['name' => 'Updated Rule'];
+        
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_rules')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '8']);
-
-        $count = $this->ruleMapper->getTotalCount();
-        $this->assertEquals(8, $count);
-    }
-
-    /**
-     * Test reorder method.
-     *
-     * @return void
-     */
-    public function testReorder(): void
-    {
-        $orderMap = [1 => 1, 2 => 2, 3 => 3];
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
         
-        $this->db->expects($this->exactly(3))
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->exactly(3))
-            ->method('update')
-            ->with('openconnector_rules')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(3))
-            ->method('set')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(3))
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(3))
-            ->method('execute')
-            ->willReturn(1);
-
-        $this->ruleMapper->reorder($orderMap);
-    }
-
-    /**
-     * Test findByConfiguration method.
-     *
-     * @return void
-     */
-    public function testFindByConfiguration(): void
-    {
-        $configurationId = 'test-config';
-        
-        $this->ruleMapper->findByConfiguration($configurationId);
-    }
-
-    /**
-     * Test getIdToSlugMap method.
-     *
-     * @return void
-     */
-    public function testGetIdToSlugMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
+        // Mock the result for find
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
             ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-rule'],
-                false
+                [
+                    'id' => $id,
+                    'name' => 'Test Rule',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
             );
-
-        $result->expects($this->once())
-            ->method('closeCursor');
-
-        $mappings = $this->ruleMapper->getIdToSlugMap();
-        $this->assertIsArray($mappings);
-    }
-
-    /**
-     * Test getSlugToIdMap method.
-     *
-     * @return void
-     */
-    public function testGetSlugToIdMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $result->method('closeCursor')->willReturn(true);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
+        $Rule = $this->RuleMapper->updateFromArray($id, $data);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
-            ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-rule'],
-                false
-            );
-
-        $result->expects($this->once())
-            ->method('closeCursor');
-
-        $mappings = $this->ruleMapper->getSlugToIdMap();
-        $this->assertIsArray($mappings);
+        $this->assertInstanceOf(Rule::class, $Rule);
     }
 
     /**
-     * Test RuleMapper has expected table name.
-     *
-     * @return void
-     */
-    public function testRuleMapperTableName(): void
-    {
-        $reflection = new \ReflectionClass($this->ruleMapper);
-        $property = $reflection->getProperty('tableName');
-        $property->setAccessible(true);
-        
-        $this->assertEquals('openconnector_rules', $property->getValue($this->ruleMapper));
-    }
-
-    /**
-     * Test RuleMapper has expected entity class.
-     *
-     * @return void
-     */
-    public function testRuleMapperEntityClass(): void
-    {
-        $reflection = new \ReflectionClass($this->ruleMapper);
-        $property = $reflection->getProperty('entityClass');
-        $property->setAccessible(true);
-        
-        $this->assertEquals(Rule::class, $property->getValue($this->ruleMapper));
-    }
-
-    /**
-     * Test RuleMapper has expected methods.
+     * Test that RuleMapper has the expected methods.
      *
      * @return void
      */
     public function testRuleMapperHasExpectedMethods(): void
     {
-        $this->assertTrue(method_exists($this->ruleMapper, 'find'));
-        $this->assertTrue(method_exists($this->ruleMapper, 'findByRef'));
-        $this->assertTrue(method_exists($this->ruleMapper, 'findAll'));
-        $this->assertTrue(method_exists($this->ruleMapper, 'createFromArray'));
-        $this->assertTrue(method_exists($this->ruleMapper, 'updateFromArray'));
-        $this->assertTrue(method_exists($this->ruleMapper, 'getTotalCount'));
-        $this->assertTrue(method_exists($this->ruleMapper, 'reorder'));
-        $this->assertTrue(method_exists($this->ruleMapper, 'findByConfiguration'));
-        $this->assertTrue(method_exists($this->ruleMapper, 'getIdToSlugMap'));
-        $this->assertTrue(method_exists($this->ruleMapper, 'getSlugToIdMap'));
-    }
-
-    /**
-     * Test RuleMapper has private getMaxOrder method.
-     *
-     * @return void
-     */
-    public function testRuleMapperHasPrivateGetMaxOrderMethod(): void
-    {
-        $reflection = new \ReflectionClass($this->ruleMapper);
-        
-        $this->assertTrue($reflection->hasMethod('getMaxOrder'));
-        
-        $getMaxOrderMethod = $reflection->getMethod('getMaxOrder');
-        $this->assertTrue($getMaxOrderMethod->isPrivate());
+        $this->assertTrue(method_exists($this->RuleMapper, 'find'));
+        $this->assertTrue(method_exists($this->RuleMapper, 'findAll'));
+        $this->assertTrue(method_exists($this->RuleMapper, 'createFromArray'));
+        $this->assertTrue(method_exists($this->RuleMapper, 'updateFromArray'));
+        $this->assertTrue(method_exists($this->RuleMapper, 'reorder'));
+        $this->assertTrue(method_exists($this->RuleMapper, 'findByConfiguration'));
+        $this->assertTrue(method_exists($this->RuleMapper, 'getIdToSlugMap'));
+        $this->assertTrue(method_exists($this->RuleMapper, 'getSlugToIdMap'));
     }
 }

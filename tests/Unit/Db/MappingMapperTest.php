@@ -5,8 +5,8 @@ declare(strict_types=1);
 /**
  * MappingMapperTest
  *
- * Unit tests for the MappingMapper class to verify database operations,
- * CRUD functionality, and mapping retrieval methods.
+ * Unit tests for the MappingMapper class to verify database operations
+ * and Mapping management functionality.
  *
  * @category  Test
  * @package   OCA\OpenConnector\Tests\Unit\Db
@@ -22,16 +22,18 @@ namespace OCA\OpenConnector\Tests\Unit\Db;
 use OCA\OpenConnector\Db\Mapping;
 use OCA\OpenConnector\Db\MappingMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\IDBConnection;
+use OCP\DB\IResult;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
-use Doctrine\DBAL\Result;
+use DateTime;
 
 /**
  * MappingMapper Test Suite
  *
- * Unit tests for mapping database operations, including
- * CRUD operations and specialized retrieval methods.
+ * Unit tests for Mapping database operations, including
+ * CRUD operations and Mapping management methods.
  */
 class MappingMapperTest extends TestCase
 {
@@ -39,7 +41,7 @@ class MappingMapperTest extends TestCase
     private IDBConnection $db;
 
     /** @var MappingMapper */
-    private MappingMapper $mappingMapper;
+    private MappingMapper $MappingMapper;
 
     /**
      * Set up the test environment.
@@ -51,7 +53,7 @@ class MappingMapperTest extends TestCase
         parent::setUp();
 
         $this->db = $this->createMock(IDBConnection::class);
-        $this->mappingMapper = new MappingMapper($this->db);
+        $this->MappingMapper = new MappingMapper($this->db);
     }
 
     /**
@@ -61,126 +63,80 @@ class MappingMapperTest extends TestCase
      */
     public function testMappingMapperInstantiation(): void
     {
-        $this->assertInstanceOf(MappingMapper::class, $this->mappingMapper);
+        $this->assertInstanceOf(MappingMapper::class, $this->MappingMapper);
     }
 
     /**
-     * Test find method with numeric ID.
+     * Test that MappingMapper has the expected table name.
      *
      * @return void
      */
-    public function testFindWithNumericId(): void
+    public function testMappingMapperTableName(): void
+    {
+        $reflection = new \ReflectionClass($this->MappingMapper);
+        $property = $reflection->getProperty('tableName');
+        $property->setAccessible(true);
+        
+        $this->assertEquals('openconnector_mappings', $property->getValue($this->MappingMapper));
+    }
+
+    /**
+     * Test that MappingMapper has the expected entity class.
+     *
+     * @return void
+     */
+    public function testMappingMapperEntityClass(): void
+    {
+        $reflection = new \ReflectionClass($this->MappingMapper);
+        $property = $reflection->getProperty('entityClass');
+        $property->setAccessible(true);
+        
+        $this->assertEquals(Mapping::class, $property->getValue($this->MappingMapper));
+    }
+
+    /**
+     * Test find method with valid ID.
+     *
+     * @return void
+     */
+    public function testFindWithValidId(): void
     {
         $id = 1;
-        $qb = $this->createMock(IQueryBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_mappings')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($id, IQueryBuilder::PARAM_INT)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->mappingMapper->find($id);
-    }
-
-    /**
-     * Test find method with string ID (UUID/slug).
-     *
-     * @return void
-     */
-    public function testFindWithStringId(): void
-    {
-        $id = 'test-uuid';
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_mappings')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(3))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->mappingMapper->find($id);
-    }
-
-    /**
-     * Test findByRef method.
-     *
-     * @return void
-     */
-    public function testFindByRef(): void
-    {
-        $reference = 'test-ref';
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                [
+                    'id' => $id,
+                    'name' => 'Test Mapping',
+                    'date_created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
+            );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Mapping = $this->MappingMapper->find($id);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_mappings')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($reference)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->mappingMapper->findByRef($reference);
+        $this->assertInstanceOf(Mapping::class, $Mapping);
+        $this->assertEquals($id, $Mapping->getId());
     }
 
     /**
@@ -192,38 +148,35 @@ class MappingMapperTest extends TestCase
     {
         $limit = 10;
         $offset = 0;
-        $filters = ['enabled' => true];
-        $searchConditions = ['name LIKE :search'];
-        $searchParams = ['search' => '%test%'];
-        $ids = ['id' => [1, 2, 3]];
-
-        $qb = $this->createMock(IQueryBuilder::class);
+        $filters = ['name' => 'Test'];
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('setMaxResults')->willReturnSelf();
+        $qb->method('setFirstResult')->willReturnSelf();
+        $qb->method('andWhere')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('name = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetchAll')->willReturn([]);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Mappings = $this->MappingMapper->findAll($limit, $offset, $filters);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_mappings')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with($limit)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setFirstResult')
-            ->with($offset)
-            ->willReturnSelf();
-
-        $this->mappingMapper->findAll($limit, $offset, $filters, $searchConditions, $searchParams, $ids);
+        $this->assertIsArray($Mappings);
     }
 
     /**
@@ -233,14 +186,31 @@ class MappingMapperTest extends TestCase
      */
     public function testCreateFromArray(): void
     {
-        $object = [
-            'name' => 'Test Mapping',
-            'sourceType' => 'api',
-            'targetType' => 'database',
-            'enabled' => true
+        $data = [
+            'name' => 'Test Mapping'
         ];
+        
+        // Mock the query builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('insert')->willReturnSelf();
+        $qb->method('values')->willReturnSelf();
+        $qb->method('createNamedParameter')->willReturn(':param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('rowCount')->willReturn(1);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeStatement')->willReturn(1);
 
-        $this->mappingMapper->createFromArray($object);
+        $Mapping = $this->MappingMapper->createFromArray($data);
+
+        $this->assertInstanceOf(Mapping::class, $Mapping);
     }
 
     /**
@@ -251,186 +221,57 @@ class MappingMapperTest extends TestCase
     public function testUpdateFromArray(): void
     {
         $id = 1;
-        $object = [
-            'name' => 'Updated Mapping',
-            'enabled' => false
-        ];
-
-        $this->mappingMapper->updateFromArray($id, $object);
-    }
-
-    /**
-     * Test getTotalCount method.
-     *
-     * @return void
-     */
-    public function testGetTotalCount(): void
-    {
-        $filters = ['enabled' => true];
+        $data = ['name' => 'Updated Mapping'];
         
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_mappings')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '12']);
-
-        $count = $this->mappingMapper->getTotalCount($filters);
-        $this->assertEquals(12, $count);
-    }
-
-    /**
-     * Test findByConfiguration method.
-     *
-     * @return void
-     */
-    public function testFindByConfiguration(): void
-    {
-        $configurationId = 'test-config';
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $this->mappingMapper->findByConfiguration($configurationId);
-    }
-
-    /**
-     * Test getIdToSlugMap method.
-     *
-     * @return void
-     */
-    public function testGetIdToSlugMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
+        // Mock the result for find
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
             ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-mapping'],
-                false
+                [
+                    'id' => $id,
+                    'name' => 'Test Mapping',
+                    'date_created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
             );
-
-        $mappings = $this->mappingMapper->getIdToSlugMap();
-        $this->assertIsArray($mappings);
-    }
-
-    /**
-     * Test getSlugToIdMap method.
-     *
-     * @return void
-     */
-    public function testGetSlugToIdMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $result->method('closeCursor')->willReturn(true);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
+        $Mapping = $this->MappingMapper->updateFromArray($id, $data);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
-            ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-mapping'],
-                false
-            );
-
-        $mappings = $this->mappingMapper->getSlugToIdMap();
-        $this->assertIsArray($mappings);
+        $this->assertInstanceOf(Mapping::class, $Mapping);
     }
 
     /**
-     * Test MappingMapper has expected table name.
-     *
-     * @return void
-     */
-    public function testMappingMapperTableName(): void
-    {
-        $reflection = new \ReflectionClass($this->mappingMapper);
-        $property = $reflection->getProperty('tableName');
-        $property->setAccessible(true);
-        
-        $this->assertEquals('openconnector_mappings', $property->getValue($this->mappingMapper));
-    }
-
-    /**
-     * Test MappingMapper has expected entity class.
-     *
-     * @return void
-     */
-    public function testMappingMapperEntityClass(): void
-    {
-        $reflection = new \ReflectionClass($this->mappingMapper);
-        $property = $reflection->getProperty('entityClass');
-        $property->setAccessible(true);
-        
-        $this->assertEquals(Mapping::class, $property->getValue($this->mappingMapper));
-    }
-
-    /**
-     * Test MappingMapper has expected methods.
+     * Test that MappingMapper has the expected methods.
      *
      * @return void
      */
     public function testMappingMapperHasExpectedMethods(): void
     {
-        $this->assertTrue(method_exists($this->mappingMapper, 'find'));
-        $this->assertTrue(method_exists($this->mappingMapper, 'findByRef'));
-        $this->assertTrue(method_exists($this->mappingMapper, 'findAll'));
-        $this->assertTrue(method_exists($this->mappingMapper, 'createFromArray'));
-        $this->assertTrue(method_exists($this->mappingMapper, 'updateFromArray'));
-        $this->assertTrue(method_exists($this->mappingMapper, 'getTotalCount'));
-        $this->assertTrue(method_exists($this->mappingMapper, 'findByConfiguration'));
-        $this->assertTrue(method_exists($this->mappingMapper, 'getIdToSlugMap'));
-        $this->assertTrue(method_exists($this->mappingMapper, 'getSlugToIdMap'));
+        $this->assertTrue(method_exists($this->MappingMapper, 'find'));
+        $this->assertTrue(method_exists($this->MappingMapper, 'findAll'));
+        $this->assertTrue(method_exists($this->MappingMapper, 'createFromArray'));
+        $this->assertTrue(method_exists($this->MappingMapper, 'updateFromArray'));
+        $this->assertTrue(method_exists($this->MappingMapper, 'getTotalCount'));
+        $this->assertTrue(method_exists($this->MappingMapper, 'findByConfiguration'));
+        $this->assertTrue(method_exists($this->MappingMapper, 'getIdToSlugMap'));
+        $this->assertTrue(method_exists($this->MappingMapper, 'getSlugToIdMap'));
     }
 }

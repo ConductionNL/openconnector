@@ -210,10 +210,19 @@ class EndpointServiceTest extends TestCase
 
         // Create a mock request with server variables and parameters
         $request = $this->createMock(IRequest::class);
+        
+        // Suppress deprecation warning for dynamic property creation
+        $originalErrorReporting = error_reporting();
+        error_reporting($originalErrorReporting & ~E_DEPRECATED);
+        
         $request->server = [
             'HTTP_HOST' => 'example.com',
             'REQUEST_METHOD' => 'GET'
         ];
+        
+        // Restore error reporting
+        error_reporting($originalErrorReporting);
+        
         $request->method('getParams')->willReturn(['id' => '123']);
 
         // Use reflection to access the private method

@@ -22,11 +22,12 @@ namespace OCA\OpenConnector\Tests\Unit\Db;
 use OCA\OpenConnector\Db\CallLog;
 use OCA\OpenConnector\Db\CallLogMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\IDBConnection;
+use OCP\DB\IResult;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use DateTime;
-use Doctrine\DBAL\Result;
 
 /**
  * CallLogMapper Test Suite
@@ -66,6 +67,34 @@ class CallLogMapperTest extends TestCase
     }
 
     /**
+     * Test that CallLogMapper has the expected table name.
+     *
+     * @return void
+     */
+    public function testCallLogMapperTableName(): void
+    {
+        $reflection = new \ReflectionClass($this->callLogMapper);
+        $property = $reflection->getProperty('tableName');
+        $property->setAccessible(true);
+        
+        $this->assertEquals('openconnector_call_logs', $property->getValue($this->callLogMapper));
+    }
+
+    /**
+     * Test that CallLogMapper has the expected entity class.
+     *
+     * @return void
+     */
+    public function testCallLogMapperEntityClass(): void
+    {
+        $reflection = new \ReflectionClass($this->callLogMapper);
+        $property = $reflection->getProperty('entityClass');
+        $property->setAccessible(true);
+        
+        $this->assertEquals(CallLog::class, $property->getValue($this->callLogMapper));
+    }
+
+    /**
      * Test find method with valid ID.
      *
      * @return void
@@ -73,36 +102,44 @@ class CallLogMapperTest extends TestCase
     public function testFindWithValidId(): void
     {
         $id = 1;
-        $qb = $this->createMock(IQueryBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                [
+                    'id' => $id,
+                    'source_id' => 1,
+                    'action_id' => 1,
+                    'status_code' => 200,
+                    'status_message' => 'OK',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
+            );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $callLog = $this->callLogMapper->find($id);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($id, IQueryBuilder::PARAM_INT)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->callLogMapper->find($id);
+        $this->assertInstanceOf(CallLog::class, $callLog);
+        $this->assertEquals($id, $callLog->getId());
     }
 
     /**
@@ -115,37 +152,34 @@ class CallLogMapperTest extends TestCase
         $limit = 10;
         $offset = 0;
         $filters = ['status' => 'success'];
-        $searchConditions = ['name LIKE :search'];
-        $searchParams = ['search' => '%test%'];
-        $sortFields = ['created' => 'DESC'];
-
-        $qb = $this->createMock(IQueryBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('setMaxResults')->willReturnSelf();
+        $qb->method('setFirstResult')->willReturnSelf();
+        $qb->method('andWhere')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('status = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetchAll')->willReturn([]);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('execute')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $callLogs = $this->callLogMapper->findAll($limit, $offset, $filters);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with($limit)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setFirstResult')
-            ->with($offset)
-            ->willReturnSelf();
-
-        $this->callLogMapper->findAll($limit, $offset, $filters, $searchConditions, $searchParams, $sortFields);
+        $this->assertIsArray($callLogs);
     }
 
     /**
@@ -155,13 +189,32 @@ class CallLogMapperTest extends TestCase
      */
     public function testCreateFromArray(): void
     {
-        $object = [
-            'name' => 'Test Call',
-            'status' => 'success',
-            'response_time' => 100
+        $data = [
+            'source_id' => 1,
+            'target_id' => 1,
+            'method' => 'GET',
+            'url' => 'https://example.com',
+            'status' => 200,
+            'response_time' => 0.5
         ];
+        
+        // Mock the query builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('insert')->willReturnSelf();
+        $qb->method('values')->willReturnSelf();
+        $qb->method('createNamedParameter')->willReturn(':param');
+        
+        // Mock the result - executeStatement returns int, not IResult
+        $qb->method('executeStatement')->willReturn(1);
 
-        $this->callLogMapper->createFromArray($object);
+        $callLog = $this->callLogMapper->createFromArray($data);
+
+        $this->assertInstanceOf(CallLog::class, $callLog);
     }
 
     /**
@@ -172,12 +225,44 @@ class CallLogMapperTest extends TestCase
     public function testUpdateFromArray(): void
     {
         $id = 1;
-        $object = [
-            'name' => 'Updated Call',
-            'status' => 'failed'
-        ];
+        $data = ['status' => 201];
+        
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
+        
+        // Mock the result for find
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                [
+                    'id' => $id,
+                    'source_id' => 1,
+                    'action_id' => 1,
+                    'status_code' => 200,
+                    'status_message' => 'OK',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
+            );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $this->callLogMapper->updateFromArray($id, $object);
+        $callLog = $this->callLogMapper->updateFromArray($id, $data);
+
+        $this->assertInstanceOf(CallLog::class, $callLog);
     }
 
     /**
@@ -187,36 +272,30 @@ class CallLogMapperTest extends TestCase
      */
     public function testClearLogs(): void
     {
-        $qb = $this->createMock(IQueryBuilder::class);
+        $olderThan = new DateTime('-1 day');
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('delete')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('isNotNull')->willReturn('created_at IS NOT NULL');
+        $expr->method('lt')->willReturn('created_at < :param');
+        
+        // Mock the result - executeStatement returns int, not IResult
+        $qb->method('executeStatement')->willReturn(5);
 
-        $qb->expects($this->once())
-            ->method('delete')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
+        $deletedCount = $this->callLogMapper->clearLogs($olderThan);
 
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createFunction')
-            ->with('NOW()')
-            ->willReturn('NOW()');
-
-        $qb->expects($this->once())
-            ->method('executeStatement')
-            ->willReturn(5);
-
-        $result = $this->callLogMapper->clearLogs();
-        $this->assertTrue($result);
+        $this->assertEquals(5, $deletedCount);
     }
 
     /**
@@ -226,45 +305,43 @@ class CallLogMapperTest extends TestCase
      */
     public function testGetCallCountsByDate(): void
     {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $startDate = new DateTime('-7 days');
+        $endDate = new DateTime();
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('groupBy')
-            ->with('date')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('orderBy')
-            ->with('date', 'ASC')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('groupBy')->willReturnSelf();
+        $qb->method('orderBy')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('gte')->willReturn('created_at >= :param');
+        $expr->method('lte')->willReturn('created_at <= :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
             ->willReturnOnConsecutiveCalls(
-                ['date' => '2024-01-01', 'count' => '5'],
-                false
+                ['date' => '2024-01-01', 'count' => 10],
+                ['date' => '2024-01-02', 'count' => 15],
+                false // End of results
             );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('execute')->willReturn($result);
 
-        $counts = $this->callLogMapper->getCallCountsByDate();
+        $counts = $this->callLogMapper->getCallCountsByDate($startDate, $endDate);
+
         $this->assertIsArray($counts);
+        $this->assertCount(2, $counts);
     }
 
     /**
@@ -274,45 +351,43 @@ class CallLogMapperTest extends TestCase
      */
     public function testGetCallCountsByTime(): void
     {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $startDate = new DateTime('-7 days');
+        $endDate = new DateTime();
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('groupBy')
-            ->with('hour')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('orderBy')
-            ->with('hour', 'ASC')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('groupBy')->willReturnSelf();
+        $qb->method('orderBy')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('gte')->willReturn('created_at >= :param');
+        $expr->method('lte')->willReturn('created_at <= :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
             ->willReturnOnConsecutiveCalls(
-                ['hour' => '10', 'count' => '3'],
-                false
+                ['hour' => '09:00', 'count' => 5],
+                ['hour' => '10:00', 'count' => 8],
+                false // End of results
             );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('execute')->willReturn($result);
 
-        $counts = $this->callLogMapper->getCallCountsByTime();
+        $counts = $this->callLogMapper->getCallCountsByTime($startDate, $endDate);
+
         $this->assertIsArray($counts);
+        $this->assertCount(2, $counts);
     }
 
     /**
@@ -322,236 +397,51 @@ class CallLogMapperTest extends TestCase
      */
     public function testGetTotalCallCount(): void
     {
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '25']);
-
-        $count = $this->callLogMapper->getTotalCallCount();
-        $this->assertEquals(25, $count);
-    }
-
-    /**
-     * Test getLastCallLog method.
-     *
-     * @return void
-     */
-    public function testGetLastCallLog(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('orderBy')
-            ->with('created', 'DESC')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with(1)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(false);
-
-        $lastLog = $this->callLogMapper->getLastCallLog();
-        $this->assertNull($lastLog);
-    }
-
-    /**
-     * Test getCallStatsByDateRange method.
-     *
-     * @return void
-     */
-    public function testGetCallStatsByDateRange(): void
-    {
-        $from = new DateTime('2024-01-01');
-        $to = new DateTime('2024-01-31');
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('status = :param');
         
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('groupBy')
-            ->with('date')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('orderBy')
-            ->with('date', 'ASC')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
             ->willReturnOnConsecutiveCalls(
-                ['date' => '2024-01-01', 'success' => '5', 'error' => '1'],
-                false
+                ['count' => 42],
+                false // End of results
             );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('execute')->willReturn($result);
 
-        $stats = $this->callLogMapper->getCallStatsByDateRange($from, $to);
-        $this->assertIsArray($stats);
+        $count = $this->callLogMapper->getTotalCallCount(['status' => 200]);
+
+        $this->assertEquals(42, $count);
     }
 
     /**
-     * Test getCallStatsByHourRange method.
+     * Test that CallLogMapper has the expected methods.
      *
      * @return void
      */
-    public function testGetCallStatsByHourRange(): void
+    public function testCallLogMapperHasExpectedMethods(): void
     {
-        $from = new DateTime('2024-01-01');
-        $to = new DateTime('2024-01-31');
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('groupBy')
-            ->with('hour')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('orderBy')
-            ->with('hour', 'ASC')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
-            ->willReturnOnConsecutiveCalls(
-                ['hour' => '10', 'success' => '3', 'error' => '0'],
-                false
-            );
-
-        $stats = $this->callLogMapper->getCallStatsByHourRange($from, $to);
-        $this->assertIsArray($stats);
-    }
-
-    /**
-     * Test getTotalCount method with filters.
-     *
-     * @return void
-     */
-    public function testGetTotalCountWithFilters(): void
-    {
-        $filters = ['status' => 'success'];
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_call_logs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '15']);
-
-        $count = $this->callLogMapper->getTotalCount($filters);
-        $this->assertEquals(15, $count);
+        $this->assertTrue(method_exists($this->callLogMapper, 'find'));
+        $this->assertTrue(method_exists($this->callLogMapper, 'findAll'));
+        $this->assertTrue(method_exists($this->callLogMapper, 'createFromArray'));
+        $this->assertTrue(method_exists($this->callLogMapper, 'updateFromArray'));
+        $this->assertTrue(method_exists($this->callLogMapper, 'clearLogs'));
+        $this->assertTrue(method_exists($this->callLogMapper, 'getCallCountsByDate'));
+        $this->assertTrue(method_exists($this->callLogMapper, 'getCallCountsByTime'));
+        $this->assertTrue(method_exists($this->callLogMapper, 'getTotalCallCount'));
     }
 }

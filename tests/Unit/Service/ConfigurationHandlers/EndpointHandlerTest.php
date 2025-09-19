@@ -131,14 +131,13 @@ class EndpointHandlerTest extends TestCase
         $reflection = new \ReflectionClass($this->endpointHandler);
         
         $exportMethod = $reflection->getMethod('export');
-        $this->assertEquals(0, $exportMethod->getNumberOfParameters());
+        $this->assertEquals(3, $exportMethod->getNumberOfParameters());
         
         $importMethod = $reflection->getMethod('import');
-        $this->assertEquals(3, $importMethod->getNumberOfParameters());
+        $this->assertEquals(2, $importMethod->getNumberOfParameters());
         
         $importParameters = $importMethod->getParameters();
-        $this->assertEquals('endpointData', $importParameters[0]->getName());
+        $this->assertEquals('data', $importParameters[0]->getName());
         $this->assertEquals('mappings', $importParameters[1]->getName());
-        $this->assertEquals('mappingIds', $importParameters[2]->getName());
     }
 }

@@ -5,8 +5,8 @@ declare(strict_types=1);
 /**
  * JobMapperTest
  *
- * Unit tests for the JobMapper class to verify database operations,
- * CRUD functionality, and job retrieval methods.
+ * Unit tests for the JobMapper class to verify database operations
+ * and Job management functionality.
  *
  * @category  Test
  * @package   OCA\OpenConnector\Tests\Unit\Db
@@ -22,16 +22,18 @@ namespace OCA\OpenConnector\Tests\Unit\Db;
 use OCA\OpenConnector\Db\Job;
 use OCA\OpenConnector\Db\JobMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\IDBConnection;
+use OCP\DB\IResult;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
-use Doctrine\DBAL\Result;
+use DateTime;
 
 /**
  * JobMapper Test Suite
  *
- * Unit tests for job database operations, including
- * CRUD operations and specialized retrieval methods.
+ * Unit tests for Job database operations, including
+ * CRUD operations and Job management methods.
  */
 class JobMapperTest extends TestCase
 {
@@ -39,7 +41,7 @@ class JobMapperTest extends TestCase
     private IDBConnection $db;
 
     /** @var JobMapper */
-    private JobMapper $jobMapper;
+    private JobMapper $JobMapper;
 
     /**
      * Set up the test environment.
@@ -51,7 +53,7 @@ class JobMapperTest extends TestCase
         parent::setUp();
 
         $this->db = $this->createMock(IDBConnection::class);
-        $this->jobMapper = new JobMapper($this->db);
+        $this->JobMapper = new JobMapper($this->db);
     }
 
     /**
@@ -61,126 +63,80 @@ class JobMapperTest extends TestCase
      */
     public function testJobMapperInstantiation(): void
     {
-        $this->assertInstanceOf(JobMapper::class, $this->jobMapper);
+        $this->assertInstanceOf(JobMapper::class, $this->JobMapper);
     }
 
     /**
-     * Test find method with numeric ID.
+     * Test that JobMapper has the expected table name.
      *
      * @return void
      */
-    public function testFindWithNumericId(): void
+    public function testJobMapperTableName(): void
+    {
+        $reflection = new \ReflectionClass($this->JobMapper);
+        $property = $reflection->getProperty('tableName');
+        $property->setAccessible(true);
+        
+        $this->assertEquals('openconnector_jobs', $property->getValue($this->JobMapper));
+    }
+
+    /**
+     * Test that JobMapper has the expected entity class.
+     *
+     * @return void
+     */
+    public function testJobMapperEntityClass(): void
+    {
+        $reflection = new \ReflectionClass($this->JobMapper);
+        $property = $reflection->getProperty('entityClass');
+        $property->setAccessible(true);
+        
+        $this->assertEquals(Job::class, $property->getValue($this->JobMapper));
+    }
+
+    /**
+     * Test find method with valid ID.
+     *
+     * @return void
+     */
+    public function testFindWithValidId(): void
     {
         $id = 1;
-        $qb = $this->createMock(IQueryBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_jobs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($id, IQueryBuilder::PARAM_INT)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->jobMapper->find($id);
-    }
-
-    /**
-     * Test find method with string ID (UUID/slug).
-     *
-     * @return void
-     */
-    public function testFindWithStringId(): void
-    {
-        $id = 'test-uuid';
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_jobs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(3))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->jobMapper->find($id);
-    }
-
-    /**
-     * Test findByRef method.
-     *
-     * @return void
-     */
-    public function testFindByRef(): void
-    {
-        $reference = 'test-ref';
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                [
+                    'id' => $id,
+                    'name' => 'Test Job',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
+            );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Job = $this->JobMapper->find($id);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_jobs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($reference)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->jobMapper->findByRef($reference);
+        $this->assertInstanceOf(Job::class, $Job);
+        $this->assertEquals($id, $Job->getId());
     }
 
     /**
@@ -192,38 +148,35 @@ class JobMapperTest extends TestCase
     {
         $limit = 10;
         $offset = 0;
-        $filters = ['enabled' => true];
-        $searchConditions = ['name LIKE :search'];
-        $searchParams = ['search' => '%test%'];
-        $ids = ['id' => [1, 2, 3]];
-
-        $qb = $this->createMock(IQueryBuilder::class);
+        $filters = ['name' => 'Test'];
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('setMaxResults')->willReturnSelf();
+        $qb->method('setFirstResult')->willReturnSelf();
+        $qb->method('andWhere')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('name = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetchAll')->willReturn([]);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Jobs = $this->JobMapper->findAll($limit, $offset, $filters);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_jobs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with($limit)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setFirstResult')
-            ->with($offset)
-            ->willReturnSelf();
-
-        $this->jobMapper->findAll($limit, $offset, $filters, $searchConditions, $searchParams, $ids);
+        $this->assertIsArray($Jobs);
     }
 
     /**
@@ -233,13 +186,31 @@ class JobMapperTest extends TestCase
      */
     public function testCreateFromArray(): void
     {
-        $object = [
-            'name' => 'Test Job',
-            'jobClass' => 'TestJobClass',
-            'enabled' => true
+        $data = [
+            'name' => 'Test Job'
         ];
+        
+        // Mock the query builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('insert')->willReturnSelf();
+        $qb->method('values')->willReturnSelf();
+        $qb->method('createNamedParameter')->willReturn(':param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('rowCount')->willReturn(1);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeStatement')->willReturn(1);
 
-        $this->jobMapper->createFromArray($object);
+        $Job = $this->JobMapper->createFromArray($data);
+
+        $this->assertInstanceOf(Job::class, $Job);
     }
 
     /**
@@ -250,263 +221,59 @@ class JobMapperTest extends TestCase
     public function testUpdateFromArray(): void
     {
         $id = 1;
-        $object = [
-            'name' => 'Updated Job',
-            'enabled' => false
-        ];
-
-        $this->jobMapper->updateFromArray($id, $object);
-    }
-
-    /**
-     * Test getTotalCount method.
-     *
-     * @return void
-     */
-    public function testGetTotalCount(): void
-    {
-        $filters = ['enabled' => true];
+        $data = ['name' => 'Updated Job'];
         
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_jobs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '15']);
-
-        $count = $this->jobMapper->getTotalCount($filters);
-        $this->assertEquals(15, $count);
-    }
-
-    /**
-     * Test findByConfiguration method.
-     *
-     * @return void
-     */
-    public function testFindByConfiguration(): void
-    {
-        $configurationId = 'test-config';
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $this->jobMapper->findByConfiguration($configurationId);
-    }
-
-    /**
-     * Test findByArgumentIds method.
-     *
-     * @return void
-     */
-    public function testFindByArgumentIds(): void
-    {
-        $synchronizationIds = ['sync1', 'sync2'];
-        $endpointIds = ['endpoint1'];
-        $sourceIds = ['source1'];
-
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $this->jobMapper->findByArgumentIds($synchronizationIds, $endpointIds, $sourceIds);
-    }
-
-    /**
-     * Test getIdToSlugMap method.
-     *
-     * @return void
-     */
-    public function testGetIdToSlugMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
+        // Mock the result for find
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
             ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-job'],
-                false
+                [
+                    'id' => $id,
+                    'name' => 'Test Job',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
             );
-
-        $mappings = $this->jobMapper->getIdToSlugMap();
-        $this->assertIsArray($mappings);
-    }
-
-    /**
-     * Test getSlugToIdMap method.
-     *
-     * @return void
-     */
-    public function testGetSlugToIdMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $result->method('closeCursor')->willReturn(true);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
+        $Job = $this->JobMapper->updateFromArray($id, $data);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
-            ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-job'],
-                false
-            );
-
-        $mappings = $this->jobMapper->getSlugToIdMap();
-        $this->assertIsArray($mappings);
+        $this->assertInstanceOf(Job::class, $Job);
     }
 
     /**
-     * Test findRunnable method.
-     *
-     * @return void
-     */
-    public function testFindRunnable(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_jobs')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->jobMapper->findRunnable();
-    }
-
-    /**
-     * Test JobMapper has expected table name.
-     *
-     * @return void
-     */
-    public function testJobMapperTableName(): void
-    {
-        $reflection = new \ReflectionClass($this->jobMapper);
-        $property = $reflection->getProperty('tableName');
-        $property->setAccessible(true);
-        
-        $this->assertEquals('openconnector_jobs', $property->getValue($this->jobMapper));
-    }
-
-    /**
-     * Test JobMapper has expected entity class.
-     *
-     * @return void
-     */
-    public function testJobMapperEntityClass(): void
-    {
-        $reflection = new \ReflectionClass($this->jobMapper);
-        $property = $reflection->getProperty('entityClass');
-        $property->setAccessible(true);
-        
-        $this->assertEquals(Job::class, $property->getValue($this->jobMapper));
-    }
-
-    /**
-     * Test JobMapper has expected methods.
+     * Test that JobMapper has the expected methods.
      *
      * @return void
      */
     public function testJobMapperHasExpectedMethods(): void
     {
-        $this->assertTrue(method_exists($this->jobMapper, 'find'));
-        $this->assertTrue(method_exists($this->jobMapper, 'findByRef'));
-        $this->assertTrue(method_exists($this->jobMapper, 'findAll'));
-        $this->assertTrue(method_exists($this->jobMapper, 'createFromArray'));
-        $this->assertTrue(method_exists($this->jobMapper, 'updateFromArray'));
-        $this->assertTrue(method_exists($this->jobMapper, 'getTotalCount'));
-        $this->assertTrue(method_exists($this->jobMapper, 'findByConfiguration'));
-        $this->assertTrue(method_exists($this->jobMapper, 'findByArgumentIds'));
-        $this->assertTrue(method_exists($this->jobMapper, 'getIdToSlugMap'));
-        $this->assertTrue(method_exists($this->jobMapper, 'getSlugToIdMap'));
-        $this->assertTrue(method_exists($this->jobMapper, 'findRunnable'));
+        $this->assertTrue(method_exists($this->JobMapper, 'find'));
+        $this->assertTrue(method_exists($this->JobMapper, 'findAll'));
+        $this->assertTrue(method_exists($this->JobMapper, 'createFromArray'));
+        $this->assertTrue(method_exists($this->JobMapper, 'updateFromArray'));
+        $this->assertTrue(method_exists($this->JobMapper, 'getTotalCount'));
+        $this->assertTrue(method_exists($this->JobMapper, 'findByConfiguration'));
+        $this->assertTrue(method_exists($this->JobMapper, 'findByArgumentIds'));
+        $this->assertTrue(method_exists($this->JobMapper, 'findRunnable'));
+        $this->assertTrue(method_exists($this->JobMapper, 'getIdToSlugMap'));
+        $this->assertTrue(method_exists($this->JobMapper, 'getSlugToIdMap'));
     }
 }

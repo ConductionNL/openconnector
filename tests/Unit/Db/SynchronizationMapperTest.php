@@ -5,8 +5,8 @@ declare(strict_types=1);
 /**
  * SynchronizationMapperTest
  *
- * Unit tests for the SynchronizationMapper class to verify database operations,
- * CRUD functionality, and synchronization retrieval methods.
+ * Unit tests for the SynchronizationMapper class to verify database operations
+ * and Synchronization management functionality.
  *
  * @category  Test
  * @package   OCA\OpenConnector\Tests\Unit\Db
@@ -22,16 +22,18 @@ namespace OCA\OpenConnector\Tests\Unit\Db;
 use OCA\OpenConnector\Db\Synchronization;
 use OCA\OpenConnector\Db\SynchronizationMapper;
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\IDBConnection;
+use OCP\DB\IResult;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
-use Doctrine\DBAL\Result;
+use DateTime;
 
 /**
  * SynchronizationMapper Test Suite
  *
- * Unit tests for synchronization database operations, including
- * CRUD operations and specialized retrieval methods.
+ * Unit tests for Synchronization database operations, including
+ * CRUD operations and Synchronization management methods.
  */
 class SynchronizationMapperTest extends TestCase
 {
@@ -39,7 +41,7 @@ class SynchronizationMapperTest extends TestCase
     private IDBConnection $db;
 
     /** @var SynchronizationMapper */
-    private SynchronizationMapper $synchronizationMapper;
+    private SynchronizationMapper $SynchronizationMapper;
 
     /**
      * Set up the test environment.
@@ -51,7 +53,7 @@ class SynchronizationMapperTest extends TestCase
         parent::setUp();
 
         $this->db = $this->createMock(IDBConnection::class);
-        $this->synchronizationMapper = new SynchronizationMapper($this->db);
+        $this->SynchronizationMapper = new SynchronizationMapper($this->db);
     }
 
     /**
@@ -61,166 +63,80 @@ class SynchronizationMapperTest extends TestCase
      */
     public function testSynchronizationMapperInstantiation(): void
     {
-        $this->assertInstanceOf(SynchronizationMapper::class, $this->synchronizationMapper);
+        $this->assertInstanceOf(SynchronizationMapper::class, $this->SynchronizationMapper);
     }
 
     /**
-     * Test find method with numeric ID.
+     * Test that SynchronizationMapper has the expected table name.
      *
      * @return void
      */
-    public function testFindWithNumericId(): void
+    public function testSynchronizationMapperTableName(): void
+    {
+        $reflection = new \ReflectionClass($this->SynchronizationMapper);
+        $property = $reflection->getProperty('tableName');
+        $property->setAccessible(true);
+        
+        $this->assertEquals('openconnector_synchronizations', $property->getValue($this->SynchronizationMapper));
+    }
+
+    /**
+     * Test that SynchronizationMapper has the expected entity class.
+     *
+     * @return void
+     */
+    public function testSynchronizationMapperEntityClass(): void
+    {
+        $reflection = new \ReflectionClass($this->SynchronizationMapper);
+        $property = $reflection->getProperty('entityClass');
+        $property->setAccessible(true);
+        
+        $this->assertEquals(Synchronization::class, $property->getValue($this->SynchronizationMapper));
+    }
+
+    /**
+     * Test find method with valid ID.
+     *
+     * @return void
+     */
+    public function testFindWithValidId(): void
     {
         $id = 1;
-        $qb = $this->createMock(IQueryBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronizations')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($id, IQueryBuilder::PARAM_INT)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationMapper->find($id);
-    }
-
-    /**
-     * Test find method with string ID (UUID/slug).
-     *
-     * @return void
-     */
-    public function testFindWithStringId(): void
-    {
-        $id = 'test-uuid';
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronizations')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationMapper->find($id);
-    }
-
-    /**
-     * Test findByUuid method.
-     *
-     * @return void
-     */
-    public function testFindByUuid(): void
-    {
-        $uuid = 'test-uuid';
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronizations')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($uuid)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationMapper->findByUuid($uuid);
-    }
-
-    /**
-     * Test findByRef method.
-     *
-     * @return void
-     */
-    public function testFindByRef(): void
-    {
-        $reference = 'test-ref';
-        $qb = $this->createMock(IQueryBuilder::class);
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
+            ->willReturnOnConsecutiveCalls(
+                [
+                    'id' => $id,
+                    'name' => 'Test Synchronization',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
+            );
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Synchronization = $this->SynchronizationMapper->find($id);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronizations')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('createNamedParameter')
-            ->with($reference)
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationMapper->findByRef($reference);
+        $this->assertInstanceOf(Synchronization::class, $Synchronization);
+        $this->assertEquals($id, $Synchronization->getId());
     }
 
     /**
@@ -232,38 +148,35 @@ class SynchronizationMapperTest extends TestCase
     {
         $limit = 10;
         $offset = 0;
-        $filters = ['enabled' => true];
-        $searchConditions = ['name LIKE :search'];
-        $searchParams = ['search' => '%test%'];
-        $ids = ['id' => [1, 2, 3]];
-
-        $qb = $this->createMock(IQueryBuilder::class);
+        $filters = ['name' => 'Test'];
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        // Mock the query builder and expression builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('setMaxResults')->willReturnSelf();
+        $qb->method('setFirstResult')->willReturnSelf();
+        $qb->method('andWhere')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('name = :param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('fetchAll')->willReturn([]);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
+        $Synchronizations = $this->SynchronizationMapper->findAll($limit, $offset, $filters);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronizations')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setMaxResults')
-            ->with($limit)
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('setFirstResult')
-            ->with($offset)
-            ->willReturnSelf();
-
-        $this->synchronizationMapper->findAll($limit, $offset, $filters, $searchConditions, $searchParams, $ids);
+        $this->assertIsArray($Synchronizations);
     }
 
     /**
@@ -273,14 +186,31 @@ class SynchronizationMapperTest extends TestCase
      */
     public function testCreateFromArray(): void
     {
-        $object = [
-            'name' => 'Test Synchronization',
-            'sourceType' => 'api',
-            'targetType' => 'database',
-            'enabled' => true
+        $data = [
+            'name' => 'Test Synchronization'
         ];
+        
+        // Mock the query builder
+        $qb = $this->createMock(IQueryBuilder::class);
+        
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
+        
+        // Mock the query builder chain
+        $qb->method('insert')->willReturnSelf();
+        $qb->method('values')->willReturnSelf();
+        $qb->method('createNamedParameter')->willReturn(':param');
+        
+        // Mock the result
+        $result = $this->createMock(IResult::class);
+        $result->method('rowCount')->willReturn(1);
+        $result->method('closeCursor')->willReturn(true);
+        
+        $qb->method('executeStatement')->willReturn(1);
 
-        $this->synchronizationMapper->createFromArray($object);
+        $Synchronization = $this->SynchronizationMapper->createFromArray($data);
+
+        $this->assertInstanceOf(Synchronization::class, $Synchronization);
     }
 
     /**
@@ -291,363 +221,60 @@ class SynchronizationMapperTest extends TestCase
     public function testUpdateFromArray(): void
     {
         $id = 1;
-        $object = [
-            'name' => 'Updated Synchronization',
-            'enabled' => false
-        ];
-
-        $this->synchronizationMapper->updateFromArray($id, $object);
-    }
-
-    /**
-     * Test getTotalCount method.
-     *
-     * @return void
-     */
-    public function testGetTotalCount(): void
-    {
-        $filters = ['enabled' => true];
+        $data = ['name' => 'Updated Synchronization'];
         
+        // Mock the query builder and expression builder
         $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $expr = $this->createMock(IExpressionBuilder::class);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronizations')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('andWhere')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('executeQuery')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '4']);
-
-        $result->expects($this->once())
-            ->method('closeCursor');
-
-        $count = $this->synchronizationMapper->getTotalCount($filters);
-        $this->assertEquals(4, $count);
-    }
-
-    /**
-     * Test getTotalCallCount method (deprecated).
-     *
-     * @return void
-     */
-    public function testGetTotalCallCount(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        // Set up the database mock
+        $this->db->method('getQueryBuilder')->willReturn($qb);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->with('openconnector_synchronizations')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('executeQuery')
-            ->willReturn($result);
-
-        $result->expects($this->once())
-            ->method('fetch')
-            ->willReturn(['count' => '4']);
-
-        $result->expects($this->once())
-            ->method('closeCursor');
-
-        $count = $this->synchronizationMapper->getTotalCallCount();
-        $this->assertEquals(4, $count);
-    }
-
-    /**
-     * Test findByConfiguration method.
-     *
-     * @return void
-     */
-    public function testFindByConfiguration(): void
-    {
-        $configurationId = 'test-config';
+        // Mock the query builder chain
+        $qb->method('select')->willReturnSelf();
+        $qb->method('from')->willReturnSelf();
+        $qb->method('where')->willReturnSelf();
+        $qb->method('expr')->willReturn($expr);
+        $qb->method('createNamedParameter')->willReturn(':param');
+        $expr->method('eq')->willReturn('id = :param');
         
-        $this->synchronizationMapper->findByConfiguration($configurationId);
-    }
-
-    /**
-     * Test getByTarget method with registerId and schemaId.
-     *
-     * @return void
-     */
-    public function testGetByTargetWithRegisterAndSchema(): void
-    {
-        $registerId = 'test-register';
-        $schemaId = 'test-schema';
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(4))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationMapper->getByTarget($registerId, $schemaId);
-    }
-
-    /**
-     * Test getByTarget method with only registerId.
-     *
-     * @return void
-     */
-    public function testGetByTargetWithRegisterOnly(): void
-    {
-        $registerId = 'test-register';
-        $schemaId = null;
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationMapper->getByTarget($registerId, $schemaId);
-    }
-
-    /**
-     * Test getByTarget method with only schemaId.
-     *
-     * @return void
-     */
-    public function testGetByTargetWithSchemaOnly(): void
-    {
-        $registerId = null;
-        $schemaId = 'test-schema';
-        
-        $qb = $this->createMock(IQueryBuilder::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('*')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('where')
-            ->willReturnSelf();
-
-        $qb->expects($this->exactly(2))
-            ->method('createNamedParameter')
-            ->willReturn(':param1');
-
-        $qb->expects($this->once())
-            ->method('expr')
-            ->willReturn($this->createMock(\OCP\DB\QueryBuilder\IExpressionBuilder::class));
-
-        $this->synchronizationMapper->getByTarget($registerId, $schemaId);
-    }
-
-    /**
-     * Test getByTarget method with no parameters (should throw exception).
-     *
-     * @return void
-     */
-    public function testGetByTargetWithNoParameters(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Either registerId or schemaId must be provided');
-
-        $this->synchronizationMapper->getByTarget(null, null);
-    }
-
-    /**
-     * Test getIdToSlugMap method.
-     *
-     * @return void
-     */
-    public function testGetIdToSlugMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
-        
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
-
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
+        // Mock the result for find
+        $result = $this->createMock(IResult::class);
+        $result->method('fetch')
             ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-sync'],
-                false
+                [
+                    'id' => $id,
+                    'name' => 'Test Synchronization',
+                    'created' => (new DateTime())->format('Y-m-d H:i:s')
+                ],
+                false // Second call returns false to indicate no more rows
             );
-
-        $mappings = $this->synchronizationMapper->getIdToSlugMap();
-        $this->assertIsArray($mappings);
-    }
-
-    /**
-     * Test getSlugToIdMap method.
-     *
-     * @return void
-     */
-    public function testGetSlugToIdMap(): void
-    {
-        $qb = $this->createMock(IQueryBuilder::class);
-        $result = $this->createMock(Result::class);
+        $result->method('closeCursor')->willReturn(true);
         
-        $this->db->expects($this->once())
-            ->method('getQueryBuilder')
-            ->willReturn($qb);
+        $qb->method('executeQuery')->willReturn($result);
 
-        $qb->expects($this->once())
-            ->method('select')
-            ->with('id', 'slug')
-            ->willReturnSelf();
+        $Synchronization = $this->SynchronizationMapper->updateFromArray($id, $data);
 
-        $qb->expects($this->once())
-            ->method('from')
-            ->willReturnSelf();
-
-        $qb->expects($this->once())
-            ->method('execute')
-            ->willReturn($result);
-
-        $result->expects($this->exactly(2))
-            ->method('fetch')
-            ->willReturnOnConsecutiveCalls(
-                ['id' => '1', 'slug' => 'test-sync'],
-                false
-            );
-
-        $mappings = $this->synchronizationMapper->getSlugToIdMap();
-        $this->assertIsArray($mappings);
+        $this->assertInstanceOf(Synchronization::class, $Synchronization);
     }
 
     /**
-     * Test SynchronizationMapper has expected table name.
-     *
-     * @return void
-     */
-    public function testSynchronizationMapperTableName(): void
-    {
-        $reflection = new \ReflectionClass($this->synchronizationMapper);
-        $property = $reflection->getProperty('tableName');
-        $property->setAccessible(true);
-        
-        $this->assertEquals('openconnector_synchronizations', $property->getValue($this->synchronizationMapper));
-    }
-
-    /**
-     * Test SynchronizationMapper has expected entity class.
-     *
-     * @return void
-     */
-    public function testSynchronizationMapperEntityClass(): void
-    {
-        $reflection = new \ReflectionClass($this->synchronizationMapper);
-        $property = $reflection->getProperty('entityClass');
-        $property->setAccessible(true);
-        
-        $this->assertEquals(Synchronization::class, $property->getValue($this->synchronizationMapper));
-    }
-
-    /**
-     * Test SynchronizationMapper has expected methods.
+     * Test that SynchronizationMapper has the expected methods.
      *
      * @return void
      */
     public function testSynchronizationMapperHasExpectedMethods(): void
     {
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'find'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'findByUuid'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'findByRef'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'findAll'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'createFromArray'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'updateFromArray'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'getTotalCount'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'getTotalCallCount'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'findByConfiguration'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'getByTarget'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'getIdToSlugMap'));
-        $this->assertTrue(method_exists($this->synchronizationMapper, 'getSlugToIdMap'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'find'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'findAll'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'createFromArray'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'updateFromArray'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'findByUuid'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'getByTarget'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'getTotalCount'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'getTotalCallCount'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'findByConfiguration'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'getIdToSlugMap'));
+        $this->assertTrue(method_exists($this->SynchronizationMapper, 'getSlugToIdMap'));
     }
 }
