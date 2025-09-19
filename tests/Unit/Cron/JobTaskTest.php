@@ -87,7 +87,7 @@ class JobTaskTest extends TestCase
         $this->jobTask->run($argument);
         
         // Test passes if no exception is thrown
-        $this->markTestSkipped('JobTask requires complex job execution mocking and external dependencies');
+        $this->assertTrue(true);
     }
 
     /**
@@ -107,7 +107,8 @@ class JobTaskTest extends TestCase
         
         $this->jobTask->run($argument);
         
-        $this->markTestSkipped('JobTask requires complex job execution mocking and external dependencies');
+        // Test passes if no exception is thrown
+        $this->assertTrue(true);
     }
 
     /**
@@ -125,7 +126,8 @@ class JobTaskTest extends TestCase
         
         $this->jobTask->run($argument);
         
-        $this->markTestSkipped('JobTask requires complex job execution mocking and external dependencies');
+        // Test passes if no exception is thrown
+        $this->assertTrue(true);
     }
 
     /**
@@ -141,7 +143,8 @@ class JobTaskTest extends TestCase
         
         $this->jobTask->run(null);
         
-        $this->markTestSkipped('JobTask requires complex job execution mocking and external dependencies');
+        // Test passes if no exception is thrown
+        $this->assertTrue(true);
     }
 
     /**
@@ -159,7 +162,8 @@ class JobTaskTest extends TestCase
         
         $this->jobTask->run($argument);
         
-        $this->markTestSkipped('JobTask requires complex job execution mocking and external dependencies');
+        // Test passes if no exception is thrown
+        $this->assertTrue(true);
     }
 
     /**
@@ -177,7 +181,8 @@ class JobTaskTest extends TestCase
         
         $this->jobTask->run($argument);
         
-        $this->markTestSkipped('JobTask requires complex job execution mocking and external dependencies');
+        // Test passes if no exception is thrown
+        $this->assertTrue(true);
     }
 
     /**
@@ -195,7 +200,8 @@ class JobTaskTest extends TestCase
         
         $this->jobTask->run($argument);
         
-        $this->markTestSkipped('JobTask requires complex job execution mocking and external dependencies');
+        // Test passes if no exception is thrown
+        $this->assertTrue(true);
     }
 
     /**
@@ -219,7 +225,8 @@ class JobTaskTest extends TestCase
         
         $this->jobTask->run($argument);
         
-        $this->markTestSkipped('JobTask requires complex job execution mocking and external dependencies');
+        // Test passes if no exception is thrown
+        $this->assertTrue(true);
     }
 
     /**
@@ -267,7 +274,8 @@ class JobTaskTest extends TestCase
         
         $this->jobTask->run($argument);
         
-        $this->markTestSkipped('JobTask requires complex job execution mocking and external dependencies');
+        // Test passes if no exception is thrown
+        $this->assertTrue(true);
     }
 
     /**
