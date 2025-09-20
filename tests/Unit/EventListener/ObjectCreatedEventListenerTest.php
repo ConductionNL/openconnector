@@ -5,8 +5,59 @@ declare(strict_types=1);
 /**
  * ObjectCreatedEventListenerTest
  *
- * Unit tests for the ObjectCreatedEventListener class.
- *
+ * Comprehensive unit tests for the ObjectCreatedEventListener class, which handles
+ * synchronization of newly created objects between OpenRegister and external systems.
+ * This test suite covers:
+ * 
+ * ## Test Categories:
+ * 
+ * ### 1. Event Handling
+ * - testHandleWithNonObjectCreatedEvent: Tests handling of unsupported event types
+ * - testHandleWithValidEvent: Tests successful handling of ObjectCreatedEvent
+ * - testHandleWithNullObject: Tests handling of events with null objects (skipped - type constraints)
+ * - testHandleWithOrganizationSchema: Tests handling of organization schema events
+ * 
+ * ### 2. Synchronization Logic
+ * - testHandleWithExistingSynchronizations: Tests behavior with existing sync records
+ * - testHandleWithNoSynchronizations: Tests behavior with no existing sync records
+ * - testHandleWithDifferentSchema: Tests handling of different schema types
+ * 
+ * ### 3. Error Handling
+ * - testHandleWithSynchronizationServiceError: Tests error handling in sync service
+ * - testHandleWithInvalidEventData: Tests handling of malformed event data
+ * 
+ * ## Event Flow:
+ * 
+ * 1. **Event Reception**: Listener receives ObjectCreatedEvent from OpenRegister
+ * 2. **Object Extraction**: Extracts ObjectEntity from the event
+ * 3. **Schema Validation**: Validates object schema and register
+ * 4. **Synchronization Check**: Queries existing synchronizations
+ * 5. **Sync Creation**: Creates new synchronization records if needed
+ * 6. **Error Handling**: Handles any errors gracefully
+ * 
+ * ## Mocking Strategy:
+ * 
+ * The tests use comprehensive mocking to isolate the listener from dependencies:
+ * - SynchronizationService: Mocked for sync operations
+ * - ObjectCreatedEvent: Mocked for event data
+ * - ObjectEntity: Mocked for object data
+ * - Register/Schema: Mocked for validation
+ * 
+ * ## Integration Points:
+ * 
+ * - **OpenRegister Events**: Listens to ObjectCreatedEvent from OpenRegister
+ * - **Synchronization Service**: Uses SynchronizationService for sync operations
+ * - **Database**: Interacts with synchronization tables
+ * - **External Systems**: Triggers sync to external connectors
+ * 
+ * ## Test Data Patterns:
+ * 
+ * Tests use various event patterns to ensure robust handling:
+ * - Valid ObjectCreatedEvent with proper object data
+ * - Events with different schema types (organization, software, etc.)
+ * - Events with missing or invalid data
+ * - Events that trigger different sync scenarios
+ * 
  * @category  Test
  * @package   OCA\OpenConnector\Tests\Unit\EventListener
  * @author    Conduction <info@conduction.nl>

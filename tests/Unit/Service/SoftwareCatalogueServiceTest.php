@@ -5,9 +5,84 @@ declare(strict_types=1);
 /**
  * SoftwareCatalogueServiceTest
  *
- * Comprehensive unit tests for the SoftwareCatalogueService class to verify
- * software catalogue management, version control, and synchronization functionality.
- *
+ * Comprehensive unit tests for the SoftwareCatalogueService class, which handles
+ * software catalogue management, version control, and synchronization functionality
+ * in OpenConnector. This test suite covers:
+ * 
+ * ## Test Categories:
+ * 
+ * ### 1. Software Registration
+ * - testRegisterSoftwareWithValidData: Tests registering software with valid data
+ * - testRegisterSoftwareWithInvalidData: Tests handling of invalid software data
+ * - testRegisterSoftwareWithDuplicateName: Tests handling of duplicate software names
+ * - testRegisterSoftwareWithMissingFields: Tests handling of missing required fields
+ * 
+ * ### 2. Software Discovery
+ * - testDiscoverSoftware: Tests software discovery from various sources
+ * - testDiscoverSoftwareWithFilters: Tests discovery with specific filters
+ * - testDiscoverSoftwareWithPagination: Tests discovery with pagination
+ * - testDiscoverSoftwareWithSorting: Tests discovery with sorting options
+ * 
+ * ### 3. Version Management
+ * - testGetSoftwareVersions: Tests retrieving software versions
+ * - testAddSoftwareVersion: Tests adding new software versions
+ * - testUpdateSoftwareVersion: Tests updating existing versions
+ * - testDeleteSoftwareVersion: Tests deleting software versions
+ * 
+ * ### 4. Synchronization
+ * - testSyncSoftwareCatalogue: Tests synchronizing with external catalogues
+ * - testSyncSoftwareVersions: Tests synchronizing software versions
+ * - testSyncWithExternalSource: Tests syncing with external data sources
+ * - testSyncConflictResolution: Tests handling sync conflicts
+ * 
+ * ### 5. React\Promise Integration
+ * - testAsyncOperations: Tests asynchronous operations using React\Promise
+ * - testPromiseChaining: Tests promise chaining for complex operations
+ * - testPromiseErrorHandling: Tests error handling in promise chains
+ * - testPromiseCancellation: Tests promise cancellation
+ * 
+ * ## Software Catalogue Features:
+ * 
+ * The SoftwareCatalogueService manages:
+ * - **Software Metadata**: Name, description, vendor, category
+ * - **Version Information**: Version numbers, release dates, changelogs
+ * - **Dependencies**: Software dependencies and requirements
+ * - **Compatibility**: Platform and system compatibility
+ * - **Licensing**: License information and compliance
+ * 
+ * ## Mocking Strategy:
+ * 
+ * The tests use comprehensive mocking to isolate the service from dependencies:
+ * - ObjectService: Mocked for object operations
+ * - SchemaMapper: Mocked for schema operations
+ * - External APIs: Mocked for external service calls
+ * - Database: Mocked for data persistence
+ * - React\Promise: Mocked for asynchronous operations
+ * 
+ * ## External Integrations:
+ * 
+ * Tests cover integration with:
+ * - **Software Repositories**: GitHub, GitLab, package managers
+ * - **Vendor APIs**: Software vendor APIs for metadata
+ * - **Security Databases**: CVE databases for vulnerability information
+ * - **License Databases**: License compliance databases
+ * 
+ * ## Data Flow:
+ * 
+ * 1. **Discovery**: Find software from various sources
+ * 2. **Validation**: Validate software metadata and versions
+ * 3. **Registration**: Register software in the catalogue
+ * 4. **Synchronization**: Sync with external sources
+ * 5. **Maintenance**: Update and maintain software information
+ * 
+ * ## Performance Considerations:
+ * 
+ * Tests cover performance aspects:
+ * - Large catalogue handling (1000+ software items)
+ * - Concurrent operations
+ * - Memory usage optimization
+ * - Database query optimization
+ * 
  * @category  Test
  * @package   OCA\OpenConnector\Tests\Unit\Service
  * @author    Conduction <info@conduction.nl>

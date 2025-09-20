@@ -5,9 +5,86 @@ declare(strict_types=1);
 /**
  * SOAPServiceTest
  *
- * Comprehensive unit tests for the SOAPService class to verify SOAP client functionality,
- * WSDL processing, and SOAP request/response handling.
- *
+ * Comprehensive unit tests for the SOAPService class, which handles SOAP client
+ * functionality, WSDL processing, and SOAP request/response handling in OpenConnector.
+ * This test suite covers:
+ * 
+ * ## Test Categories:
+ * 
+ * ### 1. SOAP Engine Setup
+ * - testSetupEngine: Tests SOAP engine configuration (skipped - requires external setup)
+ * - testSetupEngineWithMissingWSDL: Tests handling of missing WSDL files
+ * - testSetupEngineWithInvalidWSDL: Tests handling of invalid WSDL files
+ * - testSetupEngineWithAuthentication: Tests SOAP engine with authentication
+ * 
+ * ### 2. SOAP Source Operations
+ * - testCallSoapSource: Tests SOAP source calls (skipped - requires external setup)
+ * - testCallSoapSourceWithParameters: Tests SOAP calls with parameters
+ * - testCallSoapSourceWithHeaders: Tests SOAP calls with custom headers
+ * - testCallSoapSourceWithTimeout: Tests SOAP calls with timeout settings
+ * 
+ * ### 3. WSDL Processing
+ * - testProcessWSDL: Tests WSDL file processing and parsing
+ * - testExtractSOAPOperations: Tests extraction of SOAP operations from WSDL
+ * - testValidateSOAPRequest: Tests SOAP request validation
+ * - testGenerateSOAPResponse: Tests SOAP response generation
+ * 
+ * ### 4. Error Handling
+ * - testSOAPFaultHandling: Tests handling of SOAP faults
+ * - testNetworkErrorHandling: Tests handling of network errors
+ * - testTimeoutHandling: Tests handling of request timeouts
+ * - testAuthenticationErrorHandling: Tests handling of authentication errors
+ * 
+ * ### 5. Integration Scenarios
+ * - testSOAPWithExternalService: Tests integration with external SOAP services
+ * - testSOAPWithComplexDataTypes: Tests handling of complex SOAP data types
+ * - testSOAPWithAttachments: Tests SOAP with attachments (MTOM)
+ * - testSOAPWithWSecurity: Tests SOAP with WS-Security
+ * 
+ * ## SOAP Service Features:
+ * 
+ * The SOAPService provides:
+ * - **WSDL Processing**: Parse and process WSDL files
+ * - **SOAP Client Creation**: Create SOAP clients for external services
+ * - **Request/Response Handling**: Handle SOAP requests and responses
+ * - **Authentication**: Support various authentication methods
+ * - **Error Handling**: Comprehensive error handling and logging
+ * 
+ * ## Mocking Strategy:
+ * 
+ * The tests use comprehensive mocking to isolate the service from dependencies:
+ * - SOAP Client: Mocked for SOAP operations
+ * - HTTP Client: Mocked for WSDL fetching
+ * - File System: Mocked for WSDL file operations
+ * - LoggerInterface: Mocked for logging verification
+ * - External Services: Mocked for SOAP service calls
+ * 
+ * ## External Dependencies:
+ * 
+ * Many tests are appropriately skipped due to external dependencies:
+ * - **WSDL Files**: Require actual WSDL files for testing
+ * - **SOAP Services**: Require running SOAP services for integration tests
+ * - **Network Access**: Require network access for external services
+ * - **Complex Setup**: Require complex SOAP engine configuration
+ * 
+ * ## SOAP Standards Support:
+ * 
+ * Tests cover various SOAP standards:
+ * - **SOAP 1.1**: Basic SOAP protocol support
+ * - **SOAP 1.2**: Enhanced SOAP protocol support
+ * - **WSDL 1.1**: Web Service Description Language support
+ * - **WSDL 2.0**: Enhanced WSDL support
+ * - **WS-Security**: Web Services Security support
+ * - **MTOM**: Message Transmission Optimization Mechanism
+ * 
+ * ## Performance Considerations:
+ * 
+ * Tests cover performance aspects:
+ * - Large WSDL file processing
+ * - Complex SOAP message handling
+ * - Memory usage optimization
+ * - Connection pooling and reuse
+ * 
  * @category  Test
  * @package   OCA\OpenConnector\Tests\Unit\Service
  * @author    Conduction <info@conduction.nl>
