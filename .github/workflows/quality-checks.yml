@@ -46,6 +46,14 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
         
+      - name: Verify PHPUnit is available
+        run: |
+          if [ ! -f "./vendor/bin/phpunit" ]; then
+            echo "PHPUnit not found, installing..."
+            composer require --dev phpunit/phpunit:^9.6 --no-interaction
+          fi
+          ./vendor/bin/phpunit --version
+        
       - name: Create test database
         run: |
           mkdir -p tests/data
