@@ -31,8 +31,45 @@ if (!defined('OCP_IUser_CLASS')) {
 }
 
 // Mock missing OCP classes that are not available in test environment
+if (!class_exists('MockMapper')) {
+    abstract class MockMapper {
+        protected $db;
+        protected $tableName;
+        
+        public function __construct($db, $tableName) {
+            $this->db = $db;
+            $this->tableName = $tableName;
+        }
+        
+        public function find($id) {
+            return null;
+        }
+        
+        public function findAll($limit = null, $offset = null) {
+            return [];
+        }
+        
+        public function insert($entity) {
+            return $entity;
+        }
+        
+        public function update($entity) {
+            return $entity;
+        }
+        
+        public function delete($entity) {
+            return $entity;
+        }
+    }
+}
+
+// Create aliases to the namespaced classes
+if (!class_exists('OCP\AppFramework\Db\Mapper')) {
+    class_alias('MockMapper', 'OCP\AppFramework\Db\Mapper');
+}
+
 if (!class_exists('OCP\AppFramework\Db\QBMapper')) {
-    class_alias('OCP\AppFramework\Db\Mapper', 'OCP\AppFramework\Db\QBMapper');
+    class_alias('MockMapper', 'OCP\AppFramework\Db\QBMapper');
 }
 
 // Define mock interfaces with simple names first
@@ -103,6 +140,20 @@ if (!interface_exists('MockIResult')) {
     }
 }
 
+if (!interface_exists('MockIAccountManager')) {
+    interface MockIAccountManager {
+        public function getAccount(string $user): MockIAccount;
+        public function updateAccount(MockIAccount $account): void;
+    }
+}
+
+if (!interface_exists('MockIAccount')) {
+    interface MockIAccount {
+        public function getProperty(string $name): string;
+        public function setProperty(string $name, string $value): void;
+    }
+}
+
 // Now create aliases to the namespaced names
 if (!interface_exists('OCP\IUserManager')) {
     class_alias('MockIUserManager', 'OCP\IUserManager');
@@ -138,6 +189,14 @@ if (!interface_exists('OCP\DB\QueryBuilder\IQueryBuilder')) {
 
 if (!interface_exists('OCP\DB\IResult')) {
     class_alias('MockIResult', 'OCP\DB\IResult');
+}
+
+if (!interface_exists('OCP\Accounts\IAccountManager')) {
+    class_alias('MockIAccountManager', 'OCP\Accounts\IAccountManager');
+}
+
+if (!interface_exists('OCP\Accounts\IAccount')) {
+    class_alias('MockIAccount', 'OCP\Accounts\IAccount');
 }
 
 // Set up any additional test configuration here

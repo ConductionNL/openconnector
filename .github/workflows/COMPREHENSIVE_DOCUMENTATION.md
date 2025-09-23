@@ -57,12 +57,14 @@ When you open a PR on GitHub, you'll see these workflow names in the checks sect
 - **Composer Script**: `composer test:unit`
 
 ### **Bootstrap Mocking Strategy**
-The `tests/bootstrap.php` file provides comprehensive mocking for Nextcloud OCP interfaces:
+The `tests/bootstrap.php` file provides comprehensive mocking for Nextcloud OCP classes and interfaces:
+- **Mock Classes**: Simple-named classes (MockMapper) with basic functionality
 - **Mock Interfaces**: Simple-named interfaces (MockIUserManager, MockIUser, etc.)
-- **Class Aliases**: Maps mock interfaces to namespaced OCP classes
-- **Database Mocks**: QBMapper, IDBConnection, IQueryBuilder, IResult
-- **User Management**: IUserManager, IUser, IUserSession, IGroupManager
-- **Configuration**: IConfig for app settings
+- **Class Aliases**: Maps mock classes/interfaces to namespaced OCP classes
+- **Database Layer**: Mapper, QBMapper, IDBConnection, IQueryBuilder, IResult
+- **User Management**: IUserManager, IUser, IUserSession, IGroupManager, IGroup
+- **Account Management**: IAccountManager, IAccount for user account data
+- **Configuration**: IConfig for app settings and configuration
 
 ### **PHP Setup**
 - **Versions**: PHP 8.2, 8.3
