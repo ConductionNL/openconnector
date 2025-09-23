@@ -40,6 +40,20 @@
 - **Fix Applied**: Added fallback PHPUnit installation step
 - **Files Modified**: All workflow files with enhanced PHPUnit verification
 
+### **Version 1.4** - Comprehensive Dependency Resolution
+- **Date**: September 23, 2025
+- **Action**: Implemented comprehensive dependency resolution strategy
+- **Issue**: Lock file approach consistently failing to include PHPUnit
+- **Fix Applied**: Multi-layered approach with fallback to `composer update`
+- **Files Modified**: All workflow files with robust dependency installation
+
+### **Version 1.5** - Improved Error Handling
+- **Date**: September 23, 2025
+- **Action**: Enhanced error handling for composer install failures
+- **Issue**: `||` operator not properly handling composer install exit codes
+- **Fix Applied**: Changed to explicit `if !` condition for better error handling
+- **Files Modified**: All workflow files with improved conditional logic
+
 ### **Last Updated**: September 23, 2025
 ### **Documentation Status**: ✅ Complete and Current
 
@@ -308,34 +322,6 @@ The workflows should now:
 - **Keep composer.lock** synchronized with composer.json
 - **Test workflows** with actual pull requests regularly
 
-## 📝 **Changelog**
-
-### **2025-09-23** - Version 1.3
-- **Action**: Enhanced PHPUnit installation verification
-- **Issue**: Lock file update not resolving PHPUnit dependency issue
-- **Fix**: Added fallback PHPUnit installation step to all workflows
-- **Files**: Updated all workflow files with robust PHPUnit verification
-- **Status**: ✅ Complete
-
-### **2025-09-23** - Version 1.2
-- **Action**: Documentation consolidation
-- **Changes**: Merged all individual .md files into comprehensive documentation
-- **Files**: Removed 6 individual .md files, created single comprehensive documentation
-- **Status**: ✅ Complete
-
-### **2025-09-23** - Version 1.1  
-- **Action**: Critical workflow fixes
-- **Issues Fixed**: PHPUnit not found, lock file sync, linting failures, misleading messages
-- **Files Modified**: All workflow files, composer.json
-- **Status**: ✅ Complete
-
-### **2025-09-23** - Version 1.0
-- **Action**: Initial workflow setup
-- **Created**: Basic workflow infrastructure
-- **Files**: pr-unit-tests.yml, unit-tests.yml, quality-checks.yml, tests/bootstrap.php
-- **Status**: ✅ Complete
-
----
 
 ## 🔄 **Future Updates**
 
@@ -350,4 +336,4 @@ When making changes to the workflows, please update this documentation with:
 
 *This comprehensive documentation covers all aspects of the OpenConnector GitHub workflows, including setup, configuration, troubleshooting, and maintenance.*
 
-*Last Updated: September 23, 2025 | Version: 1.3 | Status: Complete*
+*Last Updated: September 23, 2025 | Version: 1.5 | Status: Complete*
