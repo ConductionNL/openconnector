@@ -45,7 +45,14 @@ if (!class_exists('MockMapper')) {
             return null;
         }
         
-        public function findAll($limit = null, $offset = null) {
+        public function findAll(
+            ?int $limit = null,
+            ?int $offset = null,
+            ?array $filters = [],
+            ?array $searchConditions = [],
+            ?array $searchParams = [],
+            ?array $ids = []
+        ): array {
             return [];
         }
         
@@ -59,6 +66,80 @@ if (!class_exists('MockMapper')) {
         
         public function delete($entity) {
             return $entity;
+        }
+        
+        // Additional commonly used methods
+        public function createFromArray(array $object) {
+            return new \stdClass();
+        }
+        
+        public function updateFromArray(int $id, array $object) {
+            return new \stdClass();
+        }
+        
+        public function getTotalCount(array $filters = []): int {
+            return 0;
+        }
+        
+        public function findByRef(string $reference): array {
+            return [];
+        }
+        
+        public function findByConfiguration(string $configurationId): array {
+            return [];
+        }
+        
+        public function getIdToSlugMap(): array {
+            return [];
+        }
+        
+        public function getSlugToIdMap(): array {
+            return [];
+        }
+        
+        // Specialized methods for specific mappers
+        public function findByUuid(string $uuid) {
+            return null;
+        }
+        
+        public function findByPathRegex(string $path, string $method): array {
+            return [];
+        }
+        
+        public function getByTarget(?string $registerId = null, ?string $schemaId = null, bool $searchSource = true, bool $searchTarget = true): array {
+            return [];
+        }
+        
+        public function findOrCreateByLocation(string $location, array $defaultData = []): \stdClass {
+            return new \stdClass();
+        }
+        
+        public function findSyncContractByOriginId(string $synchronizationId, string $originId): ?\stdClass {
+            return null;
+        }
+        
+        public function findTargetIdByOriginId(string $originId): ?string {
+            return null;
+        }
+        
+        public function findOnTarget(string $synchronization, string $targetId): \stdClass|bool|null {
+            return null;
+        }
+        
+        public function findByOriginAndTarget(string $originId, string $targetId): \stdClass|bool|null {
+            return null;
+        }
+        
+        public function findAllBySynchronizationAndSchema(string $synchronizationId, string $schemaId): array {
+            return [];
+        }
+        
+        public function cleanupExpired(): int {
+            return 0;
+        }
+        
+        public function getTotalCallCount(): int {
+            return 0;
         }
     }
 }
@@ -154,6 +235,82 @@ if (!interface_exists('MockIAccount')) {
     }
 }
 
+// Additional OCP interfaces commonly used
+if (!interface_exists('MockIEventListener')) {
+    interface MockIEventListener {
+        public function handle(MockEvent $event): void;
+    }
+}
+
+if (!interface_exists('MockEvent')) {
+    interface MockEvent {
+        public function getSubject(): string;
+        public function getArguments(): array;
+    }
+}
+
+if (!interface_exists('MockIAppConfig')) {
+    interface MockIAppConfig {
+        public function getValue(string $app, string $key, string $default = ''): string;
+        public function setValue(string $app, string $key, string $value): void;
+    }
+}
+
+if (!interface_exists('MockIRequest')) {
+    interface MockIRequest {
+        public function getParam(string $key, string $default = ''): string;
+        public function getHeader(string $name): string;
+    }
+}
+
+if (!interface_exists('MockICache')) {
+    interface MockICache {
+        public function get(string $key): mixed;
+        public function set(string $key, mixed $value, int $ttl = 0): bool;
+        public function remove(string $key): bool;
+    }
+}
+
+if (!interface_exists('MockICacheFactory')) {
+    interface MockICacheFactory {
+        public function create(string $cacheId): MockICache;
+    }
+}
+
+if (!interface_exists('MockISchemaWrapper')) {
+    interface MockISchemaWrapper {
+        public function hasTable(string $name): bool;
+        public function createTable(string $name): MockITable;
+    }
+}
+
+if (!interface_exists('MockITable')) {
+    interface MockITable {
+        public function addColumn(string $name, string $type, array $options = []): MockIColumn;
+    }
+}
+
+if (!interface_exists('MockIColumn')) {
+    interface MockIColumn {
+        public function setLength(int $length): self;
+        public function setNotnull(bool $notnull): self;
+    }
+}
+
+if (!interface_exists('MockIOutput')) {
+    interface MockIOutput {
+        public function info(string $message): void;
+        public function warning(string $message): void;
+    }
+}
+
+if (!interface_exists('MockSimpleMigrationStep')) {
+    interface MockSimpleMigrationStep {
+        public function changeSchema(MockIOutput $output, \Closure $schemaClosure, array $options): ?MockISchemaWrapper;
+        public function sql(MockIOutput $output, \Closure $schemaClosure, array $options): void;
+    }
+}
+
 // Now create aliases to the namespaced names
 if (!interface_exists('OCP\IUserManager')) {
     class_alias('MockIUserManager', 'OCP\IUserManager');
@@ -197,6 +354,85 @@ if (!interface_exists('OCP\Accounts\IAccountManager')) {
 
 if (!interface_exists('OCP\Accounts\IAccount')) {
     class_alias('MockIAccount', 'OCP\Accounts\IAccount');
+}
+
+// Additional OCP interface aliases
+if (!interface_exists('OCP\EventDispatcher\IEventListener')) {
+    class_alias('MockIEventListener', 'OCP\EventDispatcher\IEventListener');
+}
+
+if (!interface_exists('OCP\EventDispatcher\Event')) {
+    class_alias('MockEvent', 'OCP\EventDispatcher\Event');
+}
+
+if (!interface_exists('OCP\IAppConfig')) {
+    class_alias('MockIAppConfig', 'OCP\IAppConfig');
+}
+
+if (!interface_exists('OCP\IRequest')) {
+    class_alias('MockIRequest', 'OCP\IRequest');
+}
+
+if (!interface_exists('OCP\ICache')) {
+    class_alias('MockICache', 'OCP\ICache');
+}
+
+if (!interface_exists('OCP\ICacheFactory')) {
+    class_alias('MockICacheFactory', 'OCP\ICacheFactory');
+}
+
+if (!interface_exists('OCP\DB\ISchemaWrapper')) {
+    class_alias('MockISchemaWrapper', 'OCP\DB\ISchemaWrapper');
+}
+
+if (!interface_exists('OCP\DB\ITable')) {
+    class_alias('MockITable', 'OCP\DB\ITable');
+}
+
+if (!interface_exists('OCP\DB\IColumn')) {
+    class_alias('MockIColumn', 'OCP\DB\IColumn');
+}
+
+if (!interface_exists('OCP\Migration\IOutput')) {
+    class_alias('MockIOutput', 'OCP\Migration\IOutput');
+}
+
+if (!interface_exists('OCP\Migration\SimpleMigrationStep')) {
+    class_alias('MockSimpleMigrationStep', 'OCP\Migration\SimpleMigrationStep');
+}
+
+// Mock exception classes with simple names first
+if (!class_exists('MockDoesNotExistException')) {
+    class MockDoesNotExistException extends \Exception {}
+}
+
+if (!class_exists('MockMultipleObjectsReturnedException')) {
+    class MockMultipleObjectsReturnedException extends \Exception {}
+}
+
+if (!class_exists('MockGenericFileException')) {
+    class MockGenericFileException extends \Exception {}
+}
+
+if (!class_exists('MockNotFoundException')) {
+    class MockNotFoundException extends \Exception {}
+}
+
+// Create aliases to the namespaced exception classes
+if (!class_exists('OCP\AppFramework\Db\DoesNotExistException')) {
+    class_alias('MockDoesNotExistException', 'OCP\AppFramework\Db\DoesNotExistException');
+}
+
+if (!class_exists('OCP\AppFramework\Db\MultipleObjectsReturnedException')) {
+    class_alias('MockMultipleObjectsReturnedException', 'OCP\AppFramework\Db\MultipleObjectsReturnedException');
+}
+
+if (!class_exists('OCP\Files\GenericFileException')) {
+    class_alias('MockGenericFileException', 'OCP\Files\GenericFileException');
+}
+
+if (!class_exists('OCP\Files\NotFoundException')) {
+    class_alias('MockNotFoundException', 'OCP\Files\NotFoundException');
 }
 
 // Set up any additional test configuration here

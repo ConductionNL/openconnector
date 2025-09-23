@@ -65,7 +65,11 @@ The `tests/bootstrap.php` file provides comprehensive mocking for Nextcloud OCP 
 - **User Management**: IUserManager, IUser, IUserSession, IGroupManager, IGroup
 - **Account Management**: IAccountManager, IAccount for user account data
 - **Configuration**: IConfig for app settings and configuration
-- **Method Compatibility**: Mock methods match actual OCP method signatures (e.g., `find(int|string $id)`)
+- **Method Compatibility**: Mock methods match actual OCP method signatures (e.g., `find(int|string $id)`, `findAll()` with all optional parameters)
+- **Proactive Mocking**: Includes commonly used methods (`createFromArray`, `updateFromArray`, `getTotalCount`, `findByRef`, etc.)
+- **Specialized Methods**: Includes mapper-specific methods (`findByUuid`, `findByPathRegex`, `getByTarget`, `cleanupExpired`, etc.)
+- **Exception Classes**: Mocks all required OCP exception classes (`DoesNotExistException`, `MultipleObjectsReturnedException`, etc.)
+- **Extended Interfaces**: Mocks additional OCP interfaces (`IEventListener`, `IAppConfig`, `IRequest`, `ICache`, `ISchemaWrapper`, etc.)
 
 ### **PHP Setup**
 - **Versions**: PHP 8.2, 8.3
