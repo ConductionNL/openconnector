@@ -46,8 +46,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
             
+      - name: Update composer lock file
+        run: composer update --lock --no-interaction
+        
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest --no-interaction --optimize-autoloader
+        run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
         
       - name: Create test database
         run: |
