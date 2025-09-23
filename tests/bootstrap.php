@@ -41,7 +41,7 @@ if (!class_exists('MockMapper')) {
             $this->tableName = $tableName;
         }
         
-        public function find($id) {
+        public function find(int|string $id) {
             return null;
         }
         
