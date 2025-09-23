@@ -34,13 +34,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
             
-      - name: Install dependencies with PHPUnit
+      - name: Install dependencies
         run: |
-          # Try to install from lock file first
-          if ! composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader; then
-            echo "Lock file install failed, updating dependencies..."
-            composer update --no-interaction
-          fi
+          # Update dependencies to ensure lock file is current
+          composer update --no-interaction --prefer-dist
           
           # Verify PHPUnit is available
           if [ ! -f "./vendor/bin/phpunit" ]; then

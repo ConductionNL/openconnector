@@ -25,9 +25,9 @@ if (!defined('TESTING')) {
 }
 
 // Mock Nextcloud constants and functions that might be needed
-if (!defined('OCP\IUser::class')) {
+if (!defined('OCP_IUser_CLASS')) {
     // Define any necessary constants for testing
-    define('OCP\IUser::class', 'OCP\IUser');
+    define('OCP_IUser_CLASS', 'OCP\IUser');
 }
 
 // Set up any additional test configuration here

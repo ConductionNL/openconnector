@@ -40,13 +40,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
             
-      - name: Install dependencies with PHPUnit
+      - name: Install dependencies
         run: |
-          # Try to install from lock file first
-          if ! composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader; then
-            echo "Lock file install failed, updating dependencies..."
-            composer update --no-interaction
-          fi
+          # Update dependencies to ensure lock file is current
+          composer update --no-interaction --prefer-dist
           
           # Verify PHPUnit is available
           if [ ! -f "./vendor/bin/phpunit" ]; then
@@ -66,11 +63,23 @@ jobs:
         run: composer lint
         
       - name: Run PHP CodeSniffer
-        run: composer cs:check
+        run: |
+          # Check if php-cs-fixer is available
+          if [ ! -f "./vendor/bin/php-cs-fixer" ]; then
+            echo "php-cs-fixer not found, installing..."
+            composer require --dev friendsofphp/php-cs-fixer:^3.0 --no-interaction
+          fi
+          composer cs:check
         continue-on-error: true
         
       - name: Run Psalm static analysis
-        run: composer psalm
+        run: |
+          # Check if psalm is available
+          if [ ! -f "./vendor/bin/psalm" ]; then
+            echo "psalm not found, installing..."
+            composer require --dev vimeo/psalm:^5.0 --no-interaction
+          fi
+          composer psalm
         continue-on-error: true
         
       - name: Run unit tests
