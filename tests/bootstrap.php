@@ -31,6 +31,33 @@ if (!defined('OCP_IUser_CLASS')) {
 }
 
 // Mock missing OCP classes that are not available in test environment
+if (!class_exists('MockEntity')) {
+    abstract class MockEntity {
+        protected $id;
+        protected $data = [];
+        
+        public function getId(): ?int {
+            return $this->id;
+        }
+        
+        public function setId(int $id): void {
+            $this->id = $id;
+        }
+        
+        public function getData(): array {
+            return $this->data;
+        }
+        
+        public function setData(array $data): void {
+            $this->data = $data;
+        }
+        
+        public function jsonSerialize(): array {
+            return $this->data;
+        }
+    }
+}
+
 if (!class_exists('MockMapper')) {
     abstract class MockMapper {
         protected $db;
@@ -145,6 +172,10 @@ if (!class_exists('MockMapper')) {
 }
 
 // Create aliases to the namespaced classes
+if (!class_exists('OCP\AppFramework\Db\Entity')) {
+    class_alias('MockEntity', 'OCP\AppFramework\Db\Entity');
+}
+
 if (!class_exists('OCP\AppFramework\Db\Mapper')) {
     class_alias('MockMapper', 'OCP\AppFramework\Db\Mapper');
 }

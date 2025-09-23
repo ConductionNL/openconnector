@@ -61,7 +61,7 @@ The `tests/bootstrap.php` file provides comprehensive mocking for Nextcloud OCP 
 - **Mock Classes**: Simple-named classes (MockMapper) with compatible method signatures
 - **Mock Interfaces**: Simple-named interfaces (MockIUserManager, MockIUser, etc.)
 - **Class Aliases**: Maps mock classes/interfaces to namespaced OCP classes
-- **Database Layer**: Mapper, QBMapper, IDBConnection, IQueryBuilder, IResult
+- **Database Layer**: Entity (base class), Mapper, QBMapper, IDBConnection, IQueryBuilder, IResult
 - **User Management**: IUserManager, IUser, IUserSession, IGroupManager, IGroup
 - **Account Management**: IAccountManager, IAccount for user account data
 - **Configuration**: IConfig for app settings and configuration
