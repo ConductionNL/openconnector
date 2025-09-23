@@ -1,21 +1,19 @@
-name: Quality Checks
+name: CI - Tests & Quality Checks
 
 on:
   pull_request:
-    branches:
-      - development
-      - main
-      - master
+    branches: [development, main, master]
   push:
-    branches:
-      - development
-      - main
-      - master
+    branches: [development, main, master]
 
 jobs:
-  quality-checks:
+  tests:
+    name: PHP ${{ matrix.php-version }} Tests
     runs-on: ubuntu-latest
-    name: Code Quality & Standards
+    
+    strategy:
+      matrix:
+        php-version: ['8.2', '8.3']
     
     steps:
       - name: Checkout repository
@@ -24,8 +22,8 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, iconv, json, mbstring, pdo
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql
           tools: composer:v2
           
       - name: Get composer cache directory
@@ -61,74 +59,82 @@ jobs:
           
       - name: Run PHP linting
         run: composer lint
+        continue-on-error: true
         
-      - name: Run PHP CodeSniffer
+      - name: Run unit tests
+        run: composer test:unit
+        
+      - name: Upload coverage (PHP 8.2 only)
+        if: matrix.php-version == '8.2'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  quality:
+    name: Code Quality & Standards
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql
+          tools: composer:v2
+          
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+        
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+            
+      - name: Install dependencies
         run: |
-          # Check if php-cs-fixer is available
+          # Update dependencies to ensure lock file is current
+          composer update --no-interaction --prefer-dist
+          
+          # Verify tools are available
           if [ ! -f "./vendor/bin/php-cs-fixer" ]; then
             echo "php-cs-fixer not found, installing..."
             composer require --dev friendsofphp/php-cs-fixer:^3.0 --no-interaction
           fi
-          composer cs:check
-        continue-on-error: true
-        
-      - name: Run Psalm static analysis
-        run: |
-          # Check if psalm is available
+          
           if [ ! -f "./vendor/bin/psalm" ]; then
             echo "psalm not found, installing..."
             composer require --dev vimeo/psalm:^5.0 --no-interaction
           fi
-          composer psalm
+        
+      - name: Run PHP linting
+        run: composer lint
+        continue-on-error: true
+        
+      - name: Run PHP CodeSniffer
+        run: composer cs:check
+        continue-on-error: true
+        
+      - name: Run Psalm static analysis
+        run: composer psalm
         continue-on-error: true
         
       - name: Run unit tests
         run: composer test:unit
         
       - name: Generate quality status
-        if: success()
-        run: |
-          echo "QUALITY_STATUS=passed" >> $GITHUB_ENV
-          echo "Quality checks completed successfully!" > quality-status.txt
-        
-      - name: Comment PR with quality status
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            let message = '## 🔍 OpenConnector Quality Check Results\n\n';
-            
-            if (process.env.QUALITY_STATUS === 'passed') {
-              message += '✅ **All quality checks passed!**\n';
-              message += '- PHP Syntax: ✅ No errors\n';
-              message += '- Code Style: ✅ PHPCS checks passed\n';
-              message += '- Static Analysis: ✅ Psalm checks passed\n';
-              message += '- Unit Tests: ✅ Tests completed\n\n';
-            } else {
-              message += '⚠️ **Some quality checks failed**\n';
-              message += 'Please check the workflow logs for details.\n\n';
-            }
-            
-            message += '### Available Commands\n';
-            message += '```bash\n';
-            message += 'composer lint          # PHP syntax check\n';
-            message += 'composer cs:check      # Code style check\n';
-            message += 'composer psalm         # Static analysis\n';
-            message += 'composer test:unit     # Unit tests\n';
-            message += '```\n';
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: message
-            });
-        
-      - name: Test Results Summary
         if: always()
         run: |
-          echo "## 🔍 OpenConnector Quality Checks" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔍 Code Quality & Standards" >> $GITHUB_STEP_SUMMARY
           if [ "${{ job.status }}" = "success" ]; then
             echo "- ✅ PHP Linting: Completed" >> $GITHUB_STEP_SUMMARY
             echo "- ✅ Code Style: Completed" >> $GITHUB_STEP_SUMMARY

@@ -6,22 +6,47 @@ This directory contains GitHub Actions workflows for the OpenConnector repositor
 
 ## 🚀 **Available Workflows**
 
-### **`pr-unit-tests.yml`** - Pull Request Unit Tests
-- **Trigger**: Pull requests to `development`, `main`, or `master` branches
-- **Purpose**: Runs unit tests when a pull request is created
-- **PHP Version**: 8.2
-- **Features**: Composer caching, PHPUnit verification, test reporting
+### **`ci.yml`** - Main CI Pipeline ⭐
+- **Trigger**: Pull requests and pushes to `development`, `main`, `master` branches
+- **Purpose**: Comprehensive testing and quality assurance
+- **Jobs**:
+  - **`tests`**: Matrix testing across PHP 8.2 and 8.3
+    - Unit tests with PHPUnit
+    - PHP linting
+    - Coverage reporting (PHP 8.2 only)
+  - **`quality`**: Code quality and standards
+    - PHP linting
+    - Code style checks (php-cs-fixer)
+    - Static analysis (Psalm)
+    - Unit tests with PHPUnit
+    - Quality status reporting
 
-### **`unit-tests.yml`** - Matrix Unit Tests
-- **Trigger**: Pull requests and pushes to main branches
-- **Purpose**: Runs unit tests across multiple PHP versions
-- **PHP Versions**: 8.2, 8.3 (matrix strategy)
-- **Features**: Coverage reporting, Codecov integration
+### **Existing Workflows** (Pre-existing)
+- **`beta-release.yaml`**: Beta release automation
+- **`documentation.yml`**: Documentation generation
+- **`phpcs.yml`**: PHP CodeSniffer checks
+- **`pull-request-from-branch-check.yaml`**: Branch validation
+- **`pull-request-lint-check.yaml`**: Lint checking
+- **`push-development-to-beta.yaml`**: Development to beta promotion
+- **`release-workflow.yaml`**: Production release
+- **`release-workflow(nightly).yaml`**: Nightly release
 
-### **`quality-checks.yml`** - Quality Assurance Pipeline
-- **Trigger**: Pull requests and pushes to main branches
-- **Purpose**: Comprehensive quality checks
-- **Features**: Unit tests, PHP linting, code style (PHPCS), static analysis (Psalm)
+## 🏷️ **Workflow Naming & Visibility**
+
+### **GitHub PR Checks Display**
+When you open a PR on GitHub, you'll see these workflow names in the checks section:
+
+- **`CI - Tests & Quality Checks`** (from `ci.yml`)
+  - `PHP 8.2 Tests` - Unit tests on PHP 8.2
+  - `PHP 8.3 Tests` - Unit tests on PHP 8.3  
+  - `Code Quality & Standards` - Quality checks (linting, code style, static analysis, unit tests)
+
+### **Clear Separation of Concerns**
+- **`ci.yml`**: Main development workflow (testing + quality)
+- **`release-workflow.yaml`**: Production releases
+- **`beta-release.yaml`**: Beta releases
+- **`documentation.yml`**: Documentation updates
+- **`phpcs.yml`**: Standalone code style checks
 
 ## 🔧 **Configuration**
 
@@ -93,10 +118,16 @@ This directory contains GitHub Actions workflows for the OpenConnector repositor
 
 ```
 .github/workflows/
-├── pr-unit-tests.yml          # Pull request unit tests
-├── unit-tests.yml             # Matrix testing (PHP 8.2, 8.3)
-├── quality-checks.yml         # Comprehensive QA pipeline
-└── COMPREHENSIVE_DOCUMENTATION.md
+├── ci.yml                     # Main CI pipeline (tests + quality)
+├── beta-release.yaml          # Beta release workflow
+├── documentation.yml           # Documentation workflow
+├── phpcs.yml                  # PHP CodeSniffer workflow
+├── pull-request-from-branch-check.yaml  # Branch validation
+├── pull-request-lint-check.yaml        # Lint checking
+├── push-development-to-beta.yaml       # Development to beta
+├── release-workflow.yaml      # Production release
+├── release-workflow(nightly).yaml      # Nightly release
+└── COMPREHENSIVE_DOCUMENTATION.md      # This file
 
 tests/
 ├── bootstrap.php              # Test bootstrap
