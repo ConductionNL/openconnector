@@ -35,71 +35,109 @@ if (!class_exists('OCP\AppFramework\Db\QBMapper')) {
     class_alias('OCP\AppFramework\Db\Mapper', 'OCP\AppFramework\Db\QBMapper');
 }
 
-if (!interface_exists('OCP\IUserManager')) {
-    interface OCP\IUserManager {
-        public function get(string $uid): ?OCP\IUser;
+// Define mock interfaces with simple names first
+if (!interface_exists('MockIUserManager')) {
+    interface MockIUserManager {
+        public function get(string $uid): ?MockIUser;
         public function userExists(string $uid): bool;
     }
 }
 
-if (!interface_exists('OCP\IUser')) {
-    interface OCP\IUser {
+if (!interface_exists('MockIUser')) {
+    interface MockIUser {
         public function getUID(): string;
         public function getDisplayName(): string;
         public function getEMailAddress(): string;
     }
 }
 
-if (!interface_exists('OCP\IUserSession')) {
-    interface OCP\IUserSession {
-        public function getUser(): ?OCP\IUser;
+if (!interface_exists('MockIUserSession')) {
+    interface MockIUserSession {
+        public function getUser(): ?MockIUser;
         public function isLoggedIn(): bool;
     }
 }
 
-if (!interface_exists('OCP\IConfig')) {
-    interface OCP\IConfig {
+if (!interface_exists('MockIConfig')) {
+    interface MockIConfig {
         public function getAppValue(string $app, string $key, string $default = ''): string;
         public function setAppValue(string $app, string $key, string $value): void;
     }
 }
 
-if (!interface_exists('OCP\IGroupManager')) {
-    interface OCP\IGroupManager {
-        public function get(string $gid): ?OCP\IGroup;
+if (!interface_exists('MockIGroupManager')) {
+    interface MockIGroupManager {
+        public function get(string $gid): ?MockIGroup;
         public function groupExists(string $gid): bool;
     }
 }
 
-if (!interface_exists('OCP\IGroup')) {
-    interface OCP\IGroup {
+if (!interface_exists('MockIGroup')) {
+    interface MockIGroup {
         public function getGID(): string;
         public function getDisplayName(): string;
     }
 }
 
-if (!interface_exists('OCP\IDBConnection')) {
-    interface OCP\IDBConnection {
-        public function getQueryBuilder(): OCP\DB\QueryBuilder\IQueryBuilder;
+if (!interface_exists('MockIDBConnection')) {
+    interface MockIDBConnection {
+        public function getQueryBuilder(): MockIQueryBuilder;
     }
 }
 
-if (!interface_exists('OCP\DB\QueryBuilder\IQueryBuilder')) {
-    interface OCP\DB\QueryBuilder\IQueryBuilder {
+if (!interface_exists('MockIQueryBuilder')) {
+    interface MockIQueryBuilder {
         public function select(string ...$columns): self;
         public function from(string $table, string $alias = null): self;
         public function where(string $condition, ...$parameters): self;
         public function andWhere(string $condition, ...$parameters): self;
         public function orWhere(string $condition, ...$parameters): self;
-        public function execute(): OCP\DB\IResult;
+        public function execute(): MockIResult;
     }
 }
 
-if (!interface_exists('OCP\DB\IResult')) {
-    interface OCP\DB\IResult {
+if (!interface_exists('MockIResult')) {
+    interface MockIResult {
         public function fetchRow(): array|false;
         public function fetchAll(): array;
     }
+}
+
+// Now create aliases to the namespaced names
+if (!interface_exists('OCP\IUserManager')) {
+    class_alias('MockIUserManager', 'OCP\IUserManager');
+}
+
+if (!interface_exists('OCP\IUser')) {
+    class_alias('MockIUser', 'OCP\IUser');
+}
+
+if (!interface_exists('OCP\IUserSession')) {
+    class_alias('MockIUserSession', 'OCP\IUserSession');
+}
+
+if (!interface_exists('OCP\IConfig')) {
+    class_alias('MockIConfig', 'OCP\IConfig');
+}
+
+if (!interface_exists('OCP\IGroupManager')) {
+    class_alias('MockIGroupManager', 'OCP\IGroupManager');
+}
+
+if (!interface_exists('OCP\IGroup')) {
+    class_alias('MockIGroup', 'OCP\IGroup');
+}
+
+if (!interface_exists('OCP\IDBConnection')) {
+    class_alias('MockIDBConnection', 'OCP\IDBConnection');
+}
+
+if (!interface_exists('OCP\DB\QueryBuilder\IQueryBuilder')) {
+    class_alias('MockIQueryBuilder', 'OCP\DB\QueryBuilder\IQueryBuilder');
+}
+
+if (!interface_exists('OCP\DB\IResult')) {
+    class_alias('MockIResult', 'OCP\DB\IResult');
 }
 
 // Set up any additional test configuration here
