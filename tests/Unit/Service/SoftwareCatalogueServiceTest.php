@@ -205,18 +205,18 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Create a mock organization object
         $organization = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
         
-        // Expect logger to be called for welcome email
-        $this->logger->expects($this->once())
+        // Expect logger to be called for welcome email (first call)
+        $this->logger->expects($this->at(0))
             ->method('info')
             ->with('Sending welcome email to organization', ['organization' => $organization]);
         
-        // Expect logger to be called for VNG notification
-        $this->logger->expects($this->once())
+        // Expect logger to be called for VNG notification (second call)
+        $this->logger->expects($this->at(1))
             ->method('info')
             ->with('Sending VNG notification about new organization', ['organization' => $organization]);
         
-        // Expect logger to be called for security group creation
-        $this->logger->expects($this->once())
+        // Expect logger to be called for security group creation (third call)
+        $this->logger->expects($this->at(2))
             ->method('info')
             ->with('Creating security group for organization', ['organization' => $organization]);
 
@@ -237,13 +237,13 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Create a mock contact object
         $contact = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
         
-        // Expect logger to be called for user creation
-        $this->logger->expects($this->once())
+        // Expect logger to be called for user creation (first call)
+        $this->logger->expects($this->at(0))
             ->method('info')
             ->with('Creating or enabling user for contact', ['contact' => $contact]);
         
-        // Expect logger to be called for welcome email
-        $this->logger->expects($this->once())
+        // Expect logger to be called for welcome email (second call)
+        $this->logger->expects($this->at(1))
             ->method('info')
             ->with('Sending welcome email to contact', ['contact' => $contact]);
 
@@ -264,13 +264,13 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Create a mock contact object
         $contact = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
         
-        // Expect logger to be called for user update
-        $this->logger->expects($this->once())
+        // Expect logger to be called for user update (first call)
+        $this->logger->expects($this->at(0))
             ->method('info')
             ->with('Updating user for contact', ['contact' => $contact]);
         
-        // Expect logger to be called for update email
-        $this->logger->expects($this->once())
+        // Expect logger to be called for update email (second call)
+        $this->logger->expects($this->at(1))
             ->method('info')
             ->with('Sending update email to contact', ['contact' => $contact]);
 
@@ -291,13 +291,13 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Create a mock contact object
         $contact = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
         
-        // Expect logger to be called for user disabling
-        $this->logger->expects($this->once())
+        // Expect logger to be called for user disabling (first call)
+        $this->logger->expects($this->at(0))
             ->method('info')
             ->with('Disabling user for contact', ['contact' => $contact]);
         
-        // Expect logger to be called for deletion email
-        $this->logger->expects($this->once())
+        // Expect logger to be called for deletion email (second call)
+        $this->logger->expects($this->at(1))
             ->method('info')
             ->with('Sending deletion email to contact', ['contact' => $contact]);
 
