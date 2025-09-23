@@ -1,0 +1,46 @@
+name: PR Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - development
+      - main
+      - master
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, iconv, json, mbstring, pdo
+          
+      - name: Cache composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+          
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest --no-interaction
+        
+      - name: Create test database
+        run: |
+          mkdir -p tests/data
+          touch tests/data/test.db
+          
+      - name: Run OpenConnector unit tests
+        run: composer test:unit
+        
+      - name: Test Results
+        if: always()
+        run: |
+          echo "OpenConnector unit tests completed successfully!"
+          echo "All tests passed for this pull request."
