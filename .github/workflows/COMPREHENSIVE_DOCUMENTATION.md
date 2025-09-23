@@ -54,6 +54,20 @@
 - **Fix Applied**: Changed to explicit `if !` condition for better error handling
 - **Files Modified**: All workflow files with improved conditional logic
 
+### **Version 1.6** - Critical Workflow Fixes
+- **Date**: September 23, 2025
+- **Action**: Fixed multiple critical workflow issues
+- **Issues Resolved**:
+  - PHP version mismatch (dependencies require PHP >= 8.2.0)
+  - Missing PHPUnit configuration file (tests/phpunit.xml)
+  - Missing development tools (php-cs-fixer, psalm)
+  - Misleading success messages in workflow summaries
+- **Files Modified**: 
+  - Updated PHP version matrix to remove PHP 8.1
+  - Created tests/phpunit.xml configuration
+  - Added missing dev dependencies to composer.json
+  - Fixed conditional logic in workflow summaries
+
 ### **Last Updated**: September 23, 2025
 ### **Documentation Status**: ✅ Complete and Current
 
@@ -336,4 +350,4 @@ When making changes to the workflows, please update this documentation with:
 
 *This comprehensive documentation covers all aspects of the OpenConnector GitHub workflows, including setup, configuration, troubleshooting, and maintenance.*
 
-*Last Updated: September 23, 2025 | Version: 1.5 | Status: Complete*
+*Last Updated: September 23, 2025 | Version: 1.6 | Status: Complete*
