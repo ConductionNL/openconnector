@@ -141,7 +141,7 @@ if (!class_exists('MockMapper')) {
             return new \stdClass();
         }
         
-        public function findSyncContractByOriginId(string $synchronizationId, string $originId): ?\stdClass {
+        public function findSyncContractByOriginId(string $synchronizationId, string $originId) {
             return null;
         }
         
@@ -149,11 +149,11 @@ if (!class_exists('MockMapper')) {
             return null;
         }
         
-        public function findOnTarget(string $synchronization, string $targetId): \stdClass|bool|null {
+        public function findOnTarget(string $synchronization, string $targetId) {
             return null;
         }
         
-        public function findByOriginAndTarget(string $originId, string $targetId): \stdClass|bool|null {
+        public function findByOriginAndTarget(string $originId, string $targetId) {
             return null;
         }
         

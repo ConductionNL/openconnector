@@ -63,7 +63,7 @@ class EndpointsController extends Controller
 	 * @param LoggerInterface $logger Service for logging
 	 */
 	public function __construct(
-		$appName,
+		string $appName,
 		IRequest $request,
 		private IAppConfig $config,
 		private EndpointMapper $endpointMapper,
@@ -73,9 +73,9 @@ class EndpointsController extends Controller
 		private EndpointCacheService $endpointCacheService,
 		private LoggerInterface $logger,
 //		private EndpointLogMapper $endpointLogMapper,
-		$corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		$corsMaxAge = 1728000
+		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		int $corsMaxAge = 1728000
 	)
 	{
 		parent::__construct($appName, $request);

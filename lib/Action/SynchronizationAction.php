@@ -59,7 +59,7 @@ class SynchronizationAction
         }
 
         // Let's find a synchronysation
-        $response['stackTrace'][] = 'Getting synchronization: '.$argument['synchronizationId'];
+        $response['stackTrace'][] = 'Getting synchronization: '.(string)$argument['synchronizationId'];
         try {
             $synchronization = $this->synchronizationMapper->find((int) $argument['synchronizationId']);
         } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {

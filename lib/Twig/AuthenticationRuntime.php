@@ -68,6 +68,11 @@ class AuthenticationRuntime implements RuntimeExtensionInterface
 		$configuration = new Dot($source->getConfiguration(), true);
 
 		$authConfig = $configuration->get('authentication');
+		
+		// Ensure authConfig is an array
+		if (is_array($authConfig) !== true) {
+			$authConfig = [];
+		}
 
 		return $this->authService->fetchJWTToken(
 			configuration: $authConfig

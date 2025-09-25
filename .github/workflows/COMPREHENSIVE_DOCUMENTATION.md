@@ -117,6 +117,21 @@ The `tests/bootstrap.php` file provides comprehensive mocking for Nextcloud OCP 
 - **Test Bootstrap**: Fixed MockMapper method signature compatibility issues
 - **Code Quality**: Eliminated all PHP CodeSniffer violations and linting errors
 
+### **Version 1.9** - Additional CI/CD Pipeline Fixes (December 19, 2024)
+- **findAll Method Signatures**: Fixed all mapper `findAll()` methods to include missing `$ids` parameter
+- **Dependency Injection**: Added proper type assertions for Application.php service registration
+- **Mixed Operand Resolution**: Fixed remaining mixed operand errors in SynchronizationAction
+- **Parameter Usage**: Resolved unused parameter warnings in EventAction
+- **OpenRegister Integration**: Implemented conditional event listener registration based on OpenRegister availability
+- **Comprehensive Testing**: Ensured all static analysis tools pass without errors
+
+### **Version 1.10** - Code Quality and Style Improvements (December 19, 2024)
+- **Comparison Style**: Replaced `!empty()` and `if (!` with strict `===` and `!==` comparisons
+- **Type Safety**: Added proper type hints for EndpointsController constructor parameters
+- **Error Handling**: Improved error handling in MappingRuntime with proper exception throwing
+- **Code Consistency**: Standardized comparison operators throughout the codebase
+- **Documentation**: Updated comprehensive documentation with latest improvements
+
 ## 🔍 **Troubleshooting**
 
 ### **Common Issues**
