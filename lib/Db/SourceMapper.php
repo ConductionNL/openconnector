@@ -78,7 +78,6 @@ class SourceMapper extends QBMapper
 	 * @param array<string,mixed> $filters Array of field => value pairs to filter by
 	 * @param array<string> $searchConditions Array of search conditions to apply
 	 * @param array<string,mixed> $searchParams Array of parameters for the search conditions
-	 * @param array<string,array<string>> $ids Array of IDs to search for, keyed by type ('id', 'uuid', or 'slug')
 	 * @return array<Source> Array of Source entities
 	 */
 	public function findAll(
