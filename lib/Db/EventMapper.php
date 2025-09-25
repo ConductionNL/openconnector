@@ -32,14 +32,14 @@ class EventMapper extends QBMapper
 	 * @param int $id The event ID
 	 * @return Event The found event
 	 */
-	public function find(int $id): Event
+    public function find(int|string $id): Event
 	{
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->select('*')
 			->from('openconnector_events')
 			->where(
-				$qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
+				$qb->expr()->eq('id', $qb->createNamedParameter((int)$id, IQueryBuilder::PARAM_INT))
 			);
 
 		return $this->findEntity(query: $qb);

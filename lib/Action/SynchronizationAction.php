@@ -89,10 +89,12 @@ class SynchronizationAction
         $response['level'] = 'INFO';
 
         $objectCount = 0;
-        if (is_array($objects) === true) {
-            $objectCount = isset($objects['result']['contracts']) && is_array($objects['result']['contracts']) 
-                ? count($objects['result']['contracts']) 
-                : (isset($objects['result']['objects']['found']) ? (int)$objects['result']['objects']['found'] : 0);
+        if (is_array($objects) === true && isset($objects['result']) && is_array($objects['result'])) {
+            if (isset($objects['result']['contracts']) && is_array($objects['result']['contracts'])) {
+                $objectCount = count($objects['result']['contracts']);
+            } elseif (isset($objects['result']['objects']['found'])) {
+                $objectCount = (int)$objects['result']['objects']['found'];
+            }
         }
 		$response['stackTrace'][] = $response['message'] = 'Synchronized '. $objectCount .' successfully';
 

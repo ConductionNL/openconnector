@@ -110,6 +110,13 @@ The `tests/bootstrap.php` file provides comprehensive mocking for Nextcloud OCP 
 - **Inheritance Chain**: Ensured all entity classes can properly extend from base Entity class
 - **Documentation Update**: Added Entity base class to bootstrap mocking strategy
 
+### **Version 1.8** - CI/CD Pipeline Fixes (December 19, 2024)
+- **Method Signature Compatibility**: Fixed all mapper `find()` methods to accept `int|string $id` parameters
+- **Type Safety Improvements**: Added proper type casting for database parameter handling
+- **Psalm Static Analysis**: Resolved mixed array access and operand errors in Action classes
+- **Test Bootstrap**: Fixed MockMapper method signature compatibility issues
+- **Code Quality**: Eliminated all PHP CodeSniffer violations and linting errors
+
 ## 🔍 **Troubleshooting**
 
 ### **Common Issues**
