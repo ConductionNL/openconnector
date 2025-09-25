@@ -104,7 +104,7 @@ if (!class_exists('MockMapper')) {
             return new \stdClass();
         }
         
-        public function getTotalCount(array $filters = []): int {
+        public function getTotalCount(): int {
             return 0;
         }
         
