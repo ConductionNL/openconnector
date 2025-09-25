@@ -133,7 +133,7 @@ if (!class_exists('MockMapper')) {
             return [];
         }
         
-        public function getByTarget(?string $registerId = null, ?string $schemaId = null, bool $searchSource = true, bool $searchTarget = true): array {
+        public function getByTarget(?string $registerId = null, ?string $schemaId = null): array {
             return [];
         }
         
