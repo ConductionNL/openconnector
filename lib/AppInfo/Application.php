@@ -45,6 +45,7 @@ class Application extends App implements IBootstrap {
 
 		/* @var IEventDispatcher $dispatcher */
 		$dispatcher = $this->getContainer()->get(IEventDispatcher::class);
+		/** @var IEventDispatcher $dispatcher */
 		
 		// Check if OpenRegister event classes are available before registering listeners
 		$openRegisterAvailable = class_exists('OCA\OpenRegister\Event\ObjectCreatedEvent');

@@ -212,10 +212,10 @@ class PingActionTest extends TestCase
             ->getMock();
         $callLog->id = 456;
         
-        // When sourceId is invalid (non-numeric), (int) 'invalid' becomes 0
+        // When sourceId is invalid (non-numeric), is_numeric() returns false, so it defaults to sourceId = 1
         $this->sourceMapper->expects($this->once())
             ->method('find')
-            ->with(0)
+            ->with(1)
             ->willReturn($source);
         
         $this->callService->expects($this->once())
@@ -228,7 +228,7 @@ class PingActionTest extends TestCase
         $this->assertIsArray($result);
         $this->assertArrayHasKey('stackTrace', $result);
         $this->assertContains('Running PingAction', $result['stackTrace']);
-        $this->assertContains("Found sourceId {$sourceId} in arguments", $result['stackTrace']);
+        $this->assertContains("No sourceId in arguments, default to sourceId = 1", $result['stackTrace']);
     }
 
     /**

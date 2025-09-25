@@ -6,6 +6,9 @@ use DateTime;
 use JsonSerializable;
 use OCP\AppFramework\Db\Entity;
 
+/**
+ * @psalm-suppress UndefinedMagicMethod
+ */
 class CallLog extends Entity implements JsonSerializable
 {
     /** @var string|null $uuid Unique identifier for this call log entry */

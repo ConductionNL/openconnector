@@ -205,20 +205,14 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Create a mock organization object
         $organization = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
         
-        // Expect logger to be called for welcome email (first call)
-        $this->logger->expects($this->at(0))
+        // Expect logger to be called exactly 3 times with specific messages
+        $this->logger->expects($this->exactly(3))
             ->method('info')
-            ->with('Sending welcome email to organization', ['organization' => $organization]);
-        
-        // Expect logger to be called for VNG notification (second call)
-        $this->logger->expects($this->at(1))
-            ->method('info')
-            ->with('Sending VNG notification about new organization', ['organization' => $organization]);
-        
-        // Expect logger to be called for security group creation (third call)
-        $this->logger->expects($this->at(2))
-            ->method('info')
-            ->with('Creating security group for organization', ['organization' => $organization]);
+            ->withConsecutive(
+                ['Sending welcome email to organization', ['organization' => $organization]],
+                ['Sending VNG notification about new organization', ['organization' => $organization]],
+                ['Creating security group for organization', ['organization' => $organization]]
+            );
 
         $this->softwareCatalogueService->handleNewOrganization($organization);
     }
@@ -237,15 +231,13 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Create a mock contact object
         $contact = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
         
-        // Expect logger to be called for user creation (first call)
-        $this->logger->expects($this->at(0))
+        // Expect logger to be called exactly 2 times with specific messages
+        $this->logger->expects($this->exactly(2))
             ->method('info')
-            ->with('Creating or enabling user for contact', ['contact' => $contact]);
-        
-        // Expect logger to be called for welcome email (second call)
-        $this->logger->expects($this->at(1))
-            ->method('info')
-            ->with('Sending welcome email to contact', ['contact' => $contact]);
+            ->withConsecutive(
+                ['Creating or enabling user for contact', ['contact' => $contact]],
+                ['Sending welcome email to contact', ['contact' => $contact]]
+            );
 
         $this->softwareCatalogueService->handleNewContact($contact);
     }
@@ -264,15 +256,13 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Create a mock contact object
         $contact = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
         
-        // Expect logger to be called for user update (first call)
-        $this->logger->expects($this->at(0))
+        // Expect logger to be called exactly 2 times with specific messages
+        $this->logger->expects($this->exactly(2))
             ->method('info')
-            ->with('Updating user for contact', ['contact' => $contact]);
-        
-        // Expect logger to be called for update email (second call)
-        $this->logger->expects($this->at(1))
-            ->method('info')
-            ->with('Sending update email to contact', ['contact' => $contact]);
+            ->withConsecutive(
+                ['Updating user for contact', ['contact' => $contact]],
+                ['Sending update email to contact', ['contact' => $contact]]
+            );
 
         $this->softwareCatalogueService->handleContactUpdate($contact);
     }
@@ -291,15 +281,13 @@ class SoftwareCatalogueServiceTest extends TestCase
         // Create a mock contact object
         $contact = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
         
-        // Expect logger to be called for user disabling (first call)
-        $this->logger->expects($this->at(0))
+        // Expect logger to be called exactly 2 times with specific messages
+        $this->logger->expects($this->exactly(2))
             ->method('info')
-            ->with('Disabling user for contact', ['contact' => $contact]);
-        
-        // Expect logger to be called for deletion email (second call)
-        $this->logger->expects($this->at(1))
-            ->method('info')
-            ->with('Sending deletion email to contact', ['contact' => $contact]);
+            ->withConsecutive(
+                ['Disabling user for contact', ['contact' => $contact]],
+                ['Sending deletion email to contact', ['contact' => $contact]]
+            );
 
         $this->softwareCatalogueService->handleContactDeletion($contact);
     }

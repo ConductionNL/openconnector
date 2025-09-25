@@ -205,11 +205,14 @@ class SynchronizationActionTest extends TestCase
             ->with($synchronizationId)
             ->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Synchronization not found'));
         
-        // The current implementation doesn't catch the DoesNotExistException, so it will be thrown
-        $this->expectException(\OCP\AppFramework\Db\DoesNotExistException::class);
-        $this->expectExceptionMessage('Synchronization not found');
+        // The current implementation catches the DoesNotExistException and returns a response
+        $result = $this->synchronizationAction->run($arguments);
         
-        $this->synchronizationAction->run($arguments);
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('level', $result);
+        $this->assertEquals('WARNING', $result['level']);
+        $this->assertArrayHasKey('message', $result);
+        $this->assertStringContainsString('Synchronization not found', $result['message']);
     }
 
     /**

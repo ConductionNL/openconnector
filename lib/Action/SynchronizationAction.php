@@ -77,7 +77,8 @@ class SynchronizationAction
 			$response['stackTrace'][] = $response['message'] = 'Stopped synchronization: ' . $e->getMessage();
 			$headers = $e->getHeaders();
 			if (isset($headers['X-RateLimit-Reset']) === true) {
-				$response['nextRun'] = $headers['X-RateLimit-Reset'];
+				$resetTime = $headers['X-RateLimit-Reset'];
+				$response['nextRun'] = is_string($resetTime) ? $resetTime : (string)$resetTime;
 				$response['stackTrace'][] = 'Returning X-RateLimit-Reset header to update Job nextRun: ' . (string)$response['nextRun'];
 			}
 			return $response;

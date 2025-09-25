@@ -91,7 +91,7 @@ if (!class_exists('MockMapper')) {
             return $entity;
         }
         
-        public function delete($entity) {
+        public function delete(\OCP\AppFramework\Db\Entity $entity): \OCP\AppFramework\Db\Entity {
             return $entity;
         }
         
