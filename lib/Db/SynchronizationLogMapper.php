@@ -38,8 +38,8 @@ class SynchronizationLogMapper extends QBMapper
 	public function findAll(
 		?int $limit = null, 
 		?int $offset = null, 
-		?array $filters = [], 
-		?array $searchConditions = [], 
+		?array $filters = [],
+		?array $searchConditions = [],
 		?array $searchParams = []
 	): array {
 		$qb = $this->db->getQueryBuilder();

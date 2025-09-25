@@ -78,7 +78,7 @@ if (!class_exists('MockMapper')) {
             ?array $filters = [],
             ?array $searchConditions = [],
             ?array $searchParams = [],
-            ?array $ids = []
+            ...$extraParams
         ): array {
             return [];
         }
