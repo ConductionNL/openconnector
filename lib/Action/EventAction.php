@@ -14,11 +14,13 @@ class EventAction
 {
     private CallService $callService;
     private SourceMapper $sourceMapper;
+    
     public function __construct(
         CallService $callService,
         SourceMapper $sourceMapper,
     ) {
         $this->callService = $callService;
+        $this->sourceMapper = $sourceMapper;
     }
 
     //@todo: make this a bit more generic :')

@@ -104,6 +104,12 @@ The `tests/bootstrap.php` file provides comprehensive mocking for Nextcloud OCP 
 - **Missing Tools**: Added `php-cs-fixer` and `psalm` to dev dependencies
 - **Summary Logic**: Fixed conditional logic for accurate status reporting
 
+### **Version 1.7** - Critical Entity Base Class Fix (September 23, 2025)
+- **Missing Entity Base Class**: Added `MockEntity` base class for `OCP\AppFramework\Db\Entity`
+- **Fatal Error Resolution**: Fixed "Class OCP\AppFramework\Db\Entity not found" fatal error
+- **Inheritance Chain**: Ensured all entity classes can properly extend from base Entity class
+- **Documentation Update**: Added Entity base class to bootstrap mocking strategy
+
 ## 🔍 **Troubleshooting**
 
 ### **Common Issues**
@@ -169,4 +175,4 @@ The workflows should:
 
 ---
 
-*Last Updated: September 23, 2025 | Version: 1.6 | Status: Complete*
+*Last Updated: September 23, 2025 | Version: 1.7 | Status: Complete*

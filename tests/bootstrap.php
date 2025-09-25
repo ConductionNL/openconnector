@@ -137,7 +137,7 @@ if (!class_exists('MockMapper')) {
             return [];
         }
         
-        public function findOrCreateByLocation(string $location, array $defaultData = []): \stdClass {
+        public function findOrCreateByLocation(string $location, array $defaultData = []) {
             return new \stdClass();
         }
         

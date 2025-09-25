@@ -60,8 +60,9 @@ class SynchronizationAction
 
         // Let's find a synchronysation
         $response['stackTrace'][] = 'Getting synchronization: '.$argument['synchronizationId'];
-        $synchronization = $this->synchronizationMapper->find((int) $argument['synchronizationId']);
-        if ($synchronization === null) {
+        try {
+            $synchronization = $this->synchronizationMapper->find((int) $argument['synchronizationId']);
+        } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
             $response['level'] = 'WARNING';
 			$response['stackTrace'][] = $response['message'] = 'Synchronization not found: '.$argument['synchronizationId'];
             return $response;
@@ -89,7 +90,9 @@ class SynchronizationAction
 
         $objectCount = 0;
         if (is_array($objects) === true) {
-            $objectCount = $objects['result']['contracts'] ? count($objects['result']['contracts']) : $objects['result']['objects']['found'];
+            $objectCount = isset($objects['result']['contracts']) && is_array($objects['result']['contracts']) 
+                ? count($objects['result']['contracts']) 
+                : (isset($objects['result']['objects']['found']) ? (int)$objects['result']['objects']['found'] : 0);
         }
 		$response['stackTrace'][] = $response['message'] = 'Synchronized '. $objectCount .' successfully';
 
