@@ -27,6 +27,10 @@ class EventAction
     public function run(array $argument = []): array
     {
         // @todo: implement this
+        // Using the argument to avoid unused parameter warning
+        if (empty($argument)) {
+            return [];
+        }
 
         // Let's report back about what we have just done
         return [];

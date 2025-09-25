@@ -33,11 +33,14 @@ class Application extends App implements IBootstrap {
 
 		// Register services
 		$context->registerService(SettingsService::class, function($c) {
-			return new SettingsService(
-				$c->get('OCP\IDBConnection'),
-				$c->get('OCP\IAppConfig'),
-				$c->get('Psr\Log\LoggerInterface')
-			);
+			/** @var \OCP\IDBConnection $db */
+			$db = $c->get('OCP\IDBConnection');
+			/** @var \OCP\IAppConfig $config */
+			$config = $c->get('OCP\IAppConfig');
+			/** @var \Psr\Log\LoggerInterface $logger */
+			$logger = $c->get('Psr\Log\LoggerInterface');
+			
+			return new SettingsService($db, $config, $logger);
 		});
 
 		/* @var IEventDispatcher $dispatcher */

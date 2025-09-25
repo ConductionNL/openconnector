@@ -219,7 +219,7 @@ class SynchronizationContractMapper extends QBMapper
      * @param array|null $searchParams Array of search parameters
      * @return array<SynchronizationContract> Array of found contracts
      */
-    public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = []): array
+    public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = [], ?array $ids = []): array
     {
         // Create query builder
         $qb = $this->db->getQueryBuilder();

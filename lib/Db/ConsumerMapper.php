@@ -58,7 +58,7 @@ class ConsumerMapper extends QBMapper
 	 * @param array|null $searchParams Array of search parameters
 	 * @return array An array of Consumer entities
 	 */
-	public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = []): array
+	public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = [], ?array $ids = []): array
 	{
 		$qb = $this->db->getQueryBuilder();
 

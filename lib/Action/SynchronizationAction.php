@@ -64,7 +64,7 @@ class SynchronizationAction
             $synchronization = $this->synchronizationMapper->find((int) $argument['synchronizationId']);
         } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
             $response['level'] = 'WARNING';
-			$response['stackTrace'][] = $response['message'] = 'Synchronization not found: '.$argument['synchronizationId'];
+			$response['stackTrace'][] = $response['message'] = 'Synchronization not found: '.(string)$argument['synchronizationId'];
             return $response;
         }
 
@@ -75,9 +75,10 @@ class SynchronizationAction
         } catch (TooManyRequestsHttpException $e) {
 			$response['level'] = 'WARNING';
 			$response['stackTrace'][] = $response['message'] = 'Stopped synchronization: ' . $e->getMessage();
-			if (isset($e->getHeaders()['X-RateLimit-Reset']) === true) {
-				$response['nextRun'] = $e->getHeaders()['X-RateLimit-Reset'];
-				$response['stackTrace'][] = 'Returning X-RateLimit-Reset header to update Job nextRun: ' . $response['nextRun'];
+			$headers = $e->getHeaders();
+			if (isset($headers['X-RateLimit-Reset']) === true) {
+				$response['nextRun'] = $headers['X-RateLimit-Reset'];
+				$response['stackTrace'][] = 'Returning X-RateLimit-Reset header to update Job nextRun: ' . (string)$response['nextRun'];
 			}
 			return $response;
 		} catch (Exception $e) {

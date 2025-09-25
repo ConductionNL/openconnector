@@ -61,7 +61,7 @@ class SynchronizationContractLogMapper extends QBMapper
 		}
 	}
 
-	public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = []): array
+	public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = [], ?array $ids = []): array
 	{
 		$qb = $this->db->getQueryBuilder();
 
