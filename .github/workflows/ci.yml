@@ -224,6 +224,18 @@ jobs:
           echo "Waiting for app installation to complete..."
           sleep 10
           
+      - name: Install Composer in Nextcloud container
+        run: |
+          echo "=== Installing Composer in Nextcloud Container ==="
+          echo "Installing Composer..."
+          docker exec nextcloud-test bash -c "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+          echo "Verifying Composer installation..."
+          if ! docker exec nextcloud-test bash -c "composer --version"; then
+            echo "❌ ERROR: Composer installation failed"
+            exit 1
+          fi
+          echo "✅ Composer installed successfully"
+          
       - name: Diagnose Nextcloud container environment
         run: |
           echo "=== Nextcloud Container Environment Diagnostics ==="
@@ -369,7 +381,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql
           tools: composer:v2
           
@@ -557,6 +569,18 @@ jobs:
           # Wait a bit more for Nextcloud to fully process the app installation
           echo "Waiting for app installation to complete..."
           sleep 10
+          
+      - name: Install Composer in Nextcloud container (Quality)
+        run: |
+          echo "=== Installing Composer in Nextcloud Container (Quality) ==="
+          echo "Installing Composer..."
+          docker exec nextcloud-test-quality bash -c "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+          echo "Verifying Composer installation..."
+          if ! docker exec nextcloud-test-quality bash -c "composer --version"; then
+            echo "❌ ERROR: Composer installation failed"
+            exit 1
+          fi
+          echo "✅ Composer installed successfully"
           
       - name: Diagnose Nextcloud container environment (Quality)
         run: |
