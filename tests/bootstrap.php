@@ -171,17 +171,68 @@ if (!class_exists('MockMapper')) {
     }
 }
 
+// Create a specific MockQBMapper for QBMapper classes that need the $ids parameter
+if (!class_exists('MockQBMapper')) {
+    abstract class MockQBMapper {
+        protected $db;
+        protected $tableName;
+        
+        public function __construct($db, $tableName) {
+            $this->db = $db;
+            $this->tableName = $tableName;
+        }
+        
+        public function find(int|string $id) {
+            return null;
+        }
+        
+        public function findAll(
+            ?int $limit = null,
+            ?int $offset = null,
+            ?array $filters = [],
+            ?array $searchConditions = [],
+            ?array $searchParams = [],
+            ...$extraParams
+        ): array {
+            return [];
+        }
+        
+        public function insert($entity) {
+            return $entity;
+        }
+        
+        public function update($entity) {
+            return $entity;
+        }
+        
+        public function delete(\OCP\AppFramework\Db\Entity $entity): \OCP\AppFramework\Db\Entity {
+            return $entity;
+        }
+        
+        // Additional commonly used methods
+        public function createFromArray(array $object) {
+            return new \stdClass();
+        }
+        
+        public function updateFromArray(int $id, array $object) {
+            return new \stdClass();
+        }
+        
+        public function getTotalCount(): int {
+            return 0;
+        }
+    }
+}
+
 // Create aliases to the namespaced classes
 if (!class_exists('OCP\AppFramework\Db\Entity')) {
     class_alias('MockEntity', 'OCP\AppFramework\Db\Entity');
 }
 
-if (!class_exists('OCP\AppFramework\Db\Mapper')) {
-    class_alias('MockMapper', 'OCP\AppFramework\Db\Mapper');
-}
+// Note: No mappers extend the base Mapper class, all extend QBMapper
 
 if (!class_exists('OCP\AppFramework\Db\QBMapper')) {
-    class_alias('MockMapper', 'OCP\AppFramework\Db\QBMapper');
+    class_alias('MockQBMapper', 'OCP\AppFramework\Db\QBMapper');
 }
 
 // Define mock interfaces with simple names first
@@ -467,4 +518,116 @@ if (!class_exists('OCP\Files\NotFoundException')) {
 }
 
 // Set up any additional test configuration here
+
+// Create specific mocks for different mapper signature categories
+
+// Category 1: Mappers with $ids parameter (SourceMapper, EndpointMapper)
+if (!class_exists('MockMapperWithIds')) {
+    class MockMapperWithIds extends MockQBMapper {
+        public function findAll(
+            ?int $limit = null,
+            ?int $offset = null,
+            ?array $filters = [],
+            ?array $searchConditions = [],
+            ?array $searchParams = [],
+            ?array $ids = []
+        ): array {
+            return [];
+        }
+    }
+}
+
+// Category 2: Mappers with search parameters but no $ids
+if (!class_exists('MockMapperWithSearch')) {
+    class MockMapperWithSearch extends MockQBMapper {
+        public function findAll(
+            ?int $limit = null,
+            ?int $offset = null,
+            ?array $filters = [],
+            ?array $searchConditions = [],
+            ?array $searchParams = []
+        ): array {
+            return [];
+        }
+    }
+}
+
+// Category 3: Basic mappers with minimal parameters
+if (!class_exists('MockMapperBasic')) {
+    class MockMapperBasic extends MockQBMapper {
+        public function findAll(
+            ?int $limit = null,
+            ?int $offset = null,
+            ?array $filters = []
+        ): array {
+            return [];
+        }
+    }
+}
+
+// Category 4: Mappers with sort fields
+if (!class_exists('MockMapperWithSort')) {
+    class MockMapperWithSort extends MockQBMapper {
+        public function findAll(
+            ?int $limit = null,
+            ?int $offset = null,
+            ?array $filters = [],
+            ?array $searchConditions = [],
+            ?array $searchParams = [],
+            ?array $sortFields = []
+        ): array {
+            return [];
+        }
+    }
+}
+
+// Create specific aliases for each mapper
+if (!class_exists('OCA\OpenConnector\Db\SourceMapper')) {
+    class_alias('MockMapperWithIds', 'OCA\OpenConnector\Db\SourceMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\EndpointMapper')) {
+    class_alias('MockMapperWithIds', 'OCA\OpenConnector\Db\EndpointMapper');
+}
+
+if (!class_exists('OCA\OpenConnector\Db\RuleMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\RuleMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\JobMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\JobMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\MappingMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\MappingMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\SynchronizationMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\SynchronizationMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\SynchronizationLogMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\SynchronizationLogMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\SynchronizationContractMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\SynchronizationContractMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\JobLogMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\JobLogMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\SynchronizationContractLogMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\SynchronizationContractLogMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\EventMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\EventMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\ConsumerMapper')) {
+    class_alias('MockMapperWithSearch', 'OCA\OpenConnector\Db\ConsumerMapper');
+}
+
+if (!class_exists('OCA\OpenConnector\Db\EventSubscriptionMapper')) {
+    class_alias('MockMapperBasic', 'OCA\OpenConnector\Db\EventSubscriptionMapper');
+}
+if (!class_exists('OCA\OpenConnector\Db\EventMessageMapper')) {
+    class_alias('MockMapperBasic', 'OCA\OpenConnector\Db\EventMessageMapper');
+}
+
+if (!class_exists('OCA\OpenConnector\Db\CallLogMapper')) {
+    class_alias('MockMapperWithSort', 'OCA\OpenConnector\Db\CallLogMapper');
+}
 // This could include database setup, mock services, etc.
