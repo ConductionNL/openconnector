@@ -235,6 +235,38 @@ jobs:
           fi
           echo "✅ PHPUnit is working correctly"
           
+      - name: Diagnose PHPUnit installation issues
+        run: |
+          echo "=== PHPUnit Installation Diagnostics ==="
+          echo "Checking if vendor directory exists..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/vendor/ || echo 'vendor directory not found'"
+          
+          echo "Checking if vendor/bin directory exists..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/vendor/bin/ || echo 'vendor/bin directory not found'"
+          
+          echo "Checking what's in vendor/bin directory..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/vendor/bin/ | head -20 || echo 'Cannot list vendor/bin contents'"
+          
+          echo "Checking if phpunit executable exists..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/vendor/bin/phpunit || echo 'phpunit executable not found'"
+          
+          echo "Checking composer.json for phpunit dependency..."
+          docker exec nextcloud-test bash -c "grep -i phpunit /var/www/html/composer.json || echo 'phpunit not found in composer.json'"
+          
+          echo "Checking composer.lock for phpunit..."
+          docker exec nextcloud-test bash -c "grep -i phpunit /var/www/html/composer.lock || echo 'phpunit not found in composer.lock'"
+          
+          echo "Checking if we can run composer show phpunit..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && composer show phpunit/phpunit || echo 'phpunit not installed via composer'"
+          
+          echo "Checking current working directory in container..."
+          docker exec nextcloud-test bash -c "pwd && ls -la"
+          
+          echo "Checking if we can find phpunit anywhere..."
+          docker exec nextcloud-test bash -c "find /var/www/html -name phpunit -type f 2>/dev/null || echo 'phpunit not found anywhere'"
+          
+          echo "=== End PHPUnit Diagnostics ==="
+          
       - name: Run PHP linting
         run: composer lint
         continue-on-error: true
@@ -497,6 +529,38 @@ jobs:
             exit 1
           fi
           echo "✅ PHPUnit is working correctly"
+          
+      - name: Diagnose PHPUnit installation issues (Quality)
+        run: |
+          echo "=== PHPUnit Installation Diagnostics (Quality) ==="
+          echo "Checking if vendor directory exists..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/vendor/ || echo 'vendor directory not found'"
+          
+          echo "Checking if vendor/bin directory exists..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/vendor/bin/ || echo 'vendor/bin directory not found'"
+          
+          echo "Checking what's in vendor/bin directory..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/vendor/bin/ | head -20 || echo 'Cannot list vendor/bin contents'"
+          
+          echo "Checking if phpunit executable exists..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/vendor/bin/phpunit || echo 'phpunit executable not found'"
+          
+          echo "Checking composer.json for phpunit dependency..."
+          docker exec nextcloud-test-quality bash -c "grep -i phpunit /var/www/html/composer.json || echo 'phpunit not found in composer.json'"
+          
+          echo "Checking composer.lock for phpunit..."
+          docker exec nextcloud-test-quality bash -c "grep -i phpunit /var/www/html/composer.lock || echo 'phpunit not found in composer.lock'"
+          
+          echo "Checking if we can run composer show phpunit..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer show phpunit/phpunit || echo 'phpunit not installed via composer'"
+          
+          echo "Checking current working directory in container..."
+          docker exec nextcloud-test-quality bash -c "pwd && ls -la"
+          
+          echo "Checking if we can find phpunit anywhere..."
+          docker exec nextcloud-test-quality bash -c "find /var/www/html -name phpunit -type f 2>/dev/null || echo 'phpunit not found anywhere'"
+          
+          echo "=== End PHPUnit Diagnostics (Quality) ==="
         
       - name: Run unit tests inside Nextcloud container
         run: |
