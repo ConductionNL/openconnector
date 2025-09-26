@@ -286,7 +286,7 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html && find . -name phpunit -type f"
           
           echo "Verifying PHPUnit installation..."
-          if ! docker exec nextcloud-test bash -c "cd /var/www/html && ./vendor/bin/phpunit --version"; then
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --version"; then
             echo "❌ ERROR: PHPUnit installation verification failed"
             echo "Checking alternative locations..."
             docker exec nextcloud-test bash -c "cd /var/www/html && find . -name phpunit -type f -executable"
@@ -334,7 +334,7 @@ jobs:
         run: |
           # Run tests from inside the Nextcloud container where all OCP classes are available
           echo "Running tests inside Nextcloud container..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && ./vendor/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap.php apps-extra/openconnector/tests"
+          docker exec nextcloud-test bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap.php apps-extra/openconnector/tests"
         
       - name: Upload coverage (PHP 8.2 only)
         if: matrix.php-version == '8.2'
@@ -640,7 +640,7 @@ jobs:
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name phpunit -type f"
           
           echo "Verifying PHPUnit installation..."
-          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/phpunit --version"; then
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --version"; then
             echo "❌ ERROR: PHPUnit installation verification failed"
             echo "Checking alternative locations..."
             docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name phpunit -type f -executable"
@@ -684,7 +684,7 @@ jobs:
         run: |
           # Run tests from inside the Nextcloud container where all OCP classes are available
           echo "Running tests inside Nextcloud container..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap.php apps-extra/openconnector/tests"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap.php apps-extra/openconnector/tests"
         
       - name: Generate quality status
         if: always()
