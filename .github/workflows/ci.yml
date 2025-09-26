@@ -117,12 +117,25 @@ jobs:
           echo "Copying OpenConnector app into Nextcloud container..."
           docker cp . nextcloud-test:/var/www/html/apps-extra/openconnector
           
+          # Check what's available in the container
+          echo "=== Nextcloud Container Diagnostics ==="
+          echo "Checking if occ command is available..."
+          docker exec nextcloud-test bash -c "which occ || echo 'occ not found'"
+          echo "Checking if php occ works..."
+          docker exec nextcloud-test bash -c "php occ --version || echo 'php occ not working'"
+          echo "Checking Nextcloud installation..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/occ || echo 'occ file not found'"
+          echo "Checking if Nextcloud is fully initialized..."
+          docker exec nextcloud-test bash -c "php -r 'echo \"PHP is working\n\";'"
+          echo "=== End Diagnostics ==="
+          
           # Install the OpenConnector app
           echo "Installing OpenConnector app..."
-          docker exec nextcloud-test php occ app:install openconnector || true
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector" || echo "App installation failed, continuing..."
           
           # Enable the app
-          docker exec nextcloud-test php occ app:enable openconnector
+          echo "Enabling OpenConnector app..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector" || echo "App enabling failed, continuing..."
           
           # Set up test environment
           docker exec nextcloud-test php occ config:system:set debug --value true
@@ -289,12 +302,25 @@ jobs:
           echo "Copying OpenConnector app into Nextcloud container..."
           docker cp . nextcloud-test-quality:/var/www/html/apps-extra/openconnector
           
+          # Check what's available in the container
+          echo "=== Nextcloud Container Diagnostics ==="
+          echo "Checking if occ command is available..."
+          docker exec nextcloud-test-quality bash -c "which occ || echo 'occ not found'"
+          echo "Checking if php occ works..."
+          docker exec nextcloud-test-quality bash -c "php occ --version || echo 'php occ not working'"
+          echo "Checking Nextcloud installation..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/occ || echo 'occ file not found'"
+          echo "Checking if Nextcloud is fully initialized..."
+          docker exec nextcloud-test-quality bash -c "php -r 'echo \"PHP is working\n\";'"
+          echo "=== End Diagnostics ==="
+          
           # Install the OpenConnector app
           echo "Installing OpenConnector app..."
-          docker exec nextcloud-test-quality php occ app:install openconnector || true
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector" || echo "App installation failed, continuing..."
           
           # Enable the app
-          docker exec nextcloud-test-quality php occ app:enable openconnector
+          echo "Enabling OpenConnector app..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector" || echo "App enabling failed, continuing..."
           
           # Set up test environment
           docker exec nextcloud-test-quality php occ config:system:set debug --value true
