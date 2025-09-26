@@ -153,20 +153,30 @@ jobs:
         run: |
           echo "=== Nextcloud occ Command Diagnostics ==="
           echo "Checking if occ command is available..."
-          if ! docker exec nextcloud-test bash -c "which occ"; then
-            echo "❌ ERROR: occ command is not available in the container PATH"
-            echo "This indicates Nextcloud is not fully initialized or occ is not installed"
-            exit 1
-          fi
-          echo "✅ occ command is available"
           
-          echo "Checking if php occ works..."
-          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ --version"; then
-            echo "❌ ERROR: php occ command is not working"
-            echo "This indicates Nextcloud is not fully initialized or occ file is missing"
+          # Check if occ file exists
+          if ! docker exec nextcloud-test bash -c "test -f /var/www/html/occ"; then
+            echo "❌ ERROR: occ file not found at /var/www/html/occ"
+            echo "This indicates Nextcloud is not properly installed"
             exit 1
           fi
-          echo "✅ php occ is working"
+          echo "✅ occ file exists at /var/www/html/occ"
+          
+          # Check if occ is executable
+          if ! docker exec nextcloud-test bash -c "test -x /var/www/html/occ"; then
+            echo "❌ ERROR: occ file is not executable"
+            echo "This indicates Nextcloud installation is incomplete"
+            exit 1
+          fi
+          echo "✅ occ file is executable"
+          
+          # Test if occ command works
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ --version"; then
+            echo "❌ ERROR: occ command failed to run"
+            echo "This indicates Nextcloud is not fully initialized or has configuration issues"
+            exit 1
+          fi
+          echo "✅ occ command is working"
           
           echo "Checking Nextcloud installation..."
           if ! docker exec nextcloud-test bash -c "ls -la /var/www/html/occ"; then
@@ -477,20 +487,30 @@ jobs:
         run: |
           echo "=== Nextcloud occ Command Diagnostics (Quality) ==="
           echo "Checking if occ command is available..."
-          if ! docker exec nextcloud-test-quality bash -c "which occ"; then
-            echo "❌ ERROR: occ command is not available in the container PATH"
-            echo "This indicates Nextcloud is not fully initialized or occ is not installed"
-            exit 1
-          fi
-          echo "✅ occ command is available"
           
-          echo "Checking if php occ works..."
-          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ --version"; then
-            echo "❌ ERROR: php occ command is not working"
-            echo "This indicates Nextcloud is not fully initialized or occ file is missing"
+          # Check if occ file exists
+          if ! docker exec nextcloud-test-quality bash -c "test -f /var/www/html/occ"; then
+            echo "❌ ERROR: occ file not found at /var/www/html/occ"
+            echo "This indicates Nextcloud is not properly installed"
             exit 1
           fi
-          echo "✅ php occ is working"
+          echo "✅ occ file exists at /var/www/html/occ"
+          
+          # Check if occ is executable
+          if ! docker exec nextcloud-test-quality bash -c "test -x /var/www/html/occ"; then
+            echo "❌ ERROR: occ file is not executable"
+            echo "This indicates Nextcloud installation is incomplete"
+            exit 1
+          fi
+          echo "✅ occ file is executable"
+          
+          # Test if occ command works
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ --version"; then
+            echo "❌ ERROR: occ command failed to run"
+            echo "This indicates Nextcloud is not fully initialized or has configuration issues"
+            exit 1
+          fi
+          echo "✅ occ command is working"
           
           echo "Checking Nextcloud installation..."
           if ! docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/occ"; then
