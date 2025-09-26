@@ -59,6 +59,10 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 - Fixed apps-extra directory creation issue
 - Fixed PHPUnit command path issue
 - Added container cleanup for all services
+- **Enhanced Nextcloud health check** - Wait for full initialization including database setup
+- **Improved occ command reliability** - Proper working directory and timing
+- **Extended timeout** - 10 minutes for complete Nextcloud initialization
+- **Better error handling** - Robust curl commands with JSON validation
 
 ### Version 1.12 - Reversion to Original Approach
 **Date:** September 26, 2025  
@@ -97,6 +101,11 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 - PHPUnit installation in container
 - Composer availability investigation
 - Test execution optimization
+
+### ✅ **Recently Fixed**
+- **Nextcloud initialization timing** - Enhanced health check with JSON validation
+- **occ command reliability** - Proper working directory and extended timeouts
+- **Container startup sequence** - Better coordination between services
 
 ### 📋 **Next Steps**
 1. Resolve composer availability in Nextcloud container

@@ -105,9 +105,10 @@ jobs:
             -e WITH_REDIS=YES \
             ghcr.io/juliusknorr/nextcloud-dev-php81:latest
           
-          # Wait for Nextcloud to be ready
-          echo "Waiting for Nextcloud to start..."
-          timeout 300 bash -c 'until curl -f http://localhost:8080/status.php; do sleep 5; done'
+          # Wait for Nextcloud to be fully ready (including database initialization)
+          echo "Waiting for Nextcloud to be fully initialized..."
+          timeout 600 bash -c 'until curl -sSf http://localhost:8080/status.php | grep -q "installed.*true"; do echo "Waiting for Nextcloud to start..."; sleep 10; done'
+          echo "Nextcloud is fully initialized and ready!"
           
           # Create apps-extra directory in Nextcloud container
           echo "Creating apps-extra directory in Nextcloud container..."
@@ -138,8 +139,12 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector" || echo "App enabling failed, continuing..."
           
           # Set up test environment
-          docker exec nextcloud-test php occ config:system:set debug --value true
-          docker exec nextcloud-test php occ config:system:set loglevel --value 0
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ config:system:set debug --value true"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ config:system:set loglevel --value 0"
+          
+          # Wait a bit more for Nextcloud to fully process the app installation
+          echo "Waiting for app installation to complete..."
+          sleep 10
           
           # Check what's available in the container
           echo "=== Container Diagnostics ==="
@@ -290,9 +295,10 @@ jobs:
             -e WITH_REDIS=YES \
             ghcr.io/juliusknorr/nextcloud-dev-php81:latest
           
-          # Wait for Nextcloud to be ready
-          echo "Waiting for Nextcloud to start..."
-          timeout 300 bash -c 'until curl -f http://localhost:8081/status.php; do sleep 5; done'
+          # Wait for Nextcloud to be fully ready (including database initialization)
+          echo "Waiting for Nextcloud to be fully initialized..."
+          timeout 600 bash -c 'until curl -sSf http://localhost:8081/status.php | grep -q "installed.*true"; do echo "Waiting for Nextcloud to start..."; sleep 10; done'
+          echo "Nextcloud is fully initialized and ready!"
           
           # Create apps-extra directory in Nextcloud container
           echo "Creating apps-extra directory in Nextcloud container..."
@@ -323,8 +329,12 @@ jobs:
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector" || echo "App enabling failed, continuing..."
           
           # Set up test environment
-          docker exec nextcloud-test-quality php occ config:system:set debug --value true
-          docker exec nextcloud-test-quality php occ config:system:set loglevel --value 0
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ config:system:set debug --value true"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ config:system:set loglevel --value 0"
+          
+          # Wait a bit more for Nextcloud to fully process the app installation
+          echo "Waiting for app installation to complete..."
+          sleep 10
           
           # Check what's available in the container
           echo "=== Container Diagnostics ==="
