@@ -8,7 +8,7 @@ on:
 
 jobs:
   tests:
-    name: PHP ${{ matrix.php-version }} Tests
+    name: PHP ${{ matrix.php-version }} Tests with Nextcloud
     runs-on: ubuntu-latest
     
     strategy:
@@ -51,18 +51,91 @@ jobs:
           
           # Verify PHPUnit works
           ./vendor/bin/phpunit --version
-        
-      - name: Create test database
+
+      - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
         run: |
-          mkdir -p tests/data
-          touch tests/data/test.db
+          # Start MariaDB container (matching local setup)
+          docker run -d \
+            --name mariadb-test \
+            -e MYSQL_ROOT_PASSWORD=nextcloud \
+            -e MYSQL_PASSWORD=nextcloud \
+            -e MYSQL_USER=nextcloud \
+            -e MYSQL_DATABASE=nextcloud \
+            mariadb:10.6
+          
+          # Start Redis container (required by Nextcloud)
+          docker run -d \
+            --name redis-test \
+            redis:7
+          
+          # Start Mail container (MailHog for testing)
+          docker run -d \
+            --name mail-test \
+            -p 1025:1025 \
+            -p 8025:8025 \
+            ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest
+          
+          # Wait for MariaDB to be ready
+          echo "Waiting for MariaDB to start..."
+          timeout 60 bash -c 'until docker exec mariadb-test mysqladmin ping -h"localhost" --silent; do sleep 2; done'
+          
+          # Start Nextcloud container with all dependencies
+          docker run -d \
+            --name nextcloud-test \
+            --link mariadb-test:db \
+            --link redis-test:redis \
+            --link mail-test:mail \
+            -p 8080:80 \
+            -e MYSQL_HOST=db \
+            -e MYSQL_DATABASE=nextcloud \
+            -e MYSQL_USER=nextcloud \
+            -e MYSQL_PASSWORD=nextcloud \
+            -e REDIS_HOST=redis \
+            -e REDIS_PORT=6379 \
+            -e MAIL_SMTP_HOST=mail \
+            -e MAIL_SMTP_PORT=1025 \
+            -e MAIL_SMTP_NAME=mail \
+            -e MAIL_SMTP_PASSWORD= \
+            -e MAIL_SMTP_SECURE= \
+            -e MAIL_FROM_ADDRESS=nextcloud@localhost \
+            -e MAIL_DOMAIN=localhost \
+            -e NEXTCLOUD_ADMIN_USER=admin \
+            -e NEXTCLOUD_ADMIN_PASSWORD=admin \
+            -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
+            -e WITH_REDIS=YES \
+            nextcloud:latest
+          
+          # Wait for Nextcloud to be ready
+          echo "Waiting for Nextcloud to start..."
+          timeout 300 bash -c 'until curl -f http://localhost:8080/status.php; do sleep 5; done'
+          
+          # Copy the OpenConnector app into the container
+          echo "Copying OpenConnector app into Nextcloud container..."
+          docker cp . nextcloud-test:/var/www/html/apps-extra/openconnector
+          
+          # Install the OpenConnector app
+          echo "Installing OpenConnector app..."
+          docker exec nextcloud-test php occ app:install openconnector || true
+          
+          # Enable the app
+          docker exec nextcloud-test php occ app:enable openconnector
+          
+          # Set up test environment
+          docker exec nextcloud-test php occ config:system:set debug --value true
+          docker exec nextcloud-test php occ config:system:set loglevel --value 0
+          
+          # Install PHPUnit in the container if not available
+          docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6" || true
           
       - name: Run PHP linting
         run: composer lint
         continue-on-error: true
         
-      - name: Run unit tests
-        run: composer test:unit
+      - name: Run unit tests inside Nextcloud container
+        run: |
+          # Run tests from inside the Nextcloud container where all OCP classes are available
+          echo "Running tests inside Nextcloud container..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && phpunit --bootstrap apps-extra/openconnector/tests/bootstrap-simple.php apps-extra/openconnector/tests"
         
       - name: Upload coverage (PHP 8.2 only)
         if: matrix.php-version == '8.2'
@@ -72,9 +145,15 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
+          
+      - name: Cleanup containers
+        if: always()
+        run: |
+          docker stop nextcloud-test mariadb-test redis-test mail-test || true
+          docker rm nextcloud-test mariadb-test redis-test mail-test || true
 
   quality:
-    name: Code Quality & Standards
+    name: Code Quality & Standards with Nextcloud
     runs-on: ubuntu-latest
     
     steps:
@@ -128,8 +207,86 @@ jobs:
         run: composer psalm
         continue-on-error: true
         
-      - name: Run unit tests
-        run: composer test:unit
+      - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
+        run: |
+          # Start MariaDB container (matching local setup)
+          docker run -d \
+            --name mariadb-test-quality \
+            -e MYSQL_ROOT_PASSWORD=nextcloud \
+            -e MYSQL_PASSWORD=nextcloud \
+            -e MYSQL_USER=nextcloud \
+            -e MYSQL_DATABASE=nextcloud \
+            mariadb:10.6
+          
+          # Start Redis container (required by Nextcloud)
+          docker run -d \
+            --name redis-test-quality \
+            redis:7
+          
+          # Start Mail container (MailHog for testing)
+          docker run -d \
+            --name mail-test-quality \
+            -p 1026:1025 \
+            -p 8026:8025 \
+            ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest
+          
+          # Wait for MariaDB to be ready
+          echo "Waiting for MariaDB to start..."
+          timeout 60 bash -c 'until docker exec mariadb-test-quality mysqladmin ping -h"localhost" --silent; do sleep 2; done'
+          
+          # Start Nextcloud container with all dependencies
+          docker run -d \
+            --name nextcloud-test-quality \
+            --link mariadb-test-quality:db \
+            --link redis-test-quality:redis \
+            --link mail-test-quality:mail \
+            -p 8081:80 \
+            -e MYSQL_HOST=db \
+            -e MYSQL_DATABASE=nextcloud \
+            -e MYSQL_USER=nextcloud \
+            -e MYSQL_PASSWORD=nextcloud \
+            -e REDIS_HOST=redis \
+            -e REDIS_PORT=6379 \
+            -e MAIL_SMTP_HOST=mail \
+            -e MAIL_SMTP_PORT=1025 \
+            -e MAIL_SMTP_NAME=mail \
+            -e MAIL_SMTP_PASSWORD= \
+            -e MAIL_SMTP_SECURE= \
+            -e MAIL_FROM_ADDRESS=nextcloud@localhost \
+            -e MAIL_DOMAIN=localhost \
+            -e NEXTCLOUD_ADMIN_USER=admin \
+            -e NEXTCLOUD_ADMIN_PASSWORD=admin \
+            -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
+            -e WITH_REDIS=YES \
+            nextcloud:latest
+          
+          # Wait for Nextcloud to be ready
+          echo "Waiting for Nextcloud to start..."
+          timeout 300 bash -c 'until curl -f http://localhost:8081/status.php; do sleep 5; done'
+          
+          # Copy the OpenConnector app into the container
+          echo "Copying OpenConnector app into Nextcloud container..."
+          docker cp . nextcloud-test-quality:/var/www/html/apps-extra/openconnector
+          
+          # Install the OpenConnector app
+          echo "Installing OpenConnector app..."
+          docker exec nextcloud-test-quality php occ app:install openconnector || true
+          
+          # Enable the app
+          docker exec nextcloud-test-quality php occ app:enable openconnector
+          
+          # Set up test environment
+          docker exec nextcloud-test-quality php occ config:system:set debug --value true
+          docker exec nextcloud-test-quality php occ config:system:set loglevel --value 0
+          
+          # Install PHPUnit in the container if not available
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6" || true
+        
+      - name: Run unit tests inside Nextcloud container
+        run: |
+          # Run tests from inside the Nextcloud container where all OCP classes are available
+          echo "Running tests inside Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && phpunit --bootstrap apps-extra/openconnector/tests/bootstrap-simple.php apps-extra/openconnector/tests"
         
       - name: Generate quality status
         if: always()
@@ -148,3 +305,9 @@ jobs:
             echo "- ❌ Unit Tests: Failed" >> $GITHUB_STEP_SUMMARY
             echo "- ❌ Some quality checks failed!" >> $GITHUB_STEP_SUMMARY
           fi
+          
+      - name: Cleanup containers
+        if: always()
+        run: |
+          docker stop nextcloud-test-quality mariadb-test-quality redis-test-quality mail-test-quality || true
+          docker rm nextcloud-test-quality mariadb-test-quality redis-test-quality mail-test-quality || true
