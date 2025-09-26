@@ -523,7 +523,19 @@ if (!class_exists('OCP\Files\NotFoundException')) {
 
 // Category 1: Mappers with $ids parameter (SourceMapper, EndpointMapper)
 if (!class_exists('MockMapperWithIds')) {
-    class MockMapperWithIds extends MockQBMapper {
+    class MockMapperWithIds {
+        protected $db;
+        protected $tableName;
+        
+        public function __construct($db, $tableName) {
+            $this->db = $db;
+            $this->tableName = $tableName;
+        }
+        
+        public function find(int|string $id) {
+            return null;
+        }
+        
         public function findAll(
             ?int $limit = null,
             ?int $offset = null,
@@ -534,12 +546,49 @@ if (!class_exists('MockMapperWithIds')) {
         ): array {
             return [];
         }
+        
+        public function insert($entity) {
+            return $entity;
+        }
+        
+        public function update($entity) {
+            return $entity;
+        }
+        
+        public function delete(\OCP\AppFramework\Db\Entity $entity): \OCP\AppFramework\Db\Entity {
+            return $entity;
+        }
+        
+        // Additional commonly used methods
+        public function createFromArray(array $object) {
+            return new \stdClass();
+        }
+        
+        public function updateFromArray(int $id, array $object) {
+            return new \stdClass();
+        }
+        
+        public function getTotalCount(): int {
+            return 0;
+        }
     }
 }
 
 // Category 2: Mappers with search parameters but no $ids
 if (!class_exists('MockMapperWithSearch')) {
-    class MockMapperWithSearch extends MockQBMapper {
+    class MockMapperWithSearch {
+        protected $db;
+        protected $tableName;
+        
+        public function __construct($db, $tableName) {
+            $this->db = $db;
+            $this->tableName = $tableName;
+        }
+        
+        public function find(int|string $id) {
+            return null;
+        }
+        
         public function findAll(
             ?int $limit = null,
             ?int $offset = null,
@@ -549,12 +598,49 @@ if (!class_exists('MockMapperWithSearch')) {
         ): array {
             return [];
         }
+        
+        public function insert($entity) {
+            return $entity;
+        }
+        
+        public function update($entity) {
+            return $entity;
+        }
+        
+        public function delete(\OCP\AppFramework\Db\Entity $entity): \OCP\AppFramework\Db\Entity {
+            return $entity;
+        }
+        
+        // Additional commonly used methods
+        public function createFromArray(array $object) {
+            return new \stdClass();
+        }
+        
+        public function updateFromArray(int $id, array $object) {
+            return new \stdClass();
+        }
+        
+        public function getTotalCount(): int {
+            return 0;
+        }
     }
 }
 
 // Category 3: Basic mappers with minimal parameters
 if (!class_exists('MockMapperBasic')) {
-    class MockMapperBasic extends MockQBMapper {
+    class MockMapperBasic {
+        protected $db;
+        protected $tableName;
+        
+        public function __construct($db, $tableName) {
+            $this->db = $db;
+            $this->tableName = $tableName;
+        }
+        
+        public function find(int|string $id) {
+            return null;
+        }
+        
         public function findAll(
             ?int $limit = null,
             ?int $offset = null,
@@ -562,12 +648,49 @@ if (!class_exists('MockMapperBasic')) {
         ): array {
             return [];
         }
+        
+        public function insert($entity) {
+            return $entity;
+        }
+        
+        public function update($entity) {
+            return $entity;
+        }
+        
+        public function delete(\OCP\AppFramework\Db\Entity $entity): \OCP\AppFramework\Db\Entity {
+            return $entity;
+        }
+        
+        // Additional commonly used methods
+        public function createFromArray(array $object) {
+            return new \stdClass();
+        }
+        
+        public function updateFromArray(int $id, array $object) {
+            return new \stdClass();
+        }
+        
+        public function getTotalCount(): int {
+            return 0;
+        }
     }
 }
 
 // Category 4: Mappers with sort fields
 if (!class_exists('MockMapperWithSort')) {
-    class MockMapperWithSort extends MockQBMapper {
+    class MockMapperWithSort {
+        protected $db;
+        protected $tableName;
+        
+        public function __construct($db, $tableName) {
+            $this->db = $db;
+            $this->tableName = $tableName;
+        }
+        
+        public function find(int|string $id) {
+            return null;
+        }
+        
         public function findAll(
             ?int $limit = null,
             ?int $offset = null,
@@ -577,6 +700,31 @@ if (!class_exists('MockMapperWithSort')) {
             ?array $sortFields = []
         ): array {
             return [];
+        }
+        
+        public function insert($entity) {
+            return $entity;
+        }
+        
+        public function update($entity) {
+            return $entity;
+        }
+        
+        public function delete(\OCP\AppFramework\Db\Entity $entity): \OCP\AppFramework\Db\Entity {
+            return $entity;
+        }
+        
+        // Additional commonly used methods
+        public function createFromArray(array $object) {
+            return new \stdClass();
+        }
+        
+        public function updateFromArray(int $id, array $object) {
+            return new \stdClass();
+        }
+        
+        public function getTotalCount(): int {
+            return 0;
         }
     }
 }
