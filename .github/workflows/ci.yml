@@ -68,7 +68,7 @@ jobs:
             --name redis-test \
             redis:7
           
-          # Start Mail container (MailHog for testing)
+          # Start Mail container (MailHog for testing) - matching local setup
           docker run -d \
             --name mail-test \
             -p 1025:1025 \
@@ -79,7 +79,7 @@ jobs:
           echo "Waiting for MariaDB to start..."
           timeout 60 bash -c 'until docker exec mariadb-test mysqladmin ping -h"localhost" --silent; do sleep 2; done'
           
-          # Start Nextcloud container with all dependencies
+          # Start Nextcloud container with all dependencies - matching local setup
           docker run -d \
             --name nextcloud-test \
             --link mariadb-test:db \
@@ -103,7 +103,7 @@ jobs:
             -e NEXTCLOUD_ADMIN_PASSWORD=admin \
             -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
             -e WITH_REDIS=YES \
-            nextcloud:latest
+            ghcr.io/juliusknorr/nextcloud-dev-php81:latest
           
           # Wait for Nextcloud to be ready
           echo "Waiting for Nextcloud to start..."
@@ -128,8 +128,21 @@ jobs:
           docker exec nextcloud-test php occ config:system:set debug --value true
           docker exec nextcloud-test php occ config:system:set loglevel --value 0
           
-          # Install PHPUnit in the container if not available
-          docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6" || true
+          # Check what's available in the container
+          echo "=== Container Diagnostics ==="
+          echo "Checking if composer is available..."
+          docker exec nextcloud-test bash -c "which composer || echo 'composer not found'"
+          echo "Checking if php is available..."
+          docker exec nextcloud-test bash -c "which php || echo 'php not found'"
+          echo "Checking if composer.phar exists..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/composer.phar || echo 'composer.phar not found'"
+          echo "Checking vendor directory..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/vendor/ || echo 'vendor directory not found'"
+          echo "=== End Diagnostics ==="
+          
+          # Try to install PHPUnit
+          echo "Attempting to install PHPUnit..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6" || echo "PHPUnit installation failed"
           
       - name: Run PHP linting
         run: composer lint
@@ -139,7 +152,7 @@ jobs:
         run: |
           # Run tests from inside the Nextcloud container where all OCP classes are available
           echo "Running tests inside Nextcloud container..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && ./vendor/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap-simple.php apps-extra/openconnector/tests"
+          docker exec nextcloud-test bash -c "cd /var/www/html && ./vendor/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap.php apps-extra/openconnector/tests"
         
       - name: Upload coverage (PHP 8.2 only)
         if: matrix.php-version == '8.2'
@@ -227,7 +240,7 @@ jobs:
             --name redis-test-quality \
             redis:7
           
-          # Start Mail container (MailHog for testing)
+          # Start Mail container (MailHog for testing) - matching local setup
           docker run -d \
             --name mail-test-quality \
             -p 1026:1025 \
@@ -238,7 +251,7 @@ jobs:
           echo "Waiting for MariaDB to start..."
           timeout 60 bash -c 'until docker exec mariadb-test-quality mysqladmin ping -h"localhost" --silent; do sleep 2; done'
           
-          # Start Nextcloud container with all dependencies
+          # Start Nextcloud container with all dependencies - matching local setup
           docker run -d \
             --name nextcloud-test-quality \
             --link mariadb-test-quality:db \
@@ -262,7 +275,7 @@ jobs:
             -e NEXTCLOUD_ADMIN_PASSWORD=admin \
             -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
             -e WITH_REDIS=YES \
-            nextcloud:latest
+            ghcr.io/juliusknorr/nextcloud-dev-php81:latest
           
           # Wait for Nextcloud to be ready
           echo "Waiting for Nextcloud to start..."
@@ -287,14 +300,27 @@ jobs:
           docker exec nextcloud-test-quality php occ config:system:set debug --value true
           docker exec nextcloud-test-quality php occ config:system:set loglevel --value 0
           
-          # Install PHPUnit in the container if not available
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6" || true
+          # Check what's available in the container
+          echo "=== Container Diagnostics ==="
+          echo "Checking if composer is available..."
+          docker exec nextcloud-test-quality bash -c "which composer || echo 'composer not found'"
+          echo "Checking if php is available..."
+          docker exec nextcloud-test-quality bash -c "which php || echo 'php not found'"
+          echo "Checking if composer.phar exists..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/composer.phar || echo 'composer.phar not found'"
+          echo "Checking vendor directory..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/vendor/ || echo 'vendor directory not found'"
+          echo "=== End Diagnostics ==="
+          
+          # Try to install PHPUnit
+          echo "Attempting to install PHPUnit..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6" || echo "PHPUnit installation failed"
         
       - name: Run unit tests inside Nextcloud container
         run: |
           # Run tests from inside the Nextcloud container where all OCP classes are available
           echo "Running tests inside Nextcloud container..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap-simple.php apps-extra/openconnector/tests"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap.php apps-extra/openconnector/tests"
         
       - name: Generate quality status
         if: always()
