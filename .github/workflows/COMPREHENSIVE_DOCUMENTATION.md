@@ -53,6 +53,15 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 
 ## Changelog
 
+### Version 1.15 - PHP Version Fix and Composer Installation
+**Date:** September 26, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Fixed PHP version in quality job from 8.2 to 8.3 (matches local development)
+- Added Composer installation step to both test and quality jobs
+- Improved occ command diagnostics with proper file and execution checks
+- Fixed missing version configuration in quality job
+
 ### Version 1.14 - Centralized Version Management
 **Date:** September 26, 2025  
 **Status:** ✅ Implemented  
@@ -146,4 +155,4 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 
 ---
 
-*Last Updated: September 26, 2025 | Version: 1.14 | Status: Centralized Version Management*
+*Last Updated: September 26, 2025 | Version: 1.15 | Status: PHP Version Fix and Composer Installation*

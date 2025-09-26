@@ -272,16 +272,24 @@ jobs:
         run: |
           echo "=== PHPUnit Installation ==="
           echo "Attempting to install PHPUnit in Nextcloud container..."
-          if ! docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6"; then
+          
+          # Install PHPUnit with explicit bin-dir to avoid bamarni-bin issues
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6 --no-bin-links"; then
             echo "❌ ERROR: Failed to install PHPUnit in Nextcloud container"
             echo "This may be due to composer not being available or network issues"
             exit 1
           fi
           echo "✅ PHPUnit installed successfully"
           
+          # Check if phpunit executable exists
+          echo "Checking PHPUnit executable location..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && find . -name phpunit -type f"
+          
           echo "Verifying PHPUnit installation..."
           if ! docker exec nextcloud-test bash -c "cd /var/www/html && ./vendor/bin/phpunit --version"; then
             echo "❌ ERROR: PHPUnit installation verification failed"
+            echo "Checking alternative locations..."
+            docker exec nextcloud-test bash -c "cd /var/www/html && find . -name phpunit -type f -executable"
             exit 1
           fi
           echo "✅ PHPUnit is working correctly"
@@ -618,16 +626,24 @@ jobs:
         run: |
           echo "=== PHPUnit Installation (Quality) ==="
           echo "Attempting to install PHPUnit in Nextcloud container..."
-          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6"; then
+          
+          # Install PHPUnit with explicit bin-dir to avoid bamarni-bin issues
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6 --no-bin-links"; then
             echo "❌ ERROR: Failed to install PHPUnit in Nextcloud container"
             echo "This may be due to composer not being available or network issues"
             exit 1
           fi
           echo "✅ PHPUnit installed successfully"
           
+          # Check if phpunit executable exists
+          echo "Checking PHPUnit executable location..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name phpunit -type f"
+          
           echo "Verifying PHPUnit installation..."
           if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/phpunit --version"; then
             echo "❌ ERROR: PHPUnit installation verification failed"
+            echo "Checking alternative locations..."
+            docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name phpunit -type f -executable"
             exit 1
           fi
           echo "✅ PHPUnit is working correctly"
