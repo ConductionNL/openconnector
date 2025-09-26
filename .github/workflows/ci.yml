@@ -139,7 +139,7 @@ jobs:
         run: |
           # Run tests from inside the Nextcloud container where all OCP classes are available
           echo "Running tests inside Nextcloud container..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && phpunit --bootstrap apps-extra/openconnector/tests/bootstrap-simple.php apps-extra/openconnector/tests"
+          docker exec nextcloud-test bash -c "cd /var/www/html && ./vendor/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap-simple.php apps-extra/openconnector/tests"
         
       - name: Upload coverage (PHP 8.2 only)
         if: matrix.php-version == '8.2'
@@ -294,7 +294,7 @@ jobs:
         run: |
           # Run tests from inside the Nextcloud container where all OCP classes are available
           echo "Running tests inside Nextcloud container..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && phpunit --bootstrap apps-extra/openconnector/tests/bootstrap-simple.php apps-extra/openconnector/tests"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap-simple.php apps-extra/openconnector/tests"
         
       - name: Generate quality status
         if: always()
