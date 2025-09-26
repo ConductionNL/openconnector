@@ -51,7 +51,7 @@ jobs:
           
           # Verify PHPUnit works
           ./vendor/bin/phpunit --version
-
+        
       - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
         run: |
           # Start MariaDB container (matching local setup)
@@ -118,25 +118,64 @@ jobs:
           echo "Copying OpenConnector app into Nextcloud container..."
           docker cp . nextcloud-test:/var/www/html/apps-extra/openconnector
           
-          # Check what's available in the container
-          echo "=== Nextcloud Container Diagnostics ==="
+          # Wait a bit more for Nextcloud to fully process the app installation
+          echo "Waiting for app installation to complete..."
+          sleep 10
+          
+      - name: Diagnose Nextcloud occ command availability
+        run: |
+          echo "=== Nextcloud occ Command Diagnostics ==="
           echo "Checking if occ command is available..."
-          docker exec nextcloud-test bash -c "which occ || echo 'occ not found'"
+          if ! docker exec nextcloud-test bash -c "which occ"; then
+            echo "❌ ERROR: occ command is not available in the container PATH"
+            echo "This indicates Nextcloud is not fully initialized or occ is not installed"
+            exit 1
+          fi
+          echo "✅ occ command is available"
+          
           echo "Checking if php occ works..."
-          docker exec nextcloud-test bash -c "php occ --version || echo 'php occ not working'"
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ --version"; then
+            echo "❌ ERROR: php occ command is not working"
+            echo "This indicates Nextcloud is not fully initialized or occ file is missing"
+            exit 1
+          fi
+          echo "✅ php occ is working"
+          
           echo "Checking Nextcloud installation..."
-          docker exec nextcloud-test bash -c "ls -la /var/www/html/occ || echo 'occ file not found'"
+          if ! docker exec nextcloud-test bash -c "ls -la /var/www/html/occ"; then
+            echo "❌ ERROR: occ file not found at /var/www/html/occ"
+            echo "This indicates Nextcloud is not properly installed"
+            exit 1
+          fi
+          echo "✅ occ file found"
+          
           echo "Checking if Nextcloud is fully initialized..."
-          docker exec nextcloud-test bash -c "php -r 'echo \"PHP is working\n\";'"
-          echo "=== End Diagnostics ==="
+          if ! docker exec nextcloud-test bash -c "php -r 'echo \"PHP is working\n\";'"; then
+            echo "❌ ERROR: PHP is not working in the container"
+            exit 1
+          fi
+          echo "✅ PHP is working"
+          echo "=== End occ Command Diagnostics ==="
           
-          # Install the OpenConnector app
+      - name: Install and enable OpenConnector app
+        run: |
+          echo "=== OpenConnector App Installation ==="
           echo "Installing OpenConnector app..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector" || echo "App installation failed, continuing..."
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector"; then
+            echo "❌ ERROR: Failed to install OpenConnector app"
+            echo "This may be due to app already installed or Nextcloud not ready"
+            echo "Continuing with app enabling..."
+          else
+            echo "✅ OpenConnector app installed successfully"
+          fi
           
-          # Enable the app
           echo "Enabling OpenConnector app..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector" || echo "App enabling failed, continuing..."
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            echo "❌ ERROR: Failed to enable OpenConnector app"
+            echo "This may be due to app already enabled or Nextcloud not ready"
+            exit 1
+          fi
+          echo "✅ OpenConnector app enabled successfully"
           
           # Set up test environment
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ config:system:set debug --value true"
@@ -146,21 +185,55 @@ jobs:
           echo "Waiting for app installation to complete..."
           sleep 10
           
-          # Check what's available in the container
-          echo "=== Container Diagnostics ==="
+      - name: Diagnose Nextcloud container environment
+        run: |
+          echo "=== Nextcloud Container Environment Diagnostics ==="
           echo "Checking if composer is available..."
-          docker exec nextcloud-test bash -c "which composer || echo 'composer not found'"
-          echo "Checking if php is available..."
-          docker exec nextcloud-test bash -c "which php || echo 'php not found'"
-          echo "Checking if composer.phar exists..."
-          docker exec nextcloud-test bash -c "ls -la /var/www/html/composer.phar || echo 'composer.phar not found'"
-          echo "Checking vendor directory..."
-          docker exec nextcloud-test bash -c "ls -la /var/www/html/vendor/ || echo 'vendor directory not found'"
-          echo "=== End Diagnostics ==="
+          if ! docker exec nextcloud-test bash -c "which composer"; then
+            echo "❌ ERROR: Composer is not available in the container"
+            exit 1
+          fi
+          echo "✅ Composer is available"
           
-          # Try to install PHPUnit
-          echo "Attempting to install PHPUnit..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6" || echo "PHPUnit installation failed"
+          echo "Checking if php is available..."
+          if ! docker exec nextcloud-test bash -c "which php"; then
+            echo "❌ ERROR: PHP is not available in the container"
+            exit 1
+          fi
+          echo "✅ PHP is available"
+          
+          echo "Checking if composer.phar exists..."
+          if ! docker exec nextcloud-test bash -c "ls -la /var/www/html/composer.phar"; then
+            echo "⚠️  WARNING: composer.phar not found, but this may be normal"
+          else
+            echo "✅ composer.phar found"
+          fi
+          
+          echo "Checking vendor directory..."
+          if ! docker exec nextcloud-test bash -c "ls -la /var/www/html/vendor/"; then
+            echo "⚠️  WARNING: vendor directory not found, but this may be normal"
+          else
+            echo "✅ vendor directory found"
+          fi
+          echo "=== End Environment Diagnostics ==="
+          
+      - name: Install PHPUnit in Nextcloud container
+        run: |
+          echo "=== PHPUnit Installation ==="
+          echo "Attempting to install PHPUnit in Nextcloud container..."
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6"; then
+            echo "❌ ERROR: Failed to install PHPUnit in Nextcloud container"
+            echo "This may be due to composer not being available or network issues"
+            exit 1
+          fi
+          echo "✅ PHPUnit installed successfully"
+          
+          echo "Verifying PHPUnit installation..."
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && ./vendor/bin/phpunit --version"; then
+            echo "❌ ERROR: PHPUnit installation verification failed"
+            exit 1
+          fi
+          echo "✅ PHPUnit is working correctly"
           
       - name: Run PHP linting
         run: composer lint
@@ -308,25 +381,64 @@ jobs:
           echo "Copying OpenConnector app into Nextcloud container..."
           docker cp . nextcloud-test-quality:/var/www/html/apps-extra/openconnector
           
-          # Check what's available in the container
-          echo "=== Nextcloud Container Diagnostics ==="
+          # Wait a bit more for Nextcloud to fully process the app installation
+          echo "Waiting for app installation to complete..."
+          sleep 10
+          
+      - name: Diagnose Nextcloud occ command availability (Quality)
+        run: |
+          echo "=== Nextcloud occ Command Diagnostics (Quality) ==="
           echo "Checking if occ command is available..."
-          docker exec nextcloud-test-quality bash -c "which occ || echo 'occ not found'"
+          if ! docker exec nextcloud-test-quality bash -c "which occ"; then
+            echo "❌ ERROR: occ command is not available in the container PATH"
+            echo "This indicates Nextcloud is not fully initialized or occ is not installed"
+            exit 1
+          fi
+          echo "✅ occ command is available"
+          
           echo "Checking if php occ works..."
-          docker exec nextcloud-test-quality bash -c "php occ --version || echo 'php occ not working'"
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ --version"; then
+            echo "❌ ERROR: php occ command is not working"
+            echo "This indicates Nextcloud is not fully initialized or occ file is missing"
+            exit 1
+          fi
+          echo "✅ php occ is working"
+          
           echo "Checking Nextcloud installation..."
-          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/occ || echo 'occ file not found'"
+          if ! docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/occ"; then
+            echo "❌ ERROR: occ file not found at /var/www/html/occ"
+            echo "This indicates Nextcloud is not properly installed"
+            exit 1
+          fi
+          echo "✅ occ file found"
+          
           echo "Checking if Nextcloud is fully initialized..."
-          docker exec nextcloud-test-quality bash -c "php -r 'echo \"PHP is working\n\";'"
-          echo "=== End Diagnostics ==="
+          if ! docker exec nextcloud-test-quality bash -c "php -r 'echo \"PHP is working\n\";'"; then
+            echo "❌ ERROR: PHP is not working in the container"
+            exit 1
+          fi
+          echo "✅ PHP is working"
+          echo "=== End occ Command Diagnostics (Quality) ==="
           
-          # Install the OpenConnector app
+      - name: Install and enable OpenConnector app (Quality)
+        run: |
+          echo "=== OpenConnector App Installation (Quality) ==="
           echo "Installing OpenConnector app..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector" || echo "App installation failed, continuing..."
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
+            echo "❌ ERROR: Failed to install OpenConnector app"
+            echo "This may be due to app already installed or Nextcloud not ready"
+            echo "Continuing with app enabling..."
+          else
+            echo "✅ OpenConnector app installed successfully"
+          fi
           
-          # Enable the app
           echo "Enabling OpenConnector app..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector" || echo "App enabling failed, continuing..."
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            echo "❌ ERROR: Failed to enable OpenConnector app"
+            echo "This may be due to app already enabled or Nextcloud not ready"
+            exit 1
+          fi
+          echo "✅ OpenConnector app enabled successfully"
           
           # Set up test environment
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ config:system:set debug --value true"
@@ -336,21 +448,55 @@ jobs:
           echo "Waiting for app installation to complete..."
           sleep 10
           
-          # Check what's available in the container
-          echo "=== Container Diagnostics ==="
+      - name: Diagnose Nextcloud container environment (Quality)
+        run: |
+          echo "=== Nextcloud Container Environment Diagnostics (Quality) ==="
           echo "Checking if composer is available..."
-          docker exec nextcloud-test-quality bash -c "which composer || echo 'composer not found'"
-          echo "Checking if php is available..."
-          docker exec nextcloud-test-quality bash -c "which php || echo 'php not found'"
-          echo "Checking if composer.phar exists..."
-          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/composer.phar || echo 'composer.phar not found'"
-          echo "Checking vendor directory..."
-          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/vendor/ || echo 'vendor directory not found'"
-          echo "=== End Diagnostics ==="
+          if ! docker exec nextcloud-test-quality bash -c "which composer"; then
+            echo "❌ ERROR: Composer is not available in the container"
+            exit 1
+          fi
+          echo "✅ Composer is available"
           
-          # Try to install PHPUnit
-          echo "Attempting to install PHPUnit..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6" || echo "PHPUnit installation failed"
+          echo "Checking if php is available..."
+          if ! docker exec nextcloud-test-quality bash -c "which php"; then
+            echo "❌ ERROR: PHP is not available in the container"
+            exit 1
+          fi
+          echo "✅ PHP is available"
+          
+          echo "Checking if composer.phar exists..."
+          if ! docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/composer.phar"; then
+            echo "⚠️  WARNING: composer.phar not found, but this may be normal"
+          else
+            echo "✅ composer.phar found"
+          fi
+          
+          echo "Checking vendor directory..."
+          if ! docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/vendor/"; then
+            echo "⚠️  WARNING: vendor directory not found, but this may be normal"
+          else
+            echo "✅ vendor directory found"
+          fi
+          echo "=== End Environment Diagnostics (Quality) ==="
+          
+      - name: Install PHPUnit in Nextcloud container (Quality)
+        run: |
+          echo "=== PHPUnit Installation (Quality) ==="
+          echo "Attempting to install PHPUnit in Nextcloud container..."
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6"; then
+            echo "❌ ERROR: Failed to install PHPUnit in Nextcloud container"
+            echo "This may be due to composer not being available or network issues"
+            exit 1
+          fi
+          echo "✅ PHPUnit installed successfully"
+          
+          echo "Verifying PHPUnit installation..."
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/phpunit --version"; then
+            echo "❌ ERROR: PHPUnit installation verification failed"
+            exit 1
+          fi
+          echo "✅ PHPUnit is working correctly"
         
       - name: Run unit tests inside Nextcloud container
         run: |
