@@ -43,9 +43,25 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 - **Automatic migrations** - Database setup handled by Nextcloud
 - **Complete service stack** - Redis, Mail, MariaDB all available
 
+### 📋 **Centralized Version Management**
+- **`.github/workflows/versions.env`** - Single source of truth for all versions
+- **Environment variables** - CI workflow uses `${{ env.VARIABLE_NAME }}` syntax
+- **Local parity** - Versions match your local `docker-compose.yml` and `.env`
+- **Easy updates** - Change versions in one place, affects entire CI
+
 ---
 
 ## Changelog
+
+### Version 1.14 - Centralized Version Management
+**Date:** September 26, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Added `.github/workflows/versions.env` for centralized version management
+- Updated CI workflow to use environment variables (`${{ env.VARIABLE_NAME }}`)
+- All Docker images now reference centralized versions
+- Matches local development environment versions
+- Easy to update versions in one place
 
 ### Version 1.13 - Docker-Based Nextcloud Environment
 **Date:** September 26, 2025  
@@ -130,4 +146,4 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 
 ---
 
-*Last Updated: September 26, 2025 | Version: 1.13 | Status: Docker Environment Implementation*
+*Last Updated: September 26, 2025 | Version: 1.14 | Status: Centralized Version Management*

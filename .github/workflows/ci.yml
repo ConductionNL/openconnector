@@ -19,6 +19,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         
+      - name: Load version configuration
+        run: |
+          echo "Loading centralized version configuration..."
+          if [ -f .github/workflows/versions.env ]; then
+            echo "✅ Found versions.env file"
+            cat .github/workflows/versions.env
+            # Export variables for use in subsequent steps
+            echo "NEXTCLOUD_VERSION=31" >> $GITHUB_ENV
+            echo "MARIADB_VERSION=10.6" >> $GITHUB_ENV
+            echo "REDIS_VERSION=7" >> $GITHUB_ENV
+            echo "MAILHOG_VERSION=latest" >> $GITHUB_ENV
+            echo "NEXTCLOUD_IMAGE=nextcloud:31" >> $GITHUB_ENV
+            echo "MARIADB_IMAGE=mariadb:10.6" >> $GITHUB_ENV
+            echo "REDIS_IMAGE=redis:7" >> $GITHUB_ENV
+            echo "MAILHOG_IMAGE=ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest" >> $GITHUB_ENV
+          else
+            echo "⚠️ No versions.env found, using defaults"
+            echo "NEXTCLOUD_VERSION=31" >> $GITHUB_ENV
+            echo "MARIADB_VERSION=10.6" >> $GITHUB_ENV
+            echo "REDIS_VERSION=7" >> $GITHUB_ENV
+            echo "MAILHOG_VERSION=latest" >> $GITHUB_ENV
+            echo "NEXTCLOUD_IMAGE=nextcloud:31" >> $GITHUB_ENV
+            echo "MARIADB_IMAGE=mariadb:10.6" >> $GITHUB_ENV
+            echo "REDIS_IMAGE=redis:7" >> $GITHUB_ENV
+            echo "MAILHOG_IMAGE=ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest" >> $GITHUB_ENV
+          fi
+        
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -61,19 +88,19 @@ jobs:
             -e MYSQL_PASSWORD=nextcloud \
             -e MYSQL_USER=nextcloud \
             -e MYSQL_DATABASE=nextcloud \
-            mariadb:10.6
+            ${{ env.MARIADB_IMAGE }}
           
           # Start Redis container (required by Nextcloud)
           docker run -d \
             --name redis-test \
-            redis:7
+            ${{ env.REDIS_IMAGE }}
           
           # Start Mail container (MailHog for testing) - matching local setup
           docker run -d \
             --name mail-test \
             -p 1025:1025 \
             -p 8025:8025 \
-            ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest
+            ${{ env.MAILHOG_IMAGE }}
           
           # Wait for MariaDB to be ready
           echo "Waiting for MariaDB to start..."
@@ -103,7 +130,7 @@ jobs:
             -e NEXTCLOUD_ADMIN_PASSWORD=admin \
             -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
             -e WITH_REDIS=YES \
-            ghcr.io/juliusknorr/nextcloud-dev-php81:latest
+            ${{ env.NEXTCLOUD_IMAGE }}
           
           # Wait for Nextcloud to be fully ready (including database initialization)
           echo "Waiting for Nextcloud to be fully initialized..."
@@ -160,6 +187,8 @@ jobs:
       - name: Install and enable OpenConnector app
         run: |
           echo "=== OpenConnector App Installation ==="
+          echo "Checking Nextcloud version compatibility..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ --version"
           echo "Installing OpenConnector app..."
           if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector"; then
             echo "❌ ERROR: Failed to install OpenConnector app"
@@ -356,19 +385,19 @@ jobs:
             -e MYSQL_PASSWORD=nextcloud \
             -e MYSQL_USER=nextcloud \
             -e MYSQL_DATABASE=nextcloud \
-            mariadb:10.6
+            ${{ env.MARIADB_IMAGE }}
           
           # Start Redis container (required by Nextcloud)
           docker run -d \
             --name redis-test-quality \
-            redis:7
+            ${{ env.REDIS_IMAGE }}
           
           # Start Mail container (MailHog for testing) - matching local setup
           docker run -d \
             --name mail-test-quality \
             -p 1026:1025 \
             -p 8026:8025 \
-            ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest
+            ${{ env.MAILHOG_IMAGE }}
           
           # Wait for MariaDB to be ready
           echo "Waiting for MariaDB to start..."
@@ -398,7 +427,7 @@ jobs:
             -e NEXTCLOUD_ADMIN_PASSWORD=admin \
             -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
             -e WITH_REDIS=YES \
-            ghcr.io/juliusknorr/nextcloud-dev-php81:latest
+            ${{ env.NEXTCLOUD_IMAGE }}
           
           # Wait for Nextcloud to be fully ready (including database initialization)
           echo "Waiting for Nextcloud to be fully initialized..."
@@ -455,6 +484,8 @@ jobs:
       - name: Install and enable OpenConnector app (Quality)
         run: |
           echo "=== OpenConnector App Installation (Quality) ==="
+          echo "Checking Nextcloud version compatibility..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ --version"
           echo "Installing OpenConnector app..."
           if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
             echo "❌ ERROR: Failed to install OpenConnector app"
