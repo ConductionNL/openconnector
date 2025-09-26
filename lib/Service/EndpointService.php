@@ -1335,7 +1335,9 @@ class EndpointService
 
             try {
                 $object = $this->objectService->getOpenRegisters()->find(id: $value, extend: $extends);
+                $this->objectService->getOpenRegisters()->clearCurrents();
             } catch (DoesNotExistException $exception) {
+                $this->objectService->getOpenRegisters()->clearCurrents();
                 continue;
             }
             $extendedParameters->add($property, $object->jsonSerialize());
