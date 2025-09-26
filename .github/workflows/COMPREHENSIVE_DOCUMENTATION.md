@@ -148,6 +148,19 @@ The `tests/bootstrap.php` file provides comprehensive mocking for Nextcloud OCP 
   - `tests/bootstrap-ci.php` - Experimental CI bootstrap with real database connections
   - `.github/workflows/ci-disabled.yml` - Disabled original workflow
 - **Documentation**: New approach documented in `DATABASE_TESTING_STRATEGY.md`
+
+### **Version 1.12** - Reversion to Original Approach (September 26, 2025)
+- **Strategy Reversion**: Reverted from database-based testing back to original MockMapper approach
+- **File Cleanup**: Removed all database-based testing files and configurations
+- **Original Workflow Restored**: Restored `ci.yml` to use original `composer test:unit` approach
+- **Focus**: Fix MockMapper signature compatibility issues in original `bootstrap.php`
+- **Removed Files**:
+  - `tests/bootstrap-ci.php` - Database bootstrap approach
+  - `tests/phpunit-ci.xml` - Database test configuration
+  - `tests/phpunit-ci-simple.xml` - Simple test configuration
+  - `.github/workflows/ci-disabled.yml` - Disabled workflow
+  - `.github/workflows/DATABASE_TESTING_STRATEGY.md` - Database strategy documentation
+- **Next Steps**: Fix MockMapper signature compatibility issues in original bootstrap.php
 ### **Development Pattern**
 The git history shows an iterative approach to resolving MockMapper compatibility:
 1. **Initial Attempts**: Removing unused parameters
@@ -242,4 +255,4 @@ The workflows should:
 
 ---
 
-*Last Updated: September 25, 2025 | Version: 1.11 | Status: Complete*
+*Last Updated: September 26, 2025 | Version: 1.12 | Status: Reverted to Original Approach*
