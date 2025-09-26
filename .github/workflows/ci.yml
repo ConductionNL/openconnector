@@ -273,8 +273,8 @@ jobs:
           echo "=== PHPUnit Installation ==="
           echo "Attempting to install PHPUnit in Nextcloud container..."
           
-          # Install PHPUnit with explicit bin-dir to avoid bamarni-bin issues
-          if ! docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6 --no-bin-links"; then
+          # Install PHPUnit with standard installation
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6"; then
             echo "❌ ERROR: Failed to install PHPUnit in Nextcloud container"
             echo "This may be due to composer not being available or network issues"
             exit 1
@@ -627,8 +627,8 @@ jobs:
           echo "=== PHPUnit Installation (Quality) ==="
           echo "Attempting to install PHPUnit in Nextcloud container..."
           
-          # Install PHPUnit with explicit bin-dir to avoid bamarni-bin issues
-          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6 --no-bin-links"; then
+          # Install PHPUnit with standard installation
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^9.6"; then
             echo "❌ ERROR: Failed to install PHPUnit in Nextcloud container"
             echo "This may be due to composer not being available or network issues"
             exit 1

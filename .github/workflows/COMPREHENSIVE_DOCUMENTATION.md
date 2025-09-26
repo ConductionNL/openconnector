@@ -53,6 +53,15 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 
 ## Changelog
 
+### Version 1.16 - PHPUnit Installation Fix
+**Date:** September 26, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Fixed invalid `--no-bin-links` Composer option that doesn't exist
+- Reverted to standard PHPUnit installation approach
+- Enhanced diagnostics to show PHPUnit executable location
+- Applied fixes to both test and quality jobs
+
 ### Version 1.15 - PHP Version Fix and Composer Installation
 **Date:** September 26, 2025  
 **Status:** ✅ Implemented  
@@ -155,4 +164,4 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 
 ---
 
-*Last Updated: September 26, 2025 | Version: 1.15 | Status: PHP Version Fix and Composer Installation*
+*Last Updated: September 26, 2025 | Version: 1.16 | Status: PHPUnit Installation Fix*
