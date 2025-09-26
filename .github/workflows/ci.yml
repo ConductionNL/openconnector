@@ -109,6 +109,10 @@ jobs:
           echo "Waiting for Nextcloud to start..."
           timeout 300 bash -c 'until curl -f http://localhost:8080/status.php; do sleep 5; done'
           
+          # Create apps-extra directory in Nextcloud container
+          echo "Creating apps-extra directory in Nextcloud container..."
+          docker exec nextcloud-test mkdir -p /var/www/html/apps-extra
+          
           # Copy the OpenConnector app into the container
           echo "Copying OpenConnector app into Nextcloud container..."
           docker cp . nextcloud-test:/var/www/html/apps-extra/openconnector
@@ -263,6 +267,10 @@ jobs:
           # Wait for Nextcloud to be ready
           echo "Waiting for Nextcloud to start..."
           timeout 300 bash -c 'until curl -f http://localhost:8081/status.php; do sleep 5; done'
+          
+          # Create apps-extra directory in Nextcloud container
+          echo "Creating apps-extra directory in Nextcloud container..."
+          docker exec nextcloud-test-quality mkdir -p /var/www/html/apps-extra
           
           # Copy the OpenConnector app into the container
           echo "Copying OpenConnector app into Nextcloud container..."
