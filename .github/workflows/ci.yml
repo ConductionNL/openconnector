@@ -290,11 +290,19 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector"
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
           
+          # Force Nextcloud to rescan apps and clear caches
+          echo "Forcing Nextcloud to rescan apps and clear caches..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list"
+          
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
           
-          # Enhanced diagnostics for class loading
+      - name: Enhanced class loading diagnostics
+        run: |
           echo "=== Enhanced Class Loading Diagnostics ==="
           
           # Check if app is in both locations
@@ -739,12 +747,20 @@ jobs:
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
           
+          # Force Nextcloud to rescan apps and clear caches
+          echo "Forcing Nextcloud to rescan apps and clear caches..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ maintenance:repair"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list"
+          
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
           
-          # Enhanced diagnostics for class loading
-          echo "=== Enhanced Class Loading Diagnostics ==="
+      - name: Enhanced class loading diagnostics (Quality)
+        run: |
+          echo "=== Enhanced Class Loading Diagnostics (Quality) ==="
           
           # Check if app is in both locations
           echo "Checking app locations..."

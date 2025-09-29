@@ -5,11 +5,11 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 
 ---
 
-## Version 1.24 - Fixed App Location Issue (Current)
+## Version 1.25 - Enhanced Diagnostics and Cache Clearing (Current)
 
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
-**Approach:** Real Nextcloud Docker environment with app location fix for proper class loading
+**Approach:** Real Nextcloud Docker environment with enhanced diagnostics and forced cache clearing
 
 ### 🎯 **Strategy**
 Run tests inside a real Nextcloud container with enhanced diagnostics to ensure proper app installation and class loading.
@@ -35,6 +35,7 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 - ✅ **App installation failures** - Enhanced diagnostics and error reporting
 - ✅ **Class loading issues** - Added app class availability checks
 - ✅ **App location issue** - Move app from `/apps-extra/` to `/apps/` for proper Nextcloud autoloader recognition
+- ✅ **Nextcloud cache issues** - Added forced cache clearing with `maintenance:repair` and app rescanning
 
 ### 📁 **Files**
 - **`.github/workflows/ci.yml`** - Complete Docker environment
@@ -50,6 +51,7 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 - **PHPUnit autoloader fixes** - Resolves class loading issues automatically
 - **Better error reporting** - Clear diagnostics when app installation fails
 - **Proper app location** - App moved to correct Nextcloud directory for autoloader recognition
+- **Forced cache clearing** - Ensures Nextcloud properly recognizes moved apps
 
 ### 📋 **Centralized Version Management**
 - **`.github/workflows/versions.env`** - Single source of truth for all versions
@@ -60,6 +62,18 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 ---
 
 ## Changelog
+
+### Version 1.25 - Enhanced Diagnostics and Cache Clearing
+**Date:** September 29, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- **Enhanced diagnostics structure** - Separated diagnostics into dedicated workflow steps for better debugging
+- **Root cause identification** - Diagnostics revealed app location, dependencies, and registration were all correct
+- **Nextcloud cache issue identified** - Problem was stale autoloader cache after app move
+- **Forced cache clearing** - Added `php occ maintenance:repair` and `php occ app:list` to force Nextcloud to rescan apps
+- **Clean workflow structure** - Separated concerns into focused steps for better maintainability
+- **Applied to both jobs** - Same enhanced diagnostics and cache clearing for test and quality jobs
+- **Expected result** - Should resolve "OpenConnector Application class not found" by clearing Nextcloud's internal caches
 
 ### Version 1.24 - Fixed App Location Issue
 **Date:** September 29, 2025  
@@ -254,4 +268,4 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 
 ---
 
-*Last Updated: September 29, 2025 | Version: 1.24 | Status: Fixed App Location Issue*
+*Last Updated: September 29, 2025 | Version: 1.25 | Status: Enhanced Diagnostics and Cache Clearing*
