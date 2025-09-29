@@ -301,6 +301,26 @@ jobs:
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
           
+          # Pre-class loading diagnostics
+          echo "=== Pre-Class Loading Diagnostics ==="
+          echo "Checking app installation status..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
+          
+          echo "Checking app file structure..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/ || echo 'App directory not found'"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/ || echo 'Lib directory not found'"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/vendor/ || echo 'Vendor directory not found'"
+          
+          echo "Checking app info.xml..."
+          docker exec nextcloud-test bash -c "cat /var/www/html/apps/openconnector/appinfo/info.xml | head -10"
+          
+          echo "Checking if Application.php exists..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/AppInfo/Application.php || echo 'Application.php not found'"
+          
+          echo "Checking autoloader files..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Vendor autoload.php not found'"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'App autoload.php not found'"
+          
           # Wait for Nextcloud background processes to complete
           # maintenance:repair triggers background jobs (cache clearing, database migrations, etc.)
           # These processes need time to complete before classes become available
@@ -781,6 +801,26 @@ jobs:
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
+          
+          # Pre-class loading diagnostics
+          echo "=== Pre-Class Loading Diagnostics (Quality) ==="
+          echo "Checking app installation status..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
+          
+          echo "Checking app file structure..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/ || echo 'App directory not found'"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/lib/ || echo 'Lib directory not found'"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/vendor/ || echo 'Vendor directory not found'"
+          
+          echo "Checking app info.xml..."
+          docker exec nextcloud-test-quality bash -c "cat /var/www/html/apps/openconnector/appinfo/info.xml | head -10"
+          
+          echo "Checking if Application.php exists..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/lib/AppInfo/Application.php || echo 'Application.php not found'"
+          
+          echo "Checking autoloader files..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Vendor autoload.php not found'"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'App autoload.php not found'"
           
           # Wait for Nextcloud background processes to complete
           # maintenance:repair triggers background jobs (cache clearing, database migrations, etc.)
