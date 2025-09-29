@@ -281,6 +281,10 @@ jobs:
           fi
           echo "✅ PHPUnit installed successfully"
           
+          # Regenerate autoloader to fix class loading issues
+          echo "Regenerating autoloader to fix class loading..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && composer dump-autoload --optimize"
+          
           # Check if phpunit executable exists
           echo "Checking PHPUnit executable location..."
           docker exec nextcloud-test bash -c "cd /var/www/html && find . -name phpunit -type f"
@@ -290,6 +294,8 @@ jobs:
             echo "❌ ERROR: PHPUnit installation verification failed"
             echo "Checking alternative locations..."
             docker exec nextcloud-test bash -c "cd /var/www/html && find . -name phpunit -type f -executable"
+            echo "Trying to run PHPUnit with full path..."
+            docker exec nextcloud-test bash -c "cd /var/www/html && php ./lib/composer/bin/phpunit --version"
             exit 1
           fi
           echo "✅ PHPUnit is working correctly"
@@ -635,6 +641,10 @@ jobs:
           fi
           echo "✅ PHPUnit installed successfully"
           
+          # Regenerate autoloader to fix class loading issues
+          echo "Regenerating autoloader to fix class loading..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer dump-autoload --optimize"
+          
           # Check if phpunit executable exists
           echo "Checking PHPUnit executable location..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name phpunit -type f"
@@ -644,6 +654,8 @@ jobs:
             echo "❌ ERROR: PHPUnit installation verification failed"
             echo "Checking alternative locations..."
             docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name phpunit -type f -executable"
+            echo "Trying to run PHPUnit with full path..."
+            docker exec nextcloud-test-quality bash -c "cd /var/www/html && php ./lib/composer/bin/phpunit --version"
             exit 1
           fi
           echo "✅ PHPUnit is working correctly"

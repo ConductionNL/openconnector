@@ -53,6 +53,15 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 
 ## Changelog
 
+### Version 1.17 - PHPUnit Autoloader Fix
+**Date:** September 29, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Added `composer dump-autoload --optimize` after PHPUnit installation to fix class loading issues
+- Enhanced error diagnostics to try running PHPUnit with `php` command as fallback
+- Fixed "Class PHPUnit\TextUI\Command not found" error by regenerating autoloader
+- Applied fixes to both test and quality jobs
+
 ### Version 1.16 - PHPUnit Installation Fix
 **Date:** September 26, 2025  
 **Status:** ✅ Implemented  
