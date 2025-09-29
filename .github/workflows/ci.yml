@@ -310,7 +310,7 @@ jobs:
           echo "Testing class loading with retry mechanism..."
           for i in {1..5}; do
             echo "Attempt $i/5:"
-            if docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; exit 0; } else { echo \"❌ OpenConnector Application class not found (attempt $i)\n\"; exit 1; }'"; then
+            if docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; exit(0); } else { echo \"❌ OpenConnector Application class not found (attempt $i)\n\"; exit(1); }'"; then
               echo "✅ Class loading successful on attempt $i"
               break
             else
@@ -791,7 +791,7 @@ jobs:
           echo "Testing class loading with retry mechanism..."
           for i in {1..5}; do
             echo "Attempt $i/5:"
-            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; exit 0; } else { echo \"❌ OpenConnector Application class not found (attempt $i)\n\"; exit 1; }'"; then
+            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; exit(0); } else { echo \"❌ OpenConnector Application class not found (attempt $i)\n\"; exit(1); }'"; then
               echo "✅ Class loading successful on attempt $i"
               break
             else
