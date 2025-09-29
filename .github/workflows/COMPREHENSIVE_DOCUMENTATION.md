@@ -14,28 +14,52 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ### 🎯 **Strategy**
 Run tests inside a real Nextcloud container with comprehensive pre-class loading diagnostics to identify and fix missing app autoloader issues.
 
+### 🐳 **Docker Stack**
+- **MariaDB 10.6** - Database (matching local setup)
+- **Redis 7** - Caching and sessions
+- **MailHog** - Email testing (`ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest`)
+- **Nextcloud** - Real environment (`ghcr.io/juliusknorr/nextcloud-dev-php81:latest`)
+
 ### 🔧 **Key Features**
-1. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes
-2. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files
-3. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds
-4. **Root Cause Identification** - Systematic approach to identify missing components
+1. **Complete Service Stack** - All services linked and configured
+2. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes
+3. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files
+4. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds
+5. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes
+6. **Database Migrations** - Handled automatically by Nextcloud
+7. **Local Parity** - Exact same images as local docker-compose.yml
 
 ### 🐛 **Issues Resolved**
 - ✅ **Missing app autoloader** - Added `composer dump-autoload --optimize` to generate missing `lib/autoload.php`
 - ✅ **Comprehensive diagnostics** - Added detailed pre-class loading diagnostics to both test and quality jobs
 - ✅ **Enhanced sleep timing** - Increased retry mechanism sleep from 3 to 10 seconds for better timing
 - ✅ **Root cause identification** - Systematic diagnostics reveal exactly what's missing before class loading attempts
+- ✅ **Nextcloud cache issues** - Added forced cache clearing with `maintenance:repair` and app rescanning
+- ✅ **Timing issues** - Added optimized retry mechanism (5 attempts, 10-second delays) for class loading after background processes
+- ✅ **App location issue** - Move app from `/apps-extra/` to `/apps/` for proper Nextcloud autoloader recognition
+- ✅ **MockMapper compatibility issues** - Eliminated complex mocking by using real Nextcloud environment
+- ✅ **Database connection issues** - Proper service linking and configuration
+- ✅ **Container startup timing issues** - Enhanced health checks and proper service coordination
+- ✅ **PHPUnit autoloader issues** - Added `composer dump-autoload --optimize` after PHPUnit installation
+- ✅ **PHPUnit installation failures** - Fixed invalid `--no-bin-links` Composer option and proper installation path
+- ✅ **Composer availability issues** - Added Composer installation step to both test and quality jobs
+- ✅ **App dependencies installation** - Added `composer install --no-dev --optimize-autoloader` for OpenConnector app dependencies
+- ✅ **Missing PHP extensions** - Fixed "missing ext-soap and ext-xsl" errors with `--ignore-platform-req` flags
+- ✅ **Apps-extra directory creation** - Fixed missing apps-extra directory issue
+- ✅ **PHPUnit command path** - Fixed PHPUnit command path issue
 
 ### 📁 **Files**
 - **`.github/workflows/ci.yml`** - Added app autoloader generation and comprehensive diagnostics
-- **Diagnostic checks** - App installation status, file structure, info.xml, Application.php, autoloader files
-- **Autoloader generation** - `composer dump-autoload --optimize` in both test and quality jobs
+- **`tests/bootstrap.php`** - Simplified bootstrap for container environment
+- **Container cleanup** - All services cleaned up after tests
 
-### 🚀 **Benefits**
+### 🎯 **Benefits**
 - **Targeted fixes** - Identifies and fixes specific missing components
 - **Better diagnostics** - Comprehensive pre-class loading diagnostics
 - **Improved timing** - Enhanced sleep timing for background processes
 - **Root cause resolution** - Systematic approach to identify and fix issues
+- **Forced cache clearing** - Ensures Nextcloud recognizes app changes
+- **Optimized retry mechanism** - Handles timing issues with background processes
 
 ## Version 1.26 - Optimized Retry Mechanism and Timing Fixes
 
@@ -61,12 +85,8 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 6. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues
 
 ### 🐛 **Issues Resolved**
-- ✅ **Missing app autoloader** - Added `composer dump-autoload --optimize` to generate missing `lib/autoload.php`
-- ✅ **Comprehensive diagnostics** - Added detailed pre-class loading diagnostics to both test and quality jobs
-- ✅ **Enhanced sleep timing** - Increased retry mechanism sleep from 3 to 10 seconds for better timing
-- ✅ **Root cause identification** - Systematic diagnostics reveal exactly what's missing before class loading attempts
 - ✅ **Nextcloud cache issues** - Added forced cache clearing with `maintenance:repair` and app rescanning
-- ✅ **Timing issues** - Added optimized retry mechanism (5 attempts, 10-second delays) for class loading after background processes
+- ✅ **Timing issues** - Added optimized retry mechanism (5 attempts, 3-second delays) for class loading after background processes
 - ✅ **App location issue** - Move app from `/apps-extra/` to `/apps/` for proper Nextcloud autoloader recognition
 - ✅ **MockMapper compatibility issues** - Eliminated complex mocking by using real Nextcloud environment
 - ✅ **Database connection issues** - Proper service linking and configuration
