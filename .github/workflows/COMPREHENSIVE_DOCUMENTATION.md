@@ -59,6 +59,16 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 
 ## Changelog
 
+### Version 1.23 - Added App Structure Diagnostics and Fixed Command Failures
+**Date:** September 29, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Added comprehensive app structure diagnostics to identify root cause of class loading issues
+- Added app directory structure verification and appinfo file inspection
+- Fixed command failure issue with app location checks (exit code 1 when no matches found)
+- Made app location check commands more robust with proper error handling
+- Applied diagnostics and fixes to both test and quality jobs consistently
+
 ### Version 1.22 - Fixed CodeSniffer Dependencies and App Class Loading
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  

@@ -278,7 +278,7 @@ jobs:
           
           # Check if app is in the right location for Nextcloud
           echo "Checking if app should be in /var/www/html/apps/ instead..."
-          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/ | grep openconnector"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/ 2>/dev/null | grep openconnector || echo 'No openconnector found in /var/www/html/apps/'"
           
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
@@ -681,6 +681,16 @@ jobs:
           echo "Restarting Nextcloud to reload app classes..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
+          
+          # Check app structure and files
+          echo "Checking app structure and files..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps-extra/openconnector/"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps-extra/openconnector/appinfo/"
+          docker exec nextcloud-test-quality bash -c "cat /var/www/html/apps-extra/openconnector/appinfo/info.xml | head -10"
+          
+          # Check if app is in the right location for Nextcloud
+          echo "Checking if app should be in /var/www/html/apps/ instead..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/ 2>/dev/null | grep openconnector || echo 'No openconnector found in /var/www/html/apps/'"
           
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
