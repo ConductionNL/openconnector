@@ -293,7 +293,34 @@ jobs:
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
-          docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
+          
+          # Enhanced diagnostics for class loading
+          echo "=== Enhanced Class Loading Diagnostics ==="
+          
+          # Check if app is in both locations
+          echo "Checking app locations..."
+          docker exec nextcloud-test bash -c "echo 'Apps-extra location:'; ls -la /var/www/html/apps-extra/ | grep openconnector || echo 'Not found in apps-extra'"
+          docker exec nextcloud-test bash -c "echo 'Apps location:'; ls -la /var/www/html/apps/ | grep openconnector || echo 'Not found in apps'"
+          
+          # Check if vendor directory exists in new location
+          echo "Checking vendor directory in new location..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/vendor/ 2>/dev/null || echo 'No vendor directory in new location'"
+          
+          # Check if app is properly registered with Nextcloud
+          echo "Checking if app is registered with Nextcloud..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
+          
+          # Check app info and namespace
+          echo "Checking app info and namespace..."
+          docker exec nextcloud-test bash -c "cat /var/www/html/apps/openconnector/appinfo/info.xml | grep -E '(id|name)'"
+          
+          # Try to find the Application class file
+          echo "Looking for Application class file..."
+          docker exec nextcloud-test bash -c "find /var/www/html/apps/openconnector -name 'Application.php' -type f"
+          
+          # Check if autoloader is working
+          echo "Testing autoloader..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Autoloader test...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
           
       - name: Diagnose Nextcloud container environment
         run: |
@@ -715,7 +742,34 @@ jobs:
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
+          
+          # Enhanced diagnostics for class loading
+          echo "=== Enhanced Class Loading Diagnostics ==="
+          
+          # Check if app is in both locations
+          echo "Checking app locations..."
+          docker exec nextcloud-test-quality bash -c "echo 'Apps-extra location:'; ls -la /var/www/html/apps-extra/ | grep openconnector || echo 'Not found in apps-extra'"
+          docker exec nextcloud-test-quality bash -c "echo 'Apps location:'; ls -la /var/www/html/apps/ | grep openconnector || echo 'Not found in apps'"
+          
+          # Check if vendor directory exists in new location
+          echo "Checking vendor directory in new location..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/vendor/ 2>/dev/null || echo 'No vendor directory in new location'"
+          
+          # Check if app is properly registered with Nextcloud
+          echo "Checking if app is registered with Nextcloud..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
+          
+          # Check app info and namespace
+          echo "Checking app info and namespace..."
+          docker exec nextcloud-test-quality bash -c "cat /var/www/html/apps/openconnector/appinfo/info.xml | grep -E '(id|name)'"
+          
+          # Try to find the Application class file
+          echo "Looking for Application class file..."
+          docker exec nextcloud-test-quality bash -c "find /var/www/html/apps/openconnector -name 'Application.php' -type f"
+          
+          # Check if autoloader is working
+          echo "Testing autoloader..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Autoloader test...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
           
       - name: Diagnose Nextcloud container environment (Quality)
         run: |
