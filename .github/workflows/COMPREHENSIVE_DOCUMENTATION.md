@@ -31,6 +31,9 @@ Run tests inside a real Nextcloud container with comprehensive pre-class loading
 
 ### 🐛 **Issues Resolved**
 - ✅ **Missing app autoloader** - Added `composer dump-autoload --optimize` to generate missing `lib/autoload.php`
+- ✅ **Nextcloud autoloader reload** - Added app disable/enable cycle after autoloader generation to force Nextcloud to reload
+- ✅ **Cache clearing after autoloader** - Added `maintenance:repair` after autoloader generation to clear cached autoloader state
+- ✅ **Autoloader verification** - Added verification step to confirm autoloader file was actually created
 - ✅ **Comprehensive diagnostics** - Added detailed pre-class loading diagnostics to both test and quality jobs
 - ✅ **Enhanced sleep timing** - Increased retry mechanism sleep from 3 to 10 seconds for better timing
 - ✅ **Root cause identification** - Systematic diagnostics reveal exactly what's missing before class loading attempts

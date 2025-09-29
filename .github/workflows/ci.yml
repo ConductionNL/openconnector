@@ -326,6 +326,19 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
           echo "✅ App autoloader generated"
           
+          # Restart Nextcloud to reload the new autoloader
+          echo "Restarting Nextcloud to reload autoloader..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
+          echo "✅ Nextcloud restarted with new autoloader"
+          
+          # Verify autoloader was created and clear cache
+          echo "Verifying autoloader creation..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'Autoloader still missing'"
+          echo "Clearing Nextcloud cache..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
+          echo "✅ Cache cleared after autoloader generation"
+          
           # Wait for Nextcloud background processes to complete
           # maintenance:repair triggers background jobs (cache clearing, database migrations, etc.)
           # These processes need time to complete before classes become available
@@ -831,6 +844,19 @@ jobs:
           echo "Generating missing app autoloader..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
           echo "✅ App autoloader generated"
+          
+          # Restart Nextcloud to reload the new autoloader
+          echo "Restarting Nextcloud to reload autoloader..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
+          echo "✅ Nextcloud restarted with new autoloader"
+          
+          # Verify autoloader was created and clear cache
+          echo "Verifying autoloader creation..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'Autoloader still missing'"
+          echo "Clearing Nextcloud cache..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ maintenance:repair"
+          echo "✅ Cache cleared after autoloader generation"
           
           # Wait for Nextcloud background processes to complete
           # maintenance:repair triggers background jobs (cache clearing, database migrations, etc.)
