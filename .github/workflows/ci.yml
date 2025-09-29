@@ -321,6 +321,11 @@ jobs:
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Vendor autoload.php not found'"
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'App autoload.php not found'"
           
+          # Generate missing app autoloader
+          echo "Generating missing app autoloader..."
+          docker exec nextcloud-test bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
+          echo "✅ App autoloader generated"
+          
           # Wait for Nextcloud background processes to complete
           # maintenance:repair triggers background jobs (cache clearing, database migrations, etc.)
           # These processes need time to complete before classes become available
@@ -335,8 +340,8 @@ jobs:
               break
             else
               if [ $i -lt 5 ]; then
-                echo "⚠️ Attempt $i failed, waiting 3 seconds before retry..."
-                sleep 3
+                echo "⚠️ Attempt $i failed, waiting 10 seconds before retry..."
+                sleep 10
               else
                 echo "❌ All attempts failed - class loading unsuccessful"
                 exit 1
@@ -822,6 +827,11 @@ jobs:
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Vendor autoload.php not found'"
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'App autoload.php not found'"
           
+          # Generate missing app autoloader
+          echo "Generating missing app autoloader..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
+          echo "✅ App autoloader generated"
+          
           # Wait for Nextcloud background processes to complete
           # maintenance:repair triggers background jobs (cache clearing, database migrations, etc.)
           # These processes need time to complete before classes become available
@@ -836,8 +846,8 @@ jobs:
               break
             else
               if [ $i -lt 5 ]; then
-                echo "⚠️ Attempt $i failed, waiting 3 seconds before retry..."
-                sleep 3
+                echo "⚠️ Attempt $i failed, waiting 10 seconds before retry..."
+                sleep 10
               else
                 echo "❌ All attempts failed - class loading unsuccessful"
                 exit 1
