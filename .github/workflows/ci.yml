@@ -233,6 +233,10 @@ jobs:
           echo "Verifying app installation..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
           
+          # Install app dependencies
+          echo "Installing OpenConnector app dependencies..."
+          docker exec nextcloud-test bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader"
+          
           # Check if app classes are available
           echo "Checking if app classes are available..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found\n\"; } else { echo \"❌ OpenConnector Application class not found\n\"; }'"
@@ -613,6 +617,10 @@ jobs:
           # Verify app is properly enabled
           echo "Verifying app installation..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
+          
+          # Install app dependencies
+          echo "Installing OpenConnector app dependencies..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader"
           
           # Check if app classes are available
           echo "Checking if app classes are available..."

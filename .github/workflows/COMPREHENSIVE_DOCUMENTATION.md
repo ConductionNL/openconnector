@@ -59,6 +59,15 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 
 ## Changelog
 
+### Version 1.19 - App Dependencies Installation Fix
+**Date:** September 29, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Added `composer install --no-dev --optimize-autoloader` for OpenConnector app dependencies
+- Fixed "OpenConnector Application class not found" error by ensuring app dependencies are installed
+- Enhanced app installation process to include dependency installation
+- Applied fixes to both test and quality jobs
+
 ### Version 1.18 - Enhanced App Installation Diagnostics
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
