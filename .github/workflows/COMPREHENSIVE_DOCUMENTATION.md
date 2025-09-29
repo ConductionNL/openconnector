@@ -5,14 +5,14 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 
 ---
 
-## Version 1.13 - Docker-Based Nextcloud Environment (Current)
+## Version 1.18 - Enhanced App Installation Diagnostics (Current)
 
-**Date:** September 26, 2025  
+**Date:** September 29, 2025  
 **Status:** ✅ Implemented  
-**Approach:** Real Nextcloud Docker environment matching local development
+**Approach:** Real Nextcloud Docker environment with comprehensive app installation diagnostics
 
 ### 🎯 **Strategy**
-Instead of complex OCP mocking, we run tests inside a real Nextcloud container with all required services.
+Run tests inside a real Nextcloud container with enhanced diagnostics to ensure proper app installation and class loading.
 
 ### 🐳 **Docker Stack**
 - **MariaDB 10.6** - Database (matching local setup)
@@ -22,15 +22,18 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 
 ### 🔧 **Key Features**
 1. **Complete Service Stack** - All services linked and configured
-2. **App Installation** - OpenConnector copied and installed in real Nextcloud
+2. **Enhanced App Installation** - Comprehensive diagnostics for OpenConnector app installation
 3. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes
 4. **Database Migrations** - Handled automatically by Nextcloud
 5. **Local Parity** - Exact same images as local docker-compose.yml
+6. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues
 
 ### 🐛 **Issues Resolved**
 - ✅ **Missing apps-extra directory** - Added `mkdir -p` before copying
-- ✅ **PHPUnit command not found** - Use `./vendor/bin/phpunit`
-- 🔄 **Composer not available** - Added diagnostics to investigate
+- ✅ **PHPUnit command not found** - Use `./lib/composer/bin/phpunit` (correct Nextcloud path)
+- ✅ **PHPUnit autoloader issues** - Added `composer dump-autoload --optimize`
+- ✅ **App installation failures** - Enhanced diagnostics and error reporting
+- ✅ **Class loading issues** - Added app class availability checks
 
 ### 📁 **Files**
 - **`.github/workflows/ci.yml`** - Complete Docker environment
@@ -42,6 +45,9 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 - **Local development parity** - Same environment as local
 - **Automatic migrations** - Database setup handled by Nextcloud
 - **Complete service stack** - Redis, Mail, MariaDB all available
+- **Enhanced diagnostics** - Comprehensive app installation and class loading verification
+- **PHPUnit autoloader fixes** - Resolves class loading issues automatically
+- **Better error reporting** - Clear diagnostics when app installation fails
 
 ### 📋 **Centralized Version Management**
 - **`.github/workflows/versions.env`** - Single source of truth for all versions
@@ -52,6 +58,16 @@ Instead of complex OCP mocking, we run tests inside a real Nextcloud container w
 ---
 
 ## Changelog
+
+### Version 1.18 - Enhanced App Installation Diagnostics
+**Date:** September 29, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Added comprehensive diagnostics for OpenConnector app installation
+- Enhanced app directory verification and class loading checks
+- Added Nextcloud logs inspection for troubleshooting app installation failures
+- Improved error reporting for app installation and enabling steps
+- Applied enhanced diagnostics to both test and quality jobs
 
 ### Version 1.17 - PHPUnit Autoloader Fix
 **Date:** September 29, 2025  

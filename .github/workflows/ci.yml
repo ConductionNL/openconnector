@@ -199,10 +199,20 @@ jobs:
           echo "=== OpenConnector App Installation ==="
           echo "Checking Nextcloud version compatibility..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ --version"
+          
+          # Check if app directory exists
+          echo "Checking if OpenConnector app directory exists..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps-extra/openconnector/"
+          
+          # List available apps
+          echo "Listing available apps..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list"
+          
           echo "Installing OpenConnector app..."
           if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector"; then
             echo "❌ ERROR: Failed to install OpenConnector app"
-            echo "This may be due to app already installed or Nextcloud not ready"
+            echo "Checking if app is already installed..."
+            docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
             echo "Continuing with app enabling..."
           else
             echo "✅ OpenConnector app installed successfully"
@@ -211,10 +221,21 @@ jobs:
           echo "Enabling OpenConnector app..."
           if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
             echo "❌ ERROR: Failed to enable OpenConnector app"
-            echo "This may be due to app already enabled or Nextcloud not ready"
+            echo "Checking app status..."
+            docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
+            echo "Checking Nextcloud logs..."
+            docker exec nextcloud-test bash -c "tail -20 /var/www/html/data/nextcloud.log"
             exit 1
           fi
           echo "✅ OpenConnector app enabled successfully"
+          
+          # Verify app is properly enabled
+          echo "Verifying app installation..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
+          
+          # Check if app classes are available
+          echo "Checking if app classes are available..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found\n\"; } else { echo \"❌ OpenConnector Application class not found\n\"; }'"
           
           # Set up test environment
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ config:system:set debug --value true"
@@ -559,10 +580,20 @@ jobs:
           echo "=== OpenConnector App Installation (Quality) ==="
           echo "Checking Nextcloud version compatibility..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ --version"
+          
+          # Check if app directory exists
+          echo "Checking if OpenConnector app directory exists..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps-extra/openconnector/"
+          
+          # List available apps
+          echo "Listing available apps..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list"
+          
           echo "Installing OpenConnector app..."
           if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
             echo "❌ ERROR: Failed to install OpenConnector app"
-            echo "This may be due to app already installed or Nextcloud not ready"
+            echo "Checking if app is already installed..."
+            docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
             echo "Continuing with app enabling..."
           else
             echo "✅ OpenConnector app installed successfully"
@@ -571,10 +602,21 @@ jobs:
           echo "Enabling OpenConnector app..."
           if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
             echo "❌ ERROR: Failed to enable OpenConnector app"
-            echo "This may be due to app already enabled or Nextcloud not ready"
+            echo "Checking app status..."
+            docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
+            echo "Checking Nextcloud logs..."
+            docker exec nextcloud-test-quality bash -c "tail -20 /var/www/html/data/nextcloud.log"
             exit 1
           fi
           echo "✅ OpenConnector app enabled successfully"
+          
+          # Verify app is properly enabled
+          echo "Verifying app installation..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
+          
+          # Check if app classes are available
+          echo "Checking if app classes are available..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found\n\"; } else { echo \"❌ OpenConnector Application class not found\n\"; }'"
           
           # Set up test environment
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ config:system:set debug --value true"
