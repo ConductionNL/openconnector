@@ -323,8 +323,14 @@ jobs:
           
           # Generate missing app autoloader
           echo "Generating missing app autoloader..."
-          docker exec nextcloud-test bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
-          echo "✅ App autoloader generated"
+          # First, generate autoloader on host
+          composer dump-autoload --optimize
+          echo "✅ Host autoloader generated"
+          
+          # Copy the generated autoloader to container
+          echo "Copying autoloader to container..."
+          docker cp lib/autoload.php nextcloud-test:/var/www/html/apps/openconnector/lib/autoload.php
+          echo "✅ Autoloader copied to container"
           
           # Restart Nextcloud to reload the new autoloader
           echo "Restarting Nextcloud to reload autoloader..."
@@ -567,35 +573,35 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
             
-      - name: Install dependencies
+      - name: Install development dependencies in Nextcloud container
         run: |
-          # Update dependencies to ensure lock file is current
-          composer update --no-interaction --prefer-dist
+          echo "Installing development dependencies in Nextcloud container..."
           
-          # Verify tools are available
-          if [ ! -f "./vendor/bin/php-cs-fixer" ]; then
-            echo "php-cs-fixer not found, installing..."
-            composer require --dev friendsofphp/php-cs-fixer:^3.0 --no-interaction
-          fi
+          # Install development tools in the container (Composer already installed)
+          echo "Installing php-cs-fixer in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev friendsofphp/php-cs-fixer:^3.0 --no-interaction"
           
-          if [ ! -f "./vendor/bin/psalm" ]; then
-            echo "psalm not found, installing..."
-            composer require --dev vimeo/psalm:^5.0 --no-interaction
-          fi
-        
-      - name: Install project dependencies
-        run: composer install --no-dev --optimize-autoloader
+          echo "Installing psalm in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev vimeo/psalm:^5.0 --no-interaction"
+          
+          echo "✅ Development dependencies installed in Nextcloud container"
         
       - name: Run PHP linting
-        run: composer lint
+        run: |
+          echo "Running PHP linting in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name '*.php' -exec php -l {} \;"
         continue-on-error: true
         
       - name: Run PHP CodeSniffer
-        run: composer cs:check
+        run: |
+          echo "Running PHP CodeSniffer in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/php-cs-fixer fix --dry-run --diff"
         continue-on-error: true
         
       - name: Run Psalm static analysis
-        run: composer psalm
+        run: |
+          echo "Running Psalm static analysis in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/psalm --threads=1 --no-cache"
         continue-on-error: true
         
       - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
@@ -842,8 +848,14 @@ jobs:
           
           # Generate missing app autoloader
           echo "Generating missing app autoloader..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
-          echo "✅ App autoloader generated"
+          # First, generate autoloader on host
+          composer dump-autoload --optimize
+          echo "✅ Host autoloader generated"
+          
+          # Copy the generated autoloader to container
+          echo "Copying autoloader to container..."
+          docker cp lib/autoload.php nextcloud-test-quality:/var/www/html/apps/openconnector/lib/autoload.php
+          echo "✅ Autoloader copied to container"
           
           # Restart Nextcloud to reload the new autoloader
           echo "Restarting Nextcloud to reload autoloader..."

@@ -30,10 +30,11 @@ Run tests inside a real Nextcloud container with comprehensive pre-class loading
 7. **Local Parity** - Exact same images as local docker-compose.yml
 
 ### 🐛 **Issues Resolved**
-- ✅ **Missing app autoloader** - Added `composer dump-autoload --optimize` to generate missing `lib/autoload.php`
+- ✅ **Missing app autoloader** - Generate autoloader on host and copy to container to ensure proper creation
 - ✅ **Nextcloud autoloader reload** - Added app disable/enable cycle after autoloader generation to force Nextcloud to reload
 - ✅ **Cache clearing after autoloader** - Added `maintenance:repair` after autoloader generation to clear cached autoloader state
 - ✅ **Autoloader verification** - Added verification step to confirm autoloader file was actually created
+- ✅ **Host-based autoloader generation** - Generate autoloader on GitHub Actions host where composer.json exists, then copy to container
 - ✅ **Comprehensive diagnostics** - Added detailed pre-class loading diagnostics to both test and quality jobs
 - ✅ **Enhanced sleep timing** - Increased retry mechanism sleep from 3 to 10 seconds for better timing
 - ✅ **Root cause identification** - Systematic diagnostics reveal exactly what's missing before class loading attempts
