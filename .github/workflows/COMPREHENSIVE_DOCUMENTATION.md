@@ -59,6 +59,18 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 
 ## Changelog
 
+### Version 1.21 - Improved User Feedback and Fixed Missing PHP Extensions
+**Date:** September 29, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Improved user feedback for class loading checks with clear warnings and success messages
+- Added explanatory messages for expected "class not found" before dependencies installation
+- Enhanced success messages to clearly indicate when class loading works after dependencies
+- Fixed "missing ext-soap and ext-xsl" errors by adding `--ignore-platform-req` flags to Composer
+- Added `--ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl` to app dependencies installation
+- Resolved Composer lock file compatibility issues with missing PHP extensions
+- Applied improvements and fixes to both test and quality jobs
+
 ### Version 1.20 - Fixed Composer Installation Order
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  

@@ -235,7 +235,8 @@ jobs:
           
           # Check if app classes are available (before dependencies)
           echo "Checking if app classes are available (before dependencies)..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found\n\"; } else { echo \"❌ OpenConnector Application class not found\n\"; }'"
+          echo "⚠️  NOTE: This is expected to fail before dependencies are installed"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (unexpected but good!)\n\"; } else { echo \"⚠️  OpenConnector Application class not found (expected before dependencies)\n\"; }'"
           
           # Set up test environment
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ config:system:set debug --value true"
@@ -261,12 +262,13 @@ jobs:
         run: |
           echo "=== Installing OpenConnector App Dependencies ==="
           echo "Installing app dependencies..."
-          docker exec nextcloud-test bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader"
+          docker exec nextcloud-test bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
           echo "✅ App dependencies installed successfully"
           
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found\n\"; } else { echo \"❌ OpenConnector Application class not found\n\"; }'"
+          echo "🎯 This should now work after installing dependencies"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
           
       - name: Diagnose Nextcloud container environment
         run: |
@@ -627,7 +629,8 @@ jobs:
           
           # Check if app classes are available (before dependencies)
           echo "Checking if app classes are available (before dependencies)..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found\n\"; } else { echo \"❌ OpenConnector Application class not found\n\"; }'"
+          echo "⚠️  NOTE: This is expected to fail before dependencies are installed"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (unexpected but good!)\n\"; } else { echo \"⚠️  OpenConnector Application class not found (expected before dependencies)\n\"; }'"
           
           # Set up test environment
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ config:system:set debug --value true"
@@ -653,12 +656,13 @@ jobs:
         run: |
           echo "=== Installing OpenConnector App Dependencies (Quality) ==="
           echo "Installing app dependencies..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
           echo "✅ App dependencies installed successfully"
           
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found\n\"; } else { echo \"❌ OpenConnector Application class not found\n\"; }'"
+          echo "🎯 This should now work after installing dependencies"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
           
       - name: Diagnose Nextcloud container environment (Quality)
         run: |
