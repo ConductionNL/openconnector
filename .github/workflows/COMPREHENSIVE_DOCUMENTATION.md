@@ -59,6 +59,19 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 
 ## Changelog
 
+### Version 1.22 - Fixed CodeSniffer Dependencies and App Class Loading
+**Date:** September 29, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Fixed "Failed to open stream: No such file or directory" error in CodeSniffer step
+- Added "Install project dependencies" step before running CodeSniffer
+- Resolved missing `vendor-bin/cs-fixer/vendor/autoload.php` file issue
+- Ensured main project Composer dependencies are installed on GitHub Actions runner
+- Added app disable/enable cycle after installing dependencies to reload app classes
+- Fixed "OpenConnector Application class not found" issue by restarting the app
+- Ensures Nextcloud reloads the app's autoloader after dependency installation
+- Applied fixes to both test and quality jobs
+
 ### Version 1.21 - Improved User Feedback and Fixed Missing PHP Extensions
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  

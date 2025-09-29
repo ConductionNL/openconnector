@@ -265,6 +265,11 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
           echo "✅ App dependencies installed successfully"
           
+          # Restart Nextcloud to reload app classes
+          echo "Restarting Nextcloud to reload app classes..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
+          
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
@@ -460,6 +465,9 @@ jobs:
             echo "psalm not found, installing..."
             composer require --dev vimeo/psalm:^5.0 --no-interaction
           fi
+        
+      - name: Install project dependencies
+        run: composer install --no-dev --optimize-autoloader
         
       - name: Run PHP linting
         run: composer lint
@@ -658,6 +666,11 @@ jobs:
           echo "Installing app dependencies..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
           echo "✅ App dependencies installed successfully"
+          
+          # Restart Nextcloud to reload app classes
+          echo "Restarting Nextcloud to reload app classes..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
           
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
