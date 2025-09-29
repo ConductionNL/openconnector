@@ -59,6 +59,15 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 
 ## Changelog
 
+### Version 1.20 - Fixed Composer Installation Order
+**Date:** September 29, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Fixed "composer: command not found" error by moving app dependencies installation after Composer installation
+- Created separate "Install OpenConnector app dependencies" step that runs after Composer is available
+- Added class loading verification both before and after dependencies installation
+- Applied fixes to both test and quality jobs
+
 ### Version 1.19 - App Dependencies Installation Fix
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
