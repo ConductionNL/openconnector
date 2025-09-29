@@ -280,6 +280,16 @@ jobs:
           echo "Checking if app should be in /var/www/html/apps/ instead..."
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/ 2>/dev/null | grep openconnector || echo 'No openconnector found in /var/www/html/apps/'"
           
+          # Move app to correct location for Nextcloud
+          echo "Moving app to correct location for Nextcloud..."
+          docker exec nextcloud-test bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
+          echo "App moved to /var/www/html/apps/openconnector"
+          
+          # Restart app in new location
+          echo "Restarting app in new location..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
+          
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
@@ -691,6 +701,16 @@ jobs:
           # Check if app is in the right location for Nextcloud
           echo "Checking if app should be in /var/www/html/apps/ instead..."
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/ 2>/dev/null | grep openconnector || echo 'No openconnector found in /var/www/html/apps/'"
+          
+          # Move app to correct location for Nextcloud
+          echo "Moving app to correct location for Nextcloud..."
+          docker exec nextcloud-test-quality bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
+          echo "App moved to /var/www/html/apps/openconnector"
+          
+          # Restart app in new location
+          echo "Restarting app in new location..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
           
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
