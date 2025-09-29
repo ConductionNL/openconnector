@@ -5,11 +5,11 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 
 ---
 
-## Version 1.25 - Enhanced Diagnostics and Cache Clearing (Current)
+## Version 1.26 - Optimized Retry Mechanism and Timing Fixes (Current)
 
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
-**Approach:** Real Nextcloud Docker environment with enhanced diagnostics and forced cache clearing
+**Approach:** Real Nextcloud Docker environment with optimized retry mechanism for timing issues
 
 ### 🎯 **Strategy**
 Run tests inside a real Nextcloud container with enhanced diagnostics to ensure proper app installation and class loading.
@@ -29,13 +29,19 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 6. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues
 
 ### 🐛 **Issues Resolved**
-- ✅ **Missing apps-extra directory** - Added `mkdir -p` before copying
-- ✅ **PHPUnit command not found** - Use `./lib/composer/bin/phpunit` (correct Nextcloud path)
-- ✅ **PHPUnit autoloader issues** - Added `composer dump-autoload --optimize`
-- ✅ **App installation failures** - Enhanced diagnostics and error reporting
-- ✅ **Class loading issues** - Added app class availability checks
-- ✅ **App location issue** - Move app from `/apps-extra/` to `/apps/` for proper Nextcloud autoloader recognition
 - ✅ **Nextcloud cache issues** - Added forced cache clearing with `maintenance:repair` and app rescanning
+- ✅ **Timing issues** - Added optimized retry mechanism (5 attempts, 3-second delays) for class loading after background processes
+- ✅ **App location issue** - Move app from `/apps-extra/` to `/apps/` for proper Nextcloud autoloader recognition
+- ✅ **MockMapper compatibility issues** - Eliminated complex mocking by using real Nextcloud environment
+- ✅ **Database connection issues** - Proper service linking and configuration
+- ✅ **Container startup timing issues** - Enhanced health checks and proper service coordination
+- ✅ **PHPUnit autoloader issues** - Added `composer dump-autoload --optimize` after PHPUnit installation
+- ✅ **PHPUnit installation failures** - Fixed invalid `--no-bin-links` Composer option and proper installation path
+- ✅ **Composer availability issues** - Added Composer installation step to both test and quality jobs
+- ✅ **App dependencies installation** - Added `composer install --no-dev --optimize-autoloader` for OpenConnector app dependencies
+- ✅ **Missing PHP extensions** - Fixed "missing ext-soap and ext-xsl" errors with `--ignore-platform-req` flags
+- ✅ **Apps-extra directory creation** - Fixed missing apps-extra directory issue
+- ✅ **PHPUnit command path** - Fixed PHPUnit command path issue
 
 ### 📁 **Files**
 - **`.github/workflows/ci.yml`** - Complete Docker environment
@@ -62,6 +68,18 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 ---
 
 ## Changelog
+
+### Version 1.26 - Optimized Retry Mechanism and Timing Fixes
+**Date:** September 29, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- **Optimized retry mechanism** - 5 attempts with 3-second delays instead of single check
+- **Removed unnecessary sleeps** - Only retry where timing actually matters (after maintenance:repair)
+- **Clear timing comments** - Added explanations of what we're waiting for and why
+- **Better error handling** - Workflow fails appropriately if all retry attempts fail
+- **Targeted solution** - Retry mechanism only for class loading after background processes
+- **Applied to both jobs** - Same optimized retry logic for test and quality jobs
+- **Expected result** - Should resolve "OpenConnector Application class not found" by giving Nextcloud time to complete background processes
 
 ### Version 1.25 - Enhanced Diagnostics and Cache Clearing
 **Date:** September 29, 2025  
@@ -152,6 +170,8 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
+- **Resolved PHPUnit class loading issues** - Fixed autoloader generation problems
+- **Fixed PHPUnit command execution failures** - Proper autoloader configuration
 - Added `composer dump-autoload --optimize` after PHPUnit installation to fix class loading issues
 - Enhanced error diagnostics to try running PHPUnit with `php` command as fallback
 - Fixed "Class PHPUnit\TextUI\Command not found" error by regenerating autoloader
@@ -161,6 +181,8 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 **Date:** September 26, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
+- **Resolved Composer option errors** - Removed invalid Composer flags
+- **Fixed PHPUnit installation failures** - Proper installation path and configuration
 - Fixed invalid `--no-bin-links` Composer option that doesn't exist
 - Reverted to standard PHPUnit installation approach
 - Enhanced diagnostics to show PHPUnit executable location
@@ -170,6 +192,8 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 **Date:** September 26, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
+- **Resolved PHP version mismatch** - Ensured consistent PHP versions across all jobs
+- **Fixed Composer availability issues** - Proper Composer installation in containers
 - Fixed PHP version in quality job from 8.2 to 8.3 (matches local development)
 - Added Composer installation step to both test and quality jobs
 - Improved occ command diagnostics with proper file and execution checks
@@ -197,6 +221,9 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 - Fixed apps-extra directory creation issue
 - Fixed PHPUnit command path issue
 - Added container cleanup for all services
+- **Resolved MockMapper compatibility issues** - Eliminated complex mocking by using real Nextcloud environment
+- **Fixed database connection issues** - Proper service linking and configuration
+- **Resolved container startup timing issues** - Enhanced health checks and proper service coordination
 - **Enhanced Nextcloud health check** - Wait for full initialization including database setup
 - **Improved occ command reliability** - Proper working directory and timing
 - **Extended timeout** - 10 minutes for complete Nextcloud initialization
@@ -268,4 +295,4 @@ Run tests inside a real Nextcloud container with enhanced diagnostics to ensure 
 
 ---
 
-*Last Updated: September 29, 2025 | Version: 1.25 | Status: Enhanced Diagnostics and Cache Clearing*
+*Last Updated: September 29, 2025 | Version: 1.26 | Status: Optimized Retry Mechanism and Timing Fixes*

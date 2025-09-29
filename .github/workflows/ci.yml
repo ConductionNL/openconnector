@@ -262,6 +262,7 @@ jobs:
         run: |
           echo "=== Installing OpenConnector App Dependencies ==="
           echo "Installing app dependencies..."
+          # Composer install is synchronous but may trigger autoloader regeneration
           docker exec nextcloud-test bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
           echo "✅ App dependencies installed successfully"
           
@@ -299,7 +300,29 @@ jobs:
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
-          docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
+          
+          # Wait for Nextcloud background processes to complete
+          # maintenance:repair triggers background jobs (cache clearing, database migrations, etc.)
+          # These processes need time to complete before classes become available
+          echo "Waiting for Nextcloud background processes to complete..."
+          
+          # Try class loading with retry mechanism
+          echo "Testing class loading with retry mechanism..."
+          for i in {1..5}; do
+            echo "Attempt $i/5:"
+            if docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; exit 0; } else { echo \"❌ OpenConnector Application class not found (attempt $i)\n\"; exit 1; }'"; then
+              echo "✅ Class loading successful on attempt $i"
+              break
+            else
+              if [ $i -lt 5 ]; then
+                echo "⚠️ Attempt $i failed, waiting 3 seconds before retry..."
+                sleep 3
+              else
+                echo "❌ All attempts failed - class loading unsuccessful"
+                exit 1
+              fi
+            fi
+          done
           
       - name: Enhanced class loading diagnostics
         run: |
@@ -377,6 +400,7 @@ jobs:
           
           # Regenerate autoloader to fix class loading issues
           echo "Regenerating autoloader to fix class loading..."
+          # Composer dump-autoload is synchronous but regenerates class maps
           docker exec nextcloud-test bash -c "cd /var/www/html && composer dump-autoload --optimize"
           
           # Check if phpunit executable exists
@@ -719,6 +743,7 @@ jobs:
         run: |
           echo "=== Installing OpenConnector App Dependencies (Quality) ==="
           echo "Installing app dependencies..."
+          # Composer install is synchronous but may trigger autoloader regeneration
           docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
           echo "✅ App dependencies installed successfully"
           
@@ -756,7 +781,29 @@ jobs:
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
           echo "🎯 This should now work after installing dependencies"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; } else { echo \"❌ OpenConnector Application class not found (this indicates a problem)\n\"; }'"
+          
+          # Wait for Nextcloud background processes to complete
+          # maintenance:repair triggers background jobs (cache clearing, database migrations, etc.)
+          # These processes need time to complete before classes become available
+          echo "Waiting for Nextcloud background processes to complete..."
+          
+          # Try class loading with retry mechanism
+          echo "Testing class loading with retry mechanism..."
+          for i in {1..5}; do
+            echo "Attempt $i/5:"
+            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (SUCCESS!)\n\"; exit 0; } else { echo \"❌ OpenConnector Application class not found (attempt $i)\n\"; exit 1; }'"; then
+              echo "✅ Class loading successful on attempt $i"
+              break
+            else
+              if [ $i -lt 5 ]; then
+                echo "⚠️ Attempt $i failed, waiting 3 seconds before retry..."
+                sleep 3
+              else
+                echo "❌ All attempts failed - class loading unsuccessful"
+                exit 1
+              fi
+            fi
+          done
           
       - name: Enhanced class loading diagnostics (Quality)
         run: |
@@ -834,6 +881,7 @@ jobs:
           
           # Regenerate autoloader to fix class loading issues
           echo "Regenerating autoloader to fix class loading..."
+          # Composer dump-autoload is synchronous but regenerates class maps
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer dump-autoload --optimize"
           
           # Check if phpunit executable exists
