@@ -194,6 +194,18 @@ jobs:
           echo "✅ PHP is working"
           echo "=== End occ Command Diagnostics ==="
           
+      - name: Install Composer in Nextcloud container
+        run: |
+          echo "=== Installing Composer in Nextcloud Container ==="
+          echo "Installing Composer..."
+          docker exec nextcloud-test bash -c "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+          echo "Verifying Composer installation..."
+          if ! docker exec nextcloud-test bash -c "composer --version"; then
+            echo "❌ ERROR: Composer installation failed"
+            exit 1
+          fi
+          echo "✅ Composer installed successfully"
+          
       - name: Install and enable OpenConnector app
         run: |
           echo "=== OpenConnector App Installation ==="
@@ -251,18 +263,6 @@ jobs:
           # Wait a bit more for Nextcloud to fully process the app installation
           echo "Waiting for app installation to complete..."
           sleep 10
-          
-      - name: Install Composer in Nextcloud container
-        run: |
-          echo "=== Installing Composer in Nextcloud Container ==="
-          echo "Installing Composer..."
-          docker exec nextcloud-test bash -c "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
-          echo "Verifying Composer installation..."
-          if ! docker exec nextcloud-test bash -c "composer --version"; then
-            echo "❌ ERROR: Composer installation failed"
-            exit 1
-          fi
-          echo "✅ Composer installed successfully"
           
       - name: Verify app installation and run diagnostics
         run: |
