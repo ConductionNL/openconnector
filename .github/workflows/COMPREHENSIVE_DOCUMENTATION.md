@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.34 - Database Schema Preparation Fix  
+**Current Version:** 1.35 - Sequential Migration Fallback Testing  
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
-**Approach:** Added maintenance:repair before app:enable to ensure database schema is ready before app initialization
+**Approach:** Sequential migration fallback testing with primary force migration, fallback app install, and final all migrations approach
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -21,28 +21,31 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
 
 ## 🔧 Key Features
-1. **Database Schema Preparation** - Added `maintenance:repair` before app:enable to ensure database tables are ready (v1.34)
-2. **Composer Installation Order** - Composer installed before app dependencies in tests job (v1.33)
-3. **Explicit Database Migrations** - Added `php occ app:upgrade` step to ensure database tables are created (v1.32)
-4. **Dependencies Before Enabling** - App dependencies installed before app enabling to ensure proper initialization (v1.31)
-5. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
-6. **Workflow Consistency** - Both jobs follow identical patterns and step ordering (v1.30)
-7. **Duplicate Operation Prevention** - Eliminated redundant app moving and enabling steps (v1.30)
-8. **Fixed Step Ordering** - Composer installation before development dependencies (v1.29)
-9. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
-10. **Autoloader Verification** - Proper verification for `lib/autoload.php` creation (v1.28)
-11. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files (v1.27)
-12. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds (v1.27)
-13. **Optimized Retry Mechanism** - Handles timing issues with background processes (v1.26)
-14. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes (v1.18)
-15. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues (v1.17)
-16. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
-17. **Complete Service Stack** - All services linked and configured (v1.13)
-18. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
-19. **Database Migrations** - Handled automatically by Nextcloud (v1.13)
+1. **Sequential Migration Fallback** - Tests migration approaches sequentially with fallback logic to avoid conflicts (v1.35)
+2. **Safe Migration Testing** - Primary approach with fallback options to prevent interference between methods (v1.35)
+3. **Enhanced Database Diagnostics** - Added comprehensive database table verification and connection testing (v1.35)
+4. **Database Schema Preparation** - Added `maintenance:repair` before app:enable to ensure database tables are ready (v1.34)
+5. **Composer Installation Order** - Composer installed before app dependencies in tests job (v1.33)
+6. **Explicit Database Migrations** - Added `php occ app:upgrade` step to ensure database tables are created (v1.32)
+7. **Dependencies Before Enabling** - App dependencies installed before app enabling to ensure proper initialization (v1.31)
+8. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
+9. **Workflow Consistency** - Both jobs follow identical patterns and step ordering (v1.30)
+10. **Duplicate Operation Prevention** - Eliminated redundant app moving and enabling steps (v1.30)
+11. **Fixed Step Ordering** - Composer installation before development dependencies (v1.29)
+12. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
+13. **Autoloader Verification** - Proper verification for `lib/autoload.php` creation (v1.28)
+14. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files (v1.27)
+15. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds (v1.27)
+16. **Optimized Retry Mechanism** - Handles timing issues with background processes (v1.26)
+17. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes (v1.18)
+18. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues (v1.17)
+19. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
+20. **Complete Service Stack** - All services linked and configured (v1.13)
+21. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
+22. **Database Migrations** - Handled automatically by Nextcloud (v1.13)
 
 ## 🐛 Issues Resolved
-- 🔄 **Table oc_openconnector_job_logs doesn't exist** - Added maintenance:repair before app:enable to ensure database schema is ready (v1.34) - **TESTING IN PROGRESS**
+- 🔄 **Table oc_openconnector_job_logs doesn't exist** - Sequential migration fallback testing with primary force migration, fallback app install, and final all migrations (v1.35) - **TESTING IN PROGRESS**
 - ✅ **Composer command not found error** - Composer installation moved before app dependencies in tests job (v1.33)
 - ✅ **Missing vendor/autoload.php error** - Composer install now runs before app enabling (v1.31)
 - ✅ **Misleading step names** - All step names now accurately reflect their functionality and execution context (v1.31)
@@ -80,6 +83,9 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **`.github/workflows/versions.env`** - Centralized version management
 
 ## ✨ Benefits
+- **Safe migration testing** - Tests migration approaches sequentially to avoid conflicts and interference (v1.35)
+- **Intelligent fallback system** - Uses fallback approaches only when primary method fails (v1.35)
+- **Enhanced database diagnostics** - Comprehensive table verification and connection testing for better troubleshooting (v1.35)
 - **Proactive database schema preparation** - Database tables created before app code execution prevents initialization failures (v1.34)
 - **Reliable Composer availability** - Composer installed before any composer commands are executed (v1.33)
 - **Complete database setup** - Explicit migration step ensures all database tables are created (v1.32)
@@ -108,6 +114,17 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ---
 
 ## 📜 Changelog
+
+### Version 1.35 - Sequential Migration Fallback Testing
+**Date:** September 30, 2025  
+**Status:** 🔄 Testing In Progress  
+**Changes:**
+- Added sequential migration fallback - Tests migration approaches one at a time to avoid conflicts
+- Primary approach: Force migration - Runs `php occ app:upgrade openconnector --force` first
+- Fallback 1: App install local - Uses `php occ app:install openconnector --path=/var/www/html/apps/openconnector` if primary fails
+- Fallback 2: All migrations - Runs `php occ app:upgrade --all` if both previous approaches fail
+- Enhanced database diagnostics - Added comprehensive table verification and connection testing
+- Applied to both tests and quality jobs - Consistent approach across all workflows
 
 ### Version 1.34 - Database Schema Preparation Fix
 **Date:** September 30, 2025  
@@ -427,4 +444,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: September 30, 2025 | Version: 1.34 | Status: Database Schema Preparation Fix*
+*Last Updated: September 30, 2025 | Version: 1.35 | Status: Sequential Migration Fallback Testing*
