@@ -21,20 +21,25 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
 
 ## 🔧 Key Features
-1. **Fixed Step Ordering** - Composer installation before development dependencies (v1.29)
-2. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
-3. **Autoloader Verification** - Proper verification for `lib/autoload.php` creation (v1.28)
-4. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files (v1.27)
-5. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds (v1.27)
-6. **Optimized Retry Mechanism** - Handles timing issues with background processes (v1.26)
-7. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes (v1.18)
-8. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues (v1.17)
-9. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
-10. **Complete Service Stack** - All services linked and configured (v1.13)
-11. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
-12. **Database Migrations** - Handled automatically by Nextcloud (v1.13)
+1. **Workflow Consistency** - Both jobs follow identical patterns and step ordering (v1.30)
+2. **Duplicate Operation Prevention** - Eliminated redundant app moving and enabling steps (v1.30)
+3. **Fixed Step Ordering** - Composer installation before development dependencies (v1.29)
+4. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
+5. **Autoloader Verification** - Proper verification for `lib/autoload.php` creation (v1.28)
+6. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files (v1.27)
+7. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds (v1.27)
+8. **Optimized Retry Mechanism** - Handles timing issues with background processes (v1.26)
+9. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes (v1.18)
+10. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues (v1.17)
+11. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
+12. **Complete Service Stack** - All services linked and configured (v1.13)
+13. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
+14. **Database Migrations** - Handled automatically by Nextcloud (v1.13)
 
 ## 🐛 Issues Resolved
+- ✅ **Tests job duplicate operations** - Removed duplicate app:enable calls and app moving logic (v1.30)
+- ✅ **Workflow inconsistency** - Both jobs now follow identical patterns and step ordering (v1.30)
+- ✅ **Redundant operations** - Eliminated duplicate app moving and enabling steps in both jobs (v1.30)
 - ✅ **Composer step ordering** - Moved Composer installation before development dependencies installation (v1.29)
 - ✅ **App installation method** - Changed from `app:install` to `app:enable` for local app usage (v1.29)
 - ✅ **Composer command not found** - Composer now available when development dependencies are installed (v1.29)
@@ -68,6 +73,8 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **`.github/workflows/versions.env`** - Centralized version management
 
 ## ✨ Benefits
+- **Consistent workflow behavior** - Both jobs follow identical patterns and step ordering (v1.30)
+- **Eliminated redundancy** - No duplicate operations or redundant steps (v1.30)
 - **Reliable workflow execution** - Proper step ordering prevents critical failures (v1.29)
 - **Local app development** - Uses local app files instead of external downloads (v1.29)
 - **Robust error handling** - Clear diagnostics and proper error reporting (v1.28)
@@ -89,6 +96,18 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ---
 
 ## 📜 Changelog
+
+### Version 1.30 - Comprehensive Workflow Consistency Fixes
+**Date:** September 30, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Fixed tests job duplicate app:enable calls - Removed duplicate "Enabling OpenConnector app" steps
+- Fixed tests job premature app:enable - Added proper app moving before enabling in tests job
+- Ensured consistency between jobs - Both tests and quality jobs now follow identical patterns
+- Removed duplicate app moving logic - Eliminated redundant app moving steps in both jobs
+- Improved workflow reliability - Both jobs now have proper step ordering and error handling
+- Applied comprehensive fixes - All workflow issues identified and resolved systematically
+- Expected result - Both jobs should now run successfully with consistent behavior and no duplicate operations
 
 ### Version 1.29 - Workflow Step Ordering and App Installation Fixes
 **Date:** September 30, 2025  

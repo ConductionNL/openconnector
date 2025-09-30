@@ -208,16 +208,12 @@ jobs:
           echo "Listing available apps..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list"
           
-          echo "Enabling OpenConnector app..."
-          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
-            echo "❌ ERROR: Failed to enable OpenConnector app"
-            echo "Checking if app is available..."
-            docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
-            echo "Continuing with app enabling..."
-          else
-            echo "✅ OpenConnector app installed successfully"
-          fi
+          # Move app to correct location for Nextcloud
+          echo "Moving app to correct location for Nextcloud..."
+          docker exec nextcloud-test bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
+          echo "App moved to /var/www/html/apps/openconnector"
           
+          # Enable the app
           echo "Enabling OpenConnector app..."
           if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
             echo "❌ ERROR: Failed to enable OpenConnector app"
@@ -278,18 +274,10 @@ jobs:
           docker exec nextcloud-test bash -c "cat /var/www/html/apps-extra/openconnector/appinfo/info.xml | head -10"
           
           # Check if app is in the right location for Nextcloud
-          echo "Checking if app should be in /var/www/html/apps/ instead..."
+          echo "Checking if app is in correct location..."
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/ 2>/dev/null | grep openconnector || echo 'No openconnector found in /var/www/html/apps/'"
           
-          # Move app to correct location for Nextcloud
-          echo "Moving app to correct location for Nextcloud..."
-          docker exec nextcloud-test bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
-          echo "App moved to /var/www/html/apps/openconnector"
-          
-          # Restart app in new location
-          echo "Restarting app in new location..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector"
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
+          echo "✅ App should already be in /var/www/html/apps/ from previous step"
           
           # Force Nextcloud to rescan apps and clear caches
           echo "Forcing Nextcloud to rescan apps and clear caches..."
@@ -738,16 +726,12 @@ jobs:
           echo "Listing available apps..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list"
           
-          echo "Enabling OpenConnector app..."
-          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
-            echo "❌ ERROR: Failed to enable OpenConnector app"
-            echo "Checking if app is available..."
-            docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
-            echo "Continuing with app enabling..."
-          else
-            echo "✅ OpenConnector app installed successfully"
-          fi
+          # Move app to correct location for Nextcloud
+          echo "Moving app to correct location for Nextcloud..."
+          docker exec nextcloud-test-quality bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
+          echo "App moved to /var/www/html/apps/openconnector"
           
+          # Enable the app
           echo "Enabling OpenConnector app..."
           if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
             echo "❌ ERROR: Failed to enable OpenConnector app"
@@ -762,11 +746,6 @@ jobs:
           # Verify app is properly enabled
           echo "Verifying app installation..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
-          
-          # Check if app classes are available (before dependencies)
-          echo "Checking if app classes are available (before dependencies)..."
-          echo "⚠️  NOTE: This is expected to fail before dependencies are installed"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (unexpected but good!)\n\"; } else { echo \"⚠️  OpenConnector Application class not found (expected before dependencies)\n\"; }'"
           
           # Set up test environment
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ config:system:set debug --value true"
@@ -796,18 +775,10 @@ jobs:
           docker exec nextcloud-test-quality bash -c "cat /var/www/html/apps-extra/openconnector/appinfo/info.xml | head -10"
           
           # Check if app is in the right location for Nextcloud
-          echo "Checking if app should be in /var/www/html/apps/ instead..."
+          echo "Checking if app is in correct location..."
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/ 2>/dev/null | grep openconnector || echo 'No openconnector found in /var/www/html/apps/'"
           
-          # Move app to correct location for Nextcloud
-          echo "Moving app to correct location for Nextcloud..."
-          docker exec nextcloud-test-quality bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
-          echo "App moved to /var/www/html/apps/openconnector"
-          
-          # Restart app in new location
-          echo "Restarting app in new location..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
+          echo "✅ App should already be in /var/www/html/apps/ from previous step"
           
           # Force Nextcloud to rescan apps and clear caches
           echo "Forcing Nextcloud to rescan apps and clear caches..."
