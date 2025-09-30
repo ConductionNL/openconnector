@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.35 - Sequential Migration Fallback Testing  
+**Current Version:** 1.35 - Available Commands Testing  
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
-**Approach:** Sequential migration fallback testing with primary force migration, fallback app install, and final all migrations approach
+**Approach:** Test available Nextcloud commands with direct app:enable, fallback app:install, and final app:update approach
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.

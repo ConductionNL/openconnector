@@ -235,40 +235,43 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
           echo "✅ Database schema prepared"
           
-          # Test single approach to ensure database tables exist (v1.35)
-          echo "=== Testing Database Preparation Approach ==="
+          # Test available Nextcloud commands for database preparation (v1.35)
+          echo "=== Testing Available Nextcloud Commands ==="
           
-          # Choose one approach to test (we'll test different ones in different runs)
-          # For now, let's test Option 1: Force migration before enabling
-          echo "🔄 Testing: Force migration before enabling..."
-          if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:upgrade openconnector --force"; then
-            echo "✅ SUCCESS: Force migration completed"
+          # Check what app commands are available
+          echo "🔄 Checking available app commands..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app --help"
+          
+          # Try to enable the app directly (this should trigger migrations)
+          echo "🔄 Testing: Direct app enable (should trigger migrations)..."
+          if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            echo "✅ SUCCESS: App enabled successfully with migrations"
             MIGRATION_SUCCESS=true
           else
-            echo "❌ FAILED: Force migration failed"
+            echo "❌ FAILED: Direct app enable failed"
             MIGRATION_SUCCESS=false
           fi
           
-          # If migration failed, try alternative approach
+          # If direct enable failed, try alternative approach
           if [ "$MIGRATION_SUCCESS" = false ]; then
-            echo "🔄 Fallback: Trying app:install with local path..."
-            if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector --path=/var/www/html/apps/openconnector"; then
-              echo "✅ SUCCESS: App installed from local path"
+            echo "🔄 Fallback: Trying app:install from store..."
+            if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector"; then
+              echo "✅ SUCCESS: App installed from store"
               MIGRATION_SUCCESS=true
             else
-              echo "❌ FAILED: App install from local path also failed"
+              echo "❌ FAILED: App install from store also failed"
               MIGRATION_SUCCESS=false
             fi
           fi
           
-          # Final fallback: try all migrations
+          # Final fallback: try app:update
           if [ "$MIGRATION_SUCCESS" = false ]; then
-            echo "🔄 Final fallback: Running all pending migrations..."
-            if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:upgrade --all"; then
-              echo "✅ SUCCESS: All migrations completed"
+            echo "🔄 Final fallback: Trying app:update..."
+            if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:update openconnector"; then
+              echo "✅ SUCCESS: App updated successfully"
               MIGRATION_SUCCESS=true
             else
-              echo "❌ FAILED: All migrations also failed"
+              echo "❌ FAILED: App update also failed"
               MIGRATION_SUCCESS=false
             fi
           fi
@@ -277,10 +280,11 @@ jobs:
           echo "=== Migration Test Results ==="
           echo "Migration preparation: $MIGRATION_SUCCESS"
           
-          # Enable the app
-          echo "Enabling OpenConnector app..."
-          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
-            echo "❌ ERROR: Failed to enable OpenConnector app"
+          # Check if app is already enabled from migration testing
+          if [ "$MIGRATION_SUCCESS" = true ]; then
+            echo "✅ App already enabled during migration testing"
+          else
+            echo "❌ ERROR: All migration approaches failed"
             echo "Checking app status..."
             docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
             echo "Checking Nextcloud logs..."
@@ -795,40 +799,43 @@ jobs:
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ maintenance:repair"
           echo "✅ Database schema prepared"
           
-          # Test single approach to ensure database tables exist (v1.35)
-          echo "=== Testing Database Preparation Approach ==="
+          # Test available Nextcloud commands for database preparation (v1.35)
+          echo "=== Testing Available Nextcloud Commands ==="
           
-          # Choose one approach to test (we'll test different ones in different runs)
-          # For now, let's test Option 1: Force migration before enabling
-          echo "🔄 Testing: Force migration before enabling..."
-          if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:upgrade openconnector --force"; then
-            echo "✅ SUCCESS: Force migration completed"
+          # Check what app commands are available
+          echo "🔄 Checking available app commands..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app --help"
+          
+          # Try to enable the app directly (this should trigger migrations)
+          echo "🔄 Testing: Direct app enable (should trigger migrations)..."
+          if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            echo "✅ SUCCESS: App enabled successfully with migrations"
             MIGRATION_SUCCESS=true
           else
-            echo "❌ FAILED: Force migration failed"
+            echo "❌ FAILED: Direct app enable failed"
             MIGRATION_SUCCESS=false
           fi
           
-          # If migration failed, try alternative approach
+          # If direct enable failed, try alternative approach
           if [ "$MIGRATION_SUCCESS" = false ]; then
-            echo "🔄 Fallback: Trying app:install with local path..."
-            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector --path=/var/www/html/apps/openconnector"; then
-              echo "✅ SUCCESS: App installed from local path"
+            echo "🔄 Fallback: Trying app:install from store..."
+            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
+              echo "✅ SUCCESS: App installed from store"
               MIGRATION_SUCCESS=true
             else
-              echo "❌ FAILED: App install from local path also failed"
+              echo "❌ FAILED: App install from store also failed"
               MIGRATION_SUCCESS=false
             fi
           fi
           
-          # Final fallback: try all migrations
+          # Final fallback: try app:update
           if [ "$MIGRATION_SUCCESS" = false ]; then
-            echo "🔄 Final fallback: Running all pending migrations..."
-            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:upgrade --all"; then
-              echo "✅ SUCCESS: All migrations completed"
+            echo "🔄 Final fallback: Trying app:update..."
+            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:update openconnector"; then
+              echo "✅ SUCCESS: App updated successfully"
               MIGRATION_SUCCESS=true
             else
-              echo "❌ FAILED: All migrations also failed"
+              echo "❌ FAILED: App update also failed"
               MIGRATION_SUCCESS=false
             fi
           fi
@@ -837,10 +844,11 @@ jobs:
           echo "=== Migration Test Results ==="
           echo "Migration preparation: $MIGRATION_SUCCESS"
           
-          # Enable the app
-          echo "Enabling OpenConnector app..."
-          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
-            echo "❌ ERROR: Failed to enable OpenConnector app"
+          # Check if app is already enabled from migration testing
+          if [ "$MIGRATION_SUCCESS" = true ]; then
+            echo "✅ App already enabled during migration testing"
+          else
+            echo "❌ ERROR: All migration approaches failed"
             echo "Checking app status..."
             docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
             echo "Checking Nextcloud logs..."
