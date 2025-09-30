@@ -327,6 +327,17 @@ jobs:
           composer dump-autoload --optimize
           echo "✅ Host autoloader generated"
           
+          # Verify autoloader was created on host
+          if [ ! -f "lib/autoload.php" ]; then
+            echo "❌ ERROR: lib/autoload.php not found on host after generation"
+            echo "Checking what was generated..."
+            ls -la lib/ || echo "lib directory not found"
+            echo "Checking composer.json for autoload configuration..."
+            cat composer.json | grep -A 10 -B 5 autoload || echo "No autoload section found"
+            exit 1
+          fi
+          echo "✅ Host autoloader verified"
+          
           # Copy the generated autoloader to container
           echo "Copying autoloader to container..."
           docker cp lib/autoload.php nextcloud-test:/var/www/html/apps/openconnector/lib/autoload.php
@@ -573,37 +584,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
             
-      - name: Install development dependencies in Nextcloud container
-        run: |
-          echo "Installing development dependencies in Nextcloud container..."
-          
-          # Install development tools in the container (Composer already installed)
-          echo "Installing php-cs-fixer in Nextcloud container..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev friendsofphp/php-cs-fixer:^3.0 --no-interaction"
-          
-          echo "Installing psalm in Nextcloud container..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev vimeo/psalm:^5.0 --no-interaction"
-          
-          echo "✅ Development dependencies installed in Nextcloud container"
-        
-      - name: Run PHP linting
-        run: |
-          echo "Running PHP linting in Nextcloud container..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name '*.php' -exec php -l {} \;"
-        continue-on-error: true
-        
-      - name: Run PHP CodeSniffer
-        run: |
-          echo "Running PHP CodeSniffer in Nextcloud container..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/php-cs-fixer fix --dry-run --diff"
-        continue-on-error: true
-        
-      - name: Run Psalm static analysis
-        run: |
-          echo "Running Psalm static analysis in Nextcloud container..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/psalm --threads=1 --no-cache"
-        continue-on-error: true
-        
       - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
         run: |
           # Start MariaDB container (matching local setup)
@@ -673,6 +653,19 @@ jobs:
           # Wait a bit more for Nextcloud to fully process the app installation
           echo "Waiting for app installation to complete..."
           sleep 10
+          
+      - name: Install development dependencies in Nextcloud container
+        run: |
+          echo "Installing development dependencies in Nextcloud container..."
+          
+          # Install development tools in the container (Composer already installed)
+          echo "Installing php-cs-fixer in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev friendsofphp/php-cs-fixer:^3.0 --no-interaction"
+          
+          echo "Installing psalm in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev vimeo/psalm:^5.0 --no-interaction"
+          
+          echo "✅ Development dependencies installed in Nextcloud container"
           
       - name: Diagnose Nextcloud occ command availability (Quality)
         run: |
@@ -852,6 +845,17 @@ jobs:
           composer dump-autoload --optimize
           echo "✅ Host autoloader generated"
           
+          # Verify autoloader was created on host
+          if [ ! -f "lib/autoload.php" ]; then
+            echo "❌ ERROR: lib/autoload.php not found on host after generation"
+            echo "Checking what was generated..."
+            ls -la lib/ || echo "lib directory not found"
+            echo "Checking composer.json for autoload configuration..."
+            cat composer.json | grep -A 10 -B 5 autoload || echo "No autoload section found"
+            exit 1
+          fi
+          echo "✅ Host autoloader verified"
+          
           # Copy the generated autoloader to container
           echo "Copying autoloader to container..."
           docker cp lib/autoload.php nextcloud-test-quality:/var/www/html/apps/openconnector/lib/autoload.php
@@ -1018,6 +1022,24 @@ jobs:
           docker exec nextcloud-test-quality bash -c "find /var/www/html -name phpunit -type f 2>/dev/null || echo 'phpunit not found anywhere'"
           
           echo "=== End PHPUnit Diagnostics (Quality) ==="
+          
+      - name: Run PHP linting
+        run: |
+          echo "Running PHP linting in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name '*.php' -exec php -l {} \;"
+        continue-on-error: true
+        
+      - name: Run PHP CodeSniffer
+        run: |
+          echo "Running PHP CodeSniffer in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/php-cs-fixer fix --dry-run --diff"
+        continue-on-error: true
+        
+      - name: Run Psalm static analysis
+        run: |
+          echo "Running Psalm static analysis in Nextcloud container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/psalm --threads=1 --no-cache"
+        continue-on-error: true
         
       - name: Run unit tests inside Nextcloud container
         run: |
