@@ -230,6 +230,11 @@ jobs:
           fi
           echo "✅ OpenConnector app enabled successfully"
           
+          # Run database migrations for the app
+          echo "Running database migrations for OpenConnector app..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:upgrade openconnector"
+          echo "✅ Database migrations completed"
+          
           # Verify app is properly enabled
           echo "Verifying app installation..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
@@ -745,6 +750,11 @@ jobs:
             exit 1
           fi
           echo "✅ OpenConnector app enabled successfully"
+          
+          # Run database migrations for the app
+          echo "Running database migrations for OpenConnector app..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:upgrade openconnector"
+          echo "✅ Database migrations completed"
           
           # Verify app is properly enabled
           echo "Verifying app installation..."
