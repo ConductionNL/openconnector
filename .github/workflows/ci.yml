@@ -230,6 +230,11 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html/apps/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
           echo "✅ App dependencies installed successfully"
           
+          # Run maintenance:repair to ensure database schema is ready
+          echo "Running maintenance:repair to prepare database schema..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
+          echo "✅ Database schema prepared"
+          
           # Enable the app
           echo "Enabling OpenConnector app..."
           if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
@@ -738,6 +743,11 @@ jobs:
           echo "Installing app dependencies before enabling..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
           echo "✅ App dependencies installed successfully"
+          
+          # Run maintenance:repair to ensure database schema is ready
+          echo "Running maintenance:repair to prepare database schema..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ maintenance:repair"
+          echo "✅ Database schema prepared"
           
           # Enable the app
           echo "Enabling OpenConnector app..."
