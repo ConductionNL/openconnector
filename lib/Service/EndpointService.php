@@ -393,6 +393,7 @@ class EndpointService
         } else if ($serializedObject === null) {
             return $serializedObject;
         } else {
+            $this->objectService->getOpenRegisters()->clearCurrents();
             $object = $mapper->find($serializedObject['id']);
         }
 
@@ -638,7 +639,12 @@ class EndpointService
     ): Entity|array
     {
         if (isset($pathParams['id']) === true && $pathParams['id'] === end($pathParams)) {
-			$serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
+            try {
+                $serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
+            } catch (DoesNotExistException $e) {
+                $status = 404;
+                return ['error' => 'not found', 'message' => "the object with id {$pathParams['id']} does not exist"];
+            }
             $result = $this->replaceInternalReferences(
 				mapper: $mapper,
 				serializedObject: $serializedObject,
@@ -1276,6 +1282,7 @@ class EndpointService
 
             return $data;
         }
+//        var_dump($data['body']);
 
         $data['body'] = $this->mappingService->executeMapping($mapping, $data['body']);
 
