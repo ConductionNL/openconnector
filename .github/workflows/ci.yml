@@ -65,7 +65,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
             
-      - name: Install dependencies
+      - name: Install dependencies on GitHub Actions runner
         run: |
           # Update dependencies to ensure lock file is current
           composer update --no-interaction --prefer-dist
@@ -213,6 +213,11 @@ jobs:
           docker exec nextcloud-test bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
           echo "App moved to /var/www/html/apps/openconnector"
           
+          # Install app dependencies BEFORE enabling the app
+          echo "Installing app dependencies before enabling..."
+          docker exec nextcloud-test bash -c "cd /var/www/html/apps/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
+          echo "✅ App dependencies installed successfully"
+          
           # Enable the app
           echo "Enabling OpenConnector app..."
           if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
@@ -254,18 +259,11 @@ jobs:
           fi
           echo "✅ Composer installed successfully"
           
-      - name: Install OpenConnector app dependencies
+      - name: Verify app installation and run diagnostics
         run: |
-          echo "=== Installing OpenConnector App Dependencies ==="
-          echo "Installing app dependencies..."
-          # Composer install is synchronous but may trigger autoloader regeneration
-          docker exec nextcloud-test bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
-          echo "✅ App dependencies installed successfully"
-          
-          # Restart Nextcloud to reload app classes
-          echo "Restarting Nextcloud to reload app classes..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector"
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
+          echo "=== App Installation Verification and Diagnostics ==="
+          echo "Verifying app dependencies are present..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Autoloader not found'"
           
           # Check app structure and files
           echo "Checking app structure and files..."
@@ -493,7 +491,7 @@ jobs:
           
           echo "=== End PHPUnit Diagnostics ==="
           
-      - name: Run PHP linting
+      - name: Run PHP linting on GitHub Actions runner
         run: composer lint
         continue-on-error: true
         
@@ -731,6 +729,11 @@ jobs:
           docker exec nextcloud-test-quality bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
           echo "App moved to /var/www/html/apps/openconnector"
           
+          # Install app dependencies BEFORE enabling the app
+          echo "Installing app dependencies before enabling..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
+          echo "✅ App dependencies installed successfully"
+          
           # Enable the app
           echo "Enabling OpenConnector app..."
           if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
@@ -755,18 +758,11 @@ jobs:
           echo "Waiting for app installation to complete..."
           sleep 10
           
-      - name: Install OpenConnector app dependencies (Quality)
+      - name: Verify app installation and run diagnostics (Quality)
         run: |
-          echo "=== Installing OpenConnector App Dependencies (Quality) ==="
-          echo "Installing app dependencies..."
-          # Composer install is synchronous but may trigger autoloader regeneration
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps-extra/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
-          echo "✅ App dependencies installed successfully"
-          
-          # Restart Nextcloud to reload app classes
-          echo "Restarting Nextcloud to reload app classes..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
+          echo "=== App Installation Verification and Diagnostics (Quality) ==="
+          echo "Verifying app dependencies are present..."
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Autoloader not found'"
           
           # Check app structure and files
           echo "Checking app structure and files..."
@@ -994,19 +990,19 @@ jobs:
           
           echo "=== End PHPUnit Diagnostics (Quality) ==="
           
-      - name: Run PHP linting
+      - name: Run PHP linting in Nextcloud container
         run: |
           echo "Running PHP linting in Nextcloud container..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name '*.php' -exec php -l {} \;"
         continue-on-error: true
         
-      - name: Run PHP CodeSniffer
+      - name: Run PHP CodeSniffer in Nextcloud container
         run: |
           echo "Running PHP CodeSniffer in Nextcloud container..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/php-cs-fixer fix --dry-run --diff"
         continue-on-error: true
         
-      - name: Run Psalm static analysis
+      - name: Run Psalm static analysis in Nextcloud container
         run: |
           echo "Running Psalm static analysis in Nextcloud container..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/psalm --threads=1 --no-cache"
