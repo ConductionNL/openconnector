@@ -21,19 +21,24 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
 
 ## 🔧 Key Features
-1. **Fixed Step Ordering** - Docker containers start before dependency installation (v1.28)
-2. **Autoloader Verification** - Proper verification for `lib/autoload.php` creation (v1.28)
-3. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files (v1.27)
-4. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds (v1.27)
-5. **Optimized Retry Mechanism** - Handles timing issues with background processes (v1.26)
-6. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes (v1.18)
-7. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues (v1.17)
-8. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
-9. **Complete Service Stack** - All services linked and configured (v1.13)
-10. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
-11. **Database Migrations** - Handled automatically by Nextcloud (v1.13)
+1. **Fixed Step Ordering** - Composer installation before development dependencies (v1.29)
+2. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
+3. **Autoloader Verification** - Proper verification for `lib/autoload.php` creation (v1.28)
+4. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files (v1.27)
+5. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds (v1.27)
+6. **Optimized Retry Mechanism** - Handles timing issues with background processes (v1.26)
+7. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes (v1.18)
+8. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues (v1.17)
+9. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
+10. **Complete Service Stack** - All services linked and configured (v1.13)
+11. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
+12. **Database Migrations** - Handled automatically by Nextcloud (v1.13)
 
 ## 🐛 Issues Resolved
+- ✅ **Composer step ordering** - Moved Composer installation before development dependencies installation (v1.29)
+- ✅ **App installation method** - Changed from `app:install` to `app:enable` for local app usage (v1.29)
+- ✅ **Composer command not found** - Composer now available when development dependencies are installed (v1.29)
+- ✅ **App download failure** - Uses local app instead of trying to download from Nextcloud store (v1.29)
 - ✅ **Quality job step ordering** - Moved Docker container startup before development dependencies installation (v1.28)
 - ✅ **Missing autoloader file verification** - Added verification step to ensure `lib/autoload.php` exists on host (v1.28)
 - ✅ **Container ordering issue** - Quality job was trying to install dependencies in non-existent container (v1.28)
@@ -63,6 +68,8 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **`.github/workflows/versions.env`** - Centralized version management
 
 ## ✨ Benefits
+- **Reliable workflow execution** - Proper step ordering prevents critical failures (v1.29)
+- **Local app development** - Uses local app files instead of external downloads (v1.29)
 - **Robust error handling** - Clear diagnostics and proper error reporting (v1.28)
 - **Consistent results** - Same fixes applied to both test and quality jobs (v1.28)
 - **Maintainable workflow** - Clear separation of concerns and systematic approach (v1.27)
@@ -82,6 +89,18 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ---
 
 ## 📜 Changelog
+
+### Version 1.29 - Workflow Step Ordering and App Installation Fixes
+**Date:** September 30, 2025  
+**Status:** ✅ Implemented  
+**Changes:**
+- Fixed quality job step ordering - Moved Composer installation before development dependencies installation
+- Fixed app installation method - Changed from `app:install` to `app:enable` for local app usage
+- Resolved "composer: command not found" error - Composer now available when development dependencies are installed
+- Resolved "Could not download app openconnector" error - Uses local app instead of trying to download from store
+- Applied to both jobs - Same fixes implemented in both test and quality jobs
+- Better error messages - Updated error messages to reflect correct operations (enable vs install)
+- Expected result - Both quality and test jobs should now run without critical step ordering and app installation errors
 
 ### Version 1.28 - Critical Workflow Fixes
 **Date:** September 30, 2025  

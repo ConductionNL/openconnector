@@ -208,10 +208,10 @@ jobs:
           echo "Listing available apps..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list"
           
-          echo "Installing OpenConnector app..."
-          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector"; then
-            echo "❌ ERROR: Failed to install OpenConnector app"
-            echo "Checking if app is already installed..."
+          echo "Enabling OpenConnector app..."
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            echo "❌ ERROR: Failed to enable OpenConnector app"
+            echo "Checking if app is available..."
             docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
             echo "Continuing with app enabling..."
           else
@@ -654,6 +654,18 @@ jobs:
           echo "Waiting for app installation to complete..."
           sleep 10
           
+      - name: Install Composer in Nextcloud container (Quality)
+        run: |
+          echo "=== Installing Composer in Nextcloud Container (Quality) ==="
+          echo "Installing Composer..."
+          docker exec nextcloud-test-quality bash -c "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+          echo "Verifying Composer installation..."
+          if ! docker exec nextcloud-test-quality bash -c "composer --version"; then
+            echo "❌ ERROR: Composer installation failed"
+            exit 1
+          fi
+          echo "✅ Composer installed successfully"
+          
       - name: Install development dependencies in Nextcloud container
         run: |
           echo "Installing development dependencies in Nextcloud container..."
@@ -726,10 +738,10 @@ jobs:
           echo "Listing available apps..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list"
           
-          echo "Installing OpenConnector app..."
-          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
-            echo "❌ ERROR: Failed to install OpenConnector app"
-            echo "Checking if app is already installed..."
+          echo "Enabling OpenConnector app..."
+          if ! docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            echo "❌ ERROR: Failed to enable OpenConnector app"
+            echo "Checking if app is available..."
             docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
             echo "Continuing with app enabling..."
           else
@@ -763,18 +775,6 @@ jobs:
           # Wait a bit more for Nextcloud to fully process the app installation
           echo "Waiting for app installation to complete..."
           sleep 10
-          
-      - name: Install Composer in Nextcloud container (Quality)
-        run: |
-          echo "=== Installing Composer in Nextcloud Container (Quality) ==="
-          echo "Installing Composer..."
-          docker exec nextcloud-test-quality bash -c "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
-          echo "Verifying Composer installation..."
-          if ! docker exec nextcloud-test-quality bash -c "composer --version"; then
-            echo "❌ ERROR: Composer installation failed"
-            exit 1
-          fi
-          echo "✅ Composer installed successfully"
           
       - name: Install OpenConnector app dependencies (Quality)
         run: |
