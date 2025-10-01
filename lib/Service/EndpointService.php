@@ -1282,7 +1282,6 @@ class EndpointService
 
             return $data;
         }
-//        var_dump($data['body']);
 
         $data['body'] = $this->mappingService->executeMapping($mapping, $data['body']);
 
