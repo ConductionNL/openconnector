@@ -437,27 +437,26 @@ jobs:
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Vendor autoload.php not found'"
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'App autoload.php not found'"
           
-          # Generate missing app autoloader
-          echo "Generating missing app autoloader..."
-          # First, generate autoloader on host
-          composer dump-autoload --optimize
-          echo "✅ Host autoloader generated"
+          # Generate missing app autoloader INSIDE the container
+          echo "🔧 ATTEMPTING: Generating app autoloader inside container (v1.40)..."
+          echo "🔍 DIAGNOSTIC: Running composer dump-autoload inside container..."
+          docker exec nextcloud-test bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
+          echo "✅ Container autoloader generated"
           
-          # Verify autoloader was created on host
-          if [ ! -f "lib/autoload.php" ]; then
-            echo "❌ ERROR: lib/autoload.php not found on host after generation"
-            echo "Checking what was generated..."
-            ls -la lib/ || echo "lib directory not found"
-            echo "Checking composer.json for autoload configuration..."
-            cat composer.json | grep -A 10 -B 5 autoload || echo "No autoload section found"
+          # Verify autoloader was created inside container
+          echo "🔍 DIAGNOSTIC: Verifying autoloader exists in container..."
+          if docker exec nextcloud-test bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ Container autoloader verified - lib/autoload.php exists"
+          else
+            echo "❌ ERROR: lib/autoload.php not found in container after generation"
+            echo "🔍 DIAGNOSTIC: Checking what was generated in container..."
+            docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/ || echo 'lib directory not found'"
+            echo "🔍 DIAGNOSTIC: Checking composer.json for autoload configuration..."
+            docker exec nextcloud-test bash -c "cat /var/www/html/apps/openconnector/composer.json | grep -A 10 -B 5 autoload || echo 'No autoload section found'"
+            echo "🔍 DIAGNOSTIC: Checking if lib directory exists..."
+            docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/ | grep lib"
             exit 1
           fi
-          echo "✅ Host autoloader verified"
-          
-          # Copy the generated autoloader to container
-          echo "Copying autoloader to container..."
-          docker cp lib/autoload.php nextcloud-test:/var/www/html/apps/openconnector/lib/autoload.php
-          echo "✅ Autoloader copied to container"
           
           # Restart Nextcloud to reload the new autoloader
           echo "Restarting Nextcloud to reload autoloader..."
@@ -922,22 +921,26 @@ jobs:
           
           # Try to install the app directly (this should trigger migrations)
           echo "🔄 Testing: Direct app install (should trigger migrations)..."
-          if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
+          echo "🔍 DIAGNOSTIC: Adding timeout to prevent hanging progress bar (v1.40)..."
+          if timeout 120 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
             echo "✅ SUCCESS: App installed successfully with migrations"
             MIGRATION_SUCCESS=true
           else
-            echo "❌ FAILED: Direct app install failed"
+            echo "❌ FAILED: Direct app install failed or timed out"
+            echo "🔍 DIAGNOSTIC: Checking if app is partially installed..."
+            docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in list'"
             MIGRATION_SUCCESS=false
           fi
           
           # If direct install failed, try alternative approach
           if [ "$MIGRATION_SUCCESS" = false ]; then
             echo "🔄 Fallback: Trying app:enable..."
-            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            echo "🔍 DIAGNOSTIC: Adding timeout to app:enable command (v1.40)..."
+            if timeout 60 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
               echo "✅ SUCCESS: App enabled successfully"
               MIGRATION_SUCCESS=true
             else
-              echo "❌ FAILED: App enable also failed"
+              echo "❌ FAILED: App enable also failed or timed out"
               MIGRATION_SUCCESS=false
             fi
           fi
@@ -1066,27 +1069,26 @@ jobs:
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Vendor autoload.php not found'"
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'App autoload.php not found'"
           
-          # Generate missing app autoloader
-          echo "Generating missing app autoloader..."
-          # First, generate autoloader on host
-          composer dump-autoload --optimize
-          echo "✅ Host autoloader generated"
+          # Generate missing app autoloader INSIDE the container
+          echo "🔧 ATTEMPTING: Generating app autoloader inside container (v1.40)..."
+          echo "🔍 DIAGNOSTIC: Running composer dump-autoload inside container..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
+          echo "✅ Container autoloader generated"
           
-          # Verify autoloader was created on host
-          if [ ! -f "lib/autoload.php" ]; then
-            echo "❌ ERROR: lib/autoload.php not found on host after generation"
-            echo "Checking what was generated..."
-            ls -la lib/ || echo "lib directory not found"
-            echo "Checking composer.json for autoload configuration..."
-            cat composer.json | grep -A 10 -B 5 autoload || echo "No autoload section found"
+          # Verify autoloader was created inside container
+          echo "🔍 DIAGNOSTIC: Verifying autoloader exists in container..."
+          if docker exec nextcloud-test-quality bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ Container autoloader verified - lib/autoload.php exists"
+          else
+            echo "❌ ERROR: lib/autoload.php not found in container after generation"
+            echo "🔍 DIAGNOSTIC: Checking what was generated in container..."
+            docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/lib/ || echo 'lib directory not found'"
+            echo "🔍 DIAGNOSTIC: Checking composer.json for autoload configuration..."
+            docker exec nextcloud-test-quality bash -c "cat /var/www/html/apps/openconnector/composer.json | grep -A 10 -B 5 autoload || echo 'No autoload section found'"
+            echo "🔍 DIAGNOSTIC: Checking if lib directory exists..."
+            docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/ | grep lib"
             exit 1
           fi
-          echo "✅ Host autoloader verified"
-          
-          # Copy the generated autoloader to container
-          echo "Copying autoloader to container..."
-          docker cp lib/autoload.php nextcloud-test-quality:/var/www/html/apps/openconnector/lib/autoload.php
-          echo "✅ Autoloader copied to container"
           
           # Restart Nextcloud to reload the new autoloader
           echo "Restarting Nextcloud to reload autoloader..."
@@ -1268,7 +1270,7 @@ jobs:
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/psalm --threads=1 --no-cache"
         continue-on-error: true
         
-      - name: Run unit tests inside Nextcloud container
+      - name: Run unit tests inside Nextcloud container (Quality)
         run: |
           # Run tests from inside the Nextcloud container where all OCP classes are available
           echo "Running tests inside Nextcloud container..."

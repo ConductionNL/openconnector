@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.39 - Enhanced Database Verification with MariaDB Container Connection  
+**Current Version:** 1.40 - Fixed Autoload Generation Inside Container + Timeout Protection  
 **Date:** October 2, 2025  
 **Status:** 🔄 Testing In Progress  
-**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection
+**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -21,8 +21,10 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
 
 ## 🔧 Key Features
-1. **Enhanced Database Verification** - Use proper MariaDB container connection for database table verification with comprehensive diagnostics (v1.39)
-2. **App Install Primary Method** - Use app:install as primary method to ensure database migrations run properly (v1.38)
+1. **Fixed Autoload Generation** - Generate autoload files inside container instead of host to fix lib/autoload.php not found error (v1.40)
+2. **Timeout Protection** - Added timeouts to prevent hanging progress bars and command timeouts (v1.40)
+3. **Enhanced Database Verification** - Use proper MariaDB container connection for database table verification with comprehensive diagnostics (v1.39)
+4. **App Install Primary Method** - Use app:install as primary method to ensure database migrations run properly (v1.38)
 3. **Forced Migration Execution** - Force app migration execution by disable/enable cycle to ensure tables are created (v1.38)
 4. **Proper Database Migration Commands** - Use valid Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) instead of non-existent app:upgrade (v1.38)
 5. **Resilient Health Checks** - Fixed overly strict health checks with warnings instead of immediate exits (v1.37)
@@ -40,7 +42,9 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 17. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
 
 ## 🐛 Issues Resolved
-- 🔄 **Table oc_openconnector_job_logs doesn't exist** - Enhanced database verification with proper MariaDB container connection and comprehensive diagnostics (v1.39) - **TESTING IN PROGRESS**
+- 🔄 **lib/autoload.php not found error** - Fixed autoload generation to run inside container instead of host system (v1.40) - **TESTING IN PROGRESS**
+- 🔄 **Hanging progress bar during app installation** - Added timeout protection to prevent commands from hanging indefinitely (v1.40) - **TESTING IN PROGRESS**
+- ✅ **Table oc_openconnector_job_logs doesn't exist** - Enhanced database verification with proper MariaDB container connection and comprehensive diagnostics (v1.39)
 - ✅ **Database verification method** - Fixed database table verification to use proper MariaDB container connection instead of mysql client from Nextcloud container (v1.39)
 - ✅ **Overly strict health checks causing false failures** - Fixed health check logic to be more resilient with warnings instead of immediate exits (v1.37)
 - ✅ **Hanging php occ app --help command** - Added 30-second timeouts and health checks to prevent command hanging (v1.36)
@@ -89,9 +93,18 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ## 📜 Changelog
 
-### Version 1.39 - Enhanced Database Verification with MariaDB Container Connection
+### Version 1.40 - Fixed Autoload Generation Inside Container + Timeout Protection
 **Date:** October 2, 2025  
 **Status:** 🔄 Testing In Progress  
+**Changes:**
+- 🔧 **Fixed Autoload Generation** - Generate autoload files inside container instead of host to fix lib/autoload.php not found error
+- ⏱️ **Added Timeout Protection** - Added timeouts to prevent hanging progress bars and command timeouts
+- 🔍 **Enhanced Diagnostics** - Added comprehensive diagnostics for autoload generation and timeout issues
+- 🎯 **Targeted Fixes** - Specifically addresses the critical autoload generation failure and hanging progress bar issues
+
+### Version 1.39 - Enhanced Database Verification with MariaDB Container Connection
+**Date:** October 2, 2025  
+**Status:** ✅ Completed  
 **Changes:**
 - Fixed database verification method - Use proper MariaDB container connection instead of mysql client from Nextcloud container
 - Added comprehensive diagnostics for database table verification with emoji markers for easy identification
@@ -438,11 +451,10 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Database schema preparation with maintenance:repair
 - Command availability checking
 
-### 🔄 **Currently Testing (v1.39)**
-- Enhanced database verification - Testing proper MariaDB container connection for database table verification
-- Comprehensive diagnostics - Testing enhanced error reporting and fallback diagnostics for database issues
-- Database verification method - Verifying that MariaDB container connection resolves database verification issues
-- Persistent table error resolution - Should resolve "Table oc_openconnector_job_logs doesn't exist" error with improved diagnostics
+### 🔄 **Currently Testing (v1.40)**
+- Fixed autoload generation - Testing autoload generation inside container instead of host system
+- Timeout protection - Testing timeout protection for hanging progress bars and command timeouts
+- Comprehensive diagnostics - Testing enhanced error reporting and fallback diagnostics for autoload and timeout issues
 
 ### ✅ **Recently Fixed**
 - Enhanced database verification - Fixed database table verification to use proper MariaDB container connection with comprehensive diagnostics (v1.39)
@@ -458,11 +470,12 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Autoloader generation verification - Added proper verification for `lib/autoload.php` creation
 
 ### 📋 **Next Steps**
-1. Test the workflow with v1.39 enhanced database verification and MariaDB container connection
-2. Verify that database table verification works properly with the new MariaDB connection method
-3. Monitor if the persistent table error is resolved with improved diagnostics
-4. Analyze diagnostic output to understand database migration behavior
-5. Update documentation based on test results
+1. Test the workflow with v1.40 fixed autoload generation and timeout protection
+2. Verify that autoload generation works properly inside the container
+3. Monitor if the hanging progress bar issue is resolved with timeout protection
+4. Check if the lib/autoload.php not found error is fixed
+5. Analyze diagnostic output to understand autoload generation behavior
+6. Update documentation based on test results
 
 ## 🛠️ Maintenance
 
@@ -479,4 +492,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: October 2, 2025 | Version: 1.39 | Status: Enhanced Database Verification with MariaDB Container Connection*
+*Last Updated: October 2, 2025 | Version: 1.40 | Status: Fixed Autoload Generation Inside Container + Timeout Protection*
