@@ -102,7 +102,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Should resolve database verification issues and provide better insight into migration problems
 
 ### Version 1.38 - App Install Primary Method + Forced Migration Execution
-**Date:** September 30, 2025  
+**Date:** October 2, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
 - Changed primary app installation method from app:enable to app:install
@@ -116,7 +116,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Should resolve persistent "Table oc_openconnector_job_logs doesn't exist" error and hanging migration progress bars
 
 ### Version 1.37 - Resilient Health Checks
-**Date:** September 30, 2025  
+**Date:** October 2, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
 - Fixed overly strict health checks - Changed from immediate exits to warnings for better resilience
@@ -126,7 +126,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Updated both jobs consistently - Tests and quality jobs both have resilient health checks
 
 ### Version 1.36 - Command Timeout and Health Checks
-**Date:** September 30, 2025  
+**Date:** October 2, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
 - Fixed hanging `php occ app --help` command - Added 30-second timeouts to prevent command hanging
