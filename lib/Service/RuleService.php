@@ -837,7 +837,7 @@ class RuleService
 
 		$validationHandler = $this->objectService->getOpenRegisters()->getValidateHandler();
 
-		$validatedResult = $validationHandler->validateObject($object, $schemaId);
+		$validatedResult = $validationHandler->validateObject($object, $this->schemaMapper->find($schemaId));
 
 		if($validatedResult->isValid() === true) {
 			return $object;
@@ -875,9 +875,9 @@ class RuleService
 
 				$extendedParameters->add($property['property'], $this->getExternalObject($url, $config, $property['schema']));
 			} catch (ValidationException $exception) {
-				return new JSONResponse(data: ['error' => 'The object referenced in field '. $property['property'] . ' is not valid'], statusCode: 400);
+				return new JSONResponse(data: ['message' => 'Invalid Input', 'error' => 'The object referenced in field '. $property['property'] . ' is not valid', 'errors' => [['name' => $property, 'code' => 'invalid-resource', 'reason' => 'The resource is not valid']]], statusCode: 400);
 			} catch (Exception $exception) {
-				return new JSONResponse(data: ['error' => $exception->getMessage()], statusCode: 400);
+				return new JSONResponse(data: ['message' => 'Invalid Input', 'error' => $exception->getMessage(), 'errors' => [['name' => $property, 'code' => 'invalid-resource', 'reason' => 'The resource is not valid']]], statusCode: 400);
 			}
 		}
 
