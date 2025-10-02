@@ -95,6 +95,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Added app:enable as fallback method when app:install fails
 - Fixed invalid app:upgrade command - replaced with proper Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint)
 - Added forced migration execution - disable/enable cycle forces Nextcloud to execute app migration files
+- Fixed database verification - use proper MariaDB container connection instead of mysql client from Nextcloud container
 - Updated both tests and quality jobs consistently
 - Based on research showing app:install handles migrations better in CI environments
 - Should resolve persistent "Table oc_openconnector_job_logs doesn't exist" error and hanging migration progress bars

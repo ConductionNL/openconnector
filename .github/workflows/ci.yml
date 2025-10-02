@@ -333,9 +333,9 @@ jobs:
             echo "Checking Nextcloud logs..."
             docker exec nextcloud-test bash -c "tail -50 /var/www/html/data/nextcloud.log"
             echo "Checking if database table exists..."
-            docker exec nextcloud-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES LIKE \"oc_openconnector_job_logs\";'"
+            docker exec mariadb-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES LIKE \"oc_openconnector_job_logs\";'"
             echo "Checking database connection..."
-            docker exec nextcloud-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'"
+            docker exec mariadb-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'"
             exit 1
           fi
           echo "✅ OpenConnector app enabled successfully"
@@ -357,7 +357,7 @@ jobs:
           
           # Verify the required table exists after migrations
           echo "🔄 Verifying database table exists after migrations..."
-          if docker exec nextcloud-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null; then
+          if docker exec mariadb-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null; then
             echo "✅ Table oc_openconnector_job_logs exists"
           else
             echo "❌ Table oc_openconnector_job_logs still doesn't exist after migrations"
@@ -960,9 +960,9 @@ jobs:
             echo "Checking Nextcloud logs..."
             docker exec nextcloud-test-quality bash -c "tail -50 /var/www/html/data/nextcloud.log"
             echo "Checking if database table exists..."
-            docker exec nextcloud-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES LIKE \"oc_openconnector_job_logs\";'"
+            docker exec mariadb-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES LIKE \"oc_openconnector_job_logs\";'"
             echo "Checking database connection..."
-            docker exec nextcloud-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'"
+            docker exec mariadb-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'"
             exit 1
           fi
           echo "✅ OpenConnector app enabled successfully"
@@ -984,7 +984,7 @@ jobs:
           
           # Verify the required table exists after migrations
           echo "🔄 Verifying database table exists after migrations..."
-          if docker exec nextcloud-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null; then
+          if docker exec mariadb-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null; then
             echo "✅ Table oc_openconnector_job_logs exists"
           else
             echo "❌ Table oc_openconnector_job_logs still doesn't exist after migrations"
