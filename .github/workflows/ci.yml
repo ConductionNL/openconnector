@@ -237,6 +237,7 @@ jobs:
           
           # Test available Nextcloud commands for database preparation (v1.35)
           echo "=== Testing Available Nextcloud Commands ==="
+          echo "🔍 DIAGNOSTIC: Testing app --help command with enhanced diagnostics..."
           
           # Wait for Nextcloud to be fully ready
           echo "🔄 Waiting for Nextcloud to be fully ready..."
@@ -357,10 +358,16 @@ jobs:
           
           # Verify the required table exists after migrations
           echo "🔄 Verifying database table exists after migrations..."
+          echo "🔍 DIAGNOSTIC: Testing MariaDB connection from mariadb-test container..."
           if docker exec mariadb-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null; then
             echo "✅ Table oc_openconnector_job_logs exists"
+            echo "🎉 SUCCESS: Database verification with MariaDB container connection works!"
           else
             echo "❌ Table oc_openconnector_job_logs still doesn't exist after migrations"
+            echo "🔍 DIAGNOSTIC: Checking what tables actually exist..."
+            docker exec mariadb-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES LIKE \"oc_openconnector%\";'"
+            echo "🔍 DIAGNOSTIC: Checking all tables in nextcloud database..."
+            docker exec mariadb-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES;'" | grep -i openconnector || echo "No openconnector tables found"
             echo "This indicates the app's migration files are not being executed properly"
             exit 1
           fi
@@ -874,6 +881,7 @@ jobs:
           
           # Test available Nextcloud commands for database preparation (v1.35)
           echo "=== Testing Available Nextcloud Commands ==="
+          echo "🔍 DIAGNOSTIC: Testing app --help command with enhanced diagnostics..."
           
           # Wait for Nextcloud to be fully ready
           echo "🔄 Waiting for Nextcloud to be fully ready..."
@@ -984,10 +992,16 @@ jobs:
           
           # Verify the required table exists after migrations
           echo "🔄 Verifying database table exists after migrations..."
+          echo "🔍 DIAGNOSTIC: Testing MariaDB connection from mariadb-test-quality container..."
           if docker exec mariadb-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null; then
             echo "✅ Table oc_openconnector_job_logs exists"
+            echo "🎉 SUCCESS: Database verification with MariaDB container connection works!"
           else
             echo "❌ Table oc_openconnector_job_logs still doesn't exist after migrations"
+            echo "🔍 DIAGNOSTIC: Checking what tables actually exist..."
+            docker exec mariadb-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES LIKE \"oc_openconnector%\";'"
+            echo "🔍 DIAGNOSTIC: Checking all tables in nextcloud database..."
+            docker exec mariadb-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES;'" | grep -i openconnector || echo "No openconnector tables found"
             echo "This indicates the app's migration files are not being executed properly"
             exit 1
           fi

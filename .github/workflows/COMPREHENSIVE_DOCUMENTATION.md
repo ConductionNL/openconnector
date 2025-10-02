@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.38 - App Install Primary Method + Forced Migration Execution  
-**Date:** September 30, 2025  
+**Current Version:** 1.39 - Enhanced Database Verification with MariaDB Container Connection  
+**Date:** October 2, 2025  
 **Status:** 🔄 Testing In Progress  
-**Approach:** Use app:install as primary method + force migration execution by disable/enable to ensure database tables are created
+**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -21,25 +21,27 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
 
 ## 🔧 Key Features
-1. **App Install Primary Method** - Use app:install as primary method to ensure database migrations run properly (v1.38)
-2. **Forced Migration Execution** - Force app migration execution by disable/enable cycle to ensure tables are created (v1.38)
-3. **Proper Database Migration Commands** - Use valid Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) instead of non-existent app:upgrade (v1.38)
-4. **Resilient Health Checks** - Fixed overly strict health checks with warnings instead of immediate exits (v1.37)
-5. **Command Timeout Protection** - 30-second timeouts prevent hanging occ commands (v1.36)
-6. **Comprehensive Diagnostics** - Enhanced error reporting with container status, log analysis, and pre-class loading diagnostics (v1.36)
-7. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
-8. **Database Schema Preparation** - `maintenance:repair` before app:enable ensures database tables are ready (v1.34)
-9. **Composer Installation Order** - Composer installed before app dependencies in both jobs, with proper step ordering (v1.33)
-10. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
-11. **Workflow Consistency** - Both jobs follow identical patterns, step ordering, and eliminate duplicate operations (v1.30)
-12. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
-13. **Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files with proper verification and error handling (v1.27)
-14. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
-15. **Complete Service Stack** - All services linked and configured (v1.13)
-16. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
+1. **Enhanced Database Verification** - Use proper MariaDB container connection for database table verification with comprehensive diagnostics (v1.39)
+2. **App Install Primary Method** - Use app:install as primary method to ensure database migrations run properly (v1.38)
+3. **Forced Migration Execution** - Force app migration execution by disable/enable cycle to ensure tables are created (v1.38)
+4. **Proper Database Migration Commands** - Use valid Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) instead of non-existent app:upgrade (v1.38)
+5. **Resilient Health Checks** - Fixed overly strict health checks with warnings instead of immediate exits (v1.37)
+6. **Command Timeout Protection** - 30-second timeouts prevent hanging occ commands (v1.36)
+7. **Comprehensive Diagnostics** - Enhanced error reporting with container status, log analysis, and pre-class loading diagnostics (v1.36)
+8. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
+9. **Database Schema Preparation** - `maintenance:repair` before app:enable ensures database tables are ready (v1.34)
+10. **Composer Installation Order** - Composer installed before app dependencies in both jobs, with proper step ordering (v1.33)
+11. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
+12. **Workflow Consistency** - Both jobs follow identical patterns, step ordering, and eliminate duplicate operations (v1.30)
+13. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
+14. **Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files with proper verification and error handling (v1.27)
+15. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
+16. **Complete Service Stack** - All services linked and configured (v1.13)
+17. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
 
 ## 🐛 Issues Resolved
-- 🔄 **Table oc_openconnector_job_logs doesn't exist** - Changed to use app:install as primary method to ensure database migrations run properly (v1.38) - **TESTING IN PROGRESS**
+- 🔄 **Table oc_openconnector_job_logs doesn't exist** - Enhanced database verification with proper MariaDB container connection and comprehensive diagnostics (v1.39) - **TESTING IN PROGRESS**
+- ✅ **Database verification method** - Fixed database table verification to use proper MariaDB container connection instead of mysql client from Nextcloud container (v1.39)
 - ✅ **Overly strict health checks causing false failures** - Fixed health check logic to be more resilient with warnings instead of immediate exits (v1.37)
 - ✅ **Hanging php occ app --help command** - Added 30-second timeouts and health checks to prevent command hanging (v1.36)
 - ✅ **Composer command not found error** - Composer installation moved before app dependencies in tests job (v1.33)
@@ -60,6 +62,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **`.github/workflows/versions.env`** - Centralized version management
 
 ## ✨ Benefits
+- **Enhanced database verification** - Proper MariaDB container connection ensures accurate database table verification with comprehensive diagnostics (v1.39)
 - **Proper database migration execution** - app:install ensures database migrations run before app code execution (v1.38)
 - **Forced migration execution** - disable/enable cycle forces Nextcloud to execute app migration files (v1.38)
 - **Resilient workflow execution** - Fixed overly strict health checks prevent false failures and improve workflow reliability (v1.37)
@@ -85,6 +88,18 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ---
 
 ## 📜 Changelog
+
+### Version 1.39 - Enhanced Database Verification with MariaDB Container Connection
+**Date:** October 2, 2025  
+**Status:** 🔄 Testing In Progress  
+**Changes:**
+- Fixed database verification method - Use proper MariaDB container connection instead of mysql client from Nextcloud container
+- Added comprehensive diagnostics for database table verification with emoji markers for easy identification
+- Enhanced error reporting when database verification fails - shows what tables actually exist
+- Added fallback diagnostics to check all openconnector tables and database contents
+- Improved database connection reliability by using the correct container for mysql commands
+- Updated both tests and quality jobs consistently with enhanced diagnostics
+- Should resolve database verification issues and provide better insight into migration problems
 
 ### Version 1.38 - App Install Primary Method + Forced Migration Execution
 **Date:** September 30, 2025  
@@ -423,13 +438,14 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Database schema preparation with maintenance:repair
 - Command availability checking
 
-### 🔄 **Currently Testing (v1.38)**
-- App install primary method - Testing app:install as primary method to ensure database migrations run properly
-- Forced migration execution - Testing disable/enable cycle to force Nextcloud to execute app migration files
-- Proper migration commands - Using valid Nextcloud commands instead of non-existent app:upgrade
-- Persistent table error resolution - Should resolve "Table oc_openconnector_job_logs doesn't exist" error
+### 🔄 **Currently Testing (v1.39)**
+- Enhanced database verification - Testing proper MariaDB container connection for database table verification
+- Comprehensive diagnostics - Testing enhanced error reporting and fallback diagnostics for database issues
+- Database verification method - Verifying that MariaDB container connection resolves database verification issues
+- Persistent table error resolution - Should resolve "Table oc_openconnector_job_logs doesn't exist" error with improved diagnostics
 
 ### ✅ **Recently Fixed**
+- Enhanced database verification - Fixed database table verification to use proper MariaDB container connection with comprehensive diagnostics (v1.39)
 - Changed app installation method - Use app:install as primary method to ensure database migrations run properly (v1.38)
 - Fixed invalid app:upgrade command - Replaced with proper Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) (v1.38)
 - Added forced migration execution - Disable/enable cycle forces Nextcloud to execute app migration files (v1.38)
@@ -442,10 +458,11 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Autoloader generation verification - Added proper verification for `lib/autoload.php` creation
 
 ### 📋 **Next Steps**
-1. Test the workflow with v1.38 app:install primary method + forced migration execution
-2. Verify that database migrations run properly with app:install and disable/enable cycle
-3. Monitor if the persistent table error and hanging progress bars are resolved
-4. Update documentation based on results
+1. Test the workflow with v1.39 enhanced database verification and MariaDB container connection
+2. Verify that database table verification works properly with the new MariaDB connection method
+3. Monitor if the persistent table error is resolved with improved diagnostics
+4. Analyze diagnostic output to understand database migration behavior
+5. Update documentation based on test results
 
 ## 🛠️ Maintenance
 
@@ -462,4 +479,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: September 30, 2025 | Version: 1.38 | Status: App Install Primary Method + Forced Migration Execution*
+*Last Updated: October 2, 2025 | Version: 1.39 | Status: Enhanced Database Verification with MariaDB Container Connection*
