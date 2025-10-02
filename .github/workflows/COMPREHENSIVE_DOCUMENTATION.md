@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.35 - Available Commands Testing  
+**Current Version:** 1.36 - Command Timeout and Health Checks  
 **Date:** September 30, 2025  
 **Status:** 🔄 Testing In Progress  
-**Approach:** Test available Nextcloud commands with direct app:enable, fallback app:install, and final app:update approach
+**Approach:** Fix hanging occ commands with timeouts, health checks, and comprehensive diagnostics
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -21,31 +21,35 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
 
 ## 🔧 Key Features
-1. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
-2. **Command Availability Checking** - Shows available app commands with `app --help` for diagnostics (v1.35)
-3. **Safe Migration Testing** - Primary approach with fallback options to prevent interference between methods (v1.35)
-4. **Enhanced Database Diagnostics** - Added comprehensive database table verification and connection testing (v1.35)
-5. **Database Schema Preparation** - Added `maintenance:repair` before app:enable to ensure database tables are ready (v1.34)
-6. **Composer Installation Order** - Composer installed before app dependencies in tests job (v1.33)
-7. **Explicit Database Migrations** - Added `php occ app:upgrade` step to ensure database tables are created (v1.32)
-8. **Dependencies Before Enabling** - App dependencies installed before app enabling to ensure proper initialization (v1.31)
-9. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
-10. **Workflow Consistency** - Both jobs follow identical patterns and step ordering (v1.30)
-11. **Duplicate Operation Prevention** - Eliminated redundant app moving and enabling steps (v1.30)
-12. **Fixed Step Ordering** - Composer installation before development dependencies (v1.29)
-13. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
-14. **Autoloader Verification** - Proper verification for `lib/autoload.php` creation (v1.28)
-15. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files (v1.27)
-16. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds (v1.27)
-17. **Optimized Retry Mechanism** - Handles timing issues with background processes (v1.26)
-18. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes (v1.18)
-19. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues (v1.17)
-20. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
-21. **Complete Service Stack** - All services linked and configured (v1.13)
-22. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
-23. **Database Migrations** - Handled automatically by Nextcloud (v1.13)
+1. **Command Timeout Protection** - Added 30-second timeouts to prevent hanging occ commands (v1.36)
+2. **Container Health Checks** - Verify Nextcloud is fully ready before running commands (v1.36)
+3. **Comprehensive Diagnostics** - Enhanced error reporting with container status and log analysis (v1.36)
+4. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
+5. **Command Availability Checking** - Shows available app commands with `app --help` for diagnostics (v1.35)
+6. **Safe Migration Testing** - Primary approach with fallback options to prevent interference between methods (v1.35)
+7. **Enhanced Database Diagnostics** - Added comprehensive database table verification and connection testing (v1.35)
+8. **Database Schema Preparation** - Added `maintenance:repair` before app:enable to ensure database tables are ready (v1.34)
+9. **Composer Installation Order** - Composer installed before app dependencies in tests job (v1.33)
+10. **Explicit Database Migrations** - Added `php occ app:upgrade` step to ensure database tables are created (v1.32)
+11. **Dependencies Before Enabling** - App dependencies installed before app enabling to ensure proper initialization (v1.31)
+12. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
+13. **Workflow Consistency** - Both jobs follow identical patterns and step ordering (v1.30)
+14. **Duplicate Operation Prevention** - Eliminated redundant app moving and enabling steps (v1.30)
+15. **Fixed Step Ordering** - Composer installation before development dependencies (v1.29)
+16. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
+17. **Autoloader Verification** - Proper verification for `lib/autoload.php` creation (v1.28)
+18. **App Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files (v1.27)
+19. **Enhanced Sleep Timing** - Increased retry mechanism sleep from 3 to 10 seconds (v1.27)
+20. **Optimized Retry Mechanism** - Handles timing issues with background processes (v1.26)
+21. **Comprehensive Diagnostics** - Pre-class loading diagnostics to identify root causes (v1.18)
+22. **PHPUnit Autoloader Fix** - Regenerates autoloader to fix class loading issues (v1.17)
+23. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
+24. **Complete Service Stack** - All services linked and configured (v1.13)
+25. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
+26. **Database Migrations** - Handled automatically by Nextcloud (v1.13)
 
 ## 🐛 Issues Resolved
+- ✅ **Hanging php occ app --help command** - Added 30-second timeouts and health checks to prevent command hanging (v1.36)
 - 🔄 **Table oc_openconnector_job_logs doesn't exist** - Available commands testing with direct app:enable, fallback app:install, and final app:update (v1.35) - **TESTING IN PROGRESS**
 - ✅ **Composer command not found error** - Composer installation moved before app dependencies in tests job (v1.33)
 - ✅ **Missing vendor/autoload.php error** - Composer install now runs before app enabling (v1.31)
@@ -83,6 +87,9 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **`.github/workflows/versions.env`** - Centralized version management
 
 ## ✨ Benefits
+- **Reliable command execution** - Timeout protection prevents hanging commands and ensures workflow completion (v1.36)
+- **Proactive health monitoring** - Container health checks ensure Nextcloud is ready before running commands (v1.36)
+- **Enhanced error diagnostics** - Comprehensive error reporting with container status and log analysis (v1.36)
 - **Valid command testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
 - **Command diagnostics** - Shows available commands for better troubleshooting and debugging (v1.35)
 - **Intelligent fallback system** - Uses fallback approaches only when primary method fails (v1.35)
@@ -115,6 +122,17 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ---
 
 ## 📜 Changelog
+
+### Version 1.36 - Command Timeout and Health Checks
+**Date:** September 30, 2025  
+**Status:** 🔄 Testing In Progress  
+**Changes:**
+- Fixed hanging `php occ app --help` command - Added 30-second timeouts to prevent command hanging
+- Added container health checks - Verify Nextcloud is fully ready before running commands
+- Enhanced error diagnostics - Comprehensive error reporting with container status and log analysis
+- Added fallback command testing - Alternative approaches when primary commands fail
+- Improved workflow reliability - Prevents command hanging and ensures workflow completion
+- Updated both jobs consistently - Tests and quality jobs both have timeout protection
 
 ### Version 1.35 - Available Commands Testing
 **Date:** September 30, 2025  
@@ -418,25 +436,25 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Database schema preparation with maintenance:repair
 - Command availability checking
 
-### 🔄 **Currently Testing (v1.35)**
-- Available Nextcloud commands testing - Using only commands that actually exist
-- Direct app:enable approach - Should trigger migrations automatically
-- Fallback app:install from store - If direct enable fails
-- Final fallback app:update - If install fails
-- Enhanced database diagnostics - Comprehensive table verification
+### 🔄 **Currently Testing (v1.36)**
+- Command timeout protection - Testing 30-second timeouts to prevent hanging occ commands
+- Container health checks - Verifying Nextcloud is fully ready before running commands
+- Enhanced error diagnostics - Comprehensive error reporting with container status and log analysis
+- Fallback command testing - Alternative approaches when primary commands fail
 
 ### ✅ **Recently Fixed**
-- Invalid Nextcloud commands - Removed `app:upgrade` (not available) and `--path` option (not supported)
-- Command availability checking - Added `app --help` for diagnostics
-- Duplicate app:enable calls - Removed redundant calls after migration testing
-- Quality job step ordering - Docker containers now start before dependency installation
+- Hanging php occ app --help command - Added 30-second timeouts and health checks (v1.36)
+- Invalid Nextcloud commands - Removed `app:upgrade` (not available) and `--path` option (not supported) (v1.35)
+- Command availability checking - Added `app --help` for diagnostics (v1.35)
+- Duplicate app:enable calls - Removed redundant calls after migration testing (v1.35)
+- Quality job step ordering - Docker containers now start before dependency installation (v1.35)
 - Autoloader generation verification - Added proper verification for `lib/autoload.php` creation
 
 ### 📋 **Next Steps**
-1. Test the workflow with v1.35 available commands approach
-2. Verify which migration method works (direct enable, install, or update)
-3. Confirm unit tests pass successfully
-4. Monitor for any remaining issues and optimize based on results
+1. Test the workflow with v1.36 timeout protection and health checks
+2. Verify that commands complete within timeout limits
+3. Monitor container health check effectiveness
+4. Update documentation based on results
 
 ## 🛠️ Maintenance
 
@@ -453,4 +471,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: September 30, 2025 | Version: 1.35 | Status: Available Commands Testing*
+*Last Updated: September 30, 2025 | Version: 1.36 | Status: Command Timeout and Health Checks*
