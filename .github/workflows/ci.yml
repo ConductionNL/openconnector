@@ -285,24 +285,24 @@ jobs:
             fi
           fi
           
-          # Try to enable the app directly (this should trigger migrations)
-          echo "🔄 Testing: Direct app enable (should trigger migrations)..."
-          if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
-            echo "✅ SUCCESS: App enabled successfully with migrations"
+          # Try to install the app directly (this should trigger migrations)
+          echo "🔄 Testing: Direct app install (should trigger migrations)..."
+          if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector"; then
+            echo "✅ SUCCESS: App installed successfully with migrations"
             MIGRATION_SUCCESS=true
           else
-            echo "❌ FAILED: Direct app enable failed"
+            echo "❌ FAILED: Direct app install failed"
             MIGRATION_SUCCESS=false
           fi
           
-          # If direct enable failed, try alternative approach
+          # If direct install failed, try alternative approach
           if [ "$MIGRATION_SUCCESS" = false ]; then
-            echo "🔄 Fallback: Trying app:install from store..."
-            if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector"; then
-              echo "✅ SUCCESS: App installed from store"
+            echo "🔄 Fallback: Trying app:enable..."
+            if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+              echo "✅ SUCCESS: App enabled successfully"
               MIGRATION_SUCCESS=true
             else
-              echo "❌ FAILED: App install from store also failed"
+              echo "❌ FAILED: App enable also failed"
               MIGRATION_SUCCESS=false
             fi
           fi
@@ -342,8 +342,28 @@ jobs:
           
           # Run database migrations for the app
           echo "Running database migrations for OpenConnector app..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:upgrade openconnector"
+          echo "🔄 Running db:add-missing-indices..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ db:add-missing-indices"
+          echo "🔄 Running db:add-missing-columns..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ db:add-missing-columns"
+          echo "🔄 Running db:convert-filecache-bigint..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ db:convert-filecache-bigint"
+          
+          # Force app migration execution by disabling and re-enabling the app
+          echo "🔄 Forcing app migration execution..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
           echo "✅ Database migrations completed"
+          
+          # Verify the required table exists after migrations
+          echo "🔄 Verifying database table exists after migrations..."
+          if docker exec nextcloud-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null; then
+            echo "✅ Table oc_openconnector_job_logs exists"
+          else
+            echo "❌ Table oc_openconnector_job_logs still doesn't exist after migrations"
+            echo "This indicates the app's migration files are not being executed properly"
+            exit 1
+          fi
           
           # Verify app is properly enabled
           echo "Verifying app installation..."
@@ -672,7 +692,7 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
-            
+        
       - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
         run: |
           # Start MariaDB container (matching local setup)
@@ -803,8 +823,8 @@ jobs:
               echo "✅ PHP is working, continuing with app installation..."
             else
               echo "❌ ERROR: PHP is not working in the container"
-              exit 1
-            fi
+            exit 1
+          fi
           fi
           
           echo "Checking Nextcloud installation..."
@@ -892,24 +912,24 @@ jobs:
             fi
           fi
           
-          # Try to enable the app directly (this should trigger migrations)
-          echo "🔄 Testing: Direct app enable (should trigger migrations)..."
-          if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
-            echo "✅ SUCCESS: App enabled successfully with migrations"
+          # Try to install the app directly (this should trigger migrations)
+          echo "🔄 Testing: Direct app install (should trigger migrations)..."
+          if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
+            echo "✅ SUCCESS: App installed successfully with migrations"
             MIGRATION_SUCCESS=true
           else
-            echo "❌ FAILED: Direct app enable failed"
+            echo "❌ FAILED: Direct app install failed"
             MIGRATION_SUCCESS=false
           fi
           
-          # If direct enable failed, try alternative approach
+          # If direct install failed, try alternative approach
           if [ "$MIGRATION_SUCCESS" = false ]; then
-            echo "🔄 Fallback: Trying app:install from store..."
-            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
-              echo "✅ SUCCESS: App installed from store"
+            echo "🔄 Fallback: Trying app:enable..."
+            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+              echo "✅ SUCCESS: App enabled successfully"
               MIGRATION_SUCCESS=true
             else
-              echo "❌ FAILED: App install from store also failed"
+              echo "❌ FAILED: App enable also failed"
               MIGRATION_SUCCESS=false
             fi
           fi
@@ -949,8 +969,28 @@ jobs:
           
           # Run database migrations for the app
           echo "Running database migrations for OpenConnector app..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:upgrade openconnector"
+          echo "🔄 Running db:add-missing-indices..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ db:add-missing-indices"
+          echo "🔄 Running db:add-missing-columns..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ db:add-missing-columns"
+          echo "🔄 Running db:convert-filecache-bigint..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ db:convert-filecache-bigint"
+          
+          # Force app migration execution by disabling and re-enabling the app
+          echo "🔄 Forcing app migration execution..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
           echo "✅ Database migrations completed"
+          
+          # Verify the required table exists after migrations
+          echo "🔄 Verifying database table exists after migrations..."
+          if docker exec nextcloud-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null; then
+            echo "✅ Table oc_openconnector_job_logs exists"
+          else
+            echo "❌ Table oc_openconnector_job_logs still doesn't exist after migrations"
+            echo "This indicates the app's migration files are not being executed properly"
+            exit 1
+          fi
           
           # Verify app is properly enabled
           echo "Verifying app installation..."

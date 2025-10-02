@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.37 - Resilient Health Checks  
+**Current Version:** 1.38 - App Install Primary Method + Forced Migration Execution  
 **Date:** September 30, 2025  
 **Status:** 🔄 Testing In Progress  
-**Approach:** Fix overly strict health checks that were causing false failures and improve error handling
+**Approach:** Use app:install as primary method + force migration execution by disable/enable to ensure database tables are created
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -21,24 +21,27 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
 
 ## 🔧 Key Features
-1. **Resilient Health Checks** - Fixed overly strict health checks with warnings instead of immediate exits (v1.37)
-2. **Command Timeout Protection** - 30-second timeouts prevent hanging occ commands (v1.36)
-3. **Comprehensive Diagnostics** - Enhanced error reporting with container status, log analysis, and pre-class loading diagnostics (v1.36)
-4. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
-5. **Database Schema Preparation** - `maintenance:repair` before app:enable ensures database tables are ready (v1.34)
-6. **Composer Installation Order** - Composer installed before app dependencies in both jobs, with proper step ordering (v1.33)
-7. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
-8. **Workflow Consistency** - Both jobs follow identical patterns, step ordering, and eliminate duplicate operations (v1.30)
-9. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
-10. **Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files with proper verification and error handling (v1.27)
-11. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
-12. **Complete Service Stack** - All services linked and configured (v1.13)
-13. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
+1. **App Install Primary Method** - Use app:install as primary method to ensure database migrations run properly (v1.38)
+2. **Forced Migration Execution** - Force app migration execution by disable/enable cycle to ensure tables are created (v1.38)
+3. **Proper Database Migration Commands** - Use valid Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) instead of non-existent app:upgrade (v1.38)
+4. **Resilient Health Checks** - Fixed overly strict health checks with warnings instead of immediate exits (v1.37)
+5. **Command Timeout Protection** - 30-second timeouts prevent hanging occ commands (v1.36)
+6. **Comprehensive Diagnostics** - Enhanced error reporting with container status, log analysis, and pre-class loading diagnostics (v1.36)
+7. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
+8. **Database Schema Preparation** - `maintenance:repair` before app:enable ensures database tables are ready (v1.34)
+9. **Composer Installation Order** - Composer installed before app dependencies in both jobs, with proper step ordering (v1.33)
+10. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
+11. **Workflow Consistency** - Both jobs follow identical patterns, step ordering, and eliminate duplicate operations (v1.30)
+12. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
+13. **Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files with proper verification and error handling (v1.27)
+14. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
+15. **Complete Service Stack** - All services linked and configured (v1.13)
+16. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
 
 ## 🐛 Issues Resolved
+- 🔄 **Table oc_openconnector_job_logs doesn't exist** - Changed to use app:install as primary method to ensure database migrations run properly (v1.38) - **TESTING IN PROGRESS**
 - ✅ **Overly strict health checks causing false failures** - Fixed health check logic to be more resilient with warnings instead of immediate exits (v1.37)
 - ✅ **Hanging php occ app --help command** - Added 30-second timeouts and health checks to prevent command hanging (v1.36)
-- 🔄 **Table oc_openconnector_job_logs doesn't exist** - Available commands testing with direct app:enable, fallback app:install, and final app:update (v1.35) - **TESTING IN PROGRESS**
 - ✅ **Composer command not found error** - Composer installation moved before app dependencies in tests job (v1.33)
 - ✅ **Missing vendor/autoload.php error** - Composer install now runs before app enabling (v1.31)
 - ✅ **Misleading step names** - All step names now accurately reflect their functionality and execution context (v1.31)
@@ -57,6 +60,8 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **`.github/workflows/versions.env`** - Centralized version management
 
 ## ✨ Benefits
+- **Proper database migration execution** - app:install ensures database migrations run before app code execution (v1.38)
+- **Forced migration execution** - disable/enable cycle forces Nextcloud to execute app migration files (v1.38)
 - **Resilient workflow execution** - Fixed overly strict health checks prevent false failures and improve workflow reliability (v1.37)
 - **Reliable command execution** - Timeout protection prevents hanging commands and ensures workflow completion (v1.36)
 - **Enhanced error diagnostics** - Comprehensive error reporting with container status, log analysis, and pre-class loading diagnostics (v1.36)
@@ -80,6 +85,19 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ---
 
 ## 📜 Changelog
+
+### Version 1.38 - App Install Primary Method + Forced Migration Execution
+**Date:** September 30, 2025  
+**Status:** 🔄 Testing In Progress  
+**Changes:**
+- Changed primary app installation method from app:enable to app:install
+- app:install ensures database migrations run properly before app code execution
+- Added app:enable as fallback method when app:install fails
+- Fixed invalid app:upgrade command - replaced with proper Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint)
+- Added forced migration execution - disable/enable cycle forces Nextcloud to execute app migration files
+- Updated both tests and quality jobs consistently
+- Based on research showing app:install handles migrations better in CI environments
+- Should resolve persistent "Table oc_openconnector_job_logs doesn't exist" error and hanging migration progress bars
 
 ### Version 1.37 - Resilient Health Checks
 **Date:** September 30, 2025  
@@ -404,13 +422,16 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Database schema preparation with maintenance:repair
 - Command availability checking
 
-### 🔄 **Currently Testing (v1.37)**
-- Resilient health checks - Testing improved health check logic with warnings instead of immediate exits
-- Better error handling - Verifying that warnings allow workflow to continue when possible
-- Multiple fallback approaches - Testing fallback options when primary commands fail
-- Enhanced workflow reliability - Ensuring false failures are prevented
+### 🔄 **Currently Testing (v1.38)**
+- App install primary method - Testing app:install as primary method to ensure database migrations run properly
+- Forced migration execution - Testing disable/enable cycle to force Nextcloud to execute app migration files
+- Proper migration commands - Using valid Nextcloud commands instead of non-existent app:upgrade
+- Persistent table error resolution - Should resolve "Table oc_openconnector_job_logs doesn't exist" error
 
 ### ✅ **Recently Fixed**
+- Changed app installation method - Use app:install as primary method to ensure database migrations run properly (v1.38)
+- Fixed invalid app:upgrade command - Replaced with proper Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) (v1.38)
+- Added forced migration execution - Disable/enable cycle forces Nextcloud to execute app migration files (v1.38)
 - Overly strict health checks causing false failures - Fixed health check logic to be more resilient (v1.37)
 - Hanging php occ app --help command - Added 30-second timeouts and health checks (v1.36)
 - Invalid Nextcloud commands - Removed `app:upgrade` (not available) and `--path` option (not supported) (v1.35)
@@ -420,9 +441,9 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Autoloader generation verification - Added proper verification for `lib/autoload.php` creation
 
 ### 📋 **Next Steps**
-1. Test the workflow with v1.37 resilient health checks
-2. Verify that health checks no longer cause false failures
-3. Monitor workflow reliability and error handling
+1. Test the workflow with v1.38 app:install primary method + forced migration execution
+2. Verify that database migrations run properly with app:install and disable/enable cycle
+3. Monitor if the persistent table error and hanging progress bars are resolved
 4. Update documentation based on results
 
 ## 🛠️ Maintenance
@@ -440,4 +461,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: September 30, 2025 | Version: 1.37 | Status: Resilient Health Checks*
+*Last Updated: September 30, 2025 | Version: 1.38 | Status: App Install Primary Method + Forced Migration Execution*
