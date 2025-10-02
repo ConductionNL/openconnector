@@ -863,10 +863,11 @@ class RuleService
 
 		$dataDot = new Dot($data);
 		$extendedParameters = new Dot();
-
-		foreach ($config['extend_external_input']['properties'] as $property) {
-			$url = $dataDot->get($property['property']);
-			try {
+        foreach ($config['extend_external_input']['properties'] as $property) {
+            $url = $dataDot->get($property['property']);
+            $propName = explode(separator: '.', string: $property['property']);
+            $propName = end($propName);
+            try {
 				if (is_array($url) === true) {
 					$extendedParameters->add($property['property'], array_map(function (string $url) use ($property, $config) {
 						return $this->getExternalObject($url, $config, $property['schema']);
@@ -875,9 +876,10 @@ class RuleService
 
 				$extendedParameters->add($property['property'], $this->getExternalObject($url, $config, $property['schema']));
 			} catch (ValidationException $exception) {
-				return new JSONResponse(data: ['message' => 'Invalid Input', 'error' => 'The object referenced in field '. $property['property'] . ' is not valid', 'errors' => [['name' => $property, 'code' => 'invalid-resource', 'reason' => 'The resource is not valid']]], statusCode: 400);
+
+				return new JSONResponse(data: ['message' => 'Invalid Input', 'error' => 'The object referenced in field '. $property['property'] . ' is not valid', 'errors' => [['name' => $propName, 'code' => 'invalid-resource', 'reason' => 'The resource is not valid']]], statusCode: 400);
 			} catch (Exception $exception) {
-				return new JSONResponse(data: ['message' => 'Invalid Input', 'error' => $exception->getMessage(), 'errors' => [['name' => $property, 'code' => 'invalid-resource', 'reason' => 'The resource is not valid']]], statusCode: 400);
+				return new JSONResponse(data: ['message' => 'Invalid Input', 'error' => $exception->getMessage(), 'errors' => [['name' => $propName, 'code' => 'invalid-resource', 'reason' => 'The resource is not valid']]], statusCode: 400);
 			}
 		}
 
