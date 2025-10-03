@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.41 - Enhanced Autoload Diagnostics + Changelog Status Updates  
+**Current Version:** 1.42 - Workflow Structure Fix + Early Autoloader Check + Timing Fix  
 **Date:** October 2, 2025  
 **Status:** 🔄 Testing In Progress  
-**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues
+**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -21,39 +21,43 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
 
 ## 🔧 Key Features
-1. **Enhanced Autoload Diagnostics** - Added comprehensive diagnostics to identify where Composer places autoload files and troubleshoot location issues (v1.41)
-2. **Fixed Autoload Generation** - Generate autoload files inside container instead of host to fix lib/autoload.php not found error (v1.40)
-3. **Timeout Protection** - Added timeouts to prevent hanging progress bars and command timeouts (v1.40)
-4. **Enhanced Database Verification** - Use proper MariaDB container connection for database table verification with comprehensive diagnostics (v1.39)
-4. **App Install Primary Method** - Use app:install as primary method to ensure database migrations run properly (v1.38)
-3. **Forced Migration Execution** - Force app migration execution by disable/enable cycle to ensure tables are created (v1.38)
-4. **Proper Database Migration Commands** - Use valid Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) instead of non-existent app:upgrade (v1.38)
-5. **Resilient Health Checks** - Fixed overly strict health checks with warnings instead of immediate exits (v1.37)
-6. **Command Timeout Protection** - 30-second timeouts prevent hanging occ commands (v1.36)
-7. **Comprehensive Diagnostics** - Enhanced error reporting with container status, log analysis, and pre-class loading diagnostics (v1.36)
-8. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
-9. **Database Schema Preparation** - `maintenance:repair` before app:enable ensures database tables are ready (v1.34)
-10. **Composer Installation Order** - Composer installed before app dependencies in both jobs, with proper step ordering (v1.33)
-11. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
-12. **Workflow Consistency** - Both jobs follow identical patterns, step ordering, and eliminate duplicate operations (v1.30)
-13. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
-14. **Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files with proper verification and error handling (v1.27)
-15. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
-16. **Complete Service Stack** - All services linked and configured (v1.13)
-17. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
+1. **Early Autoloader Check** - Check if lib/autoload.php was already generated during app installation before attempting generation (v1.42)
+2. **Workflow Structure Fix** - Address the core timing issue by checking autoloader immediately after app installation (v1.42)
+3. **Timing Fix** - Added 10-second wait for background autoloader generation to complete (v1.42)
+4. **Nextcloud App Autoloader Generation** - Use Nextcloud's app:update command to trigger proper autoloader generation for app-specific classes (v1.42)
+5. **Extended Timeouts** - Increased timeouts to 180s for app:install and 90s for app:enable to handle progress bar hanging issues (v1.42)
+6. **Enhanced Autoload Diagnostics** - Added comprehensive diagnostics to identify where Composer places autoload files and troubleshoot location issues (v1.41)
+7. **Fixed Autoload Generation** - Generate autoload files inside container instead of host to fix lib/autoload.php not found error (v1.40)
+8. **Enhanced Database Verification** - Use proper MariaDB container connection for database table verification with comprehensive diagnostics (v1.39)
+9. **App Install Primary Method** - Use app:install as primary method to ensure database migrations run properly (v1.38)
+10. **Forced Migration Execution** - Force app migration execution by disable/enable cycle to ensure tables are created (v1.38)
+11. **Proper Database Migration Commands** - Use valid Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) instead of non-existent app:upgrade (v1.38)
+12. **Resilient Health Checks** - Fixed overly strict health checks with warnings instead of immediate exits (v1.37)
+13. **Command Timeout Protection** - 30-second timeouts prevent hanging occ commands (v1.36)
+14. **Comprehensive Diagnostics** - Enhanced error reporting with container status, log analysis, and pre-class loading diagnostics (v1.36)
+15. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
+16. **Database Schema Preparation** - `maintenance:repair` before app:enable ensures database tables are ready (v1.34)
+17. **Composer Installation Order** - Composer installed before app dependencies in both jobs, with proper step ordering (v1.33)
+18. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
+19. **Workflow Consistency** - Both jobs follow identical patterns, step ordering, and eliminate duplicate operations (v1.30)
+20. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
+21. **Autoloader Generation** - Automatic generation of missing `lib/autoload.php` files with proper verification and error handling (v1.27)
+22. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
+23. **Complete Service Stack** - All services linked and configured (v1.13)
+24. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
 
 ## 🐛 Issues Resolved
-- 🔄 **lib/autoload.php not found error** - Enhanced diagnostics to identify where Composer places autoload files and troubleshoot location issues (v1.41) - **TESTING IN PROGRESS**
-- 🔄 **Hanging progress bar during app installation** - Added timeout protection to prevent commands from hanging indefinitely (v1.40) - **TESTING IN PROGRESS**
+- 🔄 **lib/autoload.php not found error** - Early autoloader check after app installation + timing fix for background autoloader generation + Nextcloud app:update command (v1.42) - **TESTING IN PROGRESS**
+- 🔄 **Hanging progress bar during app installation** - Extended timeouts to 180s for app:install and 90s for app:enable to handle progress bar hanging issues (v1.42) - **TESTING IN PROGRESS**
+- 🔄 **Workflow structure timing issue** - Check autoloader immediately after app installation instead of later in workflow (v1.42) - **TESTING IN PROGRESS**
 - ✅ **Table oc_openconnector_job_logs doesn't exist** - Enhanced database verification with proper MariaDB container connection and comprehensive diagnostics (v1.39)
-- ✅ **Database verification method** - Fixed database table verification to use proper MariaDB container connection instead of mysql client from Nextcloud container (v1.39)
 - ✅ **Overly strict health checks causing false failures** - Fixed health check logic to be more resilient with warnings instead of immediate exits (v1.37)
 - ✅ **Hanging php occ app --help command** - Added 30-second timeouts and health checks to prevent command hanging (v1.36)
 - ✅ **Composer command not found error** - Composer installation moved before app dependencies in tests job (v1.33)
 - ✅ **Missing vendor/autoload.php error** - Composer install now runs before app enabling (v1.31)
 - ✅ **Misleading step names** - All step names now accurately reflect their functionality and execution context (v1.31)
 - ✅ **Workflow inconsistency** - Both jobs now follow identical patterns and step ordering (v1.30)
-- ✅ **App installation method** - Changed from `app:install` to `app:enable` for local app usage (v1.29)
+- ✅ **App installation method** - Use app:install as primary method with app:enable fallback for local app usage (v1.38)
 - ✅ **App autoloader generation** - Generate autoloader on host and copy to container, with Nextcloud reload and cache clearing (v1.28)
 - ✅ **Missing PHP extensions** - Fixed "missing ext-soap and ext-xsl" errors with `--ignore-platform-req` flags (v1.21)
 - ✅ **App dependencies installation** - Added `composer install --no-dev --optimize-autoloader` for OpenConnector app dependencies (v1.19)
@@ -96,6 +100,18 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ### Future Versions
 *This section will be updated as new versions are released*
+
+### Version 1.42 - Workflow Structure Fix + Early Autoloader Check + Timing Fix
+**Date:** October 2, 2025  
+**Status:** 🔄 Testing In Progress  
+**Changes:**
+- 🔍 **Early Autoloader Check** - Check if lib/autoload.php was already generated during app installation before attempting generation
+- 🏗️ **Workflow Structure Fix** - Address the core timing issue by checking autoloader immediately after app installation
+- ⏱️ **Timing Fix** - Added 10-second wait for background autoloader generation to complete
+- 🔧 **Nextcloud App Autoloader Generation** - Use Nextcloud's app:update command to trigger proper autoloader generation for app-specific classes
+- ⏱️ **Extended Timeouts** - Increased timeouts to 180s for app:install and 90s for app:enable to handle progress bar hanging issues
+- 🎯 **Targeted Autoloader Fix** - Addresses the core issue that Composer only generates vendor autoloaders, not app-specific autoloaders
+- 🔍 **Progress Bar Resolution** - Extended timeouts should resolve the hanging progress bar issue during app installation
 
 ### Version 1.41 - Enhanced Autoload Diagnostics + Changelog Status Updates
 **Date:** October 2, 2025  
@@ -462,10 +478,12 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Database schema preparation with maintenance:repair
 - Command availability checking
 
-### 🔄 **Currently Testing (v1.41)**
-- Enhanced autoload diagnostics - Testing comprehensive diagnostics to identify where Composer places autoload files
-- Autoload file location investigation - Testing diagnostics to find autoload files in vendor/, lib/, and other locations
-- Composer working directory diagnostics - Testing checks to verify Composer execution context and file placement
+### 🔄 **Currently Testing (v1.42)**
+- Early autoloader check - Testing if lib/autoload.php was already generated during app installation
+- Workflow structure fix - Testing if checking autoloader immediately after app installation resolves the issue
+- Timing fix - Testing if 10-second wait for background autoloader generation resolves timing issues
+- Nextcloud app autoloader generation - Testing Nextcloud's app:update command to trigger proper autoloader generation
+- Extended timeouts - Testing increased timeouts to handle progress bar hanging issues
 
 ### ✅ **Recently Fixed**
 - Enhanced database verification - Fixed database table verification to use proper MariaDB container connection with comprehensive diagnostics (v1.39)
@@ -481,11 +499,11 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Autoloader generation verification - Added proper verification for `lib/autoload.php` creation
 
 ### 📋 **Next Steps**
-1. Test the workflow with v1.41 enhanced autoload diagnostics
-2. Verify that the enhanced diagnostics identify where Composer places autoload files
-3. Monitor if the autoload file location mystery is resolved
-4. Check if the lib/autoload.php not found error is fixed with proper file location
-5. Analyze diagnostic output to understand Composer autoload file placement behavior
+1. Test the workflow with v1.42 early autoloader check and workflow structure fix
+2. Verify that checking autoloader immediately after app installation resolves the issue
+3. Monitor if the 10-second wait for background autoloader generation resolves timing issues
+4. Check if the lib/autoload.php not found error is fixed with proper timing and structure
+5. Analyze diagnostic output to understand autoloader generation behavior and timing
 6. Update documentation based on test results
 
 ## 🛠️ Maintenance
@@ -503,4 +521,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: October 2, 2025 | Version: 1.41 | Status: Enhanced Autoload Diagnostics + Changelog Status Updates*
+*Last Updated: October 2, 2025 | Version: 1.42 | Status: Workflow Structure Fix + Early Autoloader Check + Timing Fix*

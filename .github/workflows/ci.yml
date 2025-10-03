@@ -437,11 +437,31 @@ jobs:
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Vendor autoload.php not found'"
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'App autoload.php not found'"
           
+          # Check if autoloader was already generated during app installation
+          echo "🔍 DIAGNOSTIC: Checking if autoloader was generated during initial app installation..."
+          if docker exec nextcloud-test bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php already exists from app installation!"
+            echo "✅ No additional autoloader generation needed"
+            exit 0
+          else
+            echo "❌ lib/autoload.php not found after app installation - proceeding with generation..."
+          fi
+          
           # Generate missing app autoloader INSIDE the container
-          echo "🔧 ATTEMPTING: Generating app autoloader inside container (v1.40)..."
+          echo "🔧 ATTEMPTING: Generating app autoloader inside container (v1.42)..."
           echo "🔍 DIAGNOSTIC: Running composer dump-autoload inside container..."
           docker exec nextcloud-test bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
           echo "✅ Container autoloader generated"
+          
+          # Try Nextcloud's own autoloader generation method
+          echo "🔧 ATTEMPTING: Using Nextcloud's autoloader generation method (v1.42)..."
+          echo "🔍 DIAGNOSTIC: Running Nextcloud app:update to trigger autoloader generation..."
+          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:update openconnector"
+          echo "✅ Nextcloud autoloader generation attempted"
+          
+          # Wait for Nextcloud to complete any background autoloader generation
+          echo "🔄 Waiting for Nextcloud background autoloader generation to complete..."
+          sleep 10
           
           # Verify autoloader was created inside container
           echo "🔍 DIAGNOSTIC: Verifying autoloader exists in container..."
@@ -930,7 +950,7 @@ jobs:
           # Try to install the app directly (this should trigger migrations)
           echo "🔄 Testing: Direct app install (should trigger migrations)..."
           echo "🔍 DIAGNOSTIC: Adding timeout to prevent hanging progress bar (v1.40)..."
-          if timeout 120 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
+          if timeout 180 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
             echo "✅ SUCCESS: App installed successfully with migrations"
             MIGRATION_SUCCESS=true
           else
@@ -944,7 +964,7 @@ jobs:
           if [ "$MIGRATION_SUCCESS" = false ]; then
             echo "🔄 Fallback: Trying app:enable..."
             echo "🔍 DIAGNOSTIC: Adding timeout to app:enable command (v1.40)..."
-            if timeout 60 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            if timeout 90 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
               echo "✅ SUCCESS: App enabled successfully"
               MIGRATION_SUCCESS=true
             else
@@ -1077,11 +1097,31 @@ jobs:
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/vendor/autoload.php || echo 'Vendor autoload.php not found'"
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'App autoload.php not found'"
           
+          # Check if autoloader was already generated during app installation
+          echo "🔍 DIAGNOSTIC: Checking if autoloader was generated during initial app installation..."
+          if docker exec nextcloud-test-quality bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php already exists from app installation!"
+            echo "✅ No additional autoloader generation needed"
+            exit 0
+          else
+            echo "❌ lib/autoload.php not found after app installation - proceeding with generation..."
+          fi
+          
           # Generate missing app autoloader INSIDE the container
-          echo "🔧 ATTEMPTING: Generating app autoloader inside container (v1.40)..."
+          echo "🔧 ATTEMPTING: Generating app autoloader inside container (v1.42)..."
           echo "🔍 DIAGNOSTIC: Running composer dump-autoload inside container..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize"
           echo "✅ Container autoloader generated"
+          
+          # Try Nextcloud's own autoloader generation method
+          echo "🔧 ATTEMPTING: Using Nextcloud's autoloader generation method (v1.42)..."
+          echo "🔍 DIAGNOSTIC: Running Nextcloud app:update to trigger autoloader generation..."
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:update openconnector"
+          echo "✅ Nextcloud autoloader generation attempted"
+          
+          # Wait for Nextcloud to complete any background autoloader generation
+          echo "🔄 Waiting for Nextcloud background autoloader generation to complete..."
+          sleep 10
           
           # Verify autoloader was created inside container
           echo "🔍 DIAGNOSTIC: Verifying autoloader exists in container..."
