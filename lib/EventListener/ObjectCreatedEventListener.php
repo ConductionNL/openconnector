@@ -31,17 +31,18 @@ class ObjectCreatedEventListener implements IEventListener
             return;
         }
 
-
         $object = $event->getObject();
-        if ($object === null || $object->getRegister() === null || $object->getSchema() === null && $object->getObject() !== null) {
+        $register = $object->getRegister();
+        $schema = $object->getSchema();
+        if ($object === null || $register === null || $schema === null) {
             return;
         }
 
-        $synchronizations = $this->synchronizationService->findAllBySourceId(register: $object->getRegister(), schema: $object->getSchema());
+        $synchronizations = $this->synchronizationService->findAllBySourceId(register: $register, schema: $schema);
         foreach ($synchronizations as $synchronization) {
             try {
-                $array = $object->jsonSerialize();
-                $this->synchronizationService->synchronize(synchronization: $synchronization, force: true, object: $array, mutationType: 'create');
+                $objectArray = $object->jsonSerialize();
+                $this->synchronizationService->synchronize(synchronization: $synchronization, force: true, object: $objectArray, mutationType: 'create');
             } catch (\Exception $e) {
                 $this->logger->error('Failed to process object event: ' . $e->getMessage() . ' for synchronization ' . $synchronization->getId(), [
                     'exception' => $e,
