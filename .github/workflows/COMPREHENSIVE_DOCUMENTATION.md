@@ -495,15 +495,20 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Database schema preparation with maintenance:repair
 - Command availability checking
 
-### 🔄 **Currently Testing (v1.43)**
-- Comprehensive autoloader generation strategy - Testing multi-step approach with disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback
-- Manual autoloader creation - Testing if manual creation of lib/autoload.php with proper PSR-4 autoloader registration works as final fallback
-- Force app update with --force flag - Testing if forced app update triggers autoloader regeneration
-- Maintenance repair integration - Testing if maintenance:repair regenerates autoloaders
-- Classmap authoritative optimization - Testing Composer's --classmap-authoritative flag for optimized autoloader generation
-- Extended timeouts - Testing increased timeouts to handle progress bar hanging issues
+### 🔄 **Currently Testing (v1.44)**
+- Enhanced class existence checks - Testing verification that OpenConnector Application class actually exists after each autoloader generation step
+- Fixed invalid --force flag - Testing removal of non-existent --force flag from app:update commands
+- Improved timing with longer delays - Testing 30-second delays for Nextcloud background processes to complete
+- Enhanced file content diagnostics - Testing actual autoloader file content and permissions checking
+- Comprehensive autoloader generation strategy - Testing multi-step approach with disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback (v1.43)
+- Manual autoloader creation - Testing if manual creation of lib/autoload.php with proper PSR-4 autoloader registration works as final fallback (v1.43)
+- Extended timeouts - Testing increased timeouts to handle progress bar hanging issues (v1.42)
 
 ### ✅ **Recently Fixed**
+- Fixed invalid --force flag - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars (v1.44)
+- Enhanced class existence checks - Added verification that OpenConnector Application class actually exists after each autoloader generation step (v1.44)
+- Improved timing with longer delays - Added 30-second delays for Nextcloud background processes to complete before checking autoloader generation (v1.44)
+- Enhanced file content diagnostics - Added actual autoloader file content and permissions checking to identify malformed or incomplete files (v1.44)
 - Enhanced database verification - Fixed database table verification to use proper MariaDB container connection with comprehensive diagnostics (v1.39)
 - Changed app installation method - Use app:install as primary method to ensure database migrations run properly (v1.38)
 - Fixed invalid app:upgrade command - Replaced with proper Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) (v1.38)
@@ -517,12 +522,13 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Autoloader generation verification - Added proper verification for `lib/autoload.php` creation
 
 ### 📋 **Next Steps**
-1. Test the workflow with v1.43 comprehensive autoloader generation strategy
-2. Verify that the multi-step approach (disable/enable cycle, maintenance repair, forced app update, Composer optimization) resolves the autoloader issue
-3. Monitor if manual lib/autoload.php creation works as final fallback
-4. Check if the lib/autoload.php not found error is fixed with comprehensive strategy
-5. Analyze diagnostic output to understand which autoloader generation method succeeds
-6. Update documentation based on test results
+1. Test the workflow with v1.44 enhanced diagnostics and fixed invalid flags
+2. Verify that the invalid --force flag fix eliminates command errors and hanging progress bars
+3. Monitor enhanced class existence checks to see if OpenConnector Application class is properly detected
+4. Check if 30-second delays provide sufficient time for Nextcloud background processes to complete
+5. Analyze enhanced file content diagnostics to identify autoloader file issues
+6. Test the comprehensive autoloader generation strategy (v1.43) with improved diagnostics (v1.44)
+7. Update documentation status based on test results
 
 ## 🛠️ Maintenance
 
