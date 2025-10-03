@@ -761,6 +761,7 @@ EOF"
 
   quality:
     name: Code Quality & Standards with Nextcloud
+# v1.43: Early exit checks to prevent step interference
     runs-on: ubuntu-latest
     
     steps:
