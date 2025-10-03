@@ -455,6 +455,14 @@ jobs:
             docker exec nextcloud-test bash -c "cat /var/www/html/apps/openconnector/composer.json | grep -A 10 -B 5 autoload || echo 'No autoload section found'"
             echo "🔍 DIAGNOSTIC: Checking if lib directory exists..."
             docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/ | grep lib"
+            echo "🔍 DIAGNOSTIC: Checking where Composer actually placed autoload files..."
+            docker exec nextcloud-test bash -c "find /var/www/html/apps/openconnector -name 'autoload.php' -type f"
+            echo "🔍 DIAGNOSTIC: Checking vendor directory for autoload files..."
+            docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/vendor/ | grep autoload"
+            echo "🔍 DIAGNOSTIC: Checking if Composer created any autoload files in lib directory..."
+            docker exec nextcloud-test bash -c "find /var/www/html/apps/openconnector/lib -name '*autoload*' -type f"
+            echo "🔍 DIAGNOSTIC: Checking Composer working directory and current location..."
+            docker exec nextcloud-test bash -c "cd /var/www/html/apps/openconnector && pwd && ls -la"
             exit 1
           fi
           
@@ -1087,6 +1095,14 @@ jobs:
             docker exec nextcloud-test-quality bash -c "cat /var/www/html/apps/openconnector/composer.json | grep -A 10 -B 5 autoload || echo 'No autoload section found'"
             echo "🔍 DIAGNOSTIC: Checking if lib directory exists..."
             docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/ | grep lib"
+            echo "🔍 DIAGNOSTIC: Checking where Composer actually placed autoload files..."
+            docker exec nextcloud-test-quality bash -c "find /var/www/html/apps/openconnector -name 'autoload.php' -type f"
+            echo "🔍 DIAGNOSTIC: Checking vendor directory for autoload files..."
+            docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/vendor/ | grep autoload"
+            echo "🔍 DIAGNOSTIC: Checking if Composer created any autoload files in lib directory..."
+            docker exec nextcloud-test-quality bash -c "find /var/www/html/apps/openconnector/lib -name '*autoload*' -type f"
+            echo "🔍 DIAGNOSTIC: Checking Composer working directory and current location..."
+            docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps/openconnector && pwd && ls -la"
             exit 1
           fi
           
