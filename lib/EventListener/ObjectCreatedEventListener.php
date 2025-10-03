@@ -33,7 +33,7 @@ class ObjectCreatedEventListener implements IEventListener
 
 
         $object = $event->getObject();
-        if ($object === null || $object->getRegister() === null || $object->getSchema() === null && $object->getObject() !== null) {
+        if ($object === null || $object->getRegister() === null || $object->getSchema() === null) {
             return;
         }
 

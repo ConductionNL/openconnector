@@ -33,7 +33,7 @@ class ObjectUpdatedEventListener implements IEventListener
 
 
         $object = $event->getNewObject();
-        if ($object === null || $object->getRegister() === null || $object->getSchema() === null && $object->getNewObject() !== null) {
+        if ($object === null || $object->getRegister() === null || $object->getSchema() === null) {
             return;
         }
 
