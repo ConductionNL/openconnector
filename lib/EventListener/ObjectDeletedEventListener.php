@@ -31,13 +31,14 @@ class ObjectDeletedEventListener implements IEventListener
             return;
         }
 
-
         $object = $event->getObject();
-        if ($object === null || $object->getRegister() === null || $object->getSchema() === null) {
+        $register = $object->getRegister();
+        $schema = $object->getSchema();
+        if ($object === null || $register === null || $schema === null) {
             return;
         }
 
-        $synchronizations = $this->synchronizationService->findAllBySourceId(register: $object->getRegister(), schema: $object->getSchema());
+        $synchronizations = $this->synchronizationService->findAllBySourceId(register: $register, schema: $schema);
         foreach ($synchronizations as $synchronization) {
             try {
                 $this->synchronizationService->synchronize(synchronization: $synchronization, force: true, object: $object, mutationType: 'delete');
