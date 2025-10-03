@@ -447,7 +447,7 @@ jobs:
             echo "❌ lib/autoload.php not found after app installation - proceeding with generation..."
           fi
           
-          # v1.43: Comprehensive autoloader generation strategy
+          # v1.43: Comprehensive autoloader generation strategy with early exit checks
           echo "🔧 ATTEMPTING: Comprehensive autoloader generation strategy (v1.43)..."
           
           # Step 1: Force app disable/enable cycle to trigger autoloader generation
@@ -458,11 +458,31 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
           echo "✅ App disable/enable cycle completed"
           
+          # Check if Step 1 succeeded
+          echo "🔍 DIAGNOSTIC: Checking if Step 1 generated autoloader..."
+          if docker exec nextcloud-test bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php created by Step 1 (disable/enable cycle)!"
+            echo "✅ No additional steps needed - exiting early"
+            exit 0
+          else
+            echo "❌ Step 1 did not generate autoloader - proceeding to Step 2..."
+          fi
+          
           # Step 2: Force maintenance repair to regenerate autoloaders
           echo "🔄 Step 2: Force maintenance repair to regenerate autoloaders..."
           echo "🔍 DIAGNOSTIC: Running maintenance:repair to regenerate autoloaders..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
           echo "✅ Maintenance repair completed"
+          
+          # Check if Step 2 succeeded
+          echo "🔍 DIAGNOSTIC: Checking if Step 2 generated autoloader..."
+          if docker exec nextcloud-test bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php created by Step 2 (maintenance repair)!"
+            echo "✅ No additional steps needed - exiting early"
+            exit 0
+          else
+            echo "❌ Step 2 did not generate autoloader - proceeding to Step 3..."
+          fi
           
           # Step 3: Force app update with --force flag
           echo "🔄 Step 3: Force app update with --force flag..."
@@ -471,11 +491,31 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:update openconnector"
           echo "✅ App update completed"
           
+          # Check if Step 3 succeeded
+          echo "🔍 DIAGNOSTIC: Checking if Step 3 generated autoloader..."
+          if docker exec nextcloud-test bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php created by Step 3 (app update)!"
+            echo "✅ No additional steps needed - exiting early"
+            exit 0
+          else
+            echo "❌ Step 3 did not generate autoloader - proceeding to Step 4..."
+          fi
+          
           # Step 4: Generate autoloader manually using Composer
           echo "🔄 Step 4: Generate autoloader manually using Composer..."
           echo "🔍 DIAGNOSTIC: Running composer dump-autoload with classmap optimization..."
           docker exec nextcloud-test bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize --classmap-authoritative"
           echo "✅ Composer autoloader generation completed"
+          
+          # Check if Step 4 succeeded
+          echo "🔍 DIAGNOSTIC: Checking if Step 4 generated autoloader..."
+          if docker exec nextcloud-test bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php created by Step 4 (Composer optimization)!"
+            echo "✅ No additional steps needed - exiting early"
+            exit 0
+          else
+            echo "❌ Step 4 did not generate autoloader - proceeding to Step 5..."
+          fi
           
           # Step 5: Create lib/autoload.php manually if still missing
           echo "🔄 Step 5: Create lib/autoload.php manually if still missing..."
@@ -1153,7 +1193,7 @@ EOF"
             echo "❌ lib/autoload.php not found after app installation - proceeding with generation..."
           fi
           
-          # v1.43: Comprehensive autoloader generation strategy
+          # v1.43: Comprehensive autoloader generation strategy with early exit checks
           echo "🔧 ATTEMPTING: Comprehensive autoloader generation strategy (v1.43)..."
           
           # Step 1: Force app disable/enable cycle to trigger autoloader generation
@@ -1164,11 +1204,31 @@ EOF"
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
           echo "✅ App disable/enable cycle completed"
           
+          # Check if Step 1 succeeded
+          echo "🔍 DIAGNOSTIC: Checking if Step 1 generated autoloader..."
+          if docker exec nextcloud-test-quality bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php created by Step 1 (disable/enable cycle)!"
+            echo "✅ No additional steps needed - exiting early"
+            exit 0
+          else
+            echo "❌ Step 1 did not generate autoloader - proceeding to Step 2..."
+          fi
+          
           # Step 2: Force maintenance repair to regenerate autoloaders
           echo "🔄 Step 2: Force maintenance repair to regenerate autoloaders..."
           echo "🔍 DIAGNOSTIC: Running maintenance:repair to regenerate autoloaders..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ maintenance:repair"
           echo "✅ Maintenance repair completed"
+          
+          # Check if Step 2 succeeded
+          echo "🔍 DIAGNOSTIC: Checking if Step 2 generated autoloader..."
+          if docker exec nextcloud-test-quality bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php created by Step 2 (maintenance repair)!"
+            echo "✅ No additional steps needed - exiting early"
+            exit 0
+          else
+            echo "❌ Step 2 did not generate autoloader - proceeding to Step 3..."
+          fi
           
           # Step 3: Force app update with --force flag
           echo "🔄 Step 3: Force app update with --force flag..."
@@ -1177,11 +1237,31 @@ EOF"
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:update openconnector"
           echo "✅ App update completed"
           
+          # Check if Step 3 succeeded
+          echo "🔍 DIAGNOSTIC: Checking if Step 3 generated autoloader..."
+          if docker exec nextcloud-test-quality bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php created by Step 3 (app update)!"
+            echo "✅ No additional steps needed - exiting early"
+            exit 0
+          else
+            echo "❌ Step 3 did not generate autoloader - proceeding to Step 4..."
+          fi
+          
           # Step 4: Generate autoloader manually using Composer
           echo "🔄 Step 4: Generate autoloader manually using Composer..."
           echo "🔍 DIAGNOSTIC: Running composer dump-autoload with classmap optimization..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html/apps/openconnector && composer dump-autoload --optimize --classmap-authoritative"
           echo "✅ Composer autoloader generation completed"
+          
+          # Check if Step 4 succeeded
+          echo "🔍 DIAGNOSTIC: Checking if Step 4 generated autoloader..."
+          if docker exec nextcloud-test-quality bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
+            echo "✅ SUCCESS: lib/autoload.php created by Step 4 (Composer optimization)!"
+            echo "✅ No additional steps needed - exiting early"
+            exit 0
+          else
+            echo "❌ Step 4 did not generate autoloader - proceeding to Step 5..."
+          fi
           
           # Step 5: Create lib/autoload.php manually if still missing
           echo "🔄 Step 5: Create lib/autoload.php manually if still missing..."
