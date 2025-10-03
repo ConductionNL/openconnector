@@ -457,13 +457,21 @@ jobs:
           echo "🔍 DIAGNOSTIC: Re-enabling app to trigger autoloader generation..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
           echo "✅ App disable/enable cycle completed"
+          echo "⏳ Waiting 30 seconds for Nextcloud background processes to complete..."
+          sleep 30
           
           # Check if Step 1 succeeded
           echo "🔍 DIAGNOSTIC: Checking if Step 1 generated autoloader..."
           if docker exec nextcloud-test bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php"; then
             echo "✅ SUCCESS: lib/autoload.php created by Step 1 (disable/enable cycle)!"
-            echo "✅ No additional steps needed - exiting early"
-            exit 0
+            echo "🔍 DIAGNOSTIC: Verifying class existence..."
+            if docker exec nextcloud-test bash -c "cd /var/www/html && php -r \"require_once 'apps/openconnector/lib/autoload.php'; if (class_exists('OCA\\\\OpenConnector\\\\AppInfo\\\\Application')) { echo 'Class found!'; exit(0); } else { echo 'Class NOT found!'; exit(1); }\""; then
+              echo "✅ SUCCESS: OpenConnector Application class found after Step 1!"
+              echo "✅ No additional steps needed - exiting early"
+              exit 0
+            else
+              echo "❌ Step 1 created autoloader but class not found - proceeding to Step 2..."
+            fi
           else
             echo "❌ Step 1 did not generate autoloader - proceeding to Step 2..."
           fi
@@ -473,6 +481,9 @@ jobs:
           echo "🔍 DIAGNOSTIC: Running maintenance:repair to regenerate autoloaders..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
           echo "✅ Maintenance repair completed"
+          echo "🔍 DIAGNOSTIC: Checking file permissions and content..."
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/ || echo 'lib directory not found'"
+          docker exec nextcloud-test bash -c "test -f /var/www/html/apps/openconnector/lib/autoload.php && cat /var/www/html/apps/openconnector/lib/autoload.php || echo 'autoload.php not found'"
           
           # Check if Step 2 succeeded
           echo "🔍 DIAGNOSTIC: Checking if Step 2 generated autoloader..."
@@ -485,9 +496,8 @@ jobs:
           fi
           
           # Step 3: Force app update with --force flag
-          echo "🔄 Step 3: Force app update with --force flag..."
-          echo "🔍 DIAGNOSTIC: Running app:update with force flag..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:update openconnector --force" || echo "Force update not supported, trying regular update..."
+          echo "🔄 Step 3: Force app update without invalid --force flag..."
+          echo "🔍 DIAGNOSTIC: Running app:update without invalid --force flag..."
           docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:update openconnector"
           echo "✅ App update completed"
           
@@ -1228,9 +1238,8 @@ jobs:
           fi
           
           # Step 3: Force app update with --force flag
-          echo "🔄 Step 3: Force app update with --force flag..."
-          echo "🔍 DIAGNOSTIC: Running app:update with force flag..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:update openconnector --force" || echo "Force update not supported, trying regular update..."
+          echo "🔄 Step 3: Force app update without invalid --force flag..."
+          echo "🔍 DIAGNOSTIC: Running app:update without invalid --force flag..."
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:update openconnector"
           echo "✅ App update completed"
           

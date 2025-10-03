@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.43 - Comprehensive Autoloader Generation Strategy  
-**Date:** October 2, 2025  
+**Current Version:** 1.44 - Enhanced Diagnostics and Fixed Invalid Flags  
+**Date:** October 3, 2025  
 **Status:** 🔄 Testing In Progress  
-**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation
+**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation + fixed invalid --force flag + enhanced class existence checks + improved timing with longer delays
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -20,38 +20,45 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **MailHog** - Email testing (`ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest`)
 - **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
 
-## 🔧 Key Features
-1. **Comprehensive Autoloader Generation Strategy** - Multi-step approach with early exit checks: disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback (v1.43)
-2. **Manual Autoloader Creation** - Create lib/autoload.php manually with proper PSR-4 autoloader registration if all other methods fail (v1.43)
-3. **Force App Update with --force Flag** - Attempt to force app update to trigger autoloader regeneration (v1.43)
-4. **Maintenance Repair Integration** - Use maintenance:repair to regenerate autoloaders as part of comprehensive strategy (v1.43)
-5. **Classmap Authoritative Optimization** - Use Composer's --classmap-authoritative flag for optimized autoloader generation (v1.43)
-6. **Early Exit Checks** - Prevent step interference by checking for success after each autoloader generation method and exiting early if successful (v1.43)
-7. **Early Autoloader Check** - Check if lib/autoload.php was already generated during app installation before attempting generation (v1.42)
-8. **Workflow Structure Fix** - Address the core timing issue by checking autoloader immediately after app installation (v1.42)
-9. **Timing Fix** - Added 10-second wait for background autoloader generation to complete (v1.42)
-10. **Nextcloud App Autoloader Generation** - Use Nextcloud's app:update command to trigger proper autoloader generation for app-specific classes (v1.42)
-11. **Extended Timeouts** - Increased timeouts to 180s for app:install and 90s for app:enable to handle progress bar hanging issues (v1.42)
-12. **Enhanced Autoload Diagnostics** - Added comprehensive diagnostics to identify where Composer places autoload files and troubleshoot location issues (v1.41)
-13. **Fixed Autoload Generation** - Generate autoload files inside container instead of host to fix lib/autoload.php not found error (v1.40)
-14. **Enhanced Database Verification** - Use proper MariaDB container connection for database table verification with comprehensive diagnostics (v1.39)
-15. **App Install Primary Method** - Use app:install as primary method to ensure database migrations run properly (v1.38)
-16. **Forced Migration Execution** - Force app migration execution by disable/enable cycle to ensure tables are created (v1.38)
-17. **Proper Database Migration Commands** - Use valid Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) instead of non-existent app:upgrade (v1.38)
-18. **Resilient Health Checks** - Fixed overly strict health checks with warnings instead of immediate exits (v1.37)
-19. **Command Timeout Protection** - 30-second timeouts prevent hanging occ commands (v1.36)
-20. **Comprehensive Diagnostics** - Enhanced error reporting with container status, log analysis, and pre-class loading diagnostics (v1.36)
-21. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
-22. **Database Schema Preparation** - `maintenance:repair` before app:enable ensures database tables are ready (v1.34)
-23. **Composer Installation Order** - Composer installed before app dependencies in both jobs, with proper step ordering (v1.33)
-24. **Clear Step Names** - All step names specify execution context (GitHub Actions runner vs Nextcloud container) (v1.31)
-25. **Workflow Consistency** - Both jobs follow identical patterns, step ordering, and eliminate duplicate operations (v1.30)
-26. **Local App Usage** - Uses local app instead of downloading from store (v1.29)
-27. **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
-28. **Complete Service Stack** - All services linked and configured (v1.13)
-29. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes (v1.13)
+## 🔧 Key Features & Benefits
+
+### **Latest Improvements (v1.44)**
+1. **Enhanced Class Existence Checks** - Verify that OpenConnector Application class actually exists after each autoloader generation step, not just file existence. **Benefit:** Prevents false positives and ensures reliable class loading for tests (v1.44)
+2. **Fixed Invalid --force Flag** - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars. **Benefit:** Eliminates command errors and prevents workflow failures (v1.44)
+3. **Improved Timing with Longer Delays** - Added 30-second delays for Nextcloud background processes to complete before checking autoloader generation. **Benefit:** Ensures autoloader generation has sufficient time to complete (v1.44)
+4. **Enhanced File Content Diagnostics** - Check actual autoloader file content and permissions to identify malformed or incomplete files. **Benefit:** Provides detailed troubleshooting information for autoloader issues (v1.44)
+
+### **Autoloader Generation Strategy (v1.43)**
+5. **Comprehensive Autoloader Generation Strategy** - Multi-step approach with early exit checks: disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback. **Benefit:** Ensures autoloader is created through multiple fallback methods (v1.43)
+6. **Manual Autoloader Creation** - Create lib/autoload.php manually with proper PSR-4 autoloader registration if all other methods fail. **Benefit:** Guarantees autoloader exists even when automated methods fail (v1.43)
+7. **Early Exit Checks** - Prevent step interference by checking for success after each autoloader generation method and exiting early if successful. **Benefit:** Prevents subsequent steps from interfering with successful autoloader generation (v1.43)
+
+### **Timing and Reliability Improvements (v1.42)**
+8. **Extended Timeouts** - Increased timeouts to 180s for app:install and 90s for app:enable to handle progress bar hanging issues. **Benefit:** Prevents workflow timeouts during long-running operations (v1.42)
+9. **Early Autoloader Check** - Check if lib/autoload.php was already generated during app installation before attempting generation. **Benefit:** Avoids unnecessary regeneration when autoloader already exists (v1.42)
+10. **Nextcloud App Autoloader Generation** - Use Nextcloud's app:update command to trigger proper autoloader generation for app-specific classes. **Benefit:** Uses Nextcloud's native autoloader generation mechanism (v1.42)
+
+### **Database and Migration Management (v1.38-v1.39)**
+11. **Enhanced Database Verification** - Use proper MariaDB container connection for database table verification with comprehensive diagnostics. **Benefit:** Ensures accurate database state verification (v1.39)
+12. **App Install Primary Method** - Use app:install as primary method to ensure database migrations run properly. **Benefit:** Guarantees database migrations execute before app code runs (v1.38)
+13. **Forced Migration Execution** - Force app migration execution by disable/enable cycle to ensure tables are created. **Benefit:** Ensures database tables are properly created and migrated (v1.38)
+
+### **Workflow Reliability and Diagnostics (v1.35-v1.37)**
+14. **Resilient Health Checks** - Fixed overly strict health checks with warnings instead of immediate exits. **Benefit:** Prevents false failures and improves workflow reliability (v1.37)
+15. **Command Timeout Protection** - 30-second timeouts prevent hanging occ commands. **Benefit:** Ensures workflow completion without hanging commands (v1.36)
+16. **Comprehensive Diagnostics** - Enhanced error reporting with container status, log analysis, and pre-class loading diagnostics. **Benefit:** Provides detailed troubleshooting information for faster issue resolution (v1.36)
+17. **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment. **Benefit:** Prevents failures due to non-existent commands (v1.35)
+
+### **Development Environment Parity (v1.13-v1.34)**
+18. **Local App Usage** - Uses local app instead of downloading from store. **Benefit:** Tests actual development code instead of published versions (v1.29)
+19. **Local Development Parity** - Exact same images as local docker-compose.yml. **Benefit:** Ensures CI environment matches local development exactly (v1.14)
+20. **Complete Service Stack** - All services (Redis, Mail, MariaDB) linked and configured. **Benefit:** Provides full Nextcloud environment for comprehensive testing (v1.13)
+21. **Real OCP Classes** - No mocking needed, uses actual Nextcloud classes. **Benefit:** Eliminates MockMapper issues and ensures real-world compatibility (v1.13)
 
 ## 🐛 Issues Resolved
+- ⏳ **Invalid --force flag causing errors** - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars (v1.44) - **NOT YET TESTED**
+- ⏳ **Class existence verification missing** - Added enhanced class existence checks to verify OpenConnector Application class actually exists after each autoloader generation step (v1.44) - **NOT YET TESTED**
+- ⏳ **Insufficient timing for background processes** - Added 30-second delays for Nextcloud background processes to complete before checking autoloader generation (v1.44) - **NOT YET TESTED**
 - 🔄 **lib/autoload.php not found error** - Comprehensive autoloader generation strategy with multi-step approach: disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback (v1.43) - **TESTING IN PROGRESS**
 - 🔄 **Hanging progress bar during app installation** - Extended timeouts to 180s for app:install and 90s for app:enable to handle progress bar hanging issues (v1.42) - **TESTING IN PROGRESS**
 - 🔄 **Workflow structure timing issue** - Check autoloader immediately after app installation instead of later in workflow (v1.42) - **TESTING IN PROGRESS**
@@ -75,23 +82,6 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **`tests/bootstrap.php`** - Simplified bootstrap for container environment
 - **`.github/workflows/versions.env`** - Centralized version management
 
-## ✨ Benefits
-- **Enhanced database verification** - Proper MariaDB container connection ensures accurate database table verification with comprehensive diagnostics (v1.39)
-- **Proper database migration execution** - app:install ensures database migrations run before app code execution (v1.38)
-- **Forced migration execution** - disable/enable cycle forces Nextcloud to execute app migration files (v1.38)
-- **Resilient workflow execution** - Fixed overly strict health checks prevent false failures and improve workflow reliability (v1.37)
-- **Reliable command execution** - Timeout protection prevents hanging commands and ensures workflow completion (v1.36)
-- **Enhanced error diagnostics** - Comprehensive error reporting with container status, log analysis, and pre-class loading diagnostics (v1.36)
-- **Valid command testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
-- **Proactive database schema preparation** - Database tables created before app code execution prevents initialization failures (v1.34)
-- **Reliable Composer availability** - Composer installed before any composer commands are executed (v1.33)
-- **Clear workflow understanding** - Step names specify execution context for better debugging (v1.31)
-- **Consistent workflow behavior** - Both jobs follow identical patterns, step ordering, and eliminate duplicate operations (v1.30)
-- **Local app development** - Uses local app files instead of external downloads (v1.29)
-- **Local development parity** - Same environment as local development (v1.14)
-- **No MockMapper issues** - Uses real OCP classes instead of complex mocking (v1.13)
-- **Complete service stack** - Redis, Mail, MariaDB all available (v1.13)
-- **Reliable test execution** - Tests run in real Nextcloud environment (v1.13)
 
 ## 📦 Centralized Version Management
 - **`.github/workflows/versions.env`** - Single source of truth for all versions
@@ -105,6 +95,15 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ### Future Versions
 *This section will be updated as new versions are released*
+
+### Version 1.44 - Enhanced Diagnostics and Fixed Invalid Flags
+**Date:** October 3, 2025  
+**Status:** 🔄 Testing In Progress  
+**Changes:**
+- 🔧 **Fixed Invalid --force Flag** - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars
+- 🔍 **Enhanced Class Existence Checks** - Verify that OpenConnector Application class actually exists after each autoloader generation step, not just file existence
+- ⏳ **Improved Timing with Longer Delays** - Added 30-second delays for Nextcloud background processes to complete before checking autoloader generation
+- 📋 **Enhanced File Content Diagnostics** - Check actual autoloader file content and permissions to identify malformed or incomplete files
 
 ### Version 1.43 - Comprehensive Autoloader Generation Strategy
 **Date:** October 2, 2025  
@@ -540,4 +539,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: October 2, 2025 | Version: 1.43 | Status: Comprehensive Autoloader Generation Strategy*
+*Last Updated: October 3, 2025 | Version: 1.44 | Status: Enhanced Diagnostics and Fixed Invalid Flags*
