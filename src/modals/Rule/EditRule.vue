@@ -57,9 +57,9 @@ import { Rule } from '../../entities/index.js'
 			</div>
 
 			<!-- ====================== -->
-			<!-- Success/Error notecard -->
+			<!-- Success/Error/Warning notecard -->
 			<!-- ====================== -->
-			<div v-if="success || error">
+			<div v-if="success || error || warning">
 				<NcNoteCard v-if="success" type="success">
 					<p>Rule successfully saved</p>
 				</NcNoteCard>
@@ -899,97 +899,101 @@ export default {
 	mounted() {
 
 		if (this.IS_EDIT) {
+			const originalConfig = ruleStore.ruleItem.configuration || {}
+
 			this.ruleItem = {
 				...ruleStore.ruleItem,
+
 				configuration: {
-					extend_input: {
-						items: [
-							{ property: '', extends: [] },
-						],
-					},
-					extend_external_input: {
-						validate: true,
-						properties: [
-							{ property: '', schema: '' },
-						],
-					},
-					mapping: ruleStore.ruleItem.configuration?.mapping ?? null,
-					synchronization: {
-						synchronization: ruleStore.ruleItem.configuration?.synchronization.synchronization ?? null,
-						retainResponse: ruleStore.ruleItem.configuration?.synchronization.retainResponse ?? false,
-					},
+					...originalConfig,
 					error: {
-						code: ruleStore.ruleItem.configuration?.error?.code ?? 500,
-						name: ruleStore.ruleItem.configuration?.error?.name ?? 'Something went wrong',
-						message: ruleStore.ruleItem.configuration?.error?.message ?? 'We encountered an unexpected problem',
-						includeJsonLogicResult: ruleStore.ruleItem.configuration?.error?.includeJsonLogicResult ?? false,
+						code: originalConfig.error?.code ?? 500,
+						name: originalConfig.error?.name ?? 'Something went wrong',
+						message: originalConfig.error?.message ?? 'We encountered an unexpected problem',
+						includeJsonLogicResult: originalConfig.error?.includeJsonLogicResult ?? false,
 					},
-					javascript: ruleStore.ruleItem.configuration?.javascript ?? '',
+					synchronization: {
+						synchronization: originalConfig.synchronization?.synchronization ?? null,
+						retainResponse: originalConfig.synchronization?.retainResponse ?? false,
+					},
 					authentication: {
-						type: ruleStore.ruleItem.configuration?.authentication?.type ?? { label: 'Basic Authentication', value: 'basic' },
-						users: ruleStore.ruleItem.configuration?.authentication?.users ?? [],
-						groups: ruleStore.ruleItem.configuration?.authentication?.groups ?? [],
-						keys: ruleStore.ruleItem.configuration?.authentication?.keys ?? [],
+						type: originalConfig.authentication?.type ?? { label: 'Basic Authentication', value: 'basic' },
+						users: originalConfig.authentication?.users ?? [],
+						groups: originalConfig.authentication?.groups ?? [],
+						keys: originalConfig.authentication?.keys ?? [],
 					},
 					download: {
-						fileIdPosition: ruleStore.ruleItem.configuration?.download?.fileIdPosition ?? 0,
+						fileIdPosition: originalConfig.download?.fileIdPosition ?? 0,
 					},
 					upload: {
-						path: ruleStore.ruleItem.configuration?.upload?.path ?? '',
-						allowedTypes: ruleStore.ruleItem.configuration?.upload?.allowedTypes ?? '',
-						maxSize: ruleStore.ruleItem.configuration?.upload?.maxSize ?? 10,
+						path: originalConfig.upload?.path ?? '',
+						allowedTypes: originalConfig.upload?.allowedTypes ?? '',
+						maxSize: originalConfig.upload?.maxSize ?? 10,
 					},
 					locking: {
-						action: ruleStore.ruleItem.configuration?.locking?.action ?? 'lock',
-						timeout: ruleStore.ruleItem.configuration?.locking?.timeout ?? 30,
+						action: originalConfig.locking?.action ?? 'lock',
+						timeout: originalConfig.locking?.timeout ?? 30,
 					},
 					fetch_file: {
-						source: ruleStore.ruleItem.configuration?.fetch_file?.source ?? '',
-						filePath: ruleStore.ruleItem.configuration?.fetch_file?.filePath ?? '',
-						subObjectFilepath: ruleStore.ruleItem.configuration?.fetch_file?.subObjectFilepath ?? '',
-						objectIdPath: ruleStore.ruleItem.configuration?.fetch_file?.objectIdPath ?? '',
-						method: ruleStore.ruleItem.configuration?.fetch_file?.method ?? '',
-						tags: ruleStore.ruleItem.configuration?.fetch_file?.tags ?? [],
-						sourceConfiguration: JSON.stringify(ruleStore.ruleItem.configuration?.fetch_file?.sourceConfiguration, null, 2) ?? '[]',
-						autoShare: ruleStore.ruleItem.configuration?.fetch_file?.autoShare ?? false,
-						endpoint: ruleStore.ruleItem.configuration?.fetch_file?.endpoint ?? '',
-						contentPath: ruleStore.ruleItem.configuration?.fetch_file?.contentPath ?? '',
-						originIdPath: ruleStore.ruleItem.configuration?.fetch_file?.originIdPath ?? '',
-						filenamePath: ruleStore.ruleItem.configuration?.fetch_file?.filenamePath ?? '',
-						fileExtension: ruleStore.ruleItem.configuration?.fetch_file?.fileExtension ?? '',
-
+						source: originalConfig.fetch_file?.source ?? '',
+						filePath: originalConfig.fetch_file?.filePath ?? '',
+						subObjectFilepath: originalConfig.fetch_file?.subObjectFilepath ?? '',
+						objectIdPath: originalConfig.fetch_file?.objectIdPath ?? '',
+						method: originalConfig.fetch_file?.method ?? '',
+						tags: originalConfig.fetch_file?.tags ?? [],
+						sourceConfiguration: originalConfig.fetch_file?.sourceConfiguration
+							? JSON.stringify(originalConfig.fetch_file.sourceConfiguration, null, 2)
+							: '[]',
+						autoShare: originalConfig.fetch_file?.autoShare ?? false,
+						endpoint: originalConfig.fetch_file?.endpoint ?? '',
+						contentPath: originalConfig.fetch_file?.contentPath ?? '',
+						originIdPath: originalConfig.fetch_file?.originIdPath ?? '',
+						filenamePath: originalConfig.fetch_file?.filenamePath ?? '',
+						fileExtension: originalConfig.fetch_file?.fileExtension ?? '',
 					},
 					write_file: {
-						filePath: ruleStore.ruleItem.configuration?.write_file?.filePath ?? '',
-						fileNamePath: ruleStore.ruleItem.configuration?.write_file?.fileNamePath ?? '',
-						tags: ruleStore.ruleItem.configuration?.write_file?.tags ?? [],
-						autoShare: ruleStore.ruleItem.configuration?.write_file?.autoShare ?? false,
+						filePath: originalConfig.write_file?.filePath ?? '',
+						fileNamePath: originalConfig.write_file?.fileNamePath ?? '',
+						tags: originalConfig.write_file?.tags ?? [],
+						autoShare: originalConfig.write_file?.autoShare ?? false,
 					},
 					fileparts_create: {
-						sizeLocation: ruleStore.ruleItem.configuration?.fileparts_create?.sizeLocation ?? '',
-						schemaId: ruleStore.ruleItem.configuration?.fileparts_create?.schemaId ?? '',
-						filenameLocation: ruleStore.ruleItem.configuration?.fileparts_create?.filenameLocation ?? '',
-						filePartLocation: ruleStore.ruleItem.configuration?.fileparts_create?.filePartLocation ?? '',
-						mappingId: ruleStore.ruleItem.configuration?.fileparts_create?.mappingId ?? '',
+						sizeLocation: originalConfig.fileparts_create?.sizeLocation ?? '',
+						schemaId: originalConfig.fileparts_create?.schemaId ?? '',
+						filenameLocation: originalConfig.fileparts_create?.filenameLocation ?? '',
+						filePartLocation: originalConfig.fileparts_create?.filePartLocation ?? '',
+						mappingId: originalConfig.fileparts_create?.mappingId ?? '',
 					},
 					filepart_upload: {
-						mappingId: ruleStore.ruleItem.configuration?.filepart_upload?.mappingId ?? '',
+						mappingId: originalConfig.filepart_upload?.mappingId ?? '',
 					},
 					save_object: {
-						register: ruleStore.ruleItem.configuration?.save_object?.register ?? '',
-						schema: ruleStore.ruleItem.configuration?.save_object?.schema ?? '',
-						mapping: ruleStore.ruleItem.configuration?.save_object?.mapping ?? '',
+						register: originalConfig.save_object?.register ?? '',
+						schema: originalConfig.save_object?.schema ?? '',
+						mapping: originalConfig.save_object?.mapping ?? '',
 					},
 				},
 				conditions: JSON.stringify(ruleStore.ruleItem.conditions, null, 2),
 				actionConfig: JSON.stringify(ruleStore.ruleItem.actionConfig),
 			}
 
-			this.typeOptions.value = this.typeOptions.options.find(
+			const foundType = this.typeOptions.options.find(
 				option => option.id === this.ruleItem.type,
 			)
+
+			if (foundType) {
+				this.typeOptions.value = foundType
+			} else {
+				console.warn(`Unknown rule type: ${this.ruleItem.type}. Configuration preserved.`)
+				this.typeOptions.value = {
+					label: `Unknown: ${this.ruleItem.type}`,
+					id: this.ruleItem.type,
+				}
+				this.warning = `Unknown rule type: ${this.ruleItem.type}. Some configuration may not be editable in this UI.`
+			}
+
 			this.authenticationTypeOptions.value = this.authenticationTypeOptions.options.find(
-				option => option.value === ruleStore.ruleItem?.configuration?.authentication?.type ?? Symbol('backup value'),
+				option => option.value === originalConfig.authentication?.type ?? Symbol('backup value'),
 			)
 		}
 		if (!this.IS_EDIT) {
@@ -1008,18 +1012,29 @@ export default {
 
 		// Initialize extend_input/extend_external_input structures for new items
 		if (!this.ruleItem.configuration.extend_external_input) {
-			this.$set?.(this.ruleItem.configuration, 'extend_external_input', { validate: true, properties: [] })
+			this.$set?.(this.ruleItem.configuration, 'extend_external_input', {
+				validate: true,
+				properties: [{ property: '', schema: '' }],
+			})
+		} else if (!this.ruleItem.configuration.extend_external_input.properties || this.ruleItem.configuration.extend_external_input.properties.length === 0) {
+			this.ruleItem.configuration.extend_external_input.properties = [{ property: '', schema: '' }]
 		}
-		if (!this.ruleItem.configuration.extend_input) {
-			this.$set?.(this.ruleItem.configuration, 'extend_input', { items: [] })
-		}
-		// Convert legacy extend_input {properties:[], extends:{}} to UI items
+
 		if (this.ruleItem.configuration?.extend_input?.properties) {
 			const props = this.ruleItem.configuration.extend_input.properties || []
 			const ext = this.ruleItem.configuration.extend_input.extends || {}
 			this.ruleItem.configuration.extend_input = {
 				items: props.map((p) => ({ property: p, extends: ext[p] || [] })),
 			}
+			if (this.ruleItem.configuration.extend_input.items.length === 0 || this.ruleItem.configuration.extend_input.items[this.ruleItem.configuration.extend_input.items.length - 1].property) {
+				this.ruleItem.configuration.extend_input.items.push({ property: '', extends: [] })
+			}
+		} else if (!this.ruleItem.configuration.extend_input) {
+			this.$set?.(this.ruleItem.configuration, 'extend_input', {
+				items: [{ property: '', extends: [] }],
+			})
+		} else if (!this.ruleItem.configuration.extend_input.items || this.ruleItem.configuration.extend_input.items.length === 0) {
+			this.ruleItem.configuration.extend_input.items = [{ property: '', extends: [] }]
 		}
 	},
 	methods: {
