@@ -21,7 +21,7 @@ export class Rule extends ReadonlyBaseClass implements TRule {
 	public readonly action: 'create' | 'read' | 'update' | 'delete'
 	public readonly timing: 'before' | 'after'
 	public readonly conditions: object[] // JSON Logic format conditions
-    public readonly type: 'mapping' | 'error' | 'script' | 'synchronization' | 'authentication' | 'download' | 'upload' | 'locking' | 'extend_input' | 'extend_external_input' | 'fetch_file' | 'write_file' | 'fileparts_create' | 'filepart_upload' | 'save_object' | 'javascript'
+	public readonly type: 'mapping' | 'error' | 'script' | 'synchronization' | 'authentication' | 'download' | 'upload' | 'locking' | 'extend_input' | 'extend_external_input' | 'fetch_file' | 'write_file' | 'fileparts_create' | 'filepart_upload' | 'save_object' | 'javascript'
 	public readonly configuration: object // Type-specific configuration
 	public readonly order: number // Order in which the rule should be applied
 	public readonly created: string
@@ -41,7 +41,7 @@ export class Rule extends ReadonlyBaseClass implements TRule {
 			action: rule.action || 'create',
 			timing: rule.timing || 'before',
 			conditions: rule.conditions || [],
-            type: rule.type || 'mapping',
+			type: rule.type || 'mapping',
 			configuration: rule.configuration || {},
 			order: rule.order || 0,
 			created: getValidISOstring(rule.created) ?? '',
@@ -68,7 +68,7 @@ export class Rule extends ReadonlyBaseClass implements TRule {
 			action: z.enum(['create', 'read', 'update', 'delete']),
 			timing: z.enum(['before', 'after']),
 			conditions: z.array(z.record(z.unknown())), // JSON Logic format
-            type: z.enum(['mapping', 'error', 'script', 'synchronization', 'authentication', 'download', 'upload', 'locking', 'extend_input', 'extend_external_input', 'fetch_file', 'write_file', 'fileparts_create', 'filepart_upload', 'save_object', 'javascript']),
+			type: z.enum(['mapping', 'error', 'script', 'synchronization', 'authentication', 'download', 'upload', 'locking', 'extend_input', 'extend_external_input', 'fetch_file', 'write_file', 'fileparts_create', 'filepart_upload', 'save_object', 'javascript']),
 			configuration: z.record(z.unknown()),
 			order: z.number().int().min(0),
 			created: z.string(),
