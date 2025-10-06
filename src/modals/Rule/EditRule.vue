@@ -1474,7 +1474,8 @@ export default {
 		editRule() {
 			this.loading = true
 
-			const configuration = {}
+			// Preserve existing configuration and only update the relevant part
+			const configuration = { ...this.ruleItem.configuration }
 			const type = this.typeOptions.value?.id
 
 			// Build configuration based on type
@@ -1532,17 +1533,19 @@ export default {
 			case 'extend_input':
 				configuration.extend_input = {
 					properties: (this.ruleItem.configuration.extend_input?.items ?? [])
-						.filter(i => i.property)
+						.filter(i => i.property && i.property.trim())
 						.map(i => i.property),
 					extends: (this.ruleItem.configuration.extend_input?.items ?? [])
-						.filter(i => i.property)
+						.filter(i => i.property && i.property.trim())
 						.reduce((acc, i) => { acc[i.property] = i.extends || []; return acc }, {}),
 				}
 				break
 			case 'extend_external_input':
 				configuration.extend_external_input = {
 					validate: this.ruleItem.configuration.extend_external_input?.validate ?? true,
-					properties: (this.ruleItem.configuration.extend_external_input?.properties ?? []).map(p => ({ property: p.property, schema: p.schema })),
+					properties: (this.ruleItem.configuration.extend_external_input?.properties ?? [])
+						.filter(p => p.property && p.property.trim() && p.schema && p.schema.trim())
+						.map(p => ({ property: p.property, schema: p.schema })),
 				}
 				break
 			case 'fetch_file':
