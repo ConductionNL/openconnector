@@ -66,6 +66,9 @@ import { Rule } from '../../entities/index.js'
 				<NcNoteCard v-if="error" type="error">
 					<p>{{ error || 'An error occurred' }}</p>
 				</NcNoteCard>
+				<NcNoteCard v-if="warning" type="warning">
+					<p>{{ warning }}</p>
+				</NcNoteCard>
 			</div>
 
 			<!-- ====================== -->
@@ -244,6 +247,78 @@ import { Rule } from '../../entities/index.js'
 							:clearable="true"
 							placeholder="Select groups who can access" />
 					</template>
+				</template>
+
+				<!-- Extend Input Configuration -->
+				<template v-if="typeOptions.value?.id === 'extend_input'">
+					<div class="extendList">
+						<div v-for="(item, idx) in ruleItem.configuration.extend_input.items" :key="idx" class="extendItem">
+							<div class="extendItemProperty">
+								<label>Property (dot path)</label>
+								<NcTextField
+									:value.sync="item.property"
+									placeholder="a.b" />
+							</div>
+							<div class="extendItemProperty">
+								<label>Extends (dot array)</label>
+								<NcSelect
+									v-model="item.extends"
+									:taggable="true"
+									:multiple="true"
+									:clearable="true"
+									:options="[]">
+									<template #no-options>
+										type to add path to extend
+									</template>
+								</NcSelect>
+							</div>
+							<NcButton class="remove-action"
+								size="small"
+								type="tertiary"
+								:disabled="idx === 0"
+								@click="removeExtendInputItem(idx)">
+								<template #icon>
+									<TrashCanOutline :size="18" />
+								</template>
+							</NcButton>
+						</div>
+					</div>
+				</template>
+
+				<!-- Extend External Input Configuration -->
+				<template v-if="typeOptions.value?.id === 'extend_external_input'">
+					<NcCheckboxRadioSwitch
+						type="checkbox"
+						label="Validate fetched object with schema"
+						:checked.sync="ruleItem.configuration.extend_external_input.validate">
+						Validate fetched object with schema
+					</NcCheckboxRadioSwitch>
+
+					<div class="extendList">
+						<div v-for="(item, idx) in ruleItem.configuration.extend_external_input.properties" :key="idx" class="extendItem">
+							<div class="extendItemProperty">
+								<label>Property</label>
+								<NcTextField
+									:value.sync="item.property"
+									placeholder="path.to.url" />
+							</div>
+							<div class="extendItemProperty">
+								<label>Schema ID</label>
+								<NcTextField
+									:value.sync="item.schema"
+									placeholder="schemaId" />
+							</div>
+							<NcButton class="remove-action"
+								size="small"
+								type="tertiary"
+								:disabled="idx === 0"
+								@click="removeExtendExternalItem(idx)">
+								<template #icon>
+									<TrashCanOutline :size="18" />
+								</template>
+							</NcButton>
+						</div>
+					</div>
 				</template>
 
 				<!-- Download Configuration -->
@@ -522,14 +597,17 @@ import { Rule } from '../../entities/index.js'
 					Cancel
 				</NcButton>
 				<NcButton v-if="!success"
-					:disabled="loading
+					:disabled="(loading
 						|| !ruleItem.name
 						|| !isValidJson(ruleItem.conditions)
 						|| typeOptions.value?.id === 'fetch_file' && (!sourceOptions.sourceValue)
 						|| typeOptions.value?.id === 'save_object' && (!ruleItem.configuration.save_object.schema || !ruleItem.configuration.save_object.register)
 						|| typeOptions.value?.id === 'write_file' && (!ruleItem.configuration.write_file.filePath || !ruleItem.configuration.write_file.fileNamePath)
 						|| typeOptions.value?.id === 'fileparts_create' && (!schemaOptions.value || !ruleItem.configuration.fileparts_create.sizeLocation)
-						|| typeOptions.value?.id === 'filepart_upload' && !filepartUploadMappingOptions.value"
+						|| typeOptions.value?.id === 'filepart_upload' && !filepartUploadMappingOptions.value
+						|| typeOptions.value?.id === 'extend_input' && !(ruleItem.configuration.extend_input.items && ruleItem.configuration.extend_input.items.filter(p => p.property && p.property.trim()).length > 0)
+						|| typeOptions.value?.id === 'extend_external_input' && !(ruleItem.configuration.extend_external_input.properties && ruleItem.configuration.extend_external_input.properties.filter(p => p.property && p.property.trim() && p.schema && p.schema.trim()).length > 0)
+					)"
 					type="primary"
 					@click="editRule()">
 					<template #icon>
@@ -567,6 +645,7 @@ import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 import CloudDownload from 'vue-material-design-icons/CloudDownload.vue'
 import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
 import CancelIcon from 'vue-material-design-icons/Cancel.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 
 import openLink from '../../services/openLink.js'
 
@@ -593,6 +672,7 @@ export default {
 			success: null,
 			loading: false,
 			error: false,
+			warning: null,
 			closeAlert: false,
 			sourcesLoading: false,
 			usersLoading: false,
@@ -639,6 +719,17 @@ export default {
 				actionConfig: '{}',
 				timing: '',
 				configuration: {
+					extend_input: {
+						items: [
+							{ property: '', extends: [] },
+						],
+					},
+					extend_external_input: {
+						validate: true,
+						properties: [
+							{ property: '', schema: '' },
+						],
+					},
 					mapping: null,
 					synchronization: {
 						synchronization: null,
@@ -729,6 +820,8 @@ export default {
 					{ label: 'Fileparts Create', id: 'fileparts_create' },
 					{ label: 'Filepart Upload', id: 'filepart_upload' },
 					{ label: 'Save object', id: 'save_object' },
+					{ label: 'Extend input', id: 'extend_input' },
+					{ label: 'Extend external input', id: 'extend_external_input' },
 				],
 				value: { label: 'Error', id: 'error' },
 			},
@@ -755,6 +848,53 @@ export default {
 			},
 			deep: true,
 		},
+		// Auto-add empty extend_input item when last one is filled
+		'ruleItem.configuration.extend_input.items': {
+			handler(newVal) {
+				if (!newVal || newVal.length === 0) return
+
+				const lastItem = newVal[newVal.length - 1]
+				// If last item has a property value, add a new empty item
+				if (lastItem.property && lastItem.property.trim() !== '') {
+					this.ruleItem.configuration.extend_input.items.push({ property: '', extends: [] })
+				}
+
+				// Remove empty items from the middle (except the last one)
+				if (newVal.length > 1) {
+					for (let i = newVal.length - 2; i >= 0; i--) {
+						if (!newVal[i].property || newVal[i].property.trim() === '') {
+							this.ruleItem.configuration.extend_input.items.splice(i, 1)
+						}
+					}
+				}
+			},
+			deep: true,
+		},
+		// Auto-add empty extend_external_input property when last one is filled
+		'ruleItem.configuration.extend_external_input.properties': {
+			handler(newVal) {
+				if (!newVal || newVal.length === 0) return
+
+				const lastItem = newVal[newVal.length - 1]
+				// If last item has both property and schema values, add a new empty item
+				if (lastItem.property && lastItem.property.trim() !== ''
+					&& lastItem.schema && lastItem.schema.trim() !== '') {
+					this.ruleItem.configuration.extend_external_input.properties.push({ property: '', schema: '' })
+				}
+
+				// Remove empty items from the middle (except the last one)
+				if (newVal.length > 1) {
+					for (let i = newVal.length - 2; i >= 0; i--) {
+						const item = newVal[i]
+						if ((!item.property || item.property.trim() === '')
+							&& (!item.schema || item.schema.trim() === '')) {
+							this.ruleItem.configuration.extend_external_input.properties.splice(i, 1)
+						}
+					}
+				}
+			},
+			deep: true,
+		},
 	},
 	mounted() {
 
@@ -762,6 +902,17 @@ export default {
 			this.ruleItem = {
 				...ruleStore.ruleItem,
 				configuration: {
+					extend_input: {
+						items: [
+							{ property: '', extends: [] },
+						],
+					},
+					extend_external_input: {
+						validate: true,
+						properties: [
+							{ property: '', schema: '' },
+						],
+					},
 					mapping: ruleStore.ruleItem.configuration?.mapping ?? null,
 					synchronization: {
 						synchronization: ruleStore.ruleItem.configuration?.synchronization.synchronization ?? null,
@@ -854,6 +1005,22 @@ export default {
 		this.getAllowedUsers()
 		this.getGroups()
 		this.getApiKeysUsers()
+
+		// Initialize extend_input/extend_external_input structures for new items
+		if (!this.ruleItem.configuration.extend_external_input) {
+			this.$set?.(this.ruleItem.configuration, 'extend_external_input', { validate: true, properties: [] })
+		}
+		if (!this.ruleItem.configuration.extend_input) {
+			this.$set?.(this.ruleItem.configuration, 'extend_input', { items: [] })
+		}
+		// Convert legacy extend_input {properties:[], extends:{}} to UI items
+		if (this.ruleItem.configuration?.extend_input?.properties) {
+			const props = this.ruleItem.configuration.extend_input.properties || []
+			const ext = this.ruleItem.configuration.extend_input.extends || {}
+			this.ruleItem.configuration.extend_input = {
+				items: props.map((p) => ({ property: p, extends: ext[p] || [] })),
+			}
+		}
 	},
 	methods: {
 		async getMappings() {
@@ -1214,6 +1381,27 @@ export default {
 			}
 		},
 
+		addExtendExternalItem() {
+			if (!this.ruleItem.configuration.extend_external_input) {
+				this.ruleItem.configuration.extend_external_input = { validate: true, properties: [] }
+			}
+			this.ruleItem.configuration.extend_external_input.properties.push({ property: '', schema: '' })
+		},
+		removeExtendExternalItem(index) {
+			if (index === 0) return
+			this.ruleItem.configuration.extend_external_input.properties.splice(index, 1)
+		},
+		addExtendInputItem() {
+			if (!this.ruleItem.configuration.extend_input) {
+				this.ruleItem.configuration.extend_input = { items: [] }
+			}
+			this.ruleItem.configuration.extend_input.items.push({ property: '', extends: [] })
+		},
+		removeExtendInputItem(index) {
+			if (index === 0) return
+			this.ruleItem.configuration.extend_input.items.splice(index, 1)
+		},
+
 		closeModal() {
 			navigationStore.setModal(false)
 			clearTimeout(this.closeTimeoutFunc)
@@ -1341,6 +1529,22 @@ export default {
 					timeout: this.ruleItem.configuration.locking.timeout,
 				}
 				break
+			case 'extend_input':
+				configuration.extend_input = {
+					properties: (this.ruleItem.configuration.extend_input?.items ?? [])
+						.filter(i => i.property)
+						.map(i => i.property),
+					extends: (this.ruleItem.configuration.extend_input?.items ?? [])
+						.filter(i => i.property)
+						.reduce((acc, i) => { acc[i.property] = i.extends || []; return acc }, {}),
+				}
+				break
+			case 'extend_external_input':
+				configuration.extend_external_input = {
+					validate: this.ruleItem.configuration.extend_external_input?.validate ?? true,
+					properties: (this.ruleItem.configuration.extend_external_input?.properties ?? []).map(p => ({ property: p.property, schema: p.schema })),
+				}
+				break
 			case 'fetch_file':
 				configuration.fetch_file = {
 					source: this.sourceOptions.sourceValue?.id,
@@ -1400,9 +1604,36 @@ export default {
 			})
 
 			ruleStore.saveRule(newRuleItem)
-				.then(({ response }) => {
+				.then(({ response, data }) => {
 					this.success = response.ok
 					this.error = !response.ok && 'Failed to save rule'
+
+					// Warn if configuration contains unknown keys for current type
+					if (response.ok) {
+						const cfg = newRuleItem.configuration || {}
+						const known = {
+							error: ['error'],
+							mapping: ['mapping'],
+							synchronization: ['synchronization'],
+							javascript: ['javascript'],
+							authentication: ['authentication'],
+							download: ['download'],
+							upload: ['upload'],
+							locking: ['locking'],
+							fetch_file: ['fetch_file'],
+							write_file: ['write_file'],
+							fileparts_create: ['fileparts_create'],
+							filepart_upload: ['filepart_upload'],
+							save_object: ['save_object'],
+							extend_input: ['extend_input'],
+							extend_external_input: ['extend_external_input'],
+						}
+						const allowed = new Set(known[type] || [])
+						const unknown = Object.keys(cfg).filter(k => !allowed.has(k))
+						if (unknown.length) {
+							this.warning = `Configuration contains unrecognized keys: ${unknown.join(', ')} — they were preserved.`
+						}
+					}
 
 					response.ok && (this.closeTimeoutFunc = setTimeout(this.closeModal, 2000))
 				})
@@ -1476,6 +1707,42 @@ export default {
 	padding: 0.5rem;
 	background-color: var(--color-background-dark);
 	border-radius: var(--border-radius);
+}
+
+/* Extend lists */
+.extendList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.extendItem {
+    display: flex;
+	justify-content: space-between;
+	align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+}
+
+.extendItem :deep(.v-select) {
+    min-width: 260px;
+}
+.extendItem .remove-action.button-vue--vue-tertiary {
+    color: var(--color-error);
+	margin-inline-end: 15px;
+    background-color: rgba(var(--color-error-rgb), 0.08);
+}
+.extendItem .remove-action.button-vue--vue-tertiary:hover:not(:disabled) {
+    background-color: rgba(var(--color-error-rgb), 0.14);
+}
+.extendItemProperty {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+	align-items: center;
+	justify-content: center;
 }
 
 /* CodeMirror */
