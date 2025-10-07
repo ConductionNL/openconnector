@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.47 - Enhanced Security with sudo -u www-data Commands and Simplified App Management  
+**Current Version:** 1.48 - Fixed sudo Command Issues and Enhanced Container Setup  
 **Date:** October 7, 2025  
 **Status:** 🔄 Testing In Progress  
-**Approach:** Use app:enable as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation + fixed invalid --force flag + enhanced class existence checks + improved timing with longer delays + standardized directory structure using custom_apps path + sudo -u www-data for all php occ commands + simplified app management with app:enable focus
+**Approach:** Use app:enable as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation + fixed invalid --force flag + enhanced class existence checks + improved timing with longer delays + standardized directory structure using custom_apps path + sudo -u www-data for all php occ commands + simplified app management with app:enable focus + fixed sudo command not found errors + enhanced container setup with proper sudo installation
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -29,6 +29,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Early Exit Checks** - Prevents step interference by stopping when autoloader is successfully created (v1.43)
 
 ### **🔧 Robust Database Management**
+- **Fixed sudo Command Issues** - Resolved "sudo: command not found" errors by installing sudo in containers before use (v1.48)
 - **App Enable Primary Method** - Uses app:enable as primary method with proper user context for reliable app activation (v1.47)
 - **Enhanced Database Verification** - Accurate database state verification using proper MariaDB container connections (v1.39)
 - **Forced Migration Execution** - Ensures database tables are properly created and migrated through disable/enable cycles (v1.38)
@@ -62,8 +63,11 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Nextcloud Best Practices** - Aligns with Nextcloud's recommended directory structure for custom applications (v1.46)
 
 ## 🐛 Issues Resolved
-- 🔄 **Enhanced security and permissions** - Added sudo -u www-data to all php occ commands for proper user context and security compliance (v1.47) - **TESTING IN PROGRESS**
-- 🔄 **Complex app management workflow** - Simplified to focus on app:enable approach with app:install and app:update commented out (v1.47) - **TESTING IN PROGRESS**
+- 🔄 **Fixed sudo command not found errors** - Added proper sudo installation in Nextcloud containers before using sudo -u www-data commands to resolve "command not found" errors (v1.48) - **TESTING IN PROGRESS**
+- 🔄 **Enhanced container setup** - Added apt update and sudo/curl installation before Composer setup to ensure all required tools are available (v1.48) - **TESTING IN PROGRESS**
+- 🔄 **Fixed APT permission denied errors** - Resolved APT permission issues by ensuring proper package installation in containers (v1.48) - **TESTING IN PROGRESS**
+- ✅ **Enhanced security and permissions** - Added sudo -u www-data to all php occ commands for proper user context and security compliance (v1.47) - **COMPLETED**
+- ✅ **Complex app management workflow** - Simplified to focus on app:enable approach with app:install and app:update commented out (v1.47) - **COMPLETED**
 - 🔄 **Directory structure compatibility** - Updated to use custom_apps path instead of apps-extra for better Nextcloud compatibility (v1.46) - **TESTING IN PROGRESS**
 - ⏳ **Invalid --force flag causing errors** - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars (v1.44) - **NOT YET TESTED**
 - ⏳ **Class existence verification missing** - Added enhanced class existence checks to verify OpenConnector Application class actually exists after each autoloader generation step (v1.44) - **NOT YET TESTED**
@@ -105,9 +109,19 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ### Future Versions
 *This section will be updated as new versions are released*
 
-### Version 1.47 - Enhanced Security with sudo -u www-data Commands and Simplified App Management
+### Version 1.48 - Fixed sudo Command Issues and Enhanced Container Setup
 **Date:** October 7, 2025  
 **Status:** 🔄 Testing In Progress  
+**Changes:**
+- 🔧 **Fixed sudo Command Not Found Errors** - Added proper `sudo` installation in Nextcloud containers before using `sudo -u www-data` commands to resolve "command not found" errors
+- 🐳 **Enhanced Container Setup** - Added `apt update -y && apt install -y sudo curl` in both tests and quality jobs before Composer installation
+- 🛠️ **Improved Container Dependencies** - Ensures all required tools (sudo, curl) are available in containers before executing commands
+- 🔍 **Fixed Permission Issues** - Resolved APT permission denied errors by ensuring proper package installation in containers
+- 🎯 **Workflow Reliability** - Eliminates "sudo: command not found" errors that were causing workflow failures
+
+### Version 1.47 - Enhanced Security with sudo -u www-data Commands and Simplified App Management
+**Date:** October 7, 2025  
+**Status:** ✅ Completed  
 **Changes:**
 - 🔐 **Enhanced Security Implementation** - Added `sudo -u www-data` to all 65+ `php occ` commands across both tests and quality jobs for proper user context and security compliance
 - 🎯 **Simplified App Management Strategy** - Commented out `app:install` and `app:update` options to focus exclusively on `app:enable` approach for cleaner, more reliable workflow
@@ -533,14 +547,13 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Database schema preparation with maintenance:repair
 - Command availability checking
 
-### 🔄 **Currently Testing (v1.47)**
-- Enhanced security implementation - Testing all 65+ php occ commands running as sudo -u www-data for proper user context and security compliance
-- Simplified app management strategy - Testing app:enable approach with app:install and app:update commented out for cleaner, more reliable workflow
-- Standardized directory structure - Testing updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility
+### 🔄 **Currently Testing (v1.48)**
+- Fixed sudo command issues - Testing proper sudo installation in Nextcloud containers before using sudo -u www-data commands to resolve "command not found" errors
+- Enhanced container setup - Testing improved container dependencies with apt update and sudo/curl installation before Composer setup
+- Enhanced security implementation - Testing all 65+ php occ commands running as sudo -u www-data for proper user context and security compliance (v1.47)
+- Simplified app management strategy - Testing app:enable approach with app:install and app:update commented out for cleaner, more reliable workflow (v1.47)
+- Standardized directory structure - Testing updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility (v1.46)
 - Enhanced autoloader generation - Testing comprehensive autoloader generation strategy with improved class mapping and diagnostics (v1.45)
-- Enhanced class existence checks - Testing verification that OpenConnector Application class actually exists after each autoloader generation step (v1.44)
-- Enhanced diagnostics and timing - Testing improved diagnostics, timing fixes, and comprehensive autoloader generation strategy (v1.43-v1.44)
-- Extended timeouts - Testing increased timeouts to handle progress bar hanging issues (v1.42)
 
 ### ✅ **Recently Fixed**
 - Fixed invalid --force flag - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars (v1.44)
@@ -584,4 +597,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: October 7, 2025 | Version: 1.47 | Status: Enhanced Security with sudo -u www-data Commands and Simplified App Management*
+*Last Updated: October 7, 2025 | Version: 1.48 | Status: Fixed sudo Command Issues and Enhanced Container Setup*
