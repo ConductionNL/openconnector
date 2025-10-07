@@ -510,11 +510,16 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Database schema preparation with maintenance:repair
 - Command availability checking
 
-### 🔄 **Currently Testing (v1.45)**
-- Enhanced autoloader generation with heredoc syntax - Testing cleaner autoloader creation using heredoc instead of manual echo commands
-- Improved class mapping - Testing enhanced PSR-4 namespace handling and explicit Application class loading
-- Comprehensive class loading diagnostics - Testing class loading verification after autoloader creation to ensure OpenConnector Application class is actually loadable
-- Enhanced autoloader content structure - Testing improved autoloader structure with better namespace handling
+### 🔄 **Currently Testing (v1.46)**
+- Standardized directory structure - Testing updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility
+- Improved app installation path - Testing changed app copy destination from `apps-extra/openconnector` to `custom_apps/openconnector` following Nextcloud standards
+- Updated all references - Testing updated file path references throughout both tests and quality jobs to use the new directory structure
+- Enhanced diagnostics - Testing updated diagnostic messages to reflect the new directory structure for better troubleshooting
+- Nextcloud best practices - Testing alignment with Nextcloud's recommended directory structure for custom applications
+- Enhanced autoloader generation with heredoc syntax - Testing cleaner autoloader creation using heredoc instead of manual echo commands (v1.45)
+- Improved class mapping - Testing enhanced PSR-4 namespace handling and explicit Application class loading (v1.45)
+- Comprehensive class loading diagnostics - Testing class loading verification after autoloader creation to ensure OpenConnector Application class is actually loadable (v1.45)
+- Enhanced autoloader content structure - Testing improved autoloader structure with better namespace handling (v1.45)
 - Enhanced class existence checks - Testing verification that OpenConnector Application class actually exists after each autoloader generation step (v1.44)
 - Fixed invalid --force flag - Testing removal of non-existent --force flag from app:update commands (v1.44)
 - Improved timing with longer delays - Testing 30-second delays for Nextcloud background processes to complete (v1.44)
@@ -541,12 +546,12 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Autoloader generation verification - Added proper verification for `lib/autoload.php` creation
 
 ### 📋 **Next Steps**
-1. Test the workflow with v1.45 enhanced autoloader generation and improved class mapping
-2. Verify that the heredoc syntax autoloader creation works better than manual echo commands
-3. Monitor comprehensive class loading diagnostics to see if OpenConnector Application class is properly loaded
-4. Check if the enhanced autoloader content structure resolves the class loading issues
-5. Analyze the improved PSR-4 namespace handling and explicit Application class loading
-6. Test the comprehensive autoloader generation strategy (v1.43) with enhanced diagnostics (v1.44) and improved generation (v1.45)
+1. Test the workflow with v1.46 standardized directory structure using custom_apps path
+2. Verify that the new directory structure improves Nextcloud compatibility and follows best practices
+3. Monitor if the updated file path references work correctly in both tests and quality jobs
+4. Check if the enhanced diagnostics with new directory structure provide better troubleshooting information
+5. Test the comprehensive autoloader generation strategy (v1.43) with enhanced diagnostics (v1.44), improved generation (v1.45), and standardized directory structure (v1.46)
+6. Analyze if the Nextcloud best practices alignment resolves any remaining compatibility issues
 7. Update documentation status based on test results
 
 ## 🛠️ Maintenance
