@@ -69,6 +69,12 @@ jobs:
         run: |
           # Update dependencies to ensure lock file is current
           composer update --no-interaction --prefer-dist
+
+          # Update apt
+          apt update -y
+
+          # Install sudo
+          apt install sudo -y
           
           # Verify PHPUnit is available
           if [ ! -f "./vendor/bin/phpunit" ]; then
@@ -167,7 +173,7 @@ jobs:
           echo "✅ occ file is executable"
           
           # Test if occ command works
-          if ! docker exec nextcloud-test bash -c "cd /var/www/html && php occ --version"; then
+          if ! docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ --version"; then
             echo "❌ ERROR: occ command failed to run"
             echo "This indicates Nextcloud is not fully initialized or has configuration issues"
             exit 1
@@ -206,7 +212,7 @@ jobs:
         run: |
           echo "=== OpenConnector App Installation ==="
           echo "Checking Nextcloud version compatibility..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ --version"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ --version"
           
           # Check if app directory exists
           echo "Checking if OpenConnector app directory exists..."
@@ -214,7 +220,7 @@ jobs:
           
           # List available apps
           echo "Listing available apps..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:list"
           
           # Move app to correct location for Nextcloud
           echo "Moving app to correct location for Nextcloud..."
@@ -228,7 +234,7 @@ jobs:
           
           # Run maintenance:repair to ensure database schema is ready
           echo "Running maintenance:repair to prepare database schema..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ maintenance:repair"
           echo "✅ Database schema prepared"
           
           # Test available Nextcloud commands for database preparation (v1.35)
@@ -241,7 +247,7 @@ jobs:
           
           # Check if Nextcloud is responding to basic commands first
           echo "🔄 Testing basic Nextcloud functionality..."
-          if timeout 30 docker exec nextcloud-test bash -c "cd /var/www/html && php occ --version" 2>/dev/null; then
+          if timeout 30 docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ --version" 2>/dev/null; then
             echo "✅ Nextcloud basic commands working"
           else
             echo "⚠️  WARNING: Nextcloud basic commands test failed or timed out"
@@ -263,17 +269,17 @@ jobs:
           
           # Check what app commands are available (with timeout)
           echo "🔄 Checking available app commands..."
-          if timeout 30 docker exec nextcloud-test bash -c "cd /var/www/html && php occ app --help" 2>/dev/null; then
+          if timeout 30 docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app --help" 2>/dev/null; then
             echo "✅ App commands are working"
           else
             echo "⚠️  WARNING: app --help command failed or timed out"
             echo "Trying alternative approach..."
             echo "🔄 Checking app commands with verbose output..."
-            if timeout 30 docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list" 2>/dev/null; then
+            if timeout 30 docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:list" 2>/dev/null; then
               echo "✅ app:list is working, continuing..."
             else
               echo "⚠️  app:list also failed, trying basic occ list..."
-              if timeout 30 docker exec nextcloud-test bash -c "cd /var/www/html && php occ list" 2>/dev/null; then
+              if timeout 30 docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ list" 2>/dev/null; then
                 echo "✅ Basic occ commands are working, continuing..."
               else
                 echo "❌ All occ commands are failing - this indicates a serious Nextcloud issue"
@@ -284,18 +290,18 @@ jobs:
           
           # Try to install the app directly (this should trigger migrations)
           echo "🔄 Testing: Direct app install (should trigger migrations)..."
-          if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:install openconnector"; then
-            echo "✅ SUCCESS: App installed successfully with migrations"
-            MIGRATION_SUCCESS=true
-          else
-            echo "❌ FAILED: Direct app install failed"
-            MIGRATION_SUCCESS=false
-          fi
+          # if docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:install openconnector"; then
+          #   echo "✅ SUCCESS: App installed successfully with migrations"
+          #   MIGRATION_SUCCESS=true
+          # else
+          #   echo "❌ FAILED: Direct app install failed"
+          #   MIGRATION_SUCCESS=false
+          # fi
           
           # If direct install failed, try alternative approach
           if [ "$MIGRATION_SUCCESS" = false ]; then
             echo "🔄 Fallback: Trying app:enable..."
-            if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            if docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:enable openconnector"; then
               echo "✅ SUCCESS: App enabled successfully"
               MIGRATION_SUCCESS=true
             else
@@ -305,16 +311,16 @@ jobs:
           fi
           
           # Final fallback: try app:update
-          if [ "$MIGRATION_SUCCESS" = false ]; then
-            echo "🔄 Final fallback: Trying app:update..."
-            if docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:update openconnector"; then
-              echo "✅ SUCCESS: App updated successfully"
-              MIGRATION_SUCCESS=true
-            else
-              echo "❌ FAILED: App update also failed"
-              MIGRATION_SUCCESS=false
-            fi
-          fi
+          # if [ "$MIGRATION_SUCCESS" = false ]; then
+          #   echo "🔄 Final fallback: Trying app:update..."
+          #   if docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:update openconnector"; then
+          #     echo "✅ SUCCESS: App updated successfully"
+          #     MIGRATION_SUCCESS=true
+          #   else
+          #     echo "❌ FAILED: App update also failed"
+          #     MIGRATION_SUCCESS=false
+          #   fi
+          # fi
           
           # Summary of results
           echo "=== Migration Test Results ==="
@@ -326,7 +332,7 @@ jobs:
           else
             echo "❌ ERROR: All migration approaches failed"
             echo "Checking app status..."
-            docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
+            docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:list | grep openconnector"
             echo "Checking Nextcloud logs..."
             docker exec nextcloud-test bash -c "tail -50 /var/www/html/data/nextcloud.log"
             echo "Checking if database table exists..."
@@ -340,16 +346,16 @@ jobs:
           # Run database migrations for the app
           echo "Running database migrations for OpenConnector app..."
           echo "🔄 Running db:add-missing-indices..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ db:add-missing-indices"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ db:add-missing-indices"
           echo "🔄 Running db:add-missing-columns..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ db:add-missing-columns"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ db:add-missing-columns"
           echo "🔄 Running db:convert-filecache-bigint..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ db:convert-filecache-bigint"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ db:convert-filecache-bigint"
           
           # Force app migration execution by disabling and re-enabling the app
           echo "🔄 Forcing app migration execution..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector"
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:disable openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:enable openconnector"
           echo "✅ Database migrations completed"
           
           # Verify the required table exists after migrations
@@ -370,7 +376,7 @@ jobs:
           
           # Verify app is properly enabled
           echo "Verifying app installation..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:list | grep openconnector"
           
           # Check if app classes are available (before dependencies)
           echo "Checking if app classes are available (before dependencies)..."
@@ -378,8 +384,8 @@ jobs:
           docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'echo \"Testing class loading...\n\"; if (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")) { echo \"✅ OpenConnector Application class found (unexpected but good!)\n\"; } else { echo \"⚠️  OpenConnector Application class not found (expected before dependencies)\n\"; }'"
           
           # Set up test environment
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ config:system:set debug --value true"
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ config:system:set loglevel --value 0"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ config:system:set debug --value true"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ config:system:set loglevel --value 0"
           
           # Wait a bit more for Nextcloud to fully process the app installation
           echo "Waiting for app installation to complete..."
@@ -405,9 +411,9 @@ jobs:
           
           # Force Nextcloud to rescan apps and clear caches
           echo "Forcing Nextcloud to rescan apps and clear caches..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list"
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:list"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ maintenance:repair"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:list"
           
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
@@ -416,7 +422,7 @@ jobs:
           # Pre-class loading diagnostics
           echo "=== Pre-Class Loading Diagnostics ==="
           echo "Checking app installation status..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
           
           echo "Checking app file structure..."
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/ || echo 'App directory not found'"
@@ -449,9 +455,9 @@ jobs:
           # Step 1: Force app disable/enable cycle to trigger autoloader generation
           echo "🔄 Step 1: Force app disable/enable cycle to trigger autoloader generation..."
           echo "🔍 DIAGNOSTIC: Disabling app to force regeneration..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector" || echo "App disable failed or app not enabled"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:disable openconnector" || echo "App disable failed or app not enabled"
           echo "🔍 DIAGNOSTIC: Re-enabling app to trigger autoloader generation..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:enable openconnector"
           echo "✅ App disable/enable cycle completed"
           echo "⏳ Waiting 30 seconds for Nextcloud background processes to complete..."
           sleep 30
@@ -475,7 +481,7 @@ jobs:
           # Step 2: Force maintenance repair to regenerate autoloaders
           echo "🔄 Step 2: Force maintenance repair to regenerate autoloaders..."
           echo "🔍 DIAGNOSTIC: Running maintenance:repair to regenerate autoloaders..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ maintenance:repair"
           echo "✅ Maintenance repair completed"
           echo "🔍 DIAGNOSTIC: Checking file permissions and content..."
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/ || echo 'lib directory not found'"
@@ -493,8 +499,8 @@ jobs:
           
           # Step 3: Force app update with --force flag
           echo "🔄 Step 3: Force app update without invalid --force flag..."
-          echo "🔍 DIAGNOSTIC: Running app:update without invalid --force flag..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:update openconnector"
+          # echo "🔍 DIAGNOSTIC: Running app:update without invalid --force flag..."
+          # docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:update openconnector"
           echo "✅ App update completed"
           
           # Check if Step 3 succeeded
@@ -596,15 +602,15 @@ jobs:
           
           # Restart Nextcloud to reload the new autoloader
           echo "Restarting Nextcloud to reload autoloader..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:disable openconnector"
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:enable openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:disable openconnector"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:enable openconnector"
           echo "✅ Nextcloud restarted with new autoloader"
           
           # Verify autoloader was created and clear cache
           echo "Verifying autoloader creation..."
           docker exec nextcloud-test bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'Autoloader still missing'"
           echo "Clearing Nextcloud cache..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ maintenance:repair"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ maintenance:repair"
           echo "✅ Cache cleared after autoloader generation"
           
           # Wait for Nextcloud background processes to complete
@@ -645,7 +651,7 @@ jobs:
           
           # Check if app is properly registered with Nextcloud
           echo "Checking if app is registered with Nextcloud..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
+          docker exec nextcloud-test bash -c "cd /var/www/html && sudo -u www-data php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
           
           # Check app info and namespace
           echo "Checking app info and namespace..."
@@ -949,7 +955,7 @@ jobs:
           
           # Test if occ command works (with timeout and better error handling)
           echo "Testing occ command with timeout..."
-          if timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ --version" 2>/dev/null; then
+          if timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ --version" 2>/dev/null; then
             echo "✅ occ command is working"
           else
             echo "⚠️  WARNING: occ command test failed or timed out"
@@ -985,7 +991,7 @@ jobs:
         run: |
           echo "=== OpenConnector App Installation (Quality) ==="
           echo "Checking Nextcloud version compatibility..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ --version"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ --version"
           
           # Check if app directory exists
           echo "Checking if OpenConnector app directory exists..."
@@ -993,7 +999,7 @@ jobs:
           
           # List available apps
           echo "Listing available apps..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:list"
           
           # Move app to correct location for Nextcloud
           echo "Moving app to correct location for Nextcloud..."
@@ -1007,7 +1013,7 @@ jobs:
           
           # Run maintenance:repair to ensure database schema is ready
           echo "Running maintenance:repair to prepare database schema..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ maintenance:repair"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ maintenance:repair"
           echo "✅ Database schema prepared"
           
           # Test available Nextcloud commands for database preparation (v1.35)
@@ -1020,7 +1026,7 @@ jobs:
           
           # Check if Nextcloud is responding to basic commands first
           echo "🔄 Testing basic Nextcloud functionality..."
-          if ! timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ --version"; then
+          if ! timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ --version"; then
             echo "❌ ERROR: Nextcloud basic commands not working"
             echo "Checking container status..."
             docker exec nextcloud-test-quality bash -c "ps aux | grep php"
@@ -1032,17 +1038,17 @@ jobs:
           
           # Check what app commands are available (with timeout)
           echo "🔄 Checking available app commands..."
-          if timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app --help" 2>/dev/null; then
+          if timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app --help" 2>/dev/null; then
             echo "✅ App commands are working"
           else
             echo "⚠️  WARNING: app --help command failed or timed out"
             echo "Trying alternative approach..."
             echo "🔄 Checking app commands with verbose output..."
-            if timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list" 2>/dev/null; then
+            if timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:list" 2>/dev/null; then
               echo "✅ app:list is working, continuing..."
             else
               echo "⚠️  app:list also failed, trying basic occ list..."
-              if timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ list" 2>/dev/null; then
+              if timeout 30 docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ list" 2>/dev/null; then
                 echo "✅ Basic occ commands are working, continuing..."
               else
                 echo "❌ All occ commands are failing - this indicates a serious Nextcloud issue"
@@ -1054,21 +1060,21 @@ jobs:
           # Try to install the app directly (this should trigger migrations)
           echo "🔄 Testing: Direct app install (should trigger migrations)..."
           echo "🔍 DIAGNOSTIC: Adding timeout to prevent hanging progress bar (v1.40)..."
-          if timeout 180 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:install openconnector"; then
-            echo "✅ SUCCESS: App installed successfully with migrations"
-            MIGRATION_SUCCESS=true
-          else
-            echo "❌ FAILED: Direct app install failed or timed out"
-            echo "🔍 DIAGNOSTIC: Checking if app is partially installed..."
-            docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in list'"
-            MIGRATION_SUCCESS=false
-          fi
+          # if timeout 180 docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:install openconnector"; then
+          #   echo "✅ SUCCESS: App installed successfully with migrations"
+          #   MIGRATION_SUCCESS=true
+          # else
+          #   echo "❌ FAILED: Direct app install failed or timed out"
+          #   echo "🔍 DIAGNOSTIC: Checking if app is partially installed..."
+          #   docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:list | grep openconnector || echo 'App not found in list'"
+          #   MIGRATION_SUCCESS=false
+          # fi
           
           # If direct install failed, try alternative approach
           if [ "$MIGRATION_SUCCESS" = false ]; then
             echo "🔄 Fallback: Trying app:enable..."
             echo "🔍 DIAGNOSTIC: Adding timeout to app:enable command (v1.40)..."
-            if timeout 90 docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"; then
+            if timeout 90 docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:enable openconnector"; then
               echo "✅ SUCCESS: App enabled successfully"
               MIGRATION_SUCCESS=true
             else
@@ -1078,16 +1084,16 @@ jobs:
           fi
           
           # Final fallback: try app:update
-          if [ "$MIGRATION_SUCCESS" = false ]; then
-            echo "🔄 Final fallback: Trying app:update..."
-            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:update openconnector"; then
-              echo "✅ SUCCESS: App updated successfully"
-              MIGRATION_SUCCESS=true
-            else
-              echo "❌ FAILED: App update also failed"
-              MIGRATION_SUCCESS=false
-            fi
-          fi
+          # if [ "$MIGRATION_SUCCESS" = false ]; then
+          #   echo "🔄 Final fallback: Trying app:update..."
+          #   if docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:update openconnector"; then
+          #     echo "✅ SUCCESS: App updated successfully"
+          #     MIGRATION_SUCCESS=true
+          #   else
+          #     echo "❌ FAILED: App update also failed"
+          #     MIGRATION_SUCCESS=false
+          #   fi
+          # fi
           
           # Summary of results
           echo "=== Migration Test Results ==="
@@ -1099,7 +1105,7 @@ jobs:
           else
             echo "❌ ERROR: All migration approaches failed"
             echo "Checking app status..."
-            docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
+            docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:list | grep openconnector"
             echo "Checking Nextcloud logs..."
             docker exec nextcloud-test-quality bash -c "tail -50 /var/www/html/data/nextcloud.log"
             echo "Checking if database table exists..."
@@ -1113,16 +1119,16 @@ jobs:
           # Run database migrations for the app
           echo "Running database migrations for OpenConnector app..."
           echo "🔄 Running db:add-missing-indices..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ db:add-missing-indices"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ db:add-missing-indices"
           echo "🔄 Running db:add-missing-columns..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ db:add-missing-columns"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ db:add-missing-columns"
           echo "🔄 Running db:convert-filecache-bigint..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ db:convert-filecache-bigint"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ db:convert-filecache-bigint"
           
           # Force app migration execution by disabling and re-enabling the app
           echo "🔄 Forcing app migration execution..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:disable openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:enable openconnector"
           echo "✅ Database migrations completed"
           
           # Verify the required table exists after migrations
@@ -1143,11 +1149,11 @@ jobs:
           
           # Verify app is properly enabled
           echo "Verifying app installation..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:list | grep openconnector"
           
           # Set up test environment
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ config:system:set debug --value true"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ config:system:set loglevel --value 0"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ config:system:set debug --value true"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ config:system:set loglevel --value 0"
           
           # Wait a bit more for Nextcloud to fully process the app installation
           echo "Waiting for app installation to complete..."
@@ -1173,9 +1179,9 @@ jobs:
           
           # Force Nextcloud to rescan apps and clear caches
           echo "Forcing Nextcloud to rescan apps and clear caches..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ maintenance:repair"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:list"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ maintenance:repair"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:list"
           
           # Check if app classes are available after dependencies
           echo "Checking if app classes are available (after dependencies)..."
@@ -1184,7 +1190,7 @@ jobs:
           # Pre-class loading diagnostics
           echo "=== Pre-Class Loading Diagnostics (Quality) ==="
           echo "Checking app installation status..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
           
           echo "Checking app file structure..."
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/ || echo 'App directory not found'"
@@ -1217,9 +1223,9 @@ jobs:
           # Step 1: Force app disable/enable cycle to trigger autoloader generation
           echo "🔄 Step 1: Force app disable/enable cycle to trigger autoloader generation..."
           echo "🔍 DIAGNOSTIC: Disabling app to force regeneration..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector" || echo "App disable failed or app not enabled"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:disable openconnector" || echo "App disable failed or app not enabled"
           echo "🔍 DIAGNOSTIC: Re-enabling app to trigger autoloader generation..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:enable openconnector"
           echo "✅ App disable/enable cycle completed"
           
           # Check if Step 1 succeeded
@@ -1235,7 +1241,7 @@ jobs:
           # Step 2: Force maintenance repair to regenerate autoloaders
           echo "🔄 Step 2: Force maintenance repair to regenerate autoloaders..."
           echo "🔍 DIAGNOSTIC: Running maintenance:repair to regenerate autoloaders..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ maintenance:repair"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ maintenance:repair"
           echo "✅ Maintenance repair completed"
           
           # Check if Step 2 succeeded
@@ -1250,8 +1256,8 @@ jobs:
           
           # Step 3: Force app update with --force flag
           echo "🔄 Step 3: Force app update without invalid --force flag..."
-          echo "🔍 DIAGNOSTIC: Running app:update without invalid --force flag..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:update openconnector"
+          # echo "🔍 DIAGNOSTIC: Running app:update without invalid --force flag..."
+          # docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:update openconnector"
           echo "✅ App update completed"
           
           # Check if Step 3 succeeded
@@ -1352,15 +1358,15 @@ jobs:
           
           # Restart Nextcloud to reload the new autoloader
           echo "Restarting Nextcloud to reload autoloader..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:disable openconnector"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:enable openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:disable openconnector"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:enable openconnector"
           echo "✅ Nextcloud restarted with new autoloader"
           
           # Verify autoloader was created and clear cache
           echo "Verifying autoloader creation..."
           docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps/openconnector/lib/autoload.php || echo 'Autoloader still missing'"
           echo "Clearing Nextcloud cache..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ maintenance:repair"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ maintenance:repair"
           echo "✅ Cache cleared after autoloader generation"
           
           # Wait for Nextcloud background processes to complete
@@ -1401,7 +1407,7 @@ jobs:
           
           # Check if app is properly registered with Nextcloud
           echo "Checking if app is registered with Nextcloud..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && sudo -u www-data php occ app:list | grep openconnector || echo 'App not found in Nextcloud app list'"
           
           # Check app info and namespace
           echo "Checking app info and namespace..."

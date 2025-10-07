@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.46 - Standardized Directory Structure with Custom Apps Path  
-**Date:** October 3, 2025  
+**Current Version:** 1.47 - Enhanced Security with sudo -u www-data Commands and Simplified App Management  
+**Date:** October 7, 2025  
 **Status:** 🔄 Testing In Progress  
-**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation + fixed invalid --force flag + enhanced class existence checks + improved timing with longer delays + standardized directory structure using custom_apps path
+**Approach:** Use app:enable as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation + fixed invalid --force flag + enhanced class existence checks + improved timing with longer delays + standardized directory structure using custom_apps path + sudo -u www-data for all php occ commands + simplified app management with app:enable focus
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -29,9 +29,9 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Early Exit Checks** - Prevents step interference by stopping when autoloader is successfully created (v1.43)
 
 ### **🔧 Robust Database Management**
+- **App Enable Primary Method** - Uses app:enable as primary method with proper user context for reliable app activation (v1.47)
 - **Enhanced Database Verification** - Accurate database state verification using proper MariaDB container connections (v1.39)
 - **Forced Migration Execution** - Ensures database tables are properly created and migrated through disable/enable cycles (v1.38)
-- **App Install Primary Method** - Guarantees database migrations execute before app code runs (v1.38)
 
 ### **⚡ Workflow Reliability & Performance**
 - **Extended Timeouts** - Prevents workflow timeouts during long-running operations (180s for app:install, 90s for app:enable) (v1.42)
@@ -51,7 +51,20 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Container Status Monitoring** - Enhanced error reporting with container status and log analysis (v1.36)
 - **Available Commands Testing** - Tests only commands that actually exist in the Nextcloud environment (v1.35)
 
+### **🔐 Security & Permissions**
+- **Proper User Context** - All 65+ php occ commands execute as sudo -u www-data for correct permissions and security compliance (v1.47)
+- **Simplified App Management** - Focus on app:enable approach with app:install and app:update commented out for cleaner workflow (v1.47)
+- **Security Compliance** - Ensures all Nextcloud commands run with appropriate user permissions for production-like security (v1.47)
+
+### **📁 Directory Structure & Compatibility**
+- **Standardized Directory Structure** - Updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility (v1.46)
+- **Updated All References** - Updated all file path references throughout both tests and quality jobs to use the new directory structure (v1.46)
+- **Nextcloud Best Practices** - Aligns with Nextcloud's recommended directory structure for custom applications (v1.46)
+
 ## 🐛 Issues Resolved
+- 🔄 **Enhanced security and permissions** - Added sudo -u www-data to all php occ commands for proper user context and security compliance (v1.47) - **TESTING IN PROGRESS**
+- 🔄 **Complex app management workflow** - Simplified to focus on app:enable approach with app:install and app:update commented out (v1.47) - **TESTING IN PROGRESS**
+- 🔄 **Directory structure compatibility** - Updated to use custom_apps path instead of apps-extra for better Nextcloud compatibility (v1.46) - **TESTING IN PROGRESS**
 - ⏳ **Invalid --force flag causing errors** - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars (v1.44) - **NOT YET TESTED**
 - ⏳ **Class existence verification missing** - Added enhanced class existence checks to verify OpenConnector Application class actually exists after each autoloader generation step (v1.44) - **NOT YET TESTED**
 - ⏳ **Insufficient timing for background processes** - Added 30-second delays for Nextcloud background processes to complete before checking autoloader generation (v1.44) - **NOT YET TESTED**
@@ -92,8 +105,18 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ### Future Versions
 *This section will be updated as new versions are released*
 
+### Version 1.47 - Enhanced Security with sudo -u www-data Commands and Simplified App Management
+**Date:** October 7, 2025  
+**Status:** 🔄 Testing In Progress  
+**Changes:**
+- 🔐 **Enhanced Security Implementation** - Added `sudo -u www-data` to all 65+ `php occ` commands across both tests and quality jobs for proper user context and security compliance
+- 🎯 **Simplified App Management Strategy** - Commented out `app:install` and `app:update` options to focus exclusively on `app:enable` approach for cleaner, more reliable workflow
+- 🔧 **Consistent Command Execution** - All `php occ` commands now run with proper user context ensuring correct permissions and security
+- 🛡️ **Security Compliance** - Ensures all Nextcloud commands run with appropriate user permissions for production-like security
+- 🎯 **Workflow Simplification** - Removed complex fallback chains by focusing on single app:enable approach
+
 ### Version 1.46 - Standardized Directory Structure with Custom Apps Path
-**Date:** October 3, 2025  
+**Date:** October 7, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
 - 📁 **Standardized Directory Structure** - Updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility
@@ -103,7 +126,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - 🎯 **Nextcloud Best Practices** - Aligns with Nextcloud's recommended directory structure for custom applications
 
 ### Version 1.45 - Enhanced Autoloader Generation with Improved Class Mapping
-**Date:** October 3, 2025  
+**Date:** October 6, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
 - 🔧 **Enhanced Autoloader Generation with Heredoc Syntax** - Replaced manual echo commands with heredoc syntax for cleaner autoloader creation
@@ -121,7 +144,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - 📋 **Enhanced File Content Diagnostics** - Check actual autoloader file content and permissions to identify malformed or incomplete files
 
 ### Version 1.43 - Comprehensive Autoloader Generation Strategy
-**Date:** October 2, 2025  
+**Date:** October 3, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
 - 🔧 **Comprehensive Autoloader Generation Strategy** - Multi-step approach with early exit checks: disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback
@@ -134,7 +157,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - ✅ **Early Exit Checks** - Prevent step interference by checking for success after each autoloader generation method and exiting early if successful
 
 ### Version 1.42 - Workflow Structure Fix + Early Autoloader Check + Timing Fix
-**Date:** October 2, 2025  
+**Date:** October 3, 2025  
 **Status:** ✅ Completed  
 **Changes:**
 - 🔍 **Early Autoloader Check** - Check if lib/autoload.php was already generated during app installation before attempting generation
@@ -146,7 +169,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - 🔍 **Progress Bar Resolution** - Extended timeouts should resolve the hanging progress bar issue during app installation
 
 ### Version 1.41 - Enhanced Autoload Diagnostics + Changelog Status Updates
-**Date:** October 2, 2025  
+**Date:** October 3, 2025  
 **Status:** ✅ Completed  
 **Changes:**
 - 🔍 **Enhanced Autoload Diagnostics** - Added comprehensive diagnostics to identify where Composer places autoload files
@@ -510,22 +533,13 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Database schema preparation with maintenance:repair
 - Command availability checking
 
-### 🔄 **Currently Testing (v1.46)**
+### 🔄 **Currently Testing (v1.47)**
+- Enhanced security implementation - Testing all 65+ php occ commands running as sudo -u www-data for proper user context and security compliance
+- Simplified app management strategy - Testing app:enable approach with app:install and app:update commented out for cleaner, more reliable workflow
 - Standardized directory structure - Testing updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility
-- Improved app installation path - Testing changed app copy destination from `apps-extra/openconnector` to `custom_apps/openconnector` following Nextcloud standards
-- Updated all references - Testing updated file path references throughout both tests and quality jobs to use the new directory structure
-- Enhanced diagnostics - Testing updated diagnostic messages to reflect the new directory structure for better troubleshooting
-- Nextcloud best practices - Testing alignment with Nextcloud's recommended directory structure for custom applications
-- Enhanced autoloader generation with heredoc syntax - Testing cleaner autoloader creation using heredoc instead of manual echo commands (v1.45)
-- Improved class mapping - Testing enhanced PSR-4 namespace handling and explicit Application class loading (v1.45)
-- Comprehensive class loading diagnostics - Testing class loading verification after autoloader creation to ensure OpenConnector Application class is actually loadable (v1.45)
-- Enhanced autoloader content structure - Testing improved autoloader structure with better namespace handling (v1.45)
+- Enhanced autoloader generation - Testing comprehensive autoloader generation strategy with improved class mapping and diagnostics (v1.45)
 - Enhanced class existence checks - Testing verification that OpenConnector Application class actually exists after each autoloader generation step (v1.44)
-- Fixed invalid --force flag - Testing removal of non-existent --force flag from app:update commands (v1.44)
-- Improved timing with longer delays - Testing 30-second delays for Nextcloud background processes to complete (v1.44)
-- Enhanced file content diagnostics - Testing actual autoloader file content and permissions checking (v1.44)
-- Comprehensive autoloader generation strategy - Testing multi-step approach with disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback (v1.43)
-- Manual autoloader creation - Testing if manual creation of lib/autoload.php with proper PSR-4 autoloader registration works as final fallback (v1.43)
+- Enhanced diagnostics and timing - Testing improved diagnostics, timing fixes, and comprehensive autoloader generation strategy (v1.43-v1.44)
 - Extended timeouts - Testing increased timeouts to handle progress bar hanging issues (v1.42)
 
 ### ✅ **Recently Fixed**
@@ -546,13 +560,14 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - Autoloader generation verification - Added proper verification for `lib/autoload.php` creation
 
 ### 📋 **Next Steps**
-1. Test the workflow with v1.46 standardized directory structure using custom_apps path
-2. Verify that the new directory structure improves Nextcloud compatibility and follows best practices
-3. Monitor if the updated file path references work correctly in both tests and quality jobs
-4. Check if the enhanced diagnostics with new directory structure provide better troubleshooting information
-5. Test the comprehensive autoloader generation strategy (v1.43) with enhanced diagnostics (v1.44), improved generation (v1.45), and standardized directory structure (v1.46)
-6. Analyze if the Nextcloud best practices alignment resolves any remaining compatibility issues
-7. Update documentation status based on test results
+1. Test the workflow with v1.47 enhanced security implementation and simplified app management strategy
+2. Verify that all 65+ php occ commands run with proper user context and security compliance
+3. Monitor if the app:enable approach works reliably without app:install and app:update fallbacks
+4. Test the standardized directory structure using custom_apps path for better Nextcloud compatibility
+5. Check if the enhanced diagnostics with new directory structure provide better troubleshooting information
+6. Test the comprehensive autoloader generation strategy (v1.43) with enhanced diagnostics (v1.44), improved generation (v1.45), standardized directory structure (v1.46), and enhanced security (v1.47)
+7. Analyze if the Nextcloud best practices alignment, proper user context, and simplified app management resolves any remaining compatibility issues
+8. Update documentation status based on test results
 
 ## 🛠️ Maintenance
 
@@ -569,4 +584,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: October 3, 2025 | Version: 1.45 | Status: Enhanced Autoloader Generation with Improved Class Mapping*
+*Last Updated: October 7, 2025 | Version: 1.47 | Status: Enhanced Security with sudo -u www-data Commands and Simplified App Management*
