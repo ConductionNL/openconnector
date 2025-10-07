@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.45 - Enhanced Autoloader Generation with Improved Class Mapping  
+**Current Version:** 1.46 - Standardized Directory Structure with Custom Apps Path  
 **Date:** October 3, 2025  
 **Status:** 🔄 Testing In Progress  
-**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation + fixed invalid --force flag + enhanced class existence checks + improved timing with longer delays
+**Approach:** Use app:install as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation + fixed invalid --force flag + enhanced class existence checks + improved timing with longer delays + standardized directory structure using custom_apps path
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -91,6 +91,16 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ### Future Versions
 *This section will be updated as new versions are released*
+
+### Version 1.46 - Standardized Directory Structure with Custom Apps Path
+**Date:** October 3, 2025  
+**Status:** 🔄 Testing In Progress  
+**Changes:**
+- 📁 **Standardized Directory Structure** - Updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility
+- 🏗️ **Improved App Installation Path** - Changed app copy destination from `apps-extra/openconnector` to `custom_apps/openconnector` following Nextcloud standards
+- 🔧 **Updated All References** - Updated all file path references throughout both tests and quality jobs to use the new directory structure
+- 📋 **Enhanced Diagnostics** - Updated diagnostic messages to reflect the new directory structure for better troubleshooting
+- 🎯 **Nextcloud Best Practices** - Aligns with Nextcloud's recommended directory structure for custom applications
 
 ### Version 1.45 - Enhanced Autoloader Generation with Improved Class Mapping
 **Date:** October 3, 2025  

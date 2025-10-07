@@ -137,13 +137,9 @@ jobs:
           timeout 600 bash -c 'until curl -sSf http://localhost:8080/status.php | grep -q "installed.*true"; do echo "Waiting for Nextcloud to start..."; sleep 10; done'
           echo "Nextcloud is fully initialized and ready!"
           
-          # Create apps-extra directory in Nextcloud container
-          echo "Creating apps-extra directory in Nextcloud container..."
-          docker exec nextcloud-test mkdir -p /var/www/html/apps-extra
-          
           # Copy the OpenConnector app into the container
           echo "Copying OpenConnector app into Nextcloud container..."
-          docker cp . nextcloud-test:/var/www/html/apps-extra/openconnector
+          docker cp . nextcloud-test:/var/www/html/custom_apps/openconnector
           
           # Wait a bit more for Nextcloud to fully process the app installation
           echo "Waiting for app installation to complete..."
@@ -214,7 +210,7 @@ jobs:
           
           # Check if app directory exists
           echo "Checking if OpenConnector app directory exists..."
-          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps-extra/openconnector/"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/"
           
           # List available apps
           echo "Listing available apps..."
@@ -222,7 +218,7 @@ jobs:
           
           # Move app to correct location for Nextcloud
           echo "Moving app to correct location for Nextcloud..."
-          docker exec nextcloud-test bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
+          docker exec nextcloud-test bash -c "cp -r /var/www/html/custom_apps/openconnector /var/www/html/apps/"
           echo "App moved to /var/www/html/apps/openconnector"
           
           # Install app dependencies BEFORE enabling the app
@@ -397,9 +393,9 @@ jobs:
           
           # Check app structure and files
           echo "Checking app structure and files..."
-          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps-extra/openconnector/"
-          docker exec nextcloud-test bash -c "ls -la /var/www/html/apps-extra/openconnector/appinfo/"
-          docker exec nextcloud-test bash -c "cat /var/www/html/apps-extra/openconnector/appinfo/info.xml | head -10"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/appinfo/"
+          docker exec nextcloud-test bash -c "cat /var/www/html/custom_apps/openconnector/appinfo/info.xml | head -10"
           
           # Check if app is in the right location for Nextcloud
           echo "Checking if app is in correct location..."
@@ -640,7 +636,7 @@ jobs:
           
           # Check if app is in both locations
           echo "Checking app locations..."
-          docker exec nextcloud-test bash -c "echo 'Apps-extra location:'; ls -la /var/www/html/apps-extra/ | grep openconnector || echo 'Not found in apps-extra'"
+          docker exec nextcloud-test bash -c "echo 'Custom Apps location:'; ls -la /var/www/html/custom_apps/ | grep openconnector || echo 'Not found in custom_apps'"
           docker exec nextcloud-test bash -c "echo 'Apps location:'; ls -la /var/www/html/apps/ | grep openconnector || echo 'Not found in apps'"
           
           # Check if vendor directory exists in new location
@@ -768,7 +764,7 @@ jobs:
         run: |
           # Run tests from inside the Nextcloud container where all OCP classes are available
           echo "Running tests inside Nextcloud container..."
-          docker exec nextcloud-test bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap.php apps-extra/openconnector/tests"
+          docker exec nextcloud-test bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --bootstrap custom_apps/openconnector/tests/bootstrap.php custom_apps/openconnector/tests"
         
       - name: Upload coverage (PHP 8.2 only)
         if: matrix.php-version == '8.2'
@@ -897,13 +893,9 @@ jobs:
           timeout 600 bash -c 'until curl -sSf http://localhost:8081/status.php | grep -q "installed.*true"; do echo "Waiting for Nextcloud to start..."; sleep 10; done'
           echo "Nextcloud is fully initialized and ready!"
           
-          # Create apps-extra directory in Nextcloud container
-          echo "Creating apps-extra directory in Nextcloud container..."
-          docker exec nextcloud-test-quality mkdir -p /var/www/html/apps-extra
-          
           # Copy the OpenConnector app into the container
           echo "Copying OpenConnector app into Nextcloud container..."
-          docker cp . nextcloud-test-quality:/var/www/html/apps-extra/openconnector
+          docker cp . nextcloud-test-quality:/var/www/html/custom_apps/openconnector
           
           # Wait a bit more for Nextcloud to fully process the app installation
           echo "Waiting for app installation to complete..."
@@ -997,7 +989,7 @@ jobs:
           
           # Check if app directory exists
           echo "Checking if OpenConnector app directory exists..."
-          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps-extra/openconnector/"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/custom_apps/openconnector/"
           
           # List available apps
           echo "Listing available apps..."
@@ -1005,7 +997,7 @@ jobs:
           
           # Move app to correct location for Nextcloud
           echo "Moving app to correct location for Nextcloud..."
-          docker exec nextcloud-test-quality bash -c "cp -r /var/www/html/apps-extra/openconnector /var/www/html/apps/"
+          docker exec nextcloud-test-quality bash -c "cp -r /var/www/html/custom_apps/openconnector /var/www/html/apps/"
           echo "App moved to /var/www/html/apps/openconnector"
           
           # Install app dependencies BEFORE enabling the app
@@ -1169,9 +1161,9 @@ jobs:
           
           # Check app structure and files
           echo "Checking app structure and files..."
-          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps-extra/openconnector/"
-          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/apps-extra/openconnector/appinfo/"
-          docker exec nextcloud-test-quality bash -c "cat /var/www/html/apps-extra/openconnector/appinfo/info.xml | head -10"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/custom_apps/openconnector/"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/custom_apps/openconnector/appinfo/"
+          docker exec nextcloud-test-quality bash -c "cat /var/www/html/custom_apps/openconnector/appinfo/info.xml | head -10"
           
           # Check if app is in the right location for Nextcloud
           echo "Checking if app is in correct location..."
@@ -1400,7 +1392,7 @@ jobs:
           
           # Check if app is in both locations
           echo "Checking app locations..."
-          docker exec nextcloud-test-quality bash -c "echo 'Apps-extra location:'; ls -la /var/www/html/apps-extra/ | grep openconnector || echo 'Not found in apps-extra'"
+          docker exec nextcloud-test-quality bash -c "echo 'Custom Apps location:'; ls -la /var/www/html/custom_apps/ | grep openconnector || echo 'Not found in custom_apps'"
           docker exec nextcloud-test-quality bash -c "echo 'Apps location:'; ls -la /var/www/html/apps/ | grep openconnector || echo 'Not found in apps'"
           
           # Check if vendor directory exists in new location
@@ -1542,7 +1534,7 @@ jobs:
         run: |
           # Run tests from inside the Nextcloud container where all OCP classes are available
           echo "Running tests inside Nextcloud container..."
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --bootstrap apps-extra/openconnector/tests/bootstrap.php apps-extra/openconnector/tests"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --bootstrap custom_apps/openconnector/tests/bootstrap.php custom_apps/openconnector/tests"
         
       - name: Generate quality status
         if: always()
