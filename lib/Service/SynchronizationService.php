@@ -85,6 +85,7 @@ class SynchronizationService
     const EXTRA_DATA_BEFORE_CONDITIONS_LOCATION = 'fetchExtraDataBeforeConditions';
     const FILE_TAG_TYPE                         = 'files';
     const VALID_MUTATION_TYPES                  = ['create', 'update', 'delete'];
+    const DEFAULT_MAX_PAGES                     = 50; // Safety limit to prevent infinite page requesting loop
 
 	public function __construct(
 		CallService                      $callService,
@@ -1631,7 +1632,8 @@ class SynchronizationService
 	{
 		$allObjects = [];
 		$currentEndpoint = $endpoint;
-		$maxPages = 50; // Safety limit to prevent infinite loops
+		$sourceConfig = $synchronization->getSourceConfig();
+		$maxPages = $sourceConfig['maxPages'] ?? $this::DEFAULT_MAX_PAGES;
 		$pageCount = 0;
 
 		for ($i = 0; $i < $maxPages; $i++) {
