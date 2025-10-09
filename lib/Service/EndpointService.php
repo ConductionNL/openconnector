@@ -1585,7 +1585,12 @@ class EndpointService
         $sendObject = $object;
 
         // Run synchronization.
-        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, data: $object);
+        $mutationType = null;
+        $sourceConfig = $synchronization->getSourceConfig();
+        if (isset($sourceConfig['synchronizationType']) === true && $sourceConfig['synchronizationType'] === 'delete') {
+            $mutationType = 'delete';
+        }
+        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, mutationType: $mutationType, data: $object);
 
         // $object got updated through reference.
         $returnedObject = $object;

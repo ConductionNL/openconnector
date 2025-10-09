@@ -230,8 +230,9 @@ class SynchronizationService
      * @param SynchronizationLog  $log             The log object to record synchronization details and results.
      * @param bool|null           $isTest          Optional flag to run the synchronization in test mode (no deletions, no persistence).
      * @param bool|null           $force           Optional flag to bypass change checks and force synchronization of all objects.
-     * @param string|null $source The source to synchronize, if not provided, the synchronization's source will be used
-     * @param array|null $data The data to add to synchronize, if not provided, the synchronization's data will be used
+     * @param string|null         $source          The source to synchronize, if not provided, the synchronization's source will be used
+     * @param array|null          $data            The data to add to synchronize, if not provided, the synchronization's data will be used
+     * @param string|null         $mutationType    The current type of mutation we are doing this::VALID_MUTATION_TYPES
      *
      * @return SynchronizationLog Returns the updated synchronization log with processing results.
      *
@@ -244,7 +245,8 @@ class SynchronizationService
         ?bool $isTest = false,
         ?bool $force = false,
         ?string $source = null,
-        ?array $data = null
+        ?array $data = null,
+        ?string $mutationType = null
     ): SynchronizationLog {
         // Start overall timing measurement
         $overallStartTime = microtime(true);
@@ -278,91 +280,103 @@ class SynchronizationService
             'description' => 'Configuration loading and source validation'
         ];
 
-        // Stage 2: Fetching objects from source
-        $stageStartTime = microtime(true);
-        try {
-            $objectList = $this->getAllObjectsFromSource($synchronization, $isTest, $data);
-        } catch (TooManyRequestsHttpException $e) {
-            $rateLimitException = $e;
-            $objectList = []; // Ensure it's defined
-        }
-
-        $fetchDuration = round((microtime(true) - $stageStartTime) * 1000, 2);
-        $result['timing']['stages']['fetch_objects'] = [
-            'duration_ms' => $fetchDuration,
-            'description' => 'Fetching objects from external source (optimized pagination)',
-            'objects_fetched' => count($objectList),
-            'rate_limited' => $rateLimitException !== null,
-            'fetch_method' => 'optimized_sequential'
-        ];
-
-        // Stage 3: Object list preparation
-        $stageStartTime = microtime(true);
-        $result['objects']['found'] = count($objectList);
-
-        if ($sourceConfig['resultsPosition'] === '_object') {
-            $objectList = [$objectList];
-            $result['objects']['found'] = count($objectList);
-        }
-
-        $result['timing']['stages']['object_preparation'] = [
-            'duration_ms' => round((microtime(true) - $stageStartTime) * 1000, 2),
-            'description' => 'Object list preparation and counting',
-            'final_object_count' => count($objectList)
-        ];
-
-        // Stage 4: Processing individual objects
-        $stageStartTime = microtime(true);
-        $synchronizedTargetIds = [];
-        $objectProcessingTimes = [];
-
-        foreach ($objectList as $index => $object) {
-            $objectStartTime = microtime(true);
-
+        if ($data !== null && $mutationType === 'delete') {
             $processResult = $this->processSynchronizationObject(
                 synchronization: $synchronization,
-                object: $object,
+                object: $data,
                 result: $result,
                 isTest: $isTest,
                 force: $force,
-                log: $log
+                log: $log,
+                mutationType: $mutationType
             );
-
-            $objectProcessingTime = round((microtime(true) - $objectStartTime) * 1000, 2);
-            $objectProcessingTimes[] = $objectProcessingTime;
-
-            $result = $processResult['result'];
-            $result['_embed']['contracts'] = array_map(function($contractId) {
-                $contracts = $this->synchronizationContractMapper->findAll(filters: ['uuid' => $contractId]);
-                return array_shift($contracts)->jsonSerialize();
-            }, $result['contracts']);
-
-            if ($processResult['targetId'] !== null) {
-                $synchronizedTargetIds[] = $processResult['targetId'];
+        } else {
+            // Stage 2: Fetching objects from source
+            $stageStartTime = microtime(true);
+            try {
+                $objectList = $this->getAllObjectsFromSource($synchronization, $isTest, $data);
+            } catch (TooManyRequestsHttpException $e) {
+                $rateLimitException = $e;
+                $objectList = []; // Ensure it's defined
             }
+
+            $fetchDuration = round((microtime(true) - $stageStartTime) * 1000, 2);
+            $result['timing']['stages']['fetch_objects'] = [
+                'duration_ms' => $fetchDuration,
+                'description' => 'Fetching objects from external source (optimized pagination)',
+                'objects_fetched' => count($objectList),
+                'rate_limited' => $rateLimitException !== null,
+                'fetch_method' => 'optimized_sequential'
+            ];
+
+            // Stage 3: Object list preparation
+            $stageStartTime = microtime(true);
+            $result['objects']['found'] = count($objectList);
+
+            if ($sourceConfig['resultsPosition'] === '_object') {
+                $objectList = [$objectList];
+                $result['objects']['found'] = count($objectList);
+            }
+
+            $result['timing']['stages']['object_preparation'] = [
+                'duration_ms' => round((microtime(true) - $stageStartTime) * 1000, 2),
+                'description' => 'Object list preparation and counting',
+                'final_object_count' => count($objectList)
+            ];
+
+            // Stage 4: Processing individual objects
+            $stageStartTime = microtime(true);
+            $synchronizedTargetIds = [];
+            $objectProcessingTimes = [];
+
+            foreach ($objectList as $index => $object) {
+                $objectStartTime = microtime(true);
+
+                $processResult = $this->processSynchronizationObject(
+                    synchronization: $synchronization,
+                    object: $object,
+                    result: $result,
+                    isTest: $isTest,
+                    force: $force,
+                    log: $log
+                );
+
+                $objectProcessingTime = round((microtime(true) - $objectStartTime) * 1000, 2);
+                $objectProcessingTimes[] = $objectProcessingTime;
+
+                $result = $processResult['result'];
+                $result['_embed']['contracts'] = array_map(function($contractId) {
+                    $contracts = $this->synchronizationContractMapper->findAll(filters: ['uuid' => $contractId]);
+                    return array_shift($contracts)->jsonSerialize();
+                }, $result['contracts']);
+
+                if ($processResult['targetId'] !== null) {
+                    $synchronizedTargetIds[] = $processResult['targetId'];
+                }
+            }
+
+            $totalProcessingDuration = round((microtime(true) - $stageStartTime) * 1000, 2);
+            $result['timing']['stages']['process_objects'] = [
+                'duration_ms' => $totalProcessingDuration,
+                'description' => 'Processing and synchronizing individual objects',
+                'objects_processed' => count($objectList),
+                'average_per_object_ms' => count($objectList) > 0 ? round($totalProcessingDuration / count($objectList), 2) : 0,
+                'min_object_ms' => count($objectProcessingTimes) > 0 ? min($objectProcessingTimes) : 0,
+                'max_object_ms' => count($objectProcessingTimes) > 0 ? max($objectProcessingTimes) : 0,
+                'median_object_ms' => count($objectProcessingTimes) > 0 ? $this->calculateMedian($objectProcessingTimes) : 0
+            ];
+
+            // Stage 5: Cleanup - Delete invalid objects
+            $stageStartTime = microtime(true);
+            $deletedCount = $this->deleteInvalidObjects(synchronization: $synchronization, synchronizedTargetIds: $synchronizedTargetIds, deleteRestriction: isset($sourceConfig['restrictDeletion']) === true && (bool)$sourceConfig['restrictDeletion'], data: isset($data) === true ? $data : []);
+            $result['objects']['deleted'] = $deletedCount;
+
+            $result['timing']['stages']['cleanup_invalid'] = [
+                'duration_ms' => round((microtime(true) - $stageStartTime) * 1000, 2),
+                'description' => 'Deleting invalid/orphaned objects',
+                'objects_deleted' => $deletedCount
+            ];
         }
-
-        $totalProcessingDuration = round((microtime(true) - $stageStartTime) * 1000, 2);
-        $result['timing']['stages']['process_objects'] = [
-            'duration_ms' => $totalProcessingDuration,
-            'description' => 'Processing and synchronizing individual objects',
-            'objects_processed' => count($objectList),
-            'average_per_object_ms' => count($objectList) > 0 ? round($totalProcessingDuration / count($objectList), 2) : 0,
-            'min_object_ms' => count($objectProcessingTimes) > 0 ? min($objectProcessingTimes) : 0,
-            'max_object_ms' => count($objectProcessingTimes) > 0 ? max($objectProcessingTimes) : 0,
-            'median_object_ms' => count($objectProcessingTimes) > 0 ? $this->calculateMedian($objectProcessingTimes) : 0
-        ];
-
-        // Stage 5: Cleanup - Delete invalid objects
-        $stageStartTime = microtime(true);
-        $deletedCount = $this->deleteInvalidObjects(synchronization: $synchronization, synchronizedTargetIds: $synchronizedTargetIds, deleteRestriction: isset($sourceConfig['restrictDeletion']) === true && (bool)$sourceConfig['restrictDeletion'], data: isset($data) === true ? $data : []);
-        $result['objects']['deleted'] = $deletedCount;
-
-        $result['timing']['stages']['cleanup_invalid'] = [
-            'duration_ms' => round((microtime(true) - $stageStartTime) * 1000, 2),
-            'description' => 'Deleting invalid/orphaned objects',
-            'objects_deleted' => $deletedCount
-        ];
 
         // Stage 6: Follow-up synchronizations
         $stageStartTime = microtime(true);
@@ -383,10 +397,14 @@ class SynchronizationService
         $result['timing']['total_ms'] = round((microtime(true) - $overallStartTime) * 1000, 2);
 
         // Add performance summary
+        $objectsPerSecond = 0;
+        if (isset($objectList) === true && count($objectList) > 0) {
+            $objectsPerSecond = round(count($objectList) / ($result['timing']['total_ms'] / 1000), 2);
+        }
         $result['timing']['summary'] = [
             'slowest_stage' => $this->getSlowestStage($result['timing']['stages']),
             'efficiency_ratio' => $this->calculateEfficiencyRatio($result['timing']['stages']),
-            'objects_per_second' => count($objectList) > 0 ? round(count($objectList) / ($result['timing']['total_ms'] / 1000), 2) : 0
+            'objects_per_second' => $objectsPerSecond
         ];
 
         $log->setResult($result);
@@ -489,7 +507,7 @@ class SynchronizationService
 		$log = $this->synchronizationLogMapper->createFromArray($log);
 
         // Handle full extern-to-intern sync
-        $log = $this->synchronizeExternToIntern($synchronization, $log, $isTest, $force, $source, $data);
+        $log = $this->synchronizeExternToIntern(synchronization: $synchronization, log: $log, isTest: $isTest, force: $force, source: $source, data: $data, mutationType: $mutationType);
 
         // Finalize log
         $executionTime = round((microtime(true) - $startTime) * 1000);
@@ -960,8 +978,8 @@ class SynchronizationService
 		$synchronizationContract->setSourceLastChecked(new DateTime());
 
         // Execute mapping if found
+		$objectBeforeMapping = $object;
         if ($sourceTargetMapping) {
-			$objectBeforeMapping = $object;
             $object = $this->mappingService->executeMapping(mapping: $sourceTargetMapping, input: $object);
         }
 
@@ -1414,6 +1432,10 @@ class SynchronizationService
 		}
 
 		$type = $synchronization->getTargetType();
+
+        if ($mutationType === 'delete') {
+            $action = 'delete';
+        }
 
 		switch ($type) {
 			case 'register/schema':
@@ -3292,6 +3314,7 @@ class SynchronizationService
 	 * @param bool $isTest Whether this is a test run
 	 * @param bool $force Whether to force synchronization regardless of changes
 	 * @param SynchronizationLog $log The synchronization log
+	 * @param string|null $mutationType The type of object mutation
 	 *
 	 * @return array Contains updated result data and the targetId ['result' => array, 'targetId' => string|null]
 	 */
@@ -3301,7 +3324,8 @@ class SynchronizationService
 		array $result,
 		bool $isTest,
 		bool $force,
-		SynchronizationLog $log
+		SynchronizationLog $log,
+        ?string $mutationType = null
 	): array {
 		// We can only deal with arrays (based on the source empty values or string might be returned)
 		if (is_array($object) === false) {
@@ -3329,9 +3353,16 @@ class SynchronizationService
 		$originId = $this->getOriginId($synchronization, $object);
 
 		// Get the synchronization contract for this object
+        $findContractByOriginId = false;
+        if (isset($sourceConfig['findContractByOriginIdOnly']) === true && (filter_var($sourceConfig['findContractByOriginIdOnly'], FILTER_VALIDATE_BOOLEAN))) {
+            $findContractByOriginId = true;
+        }
+
 		$synchronizationContract = $this->synchronizationContractMapper->findSyncContractByOriginId(
 			synchronizationId: $synchronization->id,
-			originId: $originId
+			originId: $originId,
+            justByOriginId: $findContractByOriginId
+
 		);
 
 		if ($synchronizationContract instanceof SynchronizationContract === false) {
@@ -3346,7 +3377,8 @@ class SynchronizationService
 				object: $object,
 				isTest: $isTest,
 				force: $force,
-				log: $log
+				log: $log,
+                mutationType: $mutationType
 			);
 
 			$synchronizationContract = $synchronizationContractResult['contract'];
@@ -3366,8 +3398,9 @@ class SynchronizationService
 				object: $object,
 				isTest: $isTest,
 				force: $force,
-				log: $log
-			);
+				log: $log,
+                mutationType: $mutationType
+            );
 
 			$synchronizationContract = $synchronizationContractResult['contract'];
 			$result['contracts'][] = isset($synchronizationContractResult['contract']['uuid']) === true ?
