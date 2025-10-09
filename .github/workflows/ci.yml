@@ -63,6 +63,27 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
+      # Decide PHPUnit version constraint to mirror tests job
+      - name: Decide PHPUnit version constraint (Quality)
+        id: phpunit-constraint-quality
+        run: |
+          # quality job runs on PHP 8.3
+          echo "constraint=^10.5" >> $GITHUB_OUTPUT
+          echo "Using PHPUnit constraint: $(cat $GITHUB_OUTPUT | sed -n 's/constraint=//p')"
+
+      - name: Install dependencies on GitHub Actions runner (Quality)
+        run: |
+          echo "============================================================"
+          echo "📦  Install Composer dependencies (runner) [quality]"
+          echo "============================================================"
+          composer install --no-interaction --prefer-dist
+          if [ ! -f "./vendor/bin/phpunit" ]; then
+            echo "📦  Install PHPUnit (runner) [quality]"
+            composer require --dev phpunit/phpunit:${{ steps.phpunit-constraint-quality.outputs.constraint }} --no-interaction
+          fi
+          echo "🔎  PHPUnit version (quality):"
+          ./vendor/bin/phpunit --version
+
       # Decide PHPUnit version constraint based on matrix PHP
       - name: Decide PHPUnit version constraint
         id: phpunit-constraint
@@ -646,7 +667,7 @@ jobs:
           echo "🧪  Install PHPUnit (in-container)"
           echo "============================================================"
           # Quality job runs on PHP 8.3 ⇒ use 10.x
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:^10.5"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:${{ steps.phpunit-constraint-quality.outputs.constraint }}"
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer dump-autoload --optimize"
           docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --version"
           echo "✅  PHPUnit OK"
