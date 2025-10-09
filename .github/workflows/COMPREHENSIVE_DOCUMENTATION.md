@@ -6,39 +6,41 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.48 - Fixed sudo Command Issues and Enhanced Container Setup  
-**Date:** October 7, 2025  
-**Status:** 🔄 Testing In Progress  
-**Approach:** Use app:enable as primary method + force migration execution by disable/enable + enhanced database verification with proper MariaDB container connection + fixed autoload generation inside container + timeout protection for hanging commands + enhanced diagnostics to identify autoload file location issues + Nextcloud app:update for proper autoloader generation + extended timeouts for progress bar issues + early autoloader check after app installation + timing fix for background autoloader generation + fixed invalid --force flag + enhanced class existence checks + improved timing with longer delays + standardized directory structure using custom_apps path + sudo -u www-data for all php occ commands + simplified app management with app:enable focus + fixed sudo command not found errors + enhanced container setup with proper sudo installation
+**Current Version:** 1.49 - PHPUnit Version Matrix, Accurate Step Names, and Docker Networks  
+**Date:** October 9, 2025  
+**Status:** ✅ Completed  
+**Approach:** Conditional PHPUnit per PHP version, standardized step names (PHP CS Fixer), and modern container networking with per-job Docker networks instead of deprecated `--link`.
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
 
 ## 🐳 Docker Stack
-- **MariaDB 10.6** - Database (matching local setup)
-- **Redis 7** - Caching and sessions
-- **MailHog** - Email testing (`ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest`)
-- **Nextcloud** - Real environment (`nextcloud:31`) - Updated from `ghcr.io/juliusknorr/nextcloud-dev-php81:latest` for compatibility
+- **MariaDB 10.6** — Database (matching local setup)
+- **Redis 7** — Caching and sessions
+- **MailHog** — Email testing (`ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest`)
+- **Nextcloud** — Real environment (`nextcloud:31`)
+- **Networking (v1.49)** — Dedicated per-job Docker networks (`nc-net-tests`, `nc-net-quality`) replace deprecated `--link`, improving isolation and name-based service discovery.
 
 ## 🔧 Key Features & Benefits
 
 ### **🚀 Reliable Autoloader Generation**
-- **Enhanced Class Loading Diagnostics** - Immediate feedback on whether OpenConnector Application class is properly loaded (v1.45)
-- **Multi-Step Autoloader Strategy** - Comprehensive approach with multiple fallback methods ensures autoloader creation even when individual methods fail (v1.43)
-- **Manual Autoloader Creation** - Guaranteed autoloader generation through manual creation when automated methods fail (v1.43)
-- **Early Exit Checks** - Prevents step interference by stopping when autoloader is successfully created (v1.43)
+- **Enhanced Class Loading Diagnostics** — Immediate feedback on whether OpenConnector Application class is properly loaded (v1.45)
+- **Multi-Step Autoloader Strategy** — Comprehensive approach with multiple fallback methods ensures autoloader creation even when individual methods fail (v1.43)
+- **Manual Autoloader Creation** — Guaranteed autoloader generation through manual creation when automated methods fail (v1.43)
+- **Early Exit Checks** — Prevents step interference by stopping when autoloader is successfully created (v1.43)
 
 ### **🔧 Robust Database Management**
-- **Fixed sudo Command Issues** - Resolved "sudo: command not found" errors by installing sudo in containers before use (v1.48)
-- **App Enable Primary Method** - Uses app:enable as primary method with proper user context for reliable app activation (v1.47)
-- **Enhanced Database Verification** - Accurate database state verification using proper MariaDB container connections (v1.39)
-- **Forced Migration Execution** - Ensures database tables are properly created and migrated through disable/enable cycles (v1.38)
+- **Fixed sudo Command Issues** — Install sudo in containers before use (v1.48)
+- **App Enable Primary Method** — Uses `app:enable` with proper user context for reliable activation (v1.47)
+- **Enhanced Database Verification** — Accurate DB state verification using MariaDB container connections (v1.39)
+- **Forced Migration Execution** — Disable/enable cycles ensure migrations run (v1.38)
 
 ### **⚡ Workflow Reliability & Performance**
-- **Extended Timeouts** - Prevents workflow timeouts during long-running operations (180s for app:install, 90s for app:enable) (v1.42)
-- **Resilient Health Checks** - Prevents false failures with warnings instead of immediate exits (v1.37)
-- **Command Timeout Protection** - 30-second timeouts prevent hanging occ commands (v1.36)
+- **Extended Timeouts** — Handle long-running operations (180s for `app:install`, 90s for `app:enable`) (v1.42)
+- **Resilient Health Checks** — Prefer warnings to avoid false failures (v1.37)
+- **Command Timeout Protection** — 30s timeouts for potentially hanging `occ` commands (v1.36)
 - **Comprehensive Diagnostics** - Detailed troubleshooting information for faster issue resolution (v1.36)
+- **Modern Networking (v1.49)** — Per-job Docker networks for stable service resolution and cleaner teardown.
 
 ### **🎯 Development Environment Parity**
 - **Local App Usage** - Tests actual development code instead of published versions (v1.29)
@@ -58,37 +60,28 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **Security Compliance** - Ensures all Nextcloud commands run with appropriate user permissions for production-like security (v1.47)
 
 ### **📁 Directory Structure & Compatibility**
-- **Standardized Directory Structure** - Updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility (v1.46)
-- **Updated All References** - Updated all file path references throughout both tests and quality jobs to use the new directory structure (v1.46)
-- **Nextcloud Best Practices** - Aligns with Nextcloud's recommended directory structure for custom applications (v1.46)
+- **Standardized Directory Structure** - Use `/var/www/html/custom_apps/` for better Nextcloud compatibility (v1.46)
+- **Updated References** - All paths in tests and quality jobs reflect the standardized structure (v1.46)
 
 ## 🐛 Issues Resolved
-- 🔄 **Fixed sudo command not found errors** - Added proper sudo installation in Nextcloud containers before using sudo -u www-data commands to resolve "command not found" errors (v1.48) - **TESTING IN PROGRESS**
-- 🔄 **Enhanced container setup** - Added apt update and sudo/curl installation before Composer setup to ensure all required tools are available (v1.48) - **TESTING IN PROGRESS**
-- 🔄 **Fixed APT permission denied errors** - Resolved APT permission issues by ensuring proper package installation in containers (v1.48) - **TESTING IN PROGRESS**
-- ✅ **Enhanced security and permissions** - Added sudo -u www-data to all php occ commands for proper user context and security compliance (v1.47) - **COMPLETED**
-- ✅ **Complex app management workflow** - Simplified to focus on app:enable approach with app:install and app:update commented out (v1.47) - **COMPLETED**
-- 🔄 **Directory structure compatibility** - Updated to use custom_apps path instead of apps-extra for better Nextcloud compatibility (v1.46) - **TESTING IN PROGRESS**
-- ⏳ **Invalid --force flag causing errors** - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars (v1.44) - **NOT YET TESTED**
-- ⏳ **Class existence verification missing** - Added enhanced class existence checks to verify OpenConnector Application class actually exists after each autoloader generation step (v1.44) - **NOT YET TESTED**
-- ⏳ **Insufficient timing for background processes** - Added 30-second delays for Nextcloud background processes to complete before checking autoloader generation (v1.44) - **NOT YET TESTED**
-- 🔄 **lib/autoload.php not found error** - Comprehensive autoloader generation strategy with multi-step approach: disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback (v1.43) - **TESTING IN PROGRESS**
-- 🔄 **Hanging progress bar during app installation** - Extended timeouts to 180s for app:install and 90s for app:enable to handle progress bar hanging issues (v1.42) - **TESTING IN PROGRESS**
-- 🔄 **Workflow structure timing issue** - Check autoloader immediately after app installation instead of later in workflow (v1.42) - **TESTING IN PROGRESS**
-- ✅ **Table oc_openconnector_job_logs doesn't exist** - Enhanced database verification with proper MariaDB container connection and comprehensive diagnostics (v1.39)
-- ✅ **Overly strict health checks causing false failures** - Fixed health check logic to be more resilient with warnings instead of immediate exits (v1.37)
-- ✅ **Hanging php occ app --help command** - Added 30-second timeouts and health checks to prevent command hanging (v1.36)
-- ✅ **Composer command not found error** - Composer installation moved before app dependencies in tests job (v1.33)
-- ✅ **Missing vendor/autoload.php error** - Composer install now runs before app enabling (v1.31)
-- ✅ **Misleading step names** - All step names now accurately reflect their functionality and execution context (v1.31)
-- ✅ **Workflow inconsistency** - Both jobs now follow identical patterns and step ordering (v1.30)
-- ✅ **App installation method** - Use app:install as primary method with app:enable fallback for local app usage (v1.38)
-- ✅ **App autoloader generation** - Generate autoloader on host and copy to container, with Nextcloud reload and cache clearing (v1.28)
-- ✅ **Missing PHP extensions** - Fixed "missing ext-soap and ext-xsl" errors with `--ignore-platform-req` flags (v1.21)
-- ✅ **App dependencies installation** - Added `composer install --no-dev --optimize-autoloader` for OpenConnector app dependencies (v1.19)
-- ✅ **Local Parity** - Exact same images as local docker-compose.yml (v1.14)
-- ✅ **MockMapper compatibility issues** - Eliminated complex mocking by using real Nextcloud environment (v1.13)
-- ✅ **Database connection issues** - Proper service linking and configuration (v1.13)
+- 🔄 Runner APT permission handling — runner uses `composer install`; APT actions within containers run as root via `docker exec -u 0` (v1.49) - TESTING IN PROGRESS
+- 🔄 Tests/Quality job parity — identical bootstrap, diagnostics, composer strategy, migration flow, autoload verification, and logging (v1.49) - TESTING IN PROGRESS
+- 🔄 Path normalization — removed `/apps/openconnector` references; standardized to `/var/www/html/custom_apps/openconnector` (v1.49) - TESTING IN PROGRESS
+- 🔄 Post-copy ownership — `chown -R www-data:www-data` after `docker cp` to prevent root-owned files (v1.49) - TESTING IN PROGRESS
+- 🔄 Container sudo removal — use `docker exec --user www-data` instead of `sudo -u www-data` inside containers (v1.49) - TESTING IN PROGRESS
+- 🔄 Shell robustness — added `set -euo pipefail` to major run blocks (v1.49) - TESTING IN PROGRESS
+- 🔄 Composer strategy — install curl+Composer as root; run app composer install as www-data; verify composer available (v1.49) - TESTING IN PROGRESS
+- ✅ “sudo: command not found” — resolved by installing required tools before usage (v1.48)
+- ✅ Container setup — clarified around APT/curl and Composer order (v1.48)
+- ✅ Standardized directory structure — `custom_apps` over legacy locations (v1.46)
+- ✅ Autoloader generation strategy — multi-step + class existence verification (v1.43–v1.45)
+- ✅ Database verification — MariaDB container with explicit table checks (v1.39)
+- ✅ Health checks and occ timeouts — prevent hangs (v1.36–v1.37)
+- ✅ Composer/enable ordering — prevent missing vendor/autoload.php (v1.31–v1.33)
+- ✅ Local parity — same images as local docker-compose (v1.14)
+- ✅ Real Nextcloud Docker environment with full service stack (MariaDB, Redis, MailHog) — enables use of real OCP classes without brittle mocks; improves reliability of tests and diagnostics (v1.13)
+- ✅ Reproducible runs — explicit container cleanup and isolation across jobs to avoid state leakage between workflow executions (v1.13)
+- ✅ Comprehensive container diagnostics — added targeted logs and inspection commands (process lists, Nextcloud logs, directory listings) to speed up troubleshooting (v1.13)
 
 ## 📁 Files
 - **`.github/workflows/ci.yml`** - Fixed step ordering and added autoloader verification
@@ -97,497 +90,338 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 
 ## 📦 Centralized Version Management
-- **`.github/workflows/versions.env`** - Single source of truth for all versions
-- **Environment variables** - CI workflow uses `${{ env.VARIABLE_NAME }}` syntax
-- **Local parity** - Versions match your local `docker-compose.yml` and `.env`
-- **Easy updates** - Change versions in one place, affects entire CI
+- **`.github/workflows/versions.env`** — Single source of truth for all versions
+- **Environment variables** — CI workflow uses `${{ env.VARIABLE_NAME }}`
+- **Local parity** — Versions match your local `docker-compose.yml` and `.env`
+- **Easy updates** — Change versions in one place, affects entire CI
 
 ---
 
 ## 📜 Changelog
 
-### Future Versions
-*This section will be updated as new versions are released*
+### Version 1.49 - Job parity, custom_apps standardization, PHPUnit matrix, Docker networks, safer shell
+**Date:** October 9, 2025  
+**Status:** 🔄 Testing In Progress  
+**Changes:**
+- 🧭 Centralized defaults via top-level `env:`; `versions.env` remains supported and, if present, is echoed in logs.
+- 🧩 Tests/Quality parity: same container bootstrap, copy to `custom_apps`, ownership fix, occ diagnostics, composer strategy (curl+Composer as root; app composer install as www-data), `MIGRATION_SUCCESS` flow, DB helpers, toggle app, autoload verification, and class_exists retry.
+- 📁 Path normalization: all references standardized to `/var/www/html/custom_apps/openconnector`; removed redundant copies and checks under `/apps`.
+- 👤 Permissions: avoid `sudo` in containers; use `docker exec --user www-data` for all occ calls.
+- 🧰 Composer: install curl+Composer as root; verify `composer --version`; run app composer install as www-data.
+- 🧷 Robustness: `set -euo pipefail` added to major `run:` blocks; clearer banners/echo diagnostics for every phase.
+- 🧪 PHPUnit: in-container install/verify; tests job runs with coverage and uploads to Codecov; quality job also runs with coverage output inside container.
+- 🧪 PHPUnit matrix by PHP version: `^9.6` for PHP 8.2 and `^10.5` for PHP 8.3 (runner and containers).
+- 🎯 Accurate code style step: renamed to PHP CS Fixer to match `friendsofphp/php-cs-fixer`.
+- 🌐 Modern container networking: replaced deprecated `--link` with per-job Docker networks (`nc-net-tests`, `nc-net-quality`), using service names for `MYSQL_HOST`, `REDIS_HOST`, and `SMTP_HOST`. Networks are removed during cleanup.
 
 ### Version 1.48 - Fixed sudo Command Issues and Enhanced Container Setup
 **Date:** October 7, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
-- 🔧 **Fixed sudo Command Not Found Errors** - Added proper `sudo` installation in Nextcloud containers before using `sudo -u www-data` commands to resolve "command not found" errors
-- 🐳 **Enhanced Container Setup** - Added `apt update -y && apt install -y sudo curl` in both tests and quality jobs before Composer installation
-- 🛠️ **Improved Container Dependencies** - Ensures all required tools (sudo, curl) are available in containers before executing commands
-- 🔍 **Fixed Permission Issues** - Resolved APT permission denied errors by ensuring proper package installation in containers
-- 🎯 **Workflow Reliability** - Eliminates "sudo: command not found" errors that were causing workflow failures
+- 🔧 **Fixed sudo Command Not Found Errors** — Added proper `sudo` installation in Nextcloud containers before using `sudo -u www-data` commands to resolve "command not found" errors
+- 🐳 **Enhanced Container Setup** — Added `apt update -y && apt install -y sudo curl` in both tests and quality jobs before Composer installation
+- 🛠️ **Improved Container Dependencies** — Ensures all required tools (sudo, curl) are available in containers before executing commands
+- 🔍 **Fixed Permission Issues** — Resolved APT permission denied errors by ensuring proper package installation in containers
+- 🎯 **Workflow Reliability** — Eliminates "sudo: command not found" errors that were causing workflow failures
 
 ### Version 1.47 - Enhanced Security with sudo -u www-data Commands and Simplified App Management
 **Date:** October 7, 2025  
 **Status:** ✅ Completed  
 **Changes:**
-- 🔐 **Enhanced Security Implementation** - Added `sudo -u www-data` to all 65+ `php occ` commands across both tests and quality jobs for proper user context and security compliance
-- 🎯 **Simplified App Management Strategy** - Commented out `app:install` and `app:update` options to focus exclusively on `app:enable` approach for cleaner, more reliable workflow
-- 🔧 **Consistent Command Execution** - All `php occ` commands now run with proper user context ensuring correct permissions and security
-- 🛡️ **Security Compliance** - Ensures all Nextcloud commands run with appropriate user permissions for production-like security
-- 🎯 **Workflow Simplification** - Removed complex fallback chains by focusing on single app:enable approach
+- 🔐 **Enhanced Security Implementation** — Added `sudo -u www-data` to all 65+ `php occ` commands across both tests and quality jobs for proper user context and security compliance
+- 🎯 **Simplified App Management Strategy** — Commented out `app:install` and `app:update` options to focus exclusively on `app:enable` approach for cleaner, more reliable workflow
+- 🔧 **Consistent Command Execution** — All `php occ` commands now run with proper user context ensuring correct permissions and security
+- 🛡️ **Security Compliance** — Ensures all Nextcloud commands run with appropriate user permissions for production-like security
+- 🎯 **Workflow Simplification** — Removed complex fallback chains by focusing on single app:enable approach
 
 ### Version 1.46 - Standardized Directory Structure with Custom Apps Path
 **Date:** October 7, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
-- 📁 **Standardized Directory Structure** - Updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility
-- 🏗️ **Improved App Installation Path** - Changed app copy destination from `apps-extra/openconnector` to `custom_apps/openconnector` following Nextcloud standards
-- 🔧 **Updated All References** - Updated all file path references throughout both tests and quality jobs to use the new directory structure
-- 📋 **Enhanced Diagnostics** - Updated diagnostic messages to reflect the new directory structure for better troubleshooting
-- 🎯 **Nextcloud Best Practices** - Aligns with Nextcloud's recommended directory structure for custom applications
+- 📁 **Standardized Directory Structure** — Updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility
+- 🏗️ **Improved App Installation Path** — Changed app copy destination from `apps-extra/openconnector` to `custom_apps/openconnector` following Nextcloud standards
+- 🔧 **Updated All References** — Updated all file path references throughout both tests and quality jobs to use the new directory structure
+- 📋 **Enhanced Diagnostics** — Updated diagnostic messages to reflect the new directory structure for better troubleshooting
+- 🎯 **Nextcloud Best Practices** — Aligns with Nextcloud's recommended directory structure for custom applications
 
 ### Version 1.45 - Enhanced Autoloader Generation with Improved Class Mapping
 **Date:** October 6, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
-- 🔧 **Enhanced Autoloader Generation with Heredoc Syntax** - Replaced manual echo commands with heredoc syntax for cleaner autoloader creation
-- 🔍 **Improved Class Mapping** - Enhanced PSR-4 namespace handling and explicit Application class loading
-- 🧪 **Comprehensive Class Loading Diagnostics** - Added class loading tests after autoloader creation to verify OpenConnector Application class is actually loadable
-- 📊 **Enhanced Autoloader Content Structure** - Better autoloader structure with improved namespace handling and explicit class loading
+- 🔧 **Enhanced Autoloader Generation with Heredoc Syntax** — Replaced manual echo commands with heredoc syntax for cleaner autoloader creation
+- 🔍 **Improved Class Mapping** — Enhanced PSR-4 namespace handling and explicit Application class loading
+- 🧪 **Comprehensive Class Loading Diagnostics** — Added class loading tests after autoloader creation to verify OpenConnector Application class is actually loadable
+- 📊 **Enhanced Autoloader Content Structure** — Better autoloader structure with improved namespace handling and explicit class loading
 
 ### Version 1.44 - Enhanced Diagnostics and Fixed Invalid Flags
 **Date:** October 3, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
-- 🔧 **Fixed Invalid --force Flag** - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars
-- 🔍 **Enhanced Class Existence Checks** - Verify that OpenConnector Application class actually exists after each autoloader generation step, not just file existence
-- ⏳ **Improved Timing with Longer Delays** - Added 30-second delays for Nextcloud background processes to complete before checking autoloader generation
-- 📋 **Enhanced File Content Diagnostics** - Check actual autoloader file content and permissions to identify malformed or incomplete files
+- 🔧 **Fixed Invalid --Force Flag** — Removed non-existent `--force` flag from `app:update` commands that was causing errors and hanging progress bars
+- 🔍 **Enhanced Class Existence Checks** — Verify that OpenConnector Application class actually exists after each autoloader generation step, not just file existence
+- ⏳ **Improved Timing with Longer Delays** — Added 30-second delays for Nextcloud background processes to complete before checking autoloader generation
+- 📋 **Enhanced File Content Diagnostics** — Check actual autoloader file content and permissions to identify malformed or incomplete files
 
 ### Version 1.43 - Comprehensive Autoloader Generation Strategy
 **Date:** October 3, 2025  
 **Status:** 🔄 Testing In Progress  
 **Changes:**
-- 🔧 **Comprehensive Autoloader Generation Strategy** - Multi-step approach with early exit checks: disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback
-- 🛠️ **Manual Autoloader Creation** - Create lib/autoload.php manually with proper PSR-4 autoloader registration if all other methods fail
-- 🔄 **Force App Update with --force Flag** - Attempt to force app update to trigger autoloader regeneration
-- 🔧 **Maintenance Repair Integration** - Use maintenance:repair to regenerate autoloaders as part of comprehensive strategy
-- ⚡ **Classmap Authoritative Optimization** - Use Composer's --classmap-authoritative flag for optimized autoloader generation
-- 🎯 **Guaranteed Autoloader Creation** - Manual creation ensures lib/autoload.php exists even if all automated methods fail
-- 🔍 **Multi-Step Fallback Strategy** - Multiple approaches ensure autoloader generation success
-- ✅ **Early Exit Checks** - Prevent step interference by checking for success after each autoloader generation method and exiting early if successful
+- 🔧 **Comprehensive Autoloader Generation Strategy** — Multi-step approach with early exit checks: disable/enable cycle, maintenance repair, forced app update, Composer optimization, and manual creation as fallback
+- 🛠️ **Manual Autoloader Creation** — Create `lib/autoload.php` manually with proper PSR-4 autoloader registration if all other methods fail
+- 🔄 **Force App Update** — Attempt to trigger autoloader regeneration through app update
+- 🔧 **Maintenance Repair Integration** — Use `maintenance:repair` to regenerate autoloaders as part of comprehensive strategy
+- ⚡ **Classmap Authoritative Optimization** — Use Composer’s `--classmap-authoritative` flag for optimized autoloader generation
+- 🎯 **Guaranteed Autoloader Creation** — Manual creation ensures `lib/autoload.php` exists even if all automated methods fail
+- 🔍 **Multi-Step Fallback Strategy** — Multiple approaches ensure autoloader generation success
+- ✅ **Early Exit Checks** — Prevent step interference by checking for success after each method and exiting early if successful
 
 ### Version 1.42 - Workflow Structure Fix + Early Autoloader Check + Timing Fix
 **Date:** October 3, 2025  
 **Status:** ✅ Completed  
 **Changes:**
-- 🔍 **Early Autoloader Check** - Check if lib/autoload.php was already generated during app installation before attempting generation
-- 🏗️ **Workflow Structure Fix** - Address the core timing issue by checking autoloader immediately after app installation
-- ⏱️ **Timing Fix** - Added 10-second wait for background autoloader generation to complete
-- 🔧 **Nextcloud App Autoloader Generation** - Use Nextcloud's app:update command to trigger proper autoloader generation for app-specific classes
-- ⏱️ **Extended Timeouts** - Increased timeouts to 180s for app:install and 90s for app:enable to handle progress bar hanging issues
-- 🎯 **Targeted Autoloader Fix** - Addresses the core issue that Composer only generates vendor autoloaders, not app-specific autoloaders
-- 🔍 **Progress Bar Resolution** - Extended timeouts should resolve the hanging progress bar issue during app installation
+- 🔍 **Early Autoloader Check** — Check if `lib/autoload.php` was already generated during app installation before attempting generation
+- 🏗️ **Workflow Structure Fix** — Address the core timing issue by checking autoloader immediately after app installation
+- ⏱️ **Timing Fix** — Added 10-second wait for background autoloader generation to complete
+- 🔧 **Nextcloud App Autoloader Generation** — Use Nextcloud’s `app:update` to trigger autoloader generation for app-specific classes
+- ⏱️ **Extended Timeouts** — Increased timeouts to 180s for `app:install` and 90s for `app:enable`
+- 🎯 **Targeted Autoloader Fix** — Addresses the core issue that Composer generates vendor autoloaders, not app-specific autoloaders
+- 🔍 **Progress Bar Resolution** — Extended timeouts should resolve the hanging progress bar during app installation
 
 ### Version 1.41 - Enhanced Autoload Diagnostics + Changelog Status Updates
 **Date:** October 3, 2025  
 **Status:** ✅ Completed  
 **Changes:**
-- 🔍 **Enhanced Autoload Diagnostics** - Added comprehensive diagnostics to identify where Composer places autoload files
-- 📊 **Updated Changelog Statuses** - Updated v1.35, v1.36, v1.37, v1.38 to ✅ Completed status
-- 🔍 **Autoload File Location Investigation** - Added diagnostics to find autoload files in vendor/, lib/, and other locations
-- 🔍 **Composer Working Directory Diagnostics** - Added checks to verify Composer execution context and file placement
-- 🎯 **Targeted Troubleshooting** - Specifically addresses the autoload file location mystery
+- 🔍 **Enhanced Autoload Diagnostics** — Added comprehensive diagnostics to identify where Composer places autoload files
+- 📊 **Updated Changelog Statuses** — Updated v1.35–v1.38 to ✅ Completed
+- 🔍 **Autoload File Location Investigation** — Added diagnostics to find autoload files in `vendor/`, `lib/`, and other locations
+- 🔍 **Composer Working Directory Diagnostics** — Added checks to verify Composer execution context and file placement
 
 ### Version 1.40 - Fixed Autoload Generation Inside Container + Timeout Protection
 **Date:** October 2, 2025  
 **Status:** ✅ Completed  
 **Changes:**
-- 🔧 **Fixed Autoload Generation** - Generate autoload files inside container instead of host to fix lib/autoload.php not found error
-- ⏱️ **Added Timeout Protection** - Added timeouts to prevent hanging progress bars and command timeouts
-- 🔍 **Enhanced Diagnostics** - Added comprehensive diagnostics for autoload generation and timeout issues
-- 🎯 **Targeted Fixes** - Specifically addresses the critical autoload generation failure and hanging progress bar issues
+- 🔧 **Fixed Autoload Generation** — Generate autoload files inside container instead of host to fix `lib/autoload.php not found`
+- ⏱️ **Added Timeout Protection** — Added timeouts to prevent hanging progress bars and command timeouts
+- 🔍 **Enhanced Diagnostics** — Added comprehensive diagnostics for autoload generation and timeout issues
 
 ### Version 1.39 - Enhanced Database Verification with MariaDB Container Connection
 **Date:** October 2, 2025  
 **Status:** ✅ Completed  
 **Changes:**
-- Fixed database verification method - Use proper MariaDB container connection instead of mysql client from Nextcloud container
-- Added comprehensive diagnostics for database table verification with emoji markers for easy identification
-- Enhanced error reporting when database verification fails - shows what tables actually exist
-- Added fallback diagnostics to check all openconnector tables and database contents
-- Improved database connection reliability by using the correct container for mysql commands
-- Updated both tests and quality jobs consistently with enhanced diagnostics
-- Should resolve database verification issues and provide better insight into migration problems
+- ✅ **Proper DB Verification** — Use MariaDB container for `mysql` commands
+- 🧪 **Diagnostics** — Show actual tables and counts for `oc_openconnector_*`
+- 🚦 **Better Errors** — Clearer messages on verification failures
 
 ### Version 1.38 - App Install Primary Method + Forced Migration Execution
 **Date:** October 2, 2025  
 **Status:** ✅ Completed  
 **Changes:**
-- Changed primary app installation method from app:enable to app:install
-- app:install ensures database migrations run properly before app code execution
-- Added app:enable as fallback method when app:install fails
-- Fixed invalid app:upgrade command - replaced with proper Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint)
-- Added forced migration execution - disable/enable cycle forces Nextcloud to execute app migration files
-- Fixed database verification - use proper MariaDB container connection instead of mysql client from Nextcloud container
-- Updated both tests and quality jobs consistently
-- Based on research showing app:install handles migrations better in CI environments
-- Should resolve persistent "Table oc_openconnector_job_logs doesn't exist" error and hanging migration progress bars
+- 🔄 **Primary Install via app:install** — Ensures migrations run before app code executes
+- 🔁 **Forced Migration** — Disable/enable cycle to force migration execution
+- 🧰 **Schema Fix Commands** — `db:add-missing-indices`, `db:add-missing-columns`, `db:convert-filecache-bigint`
 
 ### Version 1.37 - Resilient Health Checks
 **Date:** October 2, 2025  
 **Status:** ✅ Completed  
 **Changes:**
-- Fixed overly strict health checks - Changed from immediate exits to warnings for better resilience
-- Improved error handling - Better error handling with warnings instead of immediate exits
-- Added fallback command testing - Multiple fallback approaches when primary commands fail
-- Enhanced workflow reliability - Prevents false failures from overly strict health checks
-- Updated both jobs consistently - Tests and quality jobs both have resilient health checks
+- ⚠️ **Warnings over Failures** — Soft health checks avoid false negatives
+- 🔁 **Fallbacks** — Alternative checks when primary commands fail
 
 ### Version 1.36 - Command Timeout and Health Checks
 **Date:** October 2, 2025  
 **Status:** ✅ Completed  
 **Changes:**
-- Fixed hanging `php occ app --help` command - Added 30-second timeouts to prevent command hanging
-- Added container health checks - Verify Nextcloud is fully ready before running commands
-- Enhanced error diagnostics - Comprehensive error reporting with container status and log analysis
-- Added fallback command testing - Alternative approaches when primary commands fail
-- Improved workflow reliability - Prevents command hanging and ensures workflow completion
-- Updated both jobs consistently - Tests and quality jobs both have timeout protection
+- ⏱️ **30s Timeouts** — Prevent hanging `occ` commands
+- 🧪 **Health Checks** — Verify readiness before running commands
 
 ### Version 1.35 - Available Commands Testing
 **Date:** October 2, 2025  
 **Status:** ✅ Completed  
 **Changes:**
-- Fixed invalid Nextcloud commands - Removed `app:upgrade` (not available) and `--path` option (not supported)
-- Added command availability checking - Shows available app commands with `app --help` for diagnostics
-- Primary approach: Direct app enable - Uses `php occ app:enable openconnector` (should trigger migrations)
-- Fallback 1: App install from store - Uses `php occ app:install openconnector` if direct enable fails
-- Fallback 2: App update - Uses `php occ app:update openconnector` if install fails
-- Enhanced database diagnostics - Added comprehensive table verification and connection testing
-- Applied to both tests and quality jobs - Consistent approach across all workflows
+- 🧭 **Command Discovery** — Use `app --help` to validate availability
+- 🧹 **Removed Unsupported Options** — No `app:upgrade`, no `--path`
 
 ### Version 1.34 - Database Schema Preparation Fix
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Added maintenance:repair before app:enable - Ensures database schema is ready before app initialization
-- Fixed "Table oc_openconnector_job_logs doesn't exist" error - Database tables now created before app code execution
-- Applied to both jobs - Both tests and quality jobs now include early maintenance:repair step
-- Improved timing - Database schema preparation occurs before app:enable attempts to load app code
-- Enhanced reliability - Prevents app:enable failures due to missing database tables
-- Expected result - App should enable successfully with all database tables properly initialized
+- 🧰 **Pre-Enable Repair** — Run `maintenance:repair` before `app:enable`
+- 🗃️ **Tables Ready** — Reduce “table doesn’t exist” errors
 
 ### Version 1.33 - Composer Installation Order Fix
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Fixed Composer installation order in tests job - Moved Composer installation before app installation step
-- Resolved "composer: command not found" error - Composer now available when app dependencies are installed
-- Removed duplicate Composer installation step - Eliminated redundant Composer installation in tests job
-- Ensured workflow consistency - Tests job now matches quality job order
-- Fixed step ordering - Composer installation occurs before any composer commands are executed
-- Expected result - Tests job should now run successfully without command not found errors
+- 🔧 **Order** — Install Composer before composer-based steps
+- 🧪 **Stability** — Avoid “composer: command not found”
 
 ### Version 1.32 - Database Migration Step Addition
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Added explicit database migration step - Added `php occ app:upgrade openconnector` after app enabling
-- Fixed "Table oc_openconnector_job_logs doesn't exist" error - Migrations now run to create required database tables
-- Applied to both jobs - Both tests and quality jobs now include migration step
-- Ensured proper app initialization - Database tables are created before app verification
-- Fixed migration timing - Migrations run after app:enable but before app verification
-- Expected result - App should enable successfully with all database tables properly initialized
+- 🧰 **Migrations** — Added explicit migration step around enabling
 
 ### Version 1.31 - Dependencies Before Enabling and Step Name Fixes
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Fixed app enabling order - Moved app dependencies installation before app enabling in both jobs
-- Resolved database table missing error - App dependencies now installed before enabling, ensuring proper database migrations
-- Resolved missing vendor/autoload.php error - Composer install now runs before app enabling
-- Renamed misleading step names - "Install OpenConnector app dependencies" → "Verify app installation and run diagnostics"
-- Fixed step name consistency - Added execution context to all step names (GitHub Actions runner vs Nextcloud container)
-- Improved workflow clarity - All step names now accurately reflect their functionality and execution context
-- Enhanced debugging experience - Clear step names make it easier to understand workflow execution flow
-- Expected result - App should now enable successfully with all dependencies and database tables properly initialized
+- 📦 **Deps First** — Install app dependencies before `app:enable`
+- 🏷️ **Step Names** — Clarified step naming and contexts
 
 ### Version 1.30 - Comprehensive Workflow Consistency Fixes
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Fixed tests job duplicate app:enable calls - Removed duplicate "Enabling OpenConnector app" steps
-- Fixed tests job premature app:enable - Added proper app moving before enabling in tests job
-- Ensured consistency between jobs - Both tests and quality jobs now follow identical patterns
-- Removed duplicate app moving logic - Eliminated redundant app moving steps in both jobs
-- Improved workflow reliability - Both jobs now have proper step ordering and error handling
-- Applied comprehensive fixes - All workflow issues identified and resolved systematically
-- Expected result - Both jobs should now run successfully with consistent behavior and no duplicate operations
+- 🧩 **Consistency** — Tests and quality jobs follow identical patterns
+- 🧹 **De-duplication** — Removed redundant enable steps
 
 ### Version 1.29 - Workflow Step Ordering and App Installation Fixes
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Fixed quality job step ordering - Moved Composer installation before development dependencies installation
-- Fixed app installation method - Changed from `app:install` to `app:enable` for local app usage
-- Resolved "composer: command not found" error - Composer now available when development dependencies are installed
-- Resolved "Could not download app openconnector" error - Uses local app instead of trying to download from store
-- Applied to both jobs - Same fixes implemented in both test and quality jobs
-- Better error messages - Updated error messages to reflect correct operations (enable vs install)
-- Expected result - Both quality and test jobs should now run without critical step ordering and app installation errors
+- 🧭 **Ordering** — Start containers before installing dev deps
+- 🛠️ **Local App** — Prefer `app:enable` for local code
 
 ### Version 1.28 - Critical Workflow Fixes
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Fixed quality job step ordering - Moved Docker container startup before development dependencies installation
-- Enhanced autoloader generation - Added verification step to ensure `lib/autoload.php` exists on host
-- Container ordering issue resolved - Quality job was trying to install dependencies in non-existent container
-- Autoloader generation failure handling - Added proper verification and error handling for autoloader creation
-- Applied to both jobs - Same fixes implemented in both test and quality jobs
-- Better error handling - Clear diagnostics when autoloader generation fails
-- Expected result - Workflow should now run without critical ordering and file generation errors
+- 🧭 **Ordering** — Start Docker first in quality job
+- 🔍 **Autoloader Verification** — Verify `lib/autoload.php` creation
 
 ### Version 1.27 - App Autoloader Generation Fix
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- App autoloader generation - Generate autoloader on host and copy to container to ensure proper creation
-- Nextcloud autoloader reload - Added app disable/enable cycle after autoloader generation to force Nextcloud to reload
-- Cache clearing after autoloader - Added `maintenance:repair` after autoloader generation to clear cached autoloader state
-- Autoloader verification - Added verification step to confirm autoloader file was actually created
-- Host-based autoloader generation - Generate autoloader on GitHub Actions host where composer.json exists, then copy to container
-- Comprehensive diagnostics - Added detailed pre-class loading diagnostics to both test and quality jobs
-- Enhanced sleep timing - Increased retry mechanism sleep from 3 to 10 seconds for better timing
-- Root cause identification - Systematic diagnostics reveal exactly what's missing before class loading attempts
-- Expected result - Should resolve "OpenConnector Application class not found" by ensuring proper autoloader generation
+- 🧰 **Host Generation** — Generate autoloader on host; copy into container
+- 🔁 **Reload** — Disable/enable and `maintenance:repair` to reload
 
 ### Version 1.26 - Optimized Retry Mechanism and Timing Fixes
 **Date:** September 30, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Optimized retry mechanism - 5 attempts with 3-second delays instead of single check
-- Removed unnecessary sleeps - Only retry where timing actually matters (after maintenance:repair)
-- Clear timing comments - Added explanations of what we're waiting for and why
-- Better error handling - Workflow fails appropriately if all retry attempts fail
-- Targeted solution - Retry mechanism only for class loading after background processes
-- Applied to both jobs - Same optimized retry logic for test and quality jobs
-- Expected result - Should resolve "OpenConnector Application class not found" by giving Nextcloud time to complete background processes
+- 🔁 **Retries** — 5 attempts with short sleeps for class checks
 
 ### Version 1.25 - Enhanced Diagnostics and Cache Clearing
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Enhanced diagnostics structure - Separated diagnostics into dedicated workflow steps for better debugging
-- Root cause identification - Diagnostics revealed app location, dependencies, and registration were all correct
-- Nextcloud cache issue identified - Problem was stale autoloader cache after app move
-- Forced cache clearing - Added `php occ maintenance:repair` and `php occ app:list` to force Nextcloud to rescan apps
-- Clean workflow structure - Separated concerns into focused steps for better maintainability
-- Applied to both jobs - Same enhanced diagnostics and cache clearing for test and quality jobs
-- Expected result - Should resolve "OpenConnector Application class not found" by clearing Nextcloud's internal caches
+- 🔍 **Diagnostics** — Clear structure, logs, and cache checks
 
 ### Version 1.24 - Fixed App Location Issue
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Root cause identified - Nextcloud expects apps in `/var/www/html/apps/` not `/var/www/html/apps-extra/`
-- App location fix - Copy app from `/apps-extra/` to `/apps/` directory for proper autoloader recognition
-- App restart in new location - Disable and re-enable app after moving to ensure Nextcloud recognizes it
-- Applied to both jobs - Same fix implemented in both test and quality jobs
-- Expected result - Should resolve "OpenConnector Application class not found" and 212 class loading errors
+- 📁 **Path Fix** — Use correct app paths to satisfy Nextcloud expectations
 
 ### Version 1.23 - Added App Structure Diagnostics and Fixed Command Failures
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Added comprehensive app structure diagnostics to identify root cause of class loading issues
-- Added app directory structure verification and appinfo file inspection
-- Fixed command failure issue with app location checks (exit code 1 when no matches found)
-- Made app location check commands more robust with proper error handling
-- Applied diagnostics and fixes to both test and quality jobs consistently
+- 🔍 **Structure Checks** — Stronger diagnostics for app integrity
 
 ### Version 1.22 - Fixed CodeSniffer Dependencies and App Class Loading
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Fixed "Failed to open stream: No such file or directory" error in CodeSniffer step
-- Added "Install project dependencies" step before running CodeSniffer
-- Resolved missing `vendor-bin/cs-fixer/vendor/autoload.php` file issue
-- Ensured main project Composer dependencies are installed on GitHub Actions runner
-- Added app disable/enable cycle after installing dependencies to reload app classes
-- Fixed "OpenConnector Application class not found" issue by restarting the app
-- Ensures Nextcloud reloads the app's autoloader after dependency installation
-- Applied fixes to both test and quality jobs
+- 🧰 **Deps** — Ensure project deps are installed before style tools
+- 🔁 **Reload** — Disable/enable after deps to refresh autoloader
 
 ### Version 1.21 - Improved User Feedback and Fixed Missing PHP Extensions
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Improved user feedback for class loading checks with clear warnings and success messages
-- Added explanatory messages for expected "class not found" before dependencies installation
-- Enhanced success messages to clearly indicate when class loading works after dependencies
-- Fixed "missing ext-soap and ext-xsl" errors by adding `--ignore-platform-req` flags to Composer
-- Added `--ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl` to app dependencies installation
-- Resolved Composer lock file compatibility issues with missing PHP extensions
-- Applied improvements and fixes to both test and quality jobs
+- 🗣️ **Messaging** — Clearer success/warning output
+- 📦 **Composer Flags** — Ignore missing `ext-soap`/`ext-xsl` on CI
 
 ### Version 1.20 - Fixed Composer Installation Order
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Fixed "composer: command not found" error by moving app dependencies installation after Composer installation
-- Created separate "Install OpenConnector app dependencies" step that runs after Composer is available
-- Added class loading verification both before and after dependencies installation
-- Applied fixes to both test and quality jobs
+- 🧭 **Ordering** — Composer available before any composer commands
 
 ### Version 1.19 - App Dependencies Installation Fix
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Added `composer install --no-dev --optimize-autoloader` for OpenConnector app dependencies
-- Fixed "OpenConnector Application class not found" error by ensuring app dependencies are installed
-- Enhanced app installation process to include dependency installation
-- Applied fixes to both test and quality jobs
+- 📦 **Install** — `composer install --no-dev --optimize-autoloader` for app
 
 ### Version 1.18 - Enhanced App Installation Diagnostics
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Added comprehensive diagnostics for OpenConnector app installation
-- Enhanced app directory verification and class loading checks
-- Added Nextcloud logs inspection for troubleshooting app installation failures
-- Improved error reporting for app installation and enabling steps
-- Applied enhanced diagnostics to both test and quality jobs
+- 🔍 **Diagnostics** — More visibility into install steps and failures
 
 ### Version 1.17 - PHPUnit Autoloader Fix
 **Date:** September 29, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Resolved PHPUnit class loading issues - Fixed autoloader generation problems
-- Fixed PHPUnit command execution failures - Proper autoloader configuration
-- Added `composer dump-autoload --optimize` after PHPUnit installation to fix class loading issues
-- Enhanced error diagnostics to try running PHPUnit with `php` command as fallback
-- Fixed "Class PHPUnit\TextUI\Command not found" error by regenerating autoloader
-- Applied fixes to both test and quality jobs
+- 🧪 **Autoload** — `composer dump-autoload --optimize` after PHPUnit install
 
 ### Version 1.16 - PHPUnit Installation Fix
 **Date:** September 26, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Resolved Composer option errors - Removed invalid Composer flags
-- Fixed PHPUnit installation failures - Proper installation path and configuration
-- Fixed invalid `--no-bin-links` Composer option that doesn't exist
-- Reverted to standard PHPUnit installation approach
-- Enhanced diagnostics to show PHPUnit executable location
-- Applied fixes to both test and quality jobs
+- 🧰 **Composer Flags** — Removed invalid flags; stable PHPUnit install
 
 ### Version 1.15 - PHP Version Fix and Composer Installation
 **Date:** September 26, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Resolved PHP version mismatch - Ensured consistent PHP versions across all jobs
-- Fixed Composer availability issues - Proper Composer installation in containers
-- Fixed PHP version in quality job from 8.2 to 8.3 (matches local development)
-- Added Composer installation step to both test and quality jobs
-- Improved occ command diagnostics with proper file and execution checks
-- Fixed missing version configuration in quality job
+- 🔢 **Versions** — Align PHP versions; install Composer in containers
+- 🧪 **occ Diagnostics** — Better checks for file/exec and versions
 
 ### Version 1.14 - Centralized Version Management
 **Date:** September 26, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Added `.github/workflows/versions.env` for centralized version management
-- Updated CI workflow to use environment variables (`${{ env.VARIABLE_NAME }}`)
-- All Docker images now reference centralized versions
-- Matches local development environment versions
-- Easy to update versions in one place
+- 🗂️ **versions.env** — Single source of truth for versions
+- 🔗 **env Usage** — Reference images via `${{ env.* }}`
 
 ### Version 1.13 - Docker-Based Nextcloud Environment
 **Date:** September 26, 2025  
 **Status:** ✅ Implemented  
 **Changes:**
-- Implemented real Nextcloud Docker environment
-- Added MariaDB 10.6, Redis 7, MailHog services
-- Matched local docker-compose.yml setup exactly
-- Simplified bootstrap.php for container environment
-- Added comprehensive diagnostics for troubleshooting
-- Fixed apps-extra directory creation issue
-- Fixed PHPUnit command path issue
-- Added container cleanup for all services
-- Resolved MockMapper compatibility issues - Eliminated complex mocking by using real Nextcloud environment
-- Fixed database connection issues - Proper service linking and configuration
-- Resolved container startup timing issues - Enhanced health checks and proper service coordination
-- Enhanced Nextcloud health check - Wait for full initialization including database setup
-- Improved occ command reliability - Proper working directory and timing
-- Extended timeout - 10 minutes for complete Nextcloud initialization
-- Better error handling - Robust curl commands with JSON validation
-
-### Version 1.12 - Reversion to Original Approach
+### Version 1.12 — Reversion to Original Approach
 **Date:** September 26, 2025  
 **Status:** ❌ Failed  
-**Changes:**
-- Reverted database-based testing strategy
-- Attempted to fix MockMapper signature compatibility
-- Removed complex database testing files
-- Restored original ci.yml configuration
-- Issue: MockMapper signature conflicts persisted
-
-### Version 1.11 - Database-Based Testing Strategy
+**Changes:** Attempted to revert to prior CI setup to resolve MockMapper conflicts; problems persisted, approach abandoned.
+### Version 1.11 — Database-Based Testing Strategy (Experimental)
 **Date:** September 26, 2025  
 **Status:** ❌ Abandoned  
-**Changes:**
-- Introduced in-memory SQLite database testing
-- Created phpunit-ci.xml and bootstrap-ci.php
-- Added database setup steps to CI workflow
-- Issue: Still required complex OCP mocking
-- Result: Reverted due to complexity
+**Changes:** Prototype SQLite strategy (`phpunit-ci.xml`, `bootstrap-ci.php`) reduced mocks but added complexity; reverted in favor of full Nextcloud containers.
 
 ---
 
 ## 📊 Current Status
 
-### ✅ **Working**
-- Docker environment setup
-- Service linking (MariaDB, Redis, Mail, Nextcloud)
+### 🔄 **Currently Testing (v1.49)**
+- Fixed sudo command issues — Ensure `sudo` is present before `sudo -u www-data`. (v1.48)
+- Service linking (now via Docker networks & service names, v1.49)
 - App dependencies installation
-- Database schema preparation with maintenance:repair
+- Database schema preparation with `maintenance:repair`
 - Command availability checking
 
 ### 🔄 **Currently Testing (v1.48)**
-- Fixed sudo command issues - Testing proper sudo installation in Nextcloud containers before using sudo -u www-data commands to resolve "command not found" errors
-- Enhanced container setup - Testing improved container dependencies with apt update and sudo/curl installation before Composer setup
-- Enhanced security implementation - Testing all 65+ php occ commands running as sudo -u www-data for proper user context and security compliance (v1.47)
-- Simplified app management strategy - Testing app:enable approach with app:install and app:update commented out for cleaner, more reliable workflow (v1.47)
-- Standardized directory structure - Testing updated workflow to use `/var/www/html/custom_apps/` instead of `/var/www/html/apps-extra/` for better Nextcloud compatibility (v1.46)
-- Enhanced autoloader generation - Testing comprehensive autoloader generation strategy with improved class mapping and diagnostics (v1.45)
+- Fixed sudo command issues — Testing proper sudo installation in Nextcloud containers before using `sudo -u www-data`
+- Enhanced container setup — Testing improved container dependencies with `apt update` and sudo/curl installation before Composer setup
+- Enhanced security implementation — Testing all `php occ` commands running as `sudo -u www-data` (v1.47)
+- Standardized directory structure — Testing updated workflow to use `/var/www/html/custom_apps/` (v1.46)
+- Enhanced autoloader generation — Testing comprehensive strategy with improved class mapping and diagnostics (v1.45)
 
 ### ✅ **Recently Fixed**
-- Fixed invalid --force flag - Removed non-existent --force flag from app:update commands that was causing errors and hanging progress bars (v1.44)
-- Enhanced class existence checks - Added verification that OpenConnector Application class actually exists after each autoloader generation step (v1.44)
-- Improved timing with longer delays - Added 30-second delays for Nextcloud background processes to complete before checking autoloader generation (v1.44)
-- Enhanced file content diagnostics - Added actual autoloader file content and permissions checking to identify malformed or incomplete files (v1.44)
-- Enhanced database verification - Fixed database table verification to use proper MariaDB container connection with comprehensive diagnostics (v1.39)
-- Changed app installation method - Use app:install as primary method to ensure database migrations run properly (v1.38)
-- Fixed invalid app:upgrade command - Replaced with proper Nextcloud commands (db:add-missing-indices, db:add-missing-columns, db:convert-filecache-bigint) (v1.38)
-- Added forced migration execution - Disable/enable cycle forces Nextcloud to execute app migration files (v1.38)
-- Overly strict health checks causing false failures - Fixed health check logic to be more resilient (v1.37)
-- Hanging php occ app --help command - Added 30-second timeouts and health checks (v1.36)
-- Invalid Nextcloud commands - Removed `app:upgrade` (not available) and `--path` option (not supported) (v1.35)
-- Command availability checking - Added `app --help` for diagnostics (v1.35)
-- Duplicate app:enable calls - Removed redundant calls after migration testing (v1.35)
-- Quality job step ordering - Docker containers now start before dependency installation (v1.35)
-- Autoloader generation verification - Added proper verification for `lib/autoload.php` creation
-
-### 📋 **Next Steps**
-1. Test the workflow with v1.47 enhanced security implementation and simplified app management strategy
-2. Verify that all 65+ php occ commands run with proper user context and security compliance
-3. Monitor if the app:enable approach works reliably without app:install and app:update fallbacks
-4. Test the standardized directory structure using custom_apps path for better Nextcloud compatibility
-5. Check if the enhanced diagnostics with new directory structure provide better troubleshooting information
-6. Test the comprehensive autoloader generation strategy (v1.43) with enhanced diagnostics (v1.44), improved generation (v1.45), standardized directory structure (v1.46), and enhanced security (v1.47)
-7. Analyze if the Nextcloud best practices alignment, proper user context, and simplified app management resolves any remaining compatibility issues
-8. Update documentation status based on test results
+- PHPUnit versioning aligned per PHP (v1.49)
+- Deprecated `--link` removed; networks used (v1.49)
+- Step naming corrected to **PHP CS Fixer** (v1.49)
+- Invalid `--force` flag removed (v1.44)
+- Database verification via MariaDB container (v1.39)
 
 ## 🛠️ Maintenance
 
 ### 🔄 **Regular Updates**
 - Update Docker image versions
 - Monitor workflow performance
-- Keep composer.lock synchronized
+- Keep `composer.lock` synchronized
 - Test with actual pull requests
 
 ### 📚 **Documentation**
@@ -597,4 +431,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: October 7, 2025 | Version: 1.48 | Status: Fixed sudo Command Issues and Enhanced Container Setup*
+*Last Updated: October 9, 2025 | Version: 1.49 | Status: PHPUnit Version Matrix, Accurate Step Names, and Docker Networks*
