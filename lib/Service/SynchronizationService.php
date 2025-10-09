@@ -3354,7 +3354,7 @@ class SynchronizationService
 
 		// Get the synchronization contract for this object
         $findContractByOriginId = false;
-        if (isset($sourceConfig['findContractByOriginIdOnly']) === true && (filter_var($sourceConfig['findContractByOriginIdOnly'], FILTER_VALIDATE_BOOLEAN))) {
+        if (isset($sourceConfig['findContractByOriginIdOnly']) === true && filter_var($sourceConfig['findContractByOriginIdOnly'], FILTER_VALIDATE_BOOLEAN) === true) {
             $findContractByOriginId = true;
         }
 
