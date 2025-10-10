@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.49 - PHPUnit Version Matrix, Accurate Step Names, and Docker Networks  
-**Date:** October 9, 2025  
+**Current Version:** 1.50 - Per-job PHPUnit constraint, bcmath, tool path fixes  
+**Date:** October 10, 2025  
 **Status:** ✅ Completed  
-**Approach:** Conditional PHPUnit per PHP version, standardized step names (PHP CS Fixer), and modern container networking with per-job Docker networks instead of deprecated `--link`.
+**Approach:** Define PHPUnit constraint separately in each job (tests vs quality), add missing `bcmath` PHP extension, and use container-managed tool paths under `./lib/composer/bin` for reliability.
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -20,6 +20,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **MailHog** — Email testing (`ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest`)
 - **Nextcloud** — Real environment (`nextcloud:31`)
 - **Networking (v1.49)** — Dedicated per-job Docker networks (`nc-net-tests`, `nc-net-quality`) replace deprecated `--link`, improving isolation and name-based service discovery.
+- **PHP Extensions (v1.50)** — Added `bcmath` to align CI with runtime expectations.
 
 ## 🔧 Key Features & Benefits
 
@@ -98,6 +99,14 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ---
 
 ## 📜 Changelog
+
+### Version 1.50 - Per-job PHPUnit constraint, bcmath, tool path fixes
+**Date:** October 10, 2025  
+**Status:** ✅ Completed  
+**Changes:**
+- 🧪 PHPUnit constraint defined per job: `tests` job uses matrix-based `^9.6` (PHP 8.2) or `^10.5` (PHP 8.3); `quality` job sets constraint explicitly to `^10.5` for PHP 8.3. Avoids cross-job step output leakage and removes duplication.
+- ➕ PHP extension `bcmath` added to both jobs' `setup-php` steps for parity with runtime requirements.
+- 🛠️ Tool paths and shells: use `bash -lc` and tool binaries from `./lib/composer/bin` (php-cs-fixer, psalm) for consistent resolution inside the Nextcloud container.
 
 ### Version 1.49 - Job parity, custom_apps standardization, PHPUnit matrix, Docker networks, safer shell
 **Date:** October 9, 2025  
@@ -411,6 +420,9 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ### ✅ **Recently Fixed**
 - PHPUnit versioning aligned per PHP (v1.49)
+- Per-job PHPUnit constraint; removed duplicate step in tests job (v1.50)
+- Added `bcmath` to PHP extensions in both jobs (v1.50)
+- Use `bash -lc` and `./lib/composer/bin/*` for dev tools execution (v1.50)
 - Deprecated `--link` removed; networks used (v1.49)
 - Step naming corrected to **PHP CS Fixer** (v1.49)
 - Invalid `--force` flag removed (v1.44)
@@ -431,4 +443,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: October 9, 2025 | Version: 1.49 | Status: PHPUnit Version Matrix, Accurate Step Names, and Docker Networks*
+*Last Updated: October 10, 2025 | Version: 1.50 | Status: Per-job PHPUnit constraint, bcmath, tool path fixes*

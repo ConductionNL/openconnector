@@ -48,7 +48,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql, bcmath
           tools: composer:v2
 
       - name: Get composer cache directory
@@ -62,27 +62,6 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
-
-      # Decide PHPUnit version constraint to mirror tests job
-      - name: Decide PHPUnit version constraint (Quality)
-        id: phpunit-constraint-quality
-        run: |
-          # quality job runs on PHP 8.3
-          echo "constraint=^10.5" >> $GITHUB_OUTPUT
-          echo "Using PHPUnit constraint: $(cat $GITHUB_OUTPUT | sed -n 's/constraint=//p')"
-
-      - name: Install dependencies on GitHub Actions runner (Quality)
-        run: |
-          echo "============================================================"
-          echo "📦  Install Composer dependencies (runner) [quality]"
-          echo "============================================================"
-          composer install --no-interaction --prefer-dist
-          if [ ! -f "./vendor/bin/phpunit" ]; then
-            echo "📦  Install PHPUnit (runner) [quality]"
-            composer require --dev phpunit/phpunit:${{ steps.phpunit-constraint-quality.outputs.constraint }} --no-interaction
-          fi
-          echo "🔎  PHPUnit version (quality):"
-          ./vendor/bin/phpunit --version
 
       # Decide PHPUnit version constraint based on matrix PHP
       - name: Decide PHPUnit version constraint
@@ -409,7 +388,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql, bcmath
           tools: composer:v2
 
       - name: Get composer cache directory
@@ -423,6 +402,14 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
+
+      # Decide PHPUnit version constraint for quality job
+      - name: Decide PHPUnit version constraint (Quality)
+        id: phpunit-constraint-quality
+        run: |
+          # quality job runs on PHP 8.3
+          echo "constraint=^10.5" >> $GITHUB_OUTPUT
+          echo "Using PHPUnit constraint: $(cat $GITHUB_OUTPUT | sed -n 's/constraint=//p')"
 
       - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
         run: |
@@ -531,10 +518,12 @@ jobs:
           echo "============================================================"
           echo "🧰  Install dev tools (php-cs-fixer, Psalm)"
           echo "============================================================"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev friendsofphp/php-cs-fixer:^3.0 vimeo/psalm:^5.0 --no-interaction"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/php-cs-fixer --version"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/psalm --version"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && composer require --dev friendsofphp/php-cs-fixer:^3 vimeo/psalm:^5 --no-interaction"
+          echo "🔎  Tools versions"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && ./lib/composer/bin/php-cs-fixer --version"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && ./lib/composer/bin/psalm --version"
           echo "✅  Dev tools ready"
+        continue-on-error: false
 
       - name: Install and enable OpenConnector app (Quality)
         run: |
@@ -686,18 +675,20 @@ jobs:
 
       - name: Run PHP CS Fixer in Nextcloud container (Quality)
         run: |
+          set -euo pipefail
           echo "============================================================"
           echo "🎯  Code style (php-cs-fixer --dry-run)"
           echo "============================================================"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/php-cs-fixer fix --dry-run --diff"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && ./lib/composer/bin/php-cs-fixer fix --dry-run --diff"
         continue-on-error: true
 
       - name: Run Psalm static analysis in Nextcloud container (Quality)
         run: |
+          set -euo pipefail
           echo "============================================================"
           echo "🔎  Static analysis (Psalm)"
           echo "============================================================"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./vendor/bin/psalm --threads=1 --no-cache"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && ./lib/composer/bin/psalm --threads=1 --no-cache"
         continue-on-error: true
 
       - name: Run unit tests inside Nextcloud container (Quality)
