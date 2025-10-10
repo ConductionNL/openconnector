@@ -692,7 +692,7 @@ class EndpointService
 
             }
 
-            $results = $mapper->findMultiple($ids);
+            $results = $mapper->findAll(['ids' => $ids]);
             foreach ($results as $key => $result) {
                 $results[$key] = $this->replaceInternalReferences(mapper: $mapper, object: $result);
             }
@@ -1332,6 +1332,11 @@ class EndpointService
             if(filter_var($value, FILTER_VALIDATE_URL) !== false) {
                 $exploded = explode(separator: '/', string: $value);
                 $value = end($exploded);
+            }
+
+            // Only allow uuids in the extend_input rule
+            if(Uuid::isValid($value) === false) {
+                continue;
             }
 
 			$extends = [];
