@@ -50,11 +50,11 @@
 		"web-token/jwt-framework": "^3"
 	},
 	"require-dev": {
+		"friendsofphp/php-cs-fixer": "^3",
 		"nextcloud/ocp": "dev-stable29",
+		"phpunit/phpunit": "^9.6 || ^10.5",
 		"roave/security-advisories": "dev-latest",
-		"phpunit/phpunit": "^9.6",
-		"friendsofphp/php-cs-fixer": "^3.0",
-		"vimeo/psalm": "^5.0"
+		"vimeo/psalm": "^5"
 	},
 	"config": {
 		"allow-plugins": {
