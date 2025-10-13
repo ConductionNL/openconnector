@@ -19,15 +19,15 @@ class JobLogMapper extends QBMapper
         parent::__construct($db, 'openconnector_job_logs');
     }
 
-    public function find(int $id): JobLog
+    public function find(int|string $id): JobLog
     {
         $qb = $this->db->getQueryBuilder();
 
         $qb->select('*')
             ->from('openconnector_job_logs')
-            ->where(
-                $qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
-            );
+			->where(
+				$qb->expr()->eq('id', $qb->createNamedParameter((int)$id, IQueryBuilder::PARAM_INT))
+			);
 
         return $this->findEntity($qb);
     }

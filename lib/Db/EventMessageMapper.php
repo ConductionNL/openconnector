@@ -33,15 +33,15 @@ class EventMessageMapper extends QBMapper
      * @param int $id The message ID
      * @return EventMessage
      */
-    public function find(int $id): EventMessage
+    public function find(int|string $id): EventMessage
     {
         $qb = $this->db->getQueryBuilder();
 
         $qb->select('*')
             ->from('openconnector_event_messages')
-            ->where(
-                $qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
-            );
+			->where(
+				$qb->expr()->eq('id', $qb->createNamedParameter((int)$id, IQueryBuilder::PARAM_INT))
+			);
 
         return $this->findEntity($qb);
     }

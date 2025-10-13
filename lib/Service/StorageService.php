@@ -46,6 +46,7 @@ class StorageService
      * @param IRootFolder $rootFolder The Nextcloud rootfolder
      * @param IAppConfig $config The configuration of the openconnector application.
      * @param ICacheFactory $cacheFactory The cache factory.
+     * @param IUserManager $userManager The user manager.
      * @param IUserSession $userSession The user session.
      */
     public function __construct(
@@ -53,6 +54,7 @@ class StorageService
         private readonly IAppConfig $config,
         ICacheFactory $cacheFactory,
         private readonly IUserManager $userManager,
+        private readonly IUserSession $userSession,
     ) {
         $this->cache = $cacheFactory->createDistributed(self::CACHE_KEY);
     }

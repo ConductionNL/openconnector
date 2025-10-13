@@ -63,7 +63,7 @@ class EndpointsController extends Controller
 	 * @param LoggerInterface $logger Service for logging
 	 */
 	public function __construct(
-		$appName,
+		string $appName,
 		IRequest $request,
 		private IAppConfig $config,
 		private EndpointMapper $endpointMapper,
@@ -73,9 +73,9 @@ class EndpointsController extends Controller
 		private EndpointCacheService $endpointCacheService,
 		private LoggerInterface $logger,
 //		private EndpointLogMapper $endpointLogMapper,
-		$corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		$corsMaxAge = 1728000
+		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
+		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		int $corsMaxAge = 1728000
 	)
 	{
 		parent::__construct($appName, $request);
@@ -245,13 +245,14 @@ class EndpointsController extends Controller
 				method: $this->request->getMethod()
 			);
 
-			// If no matching endpoint found, return 404
-			if ($endpoint === null) {
-				return new JSONResponse(
-					data: ['error' => 'No matching endpoint found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
-					statusCode: 404
-				);
-			}
+		// If no matching endpoint found, return 404
+		if ($endpoint === null) {
+			$response = new JSONResponse(
+				data: ['error' => 'No matching endpoint found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
+				statusCode: 404
+			);
+			return $this->authorizationService->corsAfterController($this->request, $response);
+		}
 		} catch (\Exception $e) {
 			// Multiple endpoints found (handled by cache service)
 			return new JSONResponse(
@@ -495,8 +496,16 @@ class EndpointsController extends Controller
 						return new JSONResponse($object->jsonSerialize());
 					}
 
-									// Handle collection request (list objects)
-				$result = $mapper->findAllPaginated(requestParams: $parameters);
+				// Handle collection request (list objects)
+			$result = $mapper->findAll(
+				$parameters['limit'] ?? null,
+				$parameters['offset'] ?? null,
+				$parameters['filters'] ?? [],
+				$parameters['searchConditions'] ?? [],
+				$parameters['searchParams'] ?? [],
+				$parameters['sort'] ?? [],
+				$parameters['search'] ?? null
+			);
 
 				// Debug: log the register and schema we're querying
 				$this->logger->info('Simple endpoint query', [

@@ -80,8 +80,7 @@ class JobMapper extends QBMapper
 		?int $offset = null,
 		?array $filters = [],
 		?array $searchConditions = [],
-		?array $searchParams = [],
-		?array $ids = []
+		?array $searchParams = []
 	): array {
 		$qb = $this->db->getQueryBuilder();
 
