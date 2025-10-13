@@ -310,6 +310,10 @@ class EndpointService
                         break;
                 }
 
+                if (isset($endpoint->getConfigurations()['defaultStatusCode']) === true) {
+                    $statusCode = $endpoint->getConfigurations()['defaultStatusCode'];
+                }
+
                 return new JSONResponse(data: $ruleResult['body'], statusCode: $statusCode, headers: $ruleResult['headers']);
             }
 
