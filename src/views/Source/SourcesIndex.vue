@@ -237,7 +237,7 @@
 												</tr>
 											</thead>
 											<tbody>
-												<tr v-for="(value, key) in source.configuration" :key="key">
+												<tr v-for="(value, key) in filteredConfiguration(source)" :key="key">
 													<td>{{ key }}</td>
 													<td class="truncatedText">
 														{{ value }}
@@ -444,7 +444,7 @@
 														</NcActions>
 													</td>
 												</tr>
-												<tr v-for="(config, index) in source.authenticationConfig" :key="`auth-${index}`">
+												<tr v-for="(config, index) in source.configuration.authentication" :key="`auth-${index}`">
 													<td>{{ t('openconnector', 'Auth Config {index}', { index: index + 1 }) }}</td>
 													<td class="truncatedText">
 														{{ typeof config === 'object' ? JSON.stringify(config) : config }}
@@ -713,6 +713,10 @@ export default {
 		this.sourceStore.refreshSourceList()
 	},
 	methods: {
+		filteredConfiguration(source) {
+			const { authentication, ...configWithoutAuth } = source.configuration || {}
+			return configWithoutAuth
+		},
 		setViewMode(mode) {
 			if (mode === 'cards' || mode === 'table') {
 				this.sourceStore.setViewMode(mode)
@@ -752,8 +756,8 @@ export default {
 			if (source.jwt) count++
 			if (source.secret) count++
 			if (source.authorizationHeader) count++
-			if (source.authenticationConfig && source.authenticationConfig.length > 0) {
-				count += source.authenticationConfig.length
+			if (source.configuration.authentication && Object.keys(source.configuration.authentication).length > 0) {
+				count += Object.keys(source.configuration.authentication).length
 			}
 			return count
 		},
@@ -775,7 +779,7 @@ export default {
 		hasAuthenticationData(source) {
 			return !!(source.auth || source.username || source.apikey || source.jwt
 				|| source.secret || source.authorizationHeader
-				|| (source.authenticationConfig && source.authenticationConfig.length > 0))
+				|| (source.configuration.authentication && Object.keys(source.configuration.authentication).length > 0))
 		},
 
 		/**

@@ -289,9 +289,9 @@ export default {
 			if (source.jwt) authData.JWT = source.jwt
 			if (source.secret) authData.Secret = source.secret
 			if (source.authorizationHeader) authData['Authorization Header'] = source.authorizationHeader
-			if (source.authenticationConfig && source.authenticationConfig.length > 0) {
-				source.authenticationConfig.forEach((config, index) => {
-					authData[`Auth Config ${index + 1}`] = typeof config === 'object' ? JSON.stringify(config) : config
+			if (source.configuration?.authentication && typeof source.configuration.authentication === 'object') {
+				Object.entries(source.configuration.authentication).forEach(([key, value]) => {
+					authData[key] = typeof value === 'object' ? JSON.stringify(value) : value
 				})
 			}
 
