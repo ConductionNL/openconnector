@@ -150,125 +150,129 @@
 								</p>
 								<!-- Toggle between stats, configurations, and authentication -->
 								<div v-if="!getSourceViewState(source).showConfigurations && !getSourceViewState(source).showAuthentication">
-									<table class="statisticsTable sourceStats">
-										<thead>
-											<tr>
-												<th>{{ t('openconnector', 'Property') }}</th>
-												<th>{{ t('openconnector', 'Value') }}</th>
-											</tr>
-										</thead>
-										<tbody>
-											<tr>
-												<td>{{ t('openconnector', 'Status') }}</td>
-												<td>{{ source.status || 'Unknown' }}</td>
-											</tr>
-											<tr>
-												<td>{{ t('openconnector', 'Enabled') }}</td>
-												<td>
-													{{ source.isEnabled ? 'Enabled' : 'Disabled' }}
-												</td>
-											</tr>
-											<tr>
-												<td>{{ t('openconnector', 'Type') }}</td>
-												<td>{{ source.type || 'Unknown' }}</td>
-											</tr>
-											<tr v-if="source.location">
-												<td>{{ t('openconnector', 'Location') }}</td>
-												<td class="truncatedUrl">
-													{{ source.location }}
-												</td>
-											</tr>
-											<tr v-if="source.version">
-												<td>{{ t('openconnector', 'Version') }}</td>
-												<td>{{ source.version }}</td>
-											</tr>
-											<tr>
-												<td>{{ t('openconnector', 'Configurations') }}</td>
-												<td style="display: flex; justify-content: space-between; align-items: center;">
-													<span>{{ getConfigurationCount(source) }}</span>
-													<NcButton @click="showSourceConfigurations(source)">
-														<template #icon>
-															<FileCogOutline :size="16" />
-														</template>
-														Show
-													</NcButton>
-												</td>
-											</tr>
-											<tr>
-												<td>{{ t('openconnector', 'Authentication') }}</td>
-												<td style="display: flex; justify-content: space-between; align-items: center;">
-													<span>{{ getAuthenticationCount(source) }}</span>
-													<NcButton @click="showSourceAuthentication(source)">
-														<template #icon>
-															<KeyOutline :size="16" />
-														</template>
-														Show
-													</NcButton>
-												</td>
-											</tr>
-											<tr v-if="source.lastCall">
-												<td>{{ t('openconnector', 'Last Call') }}</td>
-												<td>{{ new Date(source.lastCall).toLocaleDateString() + ', ' + new Date(source.lastCall).toLocaleTimeString() }}</td>
-											</tr>
-											<tr v-if="source.lastSync">
-												<td>{{ t('openconnector', 'Last Sync') }}</td>
-												<td>{{ new Date(source.lastSync).toLocaleDateString() + ', ' + new Date(source.lastSync).toLocaleTimeString() }}</td>
-											</tr>
-											<tr>
-												<td>{{ t('openconnector', 'Created') }}</td>
-												<td>{{ source.dateCreated ? new Date(source.dateCreated).toLocaleDateString() : '-' }}</td>
-											</tr>
-											<tr>
-												<td>{{ t('openconnector', 'Updated') }}</td>
-												<td>{{ source.dateModified ? new Date(source.dateModified).toLocaleDateString() : '-' }}</td>
-											</tr>
-										</tbody>
-									</table>
+									<div class="modal-table-wrapper">
+										<table class="statisticsTable sourceStats">
+											<thead>
+												<tr>
+													<th>{{ t('openconnector', 'Property') }}</th>
+													<th>{{ t('openconnector', 'Value') }}</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<td>{{ t('openconnector', 'Status') }}</td>
+													<td>{{ source.status || 'Unknown' }}</td>
+												</tr>
+												<tr>
+													<td>{{ t('openconnector', 'Enabled') }}</td>
+													<td>
+														{{ source.isEnabled ? 'Enabled' : 'Disabled' }}
+													</td>
+												</tr>
+												<tr>
+													<td>{{ t('openconnector', 'Type') }}</td>
+													<td>{{ source.type || 'Unknown' }}</td>
+												</tr>
+												<tr v-if="source.location">
+													<td>{{ t('openconnector', 'Location') }}</td>
+													<td class="truncatedUrl">
+														{{ source.location }}
+													</td>
+												</tr>
+												<tr v-if="source.version">
+													<td>{{ t('openconnector', 'Version') }}</td>
+													<td>{{ source.version }}</td>
+												</tr>
+												<tr>
+													<td>{{ t('openconnector', 'Configurations') }}</td>
+													<td style="display: flex; justify-content: space-between; align-items: center;">
+														<span>{{ getConfigurationCount(source) }}</span>
+														<NcButton @click="showSourceConfigurations(source)">
+															<template #icon>
+																<FileCogOutline :size="16" />
+															</template>
+															Show
+														</NcButton>
+													</td>
+												</tr>
+												<tr>
+													<td>{{ t('openconnector', 'Authentication') }}</td>
+													<td style="display: flex; justify-content: space-between; align-items: center;">
+														<span>{{ getAuthenticationCount(source) }}</span>
+														<NcButton @click="showSourceAuthentication(source)">
+															<template #icon>
+																<KeyOutline :size="16" />
+															</template>
+															Show
+														</NcButton>
+													</td>
+												</tr>
+												<tr v-if="source.lastCall">
+													<td>{{ t('openconnector', 'Last Call') }}</td>
+													<td>{{ new Date(source.lastCall).toLocaleDateString() + ', ' + new Date(source.lastCall).toLocaleTimeString() }}</td>
+												</tr>
+												<tr v-if="source.lastSync">
+													<td>{{ t('openconnector', 'Last Sync') }}</td>
+													<td>{{ new Date(source.lastSync).toLocaleDateString() + ', ' + new Date(source.lastSync).toLocaleTimeString() }}</td>
+												</tr>
+												<tr>
+													<td>{{ t('openconnector', 'Created') }}</td>
+													<td>{{ source.dateCreated ? new Date(source.dateCreated).toLocaleDateString() : '-' }}</td>
+												</tr>
+												<tr>
+													<td>{{ t('openconnector', 'Updated') }}</td>
+													<td>{{ source.dateModified ? new Date(source.dateModified).toLocaleDateString() : '-' }}</td>
+												</tr>
+											</tbody>
+										</table>
+									</div>
 								</div>
 								<!-- Configurations view -->
 								<div v-else-if="getSourceViewState(source).showConfigurations" style="display: flex; flex-direction: column; height: 100%;">
 									<div style="flex: 1;">
-										<table class="statisticsTable sourceStats">
-											<thead>
-												<tr>
-													<th>{{ t('openconnector', 'Key') }}</th>
-													<th>{{ t('openconnector', 'Value') }}</th>
-													<th>{{ t('openconnector', 'Actions') }}</th>
-												</tr>
-											</thead>
-											<tbody>
-												<tr v-for="(value, key) in filteredConfiguration(source)" :key="key">
-													<td>{{ key }}</td>
-													<td class="truncatedText">
-														{{ value }}
-													</td>
-													<td>
-														<NcActions :primary="false">
-															<template #icon>
-																<DotsHorizontal :size="16" />
-															</template>
-															<NcActionButton close-after-click @click="editSourceConfiguration(source, key)">
+										<div class="modal-table-wrapper">
+											<table class="statisticsTable sourceStats">
+												<thead>
+													<tr>
+														<th>{{ t('openconnector', 'Key') }}</th>
+														<th>{{ t('openconnector', 'Value') }}</th>
+														<th>{{ t('openconnector', 'Actions') }}</th>
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="(value, key) in filteredConfiguration(source)" :key="key">
+														<td>{{ key }}</td>
+														<td class="truncatedText">
+															{{ value }}
+														</td>
+														<td>
+															<NcActions :primary="false">
 																<template #icon>
-																	<Pencil :size="16" />
+																	<DotsHorizontal :size="16" />
 																</template>
-																Edit
-															</NcActionButton>
-															<NcActionButton close-after-click @click="deleteSourceConfiguration(source, key)">
-																<template #icon>
-																	<TrashCanOutline :size="16" />
-																</template>
-																Delete
-															</NcActionButton>
-														</NcActions>
-													</td>
-												</tr>
-												<tr v-if="!source.configuration || !Object.keys(source.configuration).length">
-													<td colspan="3">
-														{{ t('openconnector', 'No configurations found') }}
-													</td>
-												</tr>
-											</tbody>
-										</table>
+																<NcActionButton close-after-click @click="editSourceConfiguration(source, key)">
+																	<template #icon>
+																		<Pencil :size="16" />
+																	</template>
+																	Edit
+																</NcActionButton>
+																<NcActionButton close-after-click @click="deleteSourceConfiguration(source, key)">
+																	<template #icon>
+																		<TrashCanOutline :size="16" />
+																	</template>
+																	Delete
+																</NcActionButton>
+															</NcActions>
+														</td>
+													</tr>
+													<tr v-if="!source.configuration || !Object.keys(source.configuration).length">
+														<td colspan="3">
+															{{ t('openconnector', 'No configurations found') }}
+														</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
 									</div>
 									<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: auto; padding-top: 10px;">
 										<NcButton @click="showSourceStats(source)">
@@ -289,193 +293,195 @@
 								<!-- Authentication view -->
 								<div v-else-if="getSourceViewState(source).showAuthentication" style="display: flex; flex-direction: column; height: 100%;">
 									<div style="flex: 1;">
-										<table class="statisticsTable sourceStats">
-											<thead>
-												<tr>
-													<th>{{ t('openconnector', 'Property') }}</th>
-													<th>{{ t('openconnector', 'Value') }}</th>
-													<th>{{ t('openconnector', 'Actions') }}</th>
-												</tr>
-											</thead>
-											<tbody>
-												<tr v-if="source.auth">
-													<td>{{ t('openconnector', 'Auth Type') }}</td>
-													<td>{{ source.auth }}</td>
-													<td>
-														<NcActions :primary="false">
-															<template #icon>
-																<DotsHorizontal :size="16" />
-															</template>
-															<NcActionButton close-after-click @click="editSourceAuthentication(source, 'auth')">
+										<div class="modal-table-wrapper">
+											<table class="statisticsTable sourceStats">
+												<thead>
+													<tr>
+														<th>{{ t('openconnector', 'Property') }}</th>
+														<th>{{ t('openconnector', 'Value') }}</th>
+														<th>{{ t('openconnector', 'Actions') }}</th>
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-if="source.auth">
+														<td>{{ t('openconnector', 'Auth Type') }}</td>
+														<td>{{ source.auth }}</td>
+														<td>
+															<NcActions :primary="false">
 																<template #icon>
-																	<Pencil :size="16" />
+																	<DotsHorizontal :size="16" />
 																</template>
-																Edit
-															</NcActionButton>
-															<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'auth')">
+																<NcActionButton close-after-click @click="editSourceAuthentication(source, 'auth')">
+																	<template #icon>
+																		<Pencil :size="16" />
+																	</template>
+																	Edit
+																</NcActionButton>
+																<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'auth')">
+																	<template #icon>
+																		<TrashCanOutline :size="16" />
+																	</template>
+																	Delete
+																</NcActionButton>
+															</NcActions>
+														</td>
+													</tr>
+													<tr v-if="source.username">
+														<td>{{ t('openconnector', 'Username') }}</td>
+														<td>{{ source.username }}</td>
+														<td>
+															<NcActions :primary="false">
 																<template #icon>
-																	<TrashCanOutline :size="16" />
+																	<DotsHorizontal :size="16" />
 																</template>
-																Delete
-															</NcActionButton>
-														</NcActions>
-													</td>
-												</tr>
-												<tr v-if="source.username">
-													<td>{{ t('openconnector', 'Username') }}</td>
-													<td>{{ source.username }}</td>
-													<td>
-														<NcActions :primary="false">
-															<template #icon>
-																<DotsHorizontal :size="16" />
-															</template>
-															<NcActionButton close-after-click @click="editSourceAuthentication(source, 'username')">
+																<NcActionButton close-after-click @click="editSourceAuthentication(source, 'username')">
+																	<template #icon>
+																		<Pencil :size="16" />
+																	</template>
+																	Edit
+																</NcActionButton>
+																<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'username')">
+																	<template #icon>
+																		<TrashCanOutline :size="16" />
+																	</template>
+																	Delete
+																</NcActionButton>
+															</NcActions>
+														</td>
+													</tr>
+													<tr v-if="source.apikey">
+														<td>{{ t('openconnector', 'API Key') }}</td>
+														<td class="truncatedText">
+															{{ source.apikey }}
+														</td>
+														<td>
+															<NcActions :primary="false">
 																<template #icon>
-																	<Pencil :size="16" />
+																	<DotsHorizontal :size="16" />
 																</template>
-																Edit
-															</NcActionButton>
-															<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'username')">
+																<NcActionButton close-after-click @click="editSourceAuthentication(source, 'apikey')">
+																	<template #icon>
+																		<Pencil :size="16" />
+																	</template>
+																	Edit
+																</NcActionButton>
+																<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'apikey')">
+																	<template #icon>
+																		<TrashCanOutline :size="16" />
+																	</template>
+																	Delete
+																</NcActionButton>
+															</NcActions>
+														</td>
+													</tr>
+													<tr v-if="source.jwt">
+														<td>{{ t('openconnector', 'JWT') }}</td>
+														<td class="truncatedText">
+															{{ source.jwt }}
+														</td>
+														<td>
+															<NcActions :primary="false">
 																<template #icon>
-																	<TrashCanOutline :size="16" />
+																	<DotsHorizontal :size="16" />
 																</template>
-																Delete
-															</NcActionButton>
-														</NcActions>
-													</td>
-												</tr>
-												<tr v-if="source.apikey">
-													<td>{{ t('openconnector', 'API Key') }}</td>
-													<td class="truncatedText">
-														{{ source.apikey }}
-													</td>
-													<td>
-														<NcActions :primary="false">
-															<template #icon>
-																<DotsHorizontal :size="16" />
-															</template>
-															<NcActionButton close-after-click @click="editSourceAuthentication(source, 'apikey')">
+																<NcActionButton close-after-click @click="editSourceAuthentication(source, 'jwt')">
+																	<template #icon>
+																		<Pencil :size="16" />
+																	</template>
+																	Edit
+																</NcActionButton>
+																<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'jwt')">
+																	<template #icon>
+																		<TrashCanOutline :size="16" />
+																	</template>
+																	Delete
+																</NcActionButton>
+															</NcActions>
+														</td>
+													</tr>
+													<tr v-if="source.secret">
+														<td>{{ t('openconnector', 'Secret') }}</td>
+														<td class="truncatedText">
+															{{ source.secret }}
+														</td>
+														<td>
+															<NcActions :primary="false">
 																<template #icon>
-																	<Pencil :size="16" />
+																	<DotsHorizontal :size="16" />
 																</template>
-																Edit
-															</NcActionButton>
-															<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'apikey')">
+																<NcActionButton close-after-click @click="editSourceAuthentication(source, 'secret')">
+																	<template #icon>
+																		<Pencil :size="16" />
+																	</template>
+																	Edit
+																</NcActionButton>
+																<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'secret')">
+																	<template #icon>
+																		<TrashCanOutline :size="16" />
+																	</template>
+																	Delete
+																</NcActionButton>
+															</NcActions>
+														</td>
+													</tr>
+													<tr v-if="source.authorizationHeader">
+														<td>{{ t('openconnector', 'Authorization Header') }}</td>
+														<td class="truncatedText">
+															{{ source.authorizationHeader }}
+														</td>
+														<td>
+															<NcActions :primary="false">
 																<template #icon>
-																	<TrashCanOutline :size="16" />
+																	<DotsHorizontal :size="16" />
 																</template>
-																Delete
-															</NcActionButton>
-														</NcActions>
-													</td>
-												</tr>
-												<tr v-if="source.jwt">
-													<td>{{ t('openconnector', 'JWT') }}</td>
-													<td class="truncatedText">
-														{{ source.jwt }}
-													</td>
-													<td>
-														<NcActions :primary="false">
-															<template #icon>
-																<DotsHorizontal :size="16" />
-															</template>
-															<NcActionButton close-after-click @click="editSourceAuthentication(source, 'jwt')">
+																<NcActionButton close-after-click @click="editSourceAuthentication(source, 'authorizationHeader')">
+																	<template #icon>
+																		<Pencil :size="16" />
+																	</template>
+																	Edit
+																</NcActionButton>
+																<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'authorizationHeader')">
+																	<template #icon>
+																		<TrashCanOutline :size="16" />
+																	</template>
+																	Delete
+																</NcActionButton>
+															</NcActions>
+														</td>
+													</tr>
+													<tr v-for="(config, index) in source.configuration.authentication" :key="`auth-${index}`">
+														<td>{{ t('openconnector', 'Auth Config {index}', { index: index + 1 }) }}</td>
+														<td class="truncatedText">
+															{{ typeof config === 'object' ? JSON.stringify(config) : config }}
+														</td>
+														<td>
+															<NcActions :primary="false">
 																<template #icon>
-																	<Pencil :size="16" />
+																	<DotsHorizontal :size="16" />
 																</template>
-																Edit
-															</NcActionButton>
-															<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'jwt')">
-																<template #icon>
-																	<TrashCanOutline :size="16" />
-																</template>
-																Delete
-															</NcActionButton>
-														</NcActions>
-													</td>
-												</tr>
-												<tr v-if="source.secret">
-													<td>{{ t('openconnector', 'Secret') }}</td>
-													<td class="truncatedText">
-														{{ source.secret }}
-													</td>
-													<td>
-														<NcActions :primary="false">
-															<template #icon>
-																<DotsHorizontal :size="16" />
-															</template>
-															<NcActionButton close-after-click @click="editSourceAuthentication(source, 'secret')">
-																<template #icon>
-																	<Pencil :size="16" />
-																</template>
-																Edit
-															</NcActionButton>
-															<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'secret')">
-																<template #icon>
-																	<TrashCanOutline :size="16" />
-																</template>
-																Delete
-															</NcActionButton>
-														</NcActions>
-													</td>
-												</tr>
-												<tr v-if="source.authorizationHeader">
-													<td>{{ t('openconnector', 'Authorization Header') }}</td>
-													<td class="truncatedText">
-														{{ source.authorizationHeader }}
-													</td>
-													<td>
-														<NcActions :primary="false">
-															<template #icon>
-																<DotsHorizontal :size="16" />
-															</template>
-															<NcActionButton close-after-click @click="editSourceAuthentication(source, 'authorizationHeader')">
-																<template #icon>
-																	<Pencil :size="16" />
-																</template>
-																Edit
-															</NcActionButton>
-															<NcActionButton close-after-click @click="deleteSourceAuthentication(source, 'authorizationHeader')">
-																<template #icon>
-																	<TrashCanOutline :size="16" />
-																</template>
-																Delete
-															</NcActionButton>
-														</NcActions>
-													</td>
-												</tr>
-												<tr v-for="(config, index) in source.configuration.authentication" :key="`auth-${index}`">
-													<td>{{ t('openconnector', 'Auth Config {index}', { index: index + 1 }) }}</td>
-													<td class="truncatedText">
-														{{ typeof config === 'object' ? JSON.stringify(config) : config }}
-													</td>
-													<td>
-														<NcActions :primary="false">
-															<template #icon>
-																<DotsHorizontal :size="16" />
-															</template>
-															<NcActionButton close-after-click @click="editSourceAuthentication(source, `authenticationConfig.${index}`)">
-																<template #icon>
-																	<Pencil :size="16" />
-																</template>
-																Edit
-															</NcActionButton>
-															<NcActionButton close-after-click @click="deleteSourceAuthentication(source, `authenticationConfig.${index}`)">
-																<template #icon>
-																	<TrashCanOutline :size="16" />
-																</template>
-																Delete
-															</NcActionButton>
-														</NcActions>
-													</td>
-												</tr>
-												<tr v-if="!hasAuthenticationData(source)">
-													<td colspan="3">
-														{{ t('openconnector', 'No authentication configured') }}
-													</td>
-												</tr>
-											</tbody>
-										</table>
+																<NcActionButton close-after-click @click="editSourceAuthentication(source, `authenticationConfig.${index}`)">
+																	<template #icon>
+																		<Pencil :size="16" />
+																	</template>
+																	Edit
+																</NcActionButton>
+																<NcActionButton close-after-click @click="deleteSourceAuthentication(source, `authenticationConfig.${index}`)">
+																	<template #icon>
+																		<TrashCanOutline :size="16" />
+																	</template>
+																	Delete
+																</NcActionButton>
+															</NcActions>
+														</td>
+													</tr>
+													<tr v-if="!hasAuthenticationData(source)">
+														<td colspan="3">
+															{{ t('openconnector', 'No authentication configured') }}
+														</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
 									</div>
 									<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: auto; padding-top: 10px;">
 										<NcButton @click="showSourceStats(source)">
