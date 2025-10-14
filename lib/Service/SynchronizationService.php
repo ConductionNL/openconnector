@@ -513,6 +513,7 @@ class SynchronizationService
         $executionTime = round((microtime(true) - $startTime) * 1000);
         $log->setExecutionTime($executionTime);
         $log->setMessage('Success');
+        $log->setExpires('+ 1 hour');
         $this->synchronizationLogMapper->update($log);
 
         return $log->jsonSerialize();

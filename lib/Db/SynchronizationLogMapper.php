@@ -36,10 +36,10 @@ class SynchronizationLogMapper extends QBMapper
 	}
 
 	public function findAll(
-		?int $limit = null, 
-		?int $offset = null, 
-		?array $filters = [], 
-		?array $searchConditions = [], 
+		?int $limit = null,
+		?int $offset = null,
+		?array $filters = [],
+		?array $searchConditions = [],
 		?array $searchParams = []
 	): array {
 		$qb = $this->db->getQueryBuilder();
@@ -76,7 +76,7 @@ class SynchronizationLogMapper extends QBMapper
 	 * @param array $contracts Array of contracts or contract objects
 	 * @return array Processed array containing only valid UUIDs
 	 */
-	private function processContracts(array $contracts): array 
+	private function processContracts(array $contracts): array
 	{
 		return array_values(array_filter(
 			array_map(
@@ -147,12 +147,17 @@ class SynchronizationLogMapper extends QBMapper
 	public function updateFromArray(int $id, array $object): SynchronizationLog
 	{
 		$obj = $this->find($id);
-		
+
 		// Process contracts in results if they exist
 		if (isset($object['result']['contracts']) && is_array($object['result']['contracts'])) {
 			$object['result']['contracts'] = $this->processContracts($object['result']['contracts']);
 		}
-		
+
+        // If the log is successful, limit log retention to 1 hour.
+        if($object['message'] === 'Success') {
+            $object['expires'] = new DateTime('+1 hour');
+        }
+
 		$obj->hydrate($object);
 
 		return $this->update($obj);
@@ -204,7 +209,7 @@ class SynchronizationLogMapper extends QBMapper
 		$qb = $this->db->getQueryBuilder();
 
 		$qb->delete('openconnector_synchronization_logs')
-			->where($qb->expr()->lt('expires', $qb->createNamedParameter(new DateTime(), IQueryBuilder::PARAM_DATE)));
+            ->andWhere($qb->expr()->lt('expires', $qb->createFunction('NOW()')));
 
 		return $qb->executeStatement();
 	}
