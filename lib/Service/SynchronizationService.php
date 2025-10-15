@@ -513,6 +513,7 @@ class SynchronizationService
         $executionTime = round((microtime(true) - $startTime) * 1000);
         $log->setExecutionTime($executionTime);
         $log->setMessage('Success');
+        $log->setExpires('+ 1 hour');
         $this->synchronizationLogMapper->update($log);
 
         return $log->jsonSerialize();
@@ -2738,6 +2739,10 @@ class SynchronizationService
 			return "Not array";
 		}
 
+        if ($array === []) {
+            return 'Empty array';
+        }
+
 		// Check for an associative array
 		if (array_keys($array) !== range(0, count($array) - 1)) {
 			return "Associative array";
@@ -2931,11 +2936,10 @@ class SynchronizationService
                     }
                     break;
 
+                    // Array is empty
+                case 'Empty array':
                 // Array of object(s) that has file(s) - use cleanup logic
                 case "Multidimensional array":
-                    $this->processMultipleFilesWithCleanup($source, $config, $endpoint, $objectId);
-                    break;
-
                 // Array of just endpoints - use cleanup logic
                 case "Indexed array":
                     $this->processMultipleFilesWithCleanup($source, $config, $endpoint, $objectId);
@@ -3652,6 +3656,12 @@ class SynchronizationService
 	private function processMultipleFilesWithCleanup(Source $source, array $config, array $endpoints, ?string $objectId = null): void
 	{
 		$newFileNames = [];
+
+        if ($endpoints === [] && $objectId !== null) {
+            $targetObjectId = $objectId;
+        } elseif ($endpoints === []) {
+            return;
+        }
 
 		// Process all files first and collect their filenames
 		foreach ($endpoints as $endpoint) {
