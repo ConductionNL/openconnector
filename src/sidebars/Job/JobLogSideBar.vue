@@ -191,7 +191,7 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import FilterOffOutline from 'vue-material-design-icons/FilterOffOutline.vue'
 import { translate as t } from '@nextcloud/l10n'
 import DateRangeInput from '../../components/DateRangeInput.vue'
-import getValidISOstring from '@/services/getValidISOstring.js';
+import getValidISOstring from '@/services/getValidISOstring.js'
 
 export default {
 	name: 'JobLogSideBar',
