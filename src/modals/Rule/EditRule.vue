@@ -1489,8 +1489,8 @@ export default {
 		editRule() {
 			this.loading = true
 
-			// Preserve existing configuration and only update the relevant part
-			const configuration = { ...this.ruleItem.configuration }
+			// Create clean configuration for the current type only
+			const configuration = {}
 			const type = this.typeOptions.value?.id
 
 			// Build configuration based on type
