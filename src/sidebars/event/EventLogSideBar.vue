@@ -163,6 +163,7 @@ import { translate as t } from '@nextcloud/l10n'
 import Close from 'vue-material-design-icons/Close.vue'
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import DateRangeInput from '../../components/DateRangeInput.vue'
+import getValidISOstring from '@/services/getValidISOstring.js'
 
 export default {
 	name: 'EventLogSideBar',
@@ -179,6 +180,16 @@ export default {
 	},
 	data() {
 		return {
+			logLevelOptions: [
+				{ label: t('openconnector', 'Success'), value: 'SUCCESS' },
+				{ label: t('openconnector', 'Warning'), value: 'WARNING' },
+				{ label: t('openconnector', 'Error'), value: 'ERROR' },
+				{ label: t('openconnector', 'Critical'), value: 'CRITICAL' },
+				{ label: t('openconnector', 'Alert'), value: 'ALERT' },
+				{ label: t('openconnector', 'Emergency'), value: 'EMERGENCY' },
+				{ label: t('openconnector', 'Info'), value: 'INFO' },
+			],
+
 			filters: {
 				eventId: null,
 				level: null,
@@ -210,26 +221,18 @@ export default {
 				value: event.id,
 			}))
 		},
-		logLevelOptions() {
-			return [
-				{ label: t('openconnector', 'Success'), value: 'SUCCESS' },
-				{ label: t('openconnector', 'Warning'), value: 'WARNING' },
-				{ label: t('openconnector', 'Error'), value: 'ERROR' },
-				{ label: t('openconnector', 'Critical'), value: 'CRITICAL' },
-				{ label: t('openconnector', 'Alert'), value: 'ALERT' },
-				{ label: t('openconnector', 'Emergency'), value: 'EMERGENCY' },
-				{ label: t('openconnector', 'Info'), value: 'INFO' },
-			]
-		},
 	},
 	mounted() {
 		eventStore.refreshEventList()
 		this.updateStatistics()
+		// Initialize SPOT from URL
+		this.applyQueryParamsFromRoute()
 	},
 	methods: {
 		handleFilterChange() {
 			this.$root.$emit('event-log-filters-changed', this.filters)
 			this.updateStatistics()
+			this.updateRouteQueryFromState()
 		},
 		handleMessageFilterChange(value) {
 			const nextValue = typeof value === 'string' ? value : (value && value.target ? value.target.value : '')
@@ -246,6 +249,41 @@ export default {
 				showOnlyErrors: false,
 				showOnlySlow: false,
 			}
+			this.handleFilterChange()
+		},
+		buildQueryFromState() {
+			const q = {}
+			if (this.filters.eventId) q.eventId = String(this.filters.eventId)
+			if (this.filters.level) q.level = String(this.filters.level)
+			if (this.filters.startDate) q.startDate = getValidISOstring(this.filters.startDate)
+			if (this.filters.endDate) q.endDate = getValidISOstring(this.filters.endDate)
+			if (this.filters.message) q.message = this.filters.message
+			if (this.filters.showOnlyErrors) q.onlyErrors = 'true'
+			if (this.filters.showOnlySlow) q.slowExecutions = 'true'
+			return q
+		},
+		queriesEqual(a, b) {
+			const aKeys = Object.keys(a)
+			const bKeys = Object.keys(b)
+			if (aKeys.length !== bKeys.length) return false
+			return aKeys.every(k => String(a[k]) === String(b[k] || ''))
+		},
+		updateRouteQueryFromState() {
+			if (this.$route.path !== '/cloud-events/logs') return
+			const next = this.buildQueryFromState()
+			if (this.queriesEqual(next, this.$route.query || {})) return
+			this.$router.replace({ path: this.$route.path, query: next })
+		},
+		applyQueryParamsFromRoute() {
+			if (this.$route.path !== '/cloud-events/logs') return
+			const q = this.$route.query || {}
+			this.filters.eventId = q.eventId || null
+			this.filters.level = q.level || null
+			this.filters.startDate = q.startDate && new Date(q.startDate).getDate() ? new Date(q.startDate) : null
+			this.filters.endDate = q.endDate && new Date(q.endDate).getDate() ? new Date(q.endDate) : null
+			this.filters.message = q.message || ''
+			this.filters.showOnlyErrors = String(q.onlyErrors) === 'true'
+			this.filters.showOnlySlow = String(q.slowExecutions) === 'true'
 			this.handleFilterChange()
 		},
 		updateStatistics() {

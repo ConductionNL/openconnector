@@ -197,6 +197,7 @@ import Delete from 'vue-material-design-icons/Delete.vue'
 import Download from 'vue-material-design-icons/Download.vue'
 import DateRangeInput from '../../components/DateRangeInput.vue'
 import { translate as t } from '@nextcloud/l10n'
+import getValidISOstring from '@/services/getValidISOstring.js'
 
 export default {
 	name: 'LogsSideBar',
@@ -216,6 +217,14 @@ export default {
 	},
 	data() {
 		return {
+			levelOptions: [
+				{ id: 'error', label: t('openconnector', 'Error') },
+				{ id: 'warning', label: t('openconnector', 'Warning') },
+				{ id: 'info', label: t('openconnector', 'Info') },
+				{ id: 'success', label: t('openconnector', 'Success') },
+				{ id: 'debug', label: t('openconnector', 'Debug') },
+			],
+
 			activeTab: 'filters-tab',
 			filters: {
 				level: null,
@@ -233,19 +242,6 @@ export default {
 		}
 	},
 	computed: {
-		/**
-		 * Get level filter options
-		 * @return {Array} Array of level options
-		 */
-		levelOptions() {
-			return [
-				{ id: 'error', label: this.t('openconnector', 'Error') },
-				{ id: 'warning', label: this.t('openconnector', 'Warning') },
-				{ id: 'info', label: this.t('openconnector', 'Info') },
-				{ id: 'success', label: this.t('openconnector', 'Success') },
-				{ id: 'debug', label: this.t('openconnector', 'Debug') },
-			]
-		},
 		/**
 		 * Get contract filter options
 		 * @return {Array} Array of contract options
@@ -281,6 +277,8 @@ export default {
 		// Listen for events from main view
 		this.$root.$on('logs-selection-count', this.updateSelectionCount)
 		this.$root.$on('logs-filtered-count', this.updateFilteredCount)
+		// Initialize SPOT from URL
+		this.applyQueryParamsFromRoute()
 	},
 	beforeDestroy() {
 		this.$root.$off('logs-selection-count')
@@ -335,6 +333,41 @@ export default {
 
 			// Emit filters to main view
 			this.$root.$emit('logs-filters-changed', cleanFilters)
+			// Write SPOT to URL
+			this.updateRouteQueryFromState()
+		},
+		buildQueryFromState() {
+			const q = {}
+			if (this.filters.level) q.level = this.filters.level
+			if (this.filters.contract) q.contract = String(this.filters.contract.id || this.filters.contract)
+			if (this.filters.synchronization) q.synchronization = String(this.filters.synchronization.id || this.filters.synchronization)
+			if (this.filters.dateFrom) q.dateFrom = getValidISOstring(this.filters.dateFrom)
+			if (this.filters.dateTo) q.dateTo = getValidISOstring(this.filters.dateTo)
+			if (this.filters.message) q.message = this.filters.message
+			return q
+		},
+		queriesEqual(a, b) {
+			const aKeys = Object.keys(a)
+			const bKeys = Object.keys(b)
+			if (aKeys.length !== bKeys.length) return false
+			return aKeys.every(k => String(a[k]) === String(b[k] || ''))
+		},
+		updateRouteQueryFromState() {
+			if (this.$route.path !== '/synchronizations/logs') return
+			const next = this.buildQueryFromState()
+			if (this.queriesEqual(next, this.$route.query || {})) return
+			this.$router.replace({ path: this.$route.path, query: next })
+		},
+		applyQueryParamsFromRoute() {
+			if (this.$route.path !== '/synchronizations/logs') return
+			const q = this.$route.query || {}
+			this.filters.level = q.level || null
+			this.filters.contract = q.contract || null
+			this.filters.synchronization = q.synchronization || null
+			this.filters.dateFrom = q.dateFrom && new Date(q.dateFrom).getDate() ? new Date(q.dateFrom) : null
+			this.filters.dateTo = q.dateTo && new Date(q.dateTo).getDate() ? new Date(q.dateTo) : null
+			this.filters.message = q.message || ''
+			this.applyFilters()
 		},
 		/**
 		 * Clear all filters
