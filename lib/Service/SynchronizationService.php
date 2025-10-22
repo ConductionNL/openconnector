@@ -2490,7 +2490,8 @@ class SynchronizationService
 		$body = $response['body'];
 
 
-		if (($decodedBody = json_decode(json: $body, associative: true)) !== null) {
+		if (($decodedBody = json_decode(json: $body, associative: true)) !== null
+            && isset($response['headers']['Content-Disposition']) === false) {
 			$body = $decodedBody;
 		} else if (($decodedBody = base64_decode(string: $body, strict: true)) !== false) {
 			$body = $decodedBody;
@@ -2539,7 +2540,7 @@ class SynchronizationService
 
 		// Determine if file should be published based on the published parameter
 		$shouldPublish = $this->shouldPublishFile($published);
-
+        
 		try {
 			$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
 			$objectEntity = $objectService->findByUuid(uuid: $objectId);
