@@ -1129,7 +1129,7 @@ class EndpointService
                         default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
                     };
                 } catch (Exception $e) {
-                    $message = 'Failed to apply rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType();
+                    $message = 'Failed to apply rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType() . '. With error message: ' . $e->getMessage();
                     $this->logger->error($message);
                     return new JSONResponse(['error' => $message], 500);
                 }
