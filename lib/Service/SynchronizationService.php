@@ -2391,7 +2391,7 @@ class SynchronizationService
 
             return $data;
         } catch (Exception $e) {
-           $this->logger->error('Error processing rules for synchronization ' . $synchronization->getName() . ': ' . $e->getMessage());
+            $this->logger->error('Error processing rules for synchronization ' . $synchronization->getName() . ': ' . $e->getMessage());
             return new JSONResponse(['error' => 'Rule processing failed: ' . $e->getMessage()], 500);
         }
     }
