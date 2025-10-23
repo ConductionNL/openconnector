@@ -1096,6 +1096,7 @@ class EndpointService
 
                 // Check rule conditions
                 if ($this->checkRuleConditions(rule: $rule, data: $data, logicResult:  $logicResult) === false || $rule->getTiming() !== $timing) {
+                    $this->logger->info('Rule condition check failed for endpoint ' . $endpoint->getName() . ' and rule ' . $rule->getName() . ' of type: ' . $rule->getType());
                     continue;
                 }
 
@@ -1105,25 +1106,33 @@ class EndpointService
                     $data['logicResult'] = $logicResult;
                 }
 
+                $this->logger->info('Applying rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
+
                 // Process rule based on type
-                $result = match ($rule->getType()) {
-                    'save_object' => $this->processSaveObjectRule($rule, $data),
-                    'authentication' => $this->processAuthenticationRule($rule, $data),
-                    'error' => $this->processErrorRule($rule, $data),
-                    'mapping' => $this->processMappingRule($rule, $data),
-                    'synchronization' => $this->processSyncRule($rule, $data),
-                    'javascript' => $this->processJavaScriptRule($rule, $data),
-                    'fileparts_create' => $this->processFilePartRule($rule, $data, $endpoint, $objectId),
-                    'filepart_upload' => $this->processFilePartUploadRule(rule: $rule, data: $data, request: $request, objectId: $objectId),
-                    'download' => $this->processDownloadRule(rule: $rule, data: $data, objectId: $objectId),
-                    'extend_input' => $this->processExtendInputRule(rule: $rule, data: $data),
-					'extend_external_input' => $this->ruleService->extendExternalUrl(rule: $rule, data: $data),
-                    'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
-                    'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
-                    'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
-                    'custom' => $this->processCustomRule(rule: $rule, data: $data),
-                    default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
-                };
+                try {
+                    $result = match ($rule->getType()) {
+                        'save_object' => $this->processSaveObjectRule($rule, $data),
+                        'authentication' => $this->processAuthenticationRule($rule, $data),
+                        'error' => $this->processErrorRule($rule, $data),
+                        'mapping' => $this->processMappingRule($rule, $data),
+                        'synchronization' => $this->processSyncRule($rule, $data),
+                        'javascript' => $this->processJavaScriptRule($rule, $data),
+                        'fileparts_create' => $this->processFilePartRule($rule, $data, $endpoint, $objectId),
+                        'filepart_upload' => $this->processFilePartUploadRule(rule: $rule, data: $data, request: $request, objectId: $objectId),
+                        'download' => $this->processDownloadRule(rule: $rule, data: $data, objectId: $objectId),
+                        'extend_input' => $this->processExtendInputRule(rule: $rule, data: $data),
+                        'extend_external_input' => $this->ruleService->extendExternalUrl(rule: $rule, data: $data),
+                        'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
+                        'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
+                        'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
+                        'custom' => $this->processCustomRule(rule: $rule, data: $data),
+                        default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
+                    };
+                } catch (Exception $e) {
+                    $message = 'Failed to apply rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType();
+                    $this->logger->error($message);
+                    return new JSONResponse(['error' => $message], 500);
+                }
 
                 // If result is JSONResponse, return error immediately
                 if ($result instanceof JSONResponse === true || $result instanceof DataDownloadResponse === true ) {
@@ -1132,6 +1141,8 @@ class EndpointService
 
                 // Update data with rule result
                 $data = $result;
+                
+                $this->logger->info('Successfully applied rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
 			}
 
 			unset($data['body']['_extendedInput']);
