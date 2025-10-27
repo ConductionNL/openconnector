@@ -8,7 +8,7 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 			<div>
 				<div class="detailHeader">
 					<h1 class="h1">
-						{{ endpointStore.endpointItem.name }}
+						{{ endpoint?.name }}
 					</h1>
 
 					<NcActions :primary="true" menu-name="Acties">
@@ -45,59 +45,59 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 				<div class="detailGrid">
 					<div class="gridContent">
 						<b>Id:</b>
-						<p>{{ endpointStore.endpointItem?.id || '-' }}</p>
+						<p>{{ endpoint?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Uuid:</b>
-						<p>{{ endpointStore.endpointItem?.uuid || '-' }}</p>
+						<p>{{ endpoint?.uuid || '-' }}</p>
 					</div>
 					<div class="gridContent" />
 
 					<div class="gridContent">
 						<b>Name:</b>
-						<p>{{ endpointStore.endpointItem?.name || '-' }}</p>
+						<p>{{ endpoint?.name || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Description:</b>
-						<p>{{ endpointStore.endpointItem?.description || '-' }}</p>
+						<p>{{ endpoint?.description || '-' }}</p>
 					</div>
 
 					<div class="gridContent">
 						<b>Version:</b>
-						<p>{{ endpointStore.endpointItem?.version || '-' }}</p>
+						<p>{{ endpoint?.version || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Endpoint:</b>
-						<p>{{ endpointStore.endpointItem?.endpoint || '-' }}</p>
+						<p>{{ endpoint?.endpoint || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Endpoint Array:</b>
-						<p>{{ endpointStore.endpointItem.endpointArray.join(', ') || '-' }}</p>
+						<p>{{ endpoint?.endpointArray?.join(', ') || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Endpoint Regex:</b>
-						<p>{{ endpointStore.endpointItem?.endpointRegex || '-' }}</p>
+						<p>{{ endpoint?.endpointRegex || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Method:</b>
-						<p>{{ endpointStore.endpointItem?.method || '-' }}</p>
+						<p>{{ endpoint?.method || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Target Type:</b>
-						<p>{{ endpointStore.endpointItem?.targetType || '-' }}</p>
+						<p>{{ endpoint?.targetType || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Target Id:</b>
-						<p>{{ endpointStore.endpointItem?.targetId || '-' }}</p>
+						<p>{{ endpoint?.targetId || '-' }}</p>
 					</div>
 
 					<div class="gridContent">
 						<b>Created:</b>
-						<p>{{ endpointStore.endpointItem?.created ? new Date(endpointStore.endpointItem.created).toLocaleDateString() : '-' }}</p>
+						<p>{{ endpoint?.created ? new Date(endpoint.created).toLocaleDateString() : '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Updated:</b>
-						<p>{{ endpointStore.endpointItem.updated ? new Date(endpointStore.endpointItem.updated).toLocaleDateString() : '-' }}</p>
+						<p>{{ endpoint?.updated ? new Date(endpoint.updated).toLocaleDateString() : '-' }}</p>
 					</div>
 				</div>
 
@@ -116,8 +116,8 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 									Add Rule
 								</NcButton>
 							</div>
-							<div v-if="endpointStore.endpointItem?.rules?.length">
-								<NcListItem v-for="ruleId in endpointStore.endpointItem.rules"
+							<div v-if="endpoint?.rules?.length">
+								<NcListItem v-for="ruleId in endpoint.rules"
 									:key="ruleId"
 									:name="getRuleName(ruleId)"
 									:bold="false"
@@ -199,6 +199,17 @@ export default {
 		LinkOff,
 		NcButton,
 	},
+	props: {
+		endpoint: {
+			type: Object,
+			required: false,
+			default: null,
+		},
+		loading: {
+			type: Boolean,
+			default: false,
+		},
+	},
 	data() {
 		return {
 			rulesList: [],
@@ -245,7 +256,7 @@ export default {
 			const rule = this.rulesList.find(rule => String(rule.id) === String(ruleId))
 			if (rule) {
 				ruleStore.setRuleItem(rule)
-				navigationStore.setSelected('rules')
+				this.$router.push('/rules/' + rule.id)
 			}
 		},
 		async removeRule(ruleId) {
@@ -268,6 +279,7 @@ export default {
 
 				// Refresh the rules list
 				await this.loadRules()
+				this.$emit('endpoint-updated')
 			} catch (error) {
 				console.error('Failed to remove rule:', error)
 			}

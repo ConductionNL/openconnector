@@ -8,7 +8,7 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 			<ConsumersList />
 		</template>
 		<template #default>
-			<NcEmptyContent v-if="!consumerStore.consumerItem || navigationStore.selected != 'consumers'"
+			<NcEmptyContent v-if="!$route.params.id"
 				class="detailContainer"
 				name="Geen consumer"
 				description="Nog geen consumer geselecteerd">
@@ -21,7 +21,28 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 					</NcButton>
 				</template>
 			</NcEmptyContent>
-			<ConsumerDetails v-if="consumerStore.consumerItem && navigationStore.selected === 'consumers'" />
+			<NcEmptyContent v-else-if="loadError"
+				class="detailContainer"
+				name="Error"
+				description="Failed to load consumer.">
+				<template #icon>
+					<Webhook />
+				</template>
+				<template #action>
+					<div style="display: flex; gap: 0.5rem;">
+						<NcButton type="secondary" @click="consumerStore.setConsumerItem(null); loadError = false; $router.push('/consumers')">
+							Terug
+						</NcButton>
+						<NcButton type="primary" @click="consumerStore.setConsumerItem(null); loadError = false; $router.push('/consumers'); navigationStore.setModal('editConsumer')">
+							Consumer toevoegen
+						</NcButton>
+					</div>
+				</template>
+			</NcEmptyContent>
+			<ConsumerDetails v-else-if="!loading"
+				:consumer="selectedConsumer"
+				:loading="loading"
+				@consumer-updated="syncFromStore" />
 		</template>
 	</NcAppContent>
 </template>
@@ -41,6 +62,49 @@ export default {
 		ConsumersList,
 		ConsumerDetails,
 		Webhook,
+	},
+	data() {
+		return {
+			selectedConsumer: null,
+			loading: false,
+			loadError: null,
+		}
+	},
+	watch: {
+		'$route.params.id': {
+			immediate: true,
+			async handler(newId) {
+				await this.loadByRoute(newId)
+			},
+		},
+	},
+	methods: {
+		async loadByRoute(id) {
+			this.loadError = null
+			if (!id) {
+				this.selectedConsumer = null
+				consumerStore.setConsumerItem(null)
+				this.loading = false
+				return
+			}
+
+			this.loading = true
+			try {
+				const { entity, response } = await consumerStore.fetchConsumer(String(id))
+				if (!response.ok) {
+					throw new Error(response.statusText)
+				}
+				this.selectedConsumer = entity
+			} catch (e) {
+				this.loadError = e?.message || 'Failed to load consumer'
+				this.selectedConsumer = null
+			} finally {
+				this.loading = false
+			}
+		},
+		syncFromStore() {
+			this.selectedConsumer = consumerStore.getConsumerItem()
+		},
 	},
 }
 </script>

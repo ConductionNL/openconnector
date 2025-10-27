@@ -27,7 +27,7 @@
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="$route.path === '/endpoints'"
+			<NcAppNavigationItem :active="$route.matched[0].path === '/endpoints' || $route.matched[0].path === '/endpoints/:id'"
 				name="Endpoints"
 				:allow-collapse="true"
 				:open="true"
@@ -38,19 +38,19 @@
 				<!-- This is correct according to the documentation, thats why there is a disable comment -->
 				<!-- eslint-disable-next-line vue/no-lone-template -->
 				<template>
-					<NcAppNavigationItem :active="$route.path === '/endpoints/logs'" name="Logs" @click="handleNavigate('/endpoints/logs')">
+					<NcAppNavigationItem :active="$route.matched[0].path === '/endpoints/logs'" name="Logs" @click="handleNavigate('/endpoints/logs')">
 						<template #icon>
 							<TextBoxOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="$route.path === '/consumers'" name="Consumers" @click="handleNavigate('/consumers')">
+			<NcAppNavigationItem :active="$route.path.startsWith('/consumers')" name="Consumers" @click="handleNavigate('/consumers')">
 				<template #icon>
 					<Webhook :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="$route.path === '/mappings'" name="Mappings" @click="handleNavigate('/mappings')">
+			<NcAppNavigationItem :active="$route.path.startsWith('/mappings')" name="Mappings" @click="handleNavigate('/mappings')">
 				<template #icon>
 					<SitemapOutline :size="20" />
 				</template>
@@ -83,7 +83,7 @@
 				<!-- This is correct according to the documentation, thats why there is a disable comment -->
 				<!-- eslint-disable-next-line vue/no-lone-template -->
 				<template>
-					<NcAppNavigationItem :active="$route.path === '/cloud-events/events'" name="Events" @click="handleNavigate('/cloud-events/events')">
+					<NcAppNavigationItem :active="$route.path.startsWith('/cloud-events/events')" name="Events" @click="handleNavigate('/cloud-events/events')">
 						<template #icon>
 							<MessageTextFastOutline :size="20" />
 						</template>
@@ -118,7 +118,7 @@
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="$route.path === '/rules'" name="Rules" @click="handleNavigate('/rules')">
+			<NcAppNavigationItem :active="$route.path.startsWith('/rules')" name="Rules" @click="handleNavigate('/rules')">
 				<template #icon>
 					<SitemapOutline :size="20" />
 				</template>

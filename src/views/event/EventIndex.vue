@@ -8,7 +8,7 @@ import { eventStore, navigationStore } from '../../store/store.js'
 			<EventList />
 		</template>
 		<template #default>
-			<NcEmptyContent v-if="!eventStore.eventItem || navigationStore.selected != 'events'"
+			<NcEmptyContent v-if="!$route.params.id"
 				class="detailContainer"
 				name="No event"
 				description="No event selected">
@@ -21,7 +21,27 @@ import { eventStore, navigationStore } from '../../store/store.js'
 					</NcButton>
 				</template>
 			</NcEmptyContent>
-			<EventDetails v-if="eventStore.eventItem && navigationStore.selected === 'events'" />
+			<NcEmptyContent v-else-if="loadError"
+				class="detailContainer"
+				name="Error"
+				description="Failed to load event.">
+				<template #icon>
+					<Update />
+				</template>
+				<template #action>
+					<div style="display: flex; gap: 0.5rem;">
+						<NcButton type="secondary" @click="eventStore.setEventItem(null); loadError = false; $router.push('/cloud-events/events')">
+							Back
+						</NcButton>
+						<NcButton type="primary" @click="eventStore.setEventItem(null); loadError = false; $router.push('/cloud-events/events'); navigationStore.setModal('editEvent')">
+							Add event
+						</NcButton>
+					</div>
+				</template>
+			</NcEmptyContent>
+			<EventDetails v-else-if="!loading"
+				:item="eventStore.eventItem"
+				:loading="loading" />
 		</template>
 	</NcAppContent>
 </template>
@@ -41,6 +61,47 @@ export default {
 		EventList,
 		EventDetails,
 		Update,
+	},
+	data() {
+		return {
+			eventStore,
+			navigationStore,
+			loading: false,
+			loadError: false,
+		}
+	},
+	watch: {
+		'$route.params.id'() {
+			this.syncFromRoute()
+		},
+	},
+	mounted() {
+		this.syncFromRoute()
+	},
+	methods: {
+		async syncFromRoute() {
+			const id = this.$route.params.id
+			if (!id) {
+				this.eventStore.setEventItem(null)
+				this.loadError = false
+				return
+			}
+			try {
+				this.loading = true
+				this.loadError = false
+				const { response } = await this.eventStore.fetchEvent(String(id))
+				if (!response.ok) {
+					this.eventStore.setEventItem(null)
+					if (response.status >= 400 && response.status < 500) {
+						throw new Error('Not found')
+					}
+				}
+			} catch (e) {
+				this.loadError = true
+			} finally {
+				this.loading = false
+			}
+		},
 	},
 }
 </script>

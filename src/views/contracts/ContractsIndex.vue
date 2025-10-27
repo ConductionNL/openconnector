@@ -1,5 +1,5 @@
 <script setup>
-import { contractStore, synchronizationStore, navigationStore } from '../../store/store.js'
+import { contractStore, synchronizationStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -453,7 +453,7 @@ export default {
 			}
 		},
 		viewLogs(contract) {
-			navigationStore.setSelected('logs')
+			this.$router.push('/synchronizations/logs?contract=' + contract.id)
 			this.$root.$emit('logs-filter-by-contract', contract.id)
 		},
 		async changePage(page) {

@@ -113,7 +113,31 @@ class UiController extends Controller
      * @phpstan-return TemplateResponse
      * @psalm-return TemplateResponse
      */
+    public function endpointsId(string $id): TemplateResponse
+    {
+        return $this->makeSpaResponse();
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @phpstan-return TemplateResponse
+     * @psalm-return TemplateResponse
+     */
     public function consumers(): TemplateResponse
+    {
+        return $this->makeSpaResponse();
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @phpstan-return TemplateResponse
+     * @psalm-return TemplateResponse
+     */
+    public function consumersId(string $id): TemplateResponse
     {
         return $this->makeSpaResponse();
     }
@@ -173,7 +197,31 @@ class UiController extends Controller
      * @phpstan-return TemplateResponse
      * @psalm-return TemplateResponse
      */
+    public function mappingsId(string $id): TemplateResponse
+    {
+        return $this->makeSpaResponse();
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @phpstan-return TemplateResponse
+     * @psalm-return TemplateResponse
+     */
     public function rules(): TemplateResponse
+    {
+        return $this->makeSpaResponse();
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @phpstan-return TemplateResponse
+     * @psalm-return TemplateResponse
+     */
+    public function rulesId(string $id): TemplateResponse
     {
         return $this->makeSpaResponse();
     }
@@ -234,6 +282,18 @@ class UiController extends Controller
      * @psalm-return TemplateResponse
      */
     public function cloudEventsEvents(): TemplateResponse
+    {
+        return $this->makeSpaResponse();
+    }
+
+    /**
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     *
+     * @phpstan-return TemplateResponse
+     * @psalm-return TemplateResponse
+     */
+    public function cloudEventsEventsId(string $id): TemplateResponse
     {
         return $this->makeSpaResponse();
     }

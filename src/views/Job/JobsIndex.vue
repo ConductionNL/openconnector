@@ -489,7 +489,7 @@ export default {
 			// Refresh the logs for this specific job
 			this.jobStore.refreshJobLogs(job.id)
 			// Navigate to the job logs view
-			this.navigationStore.setSelected('job-logs')
+			this.$router.push('/jobs/logs')
 		},
 	},
 }

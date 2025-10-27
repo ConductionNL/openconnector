@@ -750,8 +750,35 @@ export default {
 		 * Navigate to the selected section
 		 * @param {string} section - The section to navigate to
 		 */
+		/**
+		 * Navigate to the selected section based on the routes defined in router/index.js
+		 * @param {string} section - The section to navigate to ('sources', 'mappings', 'synchronizations', etc)
+		 */
 		navigateTo(section) {
-			navigationStore.setSelected(section)
+			// Map section names to their corresponding routes
+			const routeMap = {
+				sources: '/sources',
+				mappings: '/mappings',
+				synchronizations: '/synchronizations',
+				synchronizationContracts: '/synchronizations/contracts',
+				jobs: '/jobs',
+				endpoints: '/endpoints',
+				consumers: '/consumers',
+				webhooks: '/webhooks',
+				rules: '/rules',
+				cloudEvents: '/cloud-events',
+				import: '/import',
+			}
+
+			// Get the route path for the section
+			const route = routeMap[section]
+
+			// Navigate to the route if it exists
+			if (route) {
+				this.$router.push(route)
+			} else {
+				console.warn(`Unknown section: ${section}`)
+			}
 		},
 
 		/**

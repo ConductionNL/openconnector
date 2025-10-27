@@ -239,7 +239,7 @@ export default {
 			const rule = this.rulesList.find(rule => String(rule.id) === String(ruleId))
 			if (rule) {
 				ruleStore.setRuleItem(rule)
-				navigationStore.setSelected('rules')
+				this.$router.push(`/rules/${ruleId}`)
 			}
 		},
 		/**

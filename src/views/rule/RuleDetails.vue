@@ -8,7 +8,7 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 			<div>
 				<div class="detailHeader">
 					<h1 class="h1">
-						{{ ruleStore.ruleItem.name }}
+						{{ item?.name || '-' }}
 					</h1>
 
 					<NcActions :primary="true" menu-name="Actions">
@@ -21,7 +21,7 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 							</template>
 							Edit
 						</NcActionButton>
-						<NcActionButton close-after-click @click="ruleStore.exportRule(ruleStore.ruleItem.id)">
+						<NcActionButton close-after-click @click="ruleStore.exportRule(item?.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
@@ -35,22 +35,22 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 						</NcActionButton>
 					</NcActions>
 				</div>
-				<span>{{ ruleStore.ruleItem.description }}</span>
+				<span>{{ item?.description || '-' }}</span>
 
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
 						<b>id:</b>
-						<p>{{ ruleStore.ruleItem?.id || '-' }}</p>
+						<p>{{ item?.id || '-' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>uuid:</b>
-						<p>{{ ruleStore.ruleItem?.uuid || '-' }}</p>
+						<p>{{ item?.uuid || '-' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>Created:</b>
 						<p>
-							{{ ruleStore.ruleItem.created
-								? new Date(ruleStore.ruleItem.created).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+							{{ item?.created
+								? new Date(item?.created).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
 								: 'N/A'
 							}}
 						</p>
@@ -58,8 +58,8 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 					<div class="gridContent gridFullWidth">
 						<b>Updated:</b>
 						<p>
-							{{ ruleStore.ruleItem.updated
-								? new Date(ruleStore.ruleItem.updated).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+							{{ item?.updated
+								? new Date(item?.updated).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
 								: 'N/A'
 							}}
 						</p>
@@ -70,23 +70,23 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>Type:</b>
-						<p>{{ ruleStore.ruleItem.type || 'N/A' }}</p>
+						<p>{{ item?.type || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>Action:</b>
-						<p>{{ ruleStore.ruleItem.action || 'N/A' }}</p>
+						<p>{{ item?.action || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>Order:</b>
-						<p>{{ ruleStore.ruleItem.order || 'N/A' }}</p>
+						<p>{{ item?.order || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>Conditions:</b>
-						<p>{{ ruleStore.ruleItem.conditions ? JSON.stringify(ruleStore.ruleItem.conditions, null, 2) : 'N/A' }}</p>
+						<p>{{ item?.conditions ? JSON.stringify(item?.conditions, null, 2) : 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>Action Config:</b>
-						<p>{{ ruleStore.ruleItem.actionConfig ? JSON.stringify(ruleStore.ruleItem.actionConfig, null, 2) : 'N/A' }}</p>
+						<p>{{ item?.actionConfig ? JSON.stringify(item?.actionConfig, null, 2) : 'N/A' }}</p>
 					</div>
 				</div>
 			</div>
@@ -110,6 +110,16 @@ export default {
 		Pencil,
 		TrashCanOutline,
 		FileExportOutline,
+	},
+	props: {
+		item: {
+			type: Object,
+			default: null,
+		},
+		loading: {
+			type: Boolean,
+			default: false,
+		},
 	},
 }
 </script>
