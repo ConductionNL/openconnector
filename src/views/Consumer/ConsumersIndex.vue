@@ -21,6 +21,14 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 					</NcButton>
 				</template>
 			</NcEmptyContent>
+			<NcEmptyContent v-else-if="loading"
+				class="detailContainer"
+				name="Loading..."
+				description="Fetching rule details">
+				<template #icon>
+					<NcLoadingIcon />
+				</template>
+			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
 				name="Error"
@@ -39,16 +47,15 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 					</div>
 				</template>
 			</NcEmptyContent>
-			<ConsumerDetails v-else-if="!loading"
+			<ConsumerDetails v-else
 				:consumer="selectedConsumer"
-				:loading="loading"
 				@consumer-updated="syncFromStore" />
 		</template>
 	</NcAppContent>
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcButton } from '@nextcloud/vue'
+import { NcAppContent, NcEmptyContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import ConsumersList from './ConsumersList.vue'
 import ConsumerDetails from './ConsumerDetails.vue'
 import Webhook from 'vue-material-design-icons/Webhook.vue'

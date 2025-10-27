@@ -21,6 +21,14 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 					</NcButton>
 				</template>
 			</NcEmptyContent>
+			<NcEmptyContent v-else-if="loading"
+				class="detailContainer"
+				name="Loading..."
+				description="Fetching rule details">
+				<template #icon>
+					<NcLoadingIcon />
+				</template>
+			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
 				name="Error"
@@ -39,7 +47,7 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 					</div>
 				</template>
 			</NcEmptyContent>
-			<RuleDetails v-else-if="!loading"
+			<RuleDetails v-else
 				:item="ruleStore.ruleItem"
 				:loading="loading" />
 		</template>
@@ -47,7 +55,7 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcButton } from '@nextcloud/vue'
+import { NcAppContent, NcEmptyContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import RuleList from './RuleList.vue'
 import RuleDetails from './RuleDetails.vue'
 import Update from 'vue-material-design-icons/Update.vue'
@@ -92,9 +100,7 @@ export default {
 				const { response } = await this.ruleStore.fetchRule(String(id))
 				if (!response.ok) {
 					this.ruleStore.setRuleItem(null)
-					if (response.status >= 400 && response.status < 500) {
-						throw new Error('Not found')
-					}
+					throw new Error(response.status >= 400 && response.status < 500 ? 'Not found' : 'Server error')
 				}
 			} catch (e) {
 				this.loadError = true

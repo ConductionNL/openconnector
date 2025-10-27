@@ -98,7 +98,7 @@ return [
 		['name' => 'ui#endpointsLogs', 'url' => '/endpoints/logs', 'verb' => 'GET'],
 		['name' => 'ui#endpointsId', 'url' => '/endpoints/{id}', 'verb' => 'GET'],
 		['name' => 'ui#consumers', 'url' => '/consumers', 'verb' => 'GET'],
-        ['name' => 'ui#consumersId', 'url' => '/consumers/{id}', 'verb' => 'GET'],
+		['name' => 'ui#consumersId', 'url' => '/consumers/{id}', 'verb' => 'GET'],
 		['name' => 'ui#webhooks', 'url' => '/webhooks', 'verb' => 'GET'],
 		['name' => 'ui#jobs', 'url' => '/jobs', 'verb' => 'GET'],
 		['name' => 'ui#jobsLogs', 'url' => '/jobs/logs', 'verb' => 'GET'],

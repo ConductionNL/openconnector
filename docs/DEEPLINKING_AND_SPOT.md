@@ -282,7 +282,7 @@ Current behavior:
 - Modal visibility/state is not encoded in the URL query. Modals (e.g. entries in `src/modals/Modals.vue` such as `src/modals/configuration/DeleteConfiguration.vue`) are controlled by local/component or store state triggered by in-app actions. Refreshing or sharing a URL does not reopen a modal.
 
 Why not in URL today:
-- Avoids noisy history and accidental dee links into destructive flows.p
+- Avoids noisy history and accidental deep links into destructive flows.
 - Keeps URLs stable while a user is mid-flow.
 
 Possible future enhancement:

@@ -439,7 +439,7 @@ export default {
 			const aKeys = Object.keys(a)
 			const bKeys = Object.keys(b)
 			if (aKeys.length !== bKeys.length) return false
-			return aKeys.every(k => String(a[k]) === String(b[k] || ''))
+			return aKeys.every(k => String(a[k] || '') === String(b[k] || ''))
 		},
 		updateRouteQueryFromState() {
 			if (!this.$route.path.startsWith('/jobs/logs')) return
@@ -463,8 +463,8 @@ export default {
 				this.filters.jobId = found ? found.id : null
 			}
 			// Dates
-			this.dateFrom = q.dateFrom && new Date(q.dateFrom).getDate() ? new Date(q.dateFrom) : null
-			this.dateTo = q.dateTo && new Date(q.dateTo).getDate() ? new Date(q.dateTo) : null
+			this.dateFrom = q.dateFrom && !isNaN(new Date(q.dateFrom)) ? new Date(q.dateFrom) : null
+			this.dateTo = q.dateTo && !isNaN(new Date(q.dateTo)) ? new Date(q.dateTo) : null
 			// Message
 			this.messageFilter = q.message || ''
 			// Flags

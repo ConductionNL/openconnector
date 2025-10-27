@@ -21,6 +21,14 @@ import { endpointStore, navigationStore } from '../../store/store.js'
 					</NcButton>
 				</template>
 			</NcEmptyContent>
+			<NcEmptyContent v-else-if="loading"
+				class="detailContainer"
+				name="Loading..."
+				description="Fetching rule details">
+				<template #icon>
+					<NcLoadingIcon />
+				</template>
+			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
 				name="Error"
@@ -39,16 +47,15 @@ import { endpointStore, navigationStore } from '../../store/store.js'
 					</div>
 				</template>
 			</NcEmptyContent>
-			<EndpointDetails v-else-if="!loading"
+			<EndpointDetails v-else
 				:endpoint="selectedEndpoint"
-				:loading="loading"
 				@endpoint-updated="syncFromStore" />
 		</template>
 	</NcAppContent>
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcButton } from '@nextcloud/vue'
+import { NcAppContent, NcEmptyContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import EndpointsList from './EndpointsList.vue'
 import EndpointDetails from './EndpointDetails.vue'
 import Api from 'vue-material-design-icons/Api.vue'
@@ -68,6 +75,7 @@ export default {
 			selectedEndpoint: null,
 			loading: false,
 			loadError: null,
+			activeLoadId: null,
 		}
 	},
 	watch: {
@@ -80,6 +88,8 @@ export default {
 	},
 	methods: {
 		async loadByRoute(id) {
+			const loadId = Symbol('RaceConditionGuard')
+			this.activeLoadId = loadId
 			this.loadError = null
 			if (!id) {
 				this.selectedEndpoint = null
@@ -91,11 +101,13 @@ export default {
 			this.loading = true
 			try {
 				const { entity, response } = await endpointStore.fetchEndpoint(String(id))
+				if (this.activeLoadId !== loadId) return // Stale request
 				if (!response.ok) {
 					throw new Error(response.statusText)
 				}
 				this.selectedEndpoint = entity
 			} catch (e) {
+				if (this.activeLoadId !== loadId) return // Stale request
 				this.loadError = e?.message || 'Failed to load endpoint'
 				this.selectedEndpoint = null
 			} finally {

@@ -21,6 +21,14 @@ import { eventStore, navigationStore } from '../../store/store.js'
 					</NcButton>
 				</template>
 			</NcEmptyContent>
+			<NcEmptyContent v-else-if="loading"
+				class="detailContainer"
+				name="Loading..."
+				description="Fetching rule details">
+				<template #icon>
+					<NcLoadingIcon />
+				</template>
+			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
 				name="Error"
@@ -39,15 +47,14 @@ import { eventStore, navigationStore } from '../../store/store.js'
 					</div>
 				</template>
 			</NcEmptyContent>
-			<EventDetails v-else-if="!loading"
-				:item="eventStore.eventItem"
-				:loading="loading" />
+			<EventDetails v-else
+				:item="eventStore.eventItem" />
 		</template>
 	</NcAppContent>
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcButton } from '@nextcloud/vue'
+import { NcAppContent, NcEmptyContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import EventList from './EventList.vue'
 import EventDetails from './EventDetails.vue'
 import Update from 'vue-material-design-icons/Update.vue'
@@ -92,9 +99,9 @@ export default {
 				const { response } = await this.eventStore.fetchEvent(String(id))
 				if (!response.ok) {
 					this.eventStore.setEventItem(null)
-					if (response.status >= 400 && response.status < 500) {
-						throw new Error('Not found')
-					}
+					throw new Error(response.status >= 400 && response.status < 500
+						? 'Event not found'
+						: 'Server error occurred')
 				}
 			} catch (e) {
 				this.loadError = true

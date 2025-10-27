@@ -277,7 +277,7 @@ export default {
 		// Listen for events from main view
 		this.$root.$on('logs-selection-count', this.updateSelectionCount)
 		this.$root.$on('logs-filtered-count', this.updateFilteredCount)
-		// Initialize SPOT from URL
+		// Initialize filters from URL
 		this.applyQueryParamsFromRoute()
 	},
 	beforeDestroy() {
@@ -333,7 +333,7 @@ export default {
 
 			// Emit filters to main view
 			this.$root.$emit('logs-filters-changed', cleanFilters)
-			// Write SPOT to URL
+			// Write filters to URL
 			this.updateRouteQueryFromState()
 		},
 		buildQueryFromState() {
@@ -362,10 +362,14 @@ export default {
 			if (this.$route.path !== '/synchronizations/logs') return
 			const q = this.$route.query || {}
 			this.filters.level = q.level || null
-			this.filters.contract = q.contract || null
-			this.filters.synchronization = q.synchronization || null
-			this.filters.dateFrom = q.dateFrom && new Date(q.dateFrom).getDate() ? new Date(q.dateFrom) : null
-			this.filters.dateTo = q.dateTo && new Date(q.dateTo).getDate() ? new Date(q.dateTo) : null
+			this.filters.contract = q.contract
+				? this.contractOptions.find(opt => String(opt.id) === String(q.contract)) || null
+				: null
+			this.filters.synchronization = q.synchronization
+				? this.synchronizationOptions.find(opt => String(opt.id) === String(q.synchronization)) || null
+				: null
+			this.filters.dateFrom = q.dateFrom && !isNaN(new Date(q.dateFrom).getTime()) ? new Date(q.dateFrom) : null
+			this.filters.dateTo = q.dateTo && !isNaN(new Date(q.dateTo).getTime()) ? new Date(q.dateTo) : null
 			this.filters.message = q.message || ''
 			this.applyFilters()
 		},

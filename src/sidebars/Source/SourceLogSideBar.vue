@@ -286,10 +286,10 @@ export default {
 			this.applyFilters()
 		},
 	},
-	mounted() {
+	async mounted() {
 		// Load required data
 		if (!sourceStore.sourceList?.length) {
-			sourceStore.refreshSourceList()
+			await sourceStore.refreshSourceList()
 		}
 
 		// Load initial log data
@@ -455,7 +455,11 @@ export default {
 			const aKeys = Object.keys(a)
 			const bKeys = Object.keys(b)
 			if (aKeys.length !== bKeys.length) return false
-			return aKeys.every(k => String(a[k]) === String(b[k] || ''))
+			return aKeys.every(k => {
+				const aVal = a[k] === undefined ? '' : String(a[k])
+				const bVal = b[k] === undefined ? '' : String(b[k])
+				return aVal === bVal
+			})
 		},
 		updateRouteQueryFromState() {
 			if (this.$route.path !== '/sources/logs') return
@@ -470,11 +474,15 @@ export default {
 			if (typeof q.statusCode === 'string') {
 				const parts = q.statusCode.split(',').map(s => s.trim()).filter(Boolean)
 				this.selectedStatusCodes = parts
+					.map(code => this.statusCodeOptions.find(opt => opt.value === code))
+					.filter(Boolean)
 			}
 			// Methods
 			if (typeof q.method === 'string') {
 				const parts = q.method.split(',').map(s => s.trim()).filter(Boolean)
 				this.selectedMethods = parts
+					.map(method => this.methodOptions.find(opt => opt.value === method))
+					.filter(Boolean)
 			}
 			// Source
 			if (q.source_id) {

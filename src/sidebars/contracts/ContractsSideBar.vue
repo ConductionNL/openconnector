@@ -139,12 +139,6 @@ export default {
 	},
 	data() {
 		return {
-			syncStatusOptions: [
-				{ id: 'synced', label: t('openconnector', 'Synced') },
-				{ id: 'stale', label: t('openconnector', 'Stale') },
-				{ id: 'unsynced', label: t('openconnector', 'Unsynced') },
-			],
-
 			activeTab: 'filters-tab',
 			filters: {
 				synchronization: null,
@@ -160,6 +154,13 @@ export default {
 		}
 	},
 	computed: {
+		syncStatusOptions() {
+			return [
+				{ id: 'synced', label: this.t('openconnector', 'Synced') },
+				{ id: 'stale', label: this.t('openconnector', 'Stale') },
+				{ id: 'unsynced', label: this.t('openconnector', 'Unsynced') },
+			]
+		},
 		/**
 		 * Get synchronization filter options
 		 * @return {Array} Array of synchronization options
@@ -268,8 +269,12 @@ export default {
 		applyQueryParamsFromRoute() {
 			if (this.$route.path !== '/synchronizations/contracts') return
 			const q = this.$route.query || {}
-			this.filters.synchronization = q.synchronization || null
-			this.filters.syncStatus = q.syncStatus || null
+			this.filters.synchronization = q.synchronization
+				? this.synchronizationOptions.find(opt => String(opt.id) === String(q.synchronization)) || null
+				: null
+			this.filters.syncStatus = q.syncStatus
+				? this.syncStatusOptions.find(opt => opt.id === q.syncStatus) || null
+				: null
 			this.filters.dateFrom = q.dateFrom && new Date(q.dateFrom).getDate() ? new Date(q.dateFrom) : null
 			this.filters.dateTo = q.dateTo && new Date(q.dateTo).getDate() ? new Date(q.dateTo) : null
 			this.applyFilters()

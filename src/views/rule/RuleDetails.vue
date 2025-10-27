@@ -116,10 +116,6 @@ export default {
 			type: Object,
 			default: null,
 		},
-		loading: {
-			type: Boolean,
-			default: false,
-		},
 	},
 }
 </script>

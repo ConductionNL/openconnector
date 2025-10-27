@@ -205,10 +205,6 @@ export default {
 			required: false,
 			default: null,
 		},
-		loading: {
-			type: Boolean,
-			default: false,
-		},
 	},
 	data() {
 		return {

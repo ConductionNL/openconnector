@@ -21,6 +21,14 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 					</NcButton>
 				</template>
 			</NcEmptyContent>
+			<NcEmptyContent v-else-if="loading"
+				class="detailContainer"
+				name="Loading..."
+				description="Fetching rule details">
+				<template #icon>
+					<NcLoadingIcon />
+				</template>
+			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
 				name="Error"
@@ -39,13 +47,13 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 					</div>
 				</template>
 			</NcEmptyContent>
-			<MappingDetails v-else-if="!loading" :item="mappingStore.mappingItem" :loading="loading" />
+			<MappingDetails v-else :item="mappingStore.mappingItem" />
 		</template>
 	</NcAppContent>
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcButton } from '@nextcloud/vue'
+import { NcAppContent, NcEmptyContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import MappingsList from './MappingsList.vue'
 import MappingDetails from './MappingDetails.vue'
 import SitemapOutline from 'vue-material-design-icons/SitemapOutline.vue'
@@ -90,9 +98,7 @@ export default {
 				const { response } = await this.mappingStore.fetchMapping(String(id))
 				if (!response.ok) {
 					this.mappingStore.setMappingItem(null)
-					if (response.status >= 400 && response.status < 500) {
-						throw new Error('Not found')
-					}
+					throw new Error(response.status >= 400 && response.status < 500 ? 'Not found' : 'Server error')
 				}
 			} catch (e) {
 				this.loadError = true

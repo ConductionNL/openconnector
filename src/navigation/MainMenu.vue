@@ -73,7 +73,7 @@
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="$route.path === '/cloud-events'"
+			<NcAppNavigationItem
 				name="Cloud Events"
 				:allow-collapse="true"
 				:open="true">
