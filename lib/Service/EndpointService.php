@@ -154,17 +154,20 @@ class EndpointService
     {
         if ($result->getStatus() < 200 || $result->getStatus() >= 300) {
 
+            $resultData = $result->getData();
+            $message = $resultData['message'] ?? null;
+            $error = $resultData['error'] ?? null;
 
             $responseData = [
-                'type' => $result->getData()['message'],
+                'type' => $message,
                 'code' => $result->getStatus(),
-                'title'   => $result->getData()['message'],
+                'title'   => $message,
                 'status' => $result->getStatus(),
                 'instance' => $request->getId(),
-                'detail'  => $result->getData()['error'],
+                'detail'  => $error,
             ];
 
-            $responseData = $this->parseMessage(response: $responseData, responseData: $result->getData());
+            $responseData = $this->parseMessage(response: $responseData, responseData: $resultData);
 
             return new JSONResponse(data: $responseData, statusCode: $result->getStatus());
 
@@ -1141,7 +1144,7 @@ class EndpointService
 
                 // Update data with rule result
                 $data = $result;
-                
+
                 $this->logger->info('Successfully applied rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
 			}
 
