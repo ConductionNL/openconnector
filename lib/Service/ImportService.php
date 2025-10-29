@@ -34,7 +34,8 @@ class ImportService
 		private readonly IURLGenerator $urlGenerator,
 		private readonly ObjectService $objectService
 	) {
-		$this->client = new Client([]);
+		// Ensure we have a working client instance
+		$this->client = $client ?? new Client([]);
 	}
 
 	/**

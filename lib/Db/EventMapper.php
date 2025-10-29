@@ -100,9 +100,9 @@ class EventMapper extends QBMapper
 			$obj->setUuid(Uuid::v4());
 		}
 
-		// Set version
-		if (empty($obj->getVersion()) === true) {
-			$obj->setVersion('0.0.1');
+		// Set specversion
+		if (empty($obj->getSpecversion()) === true) {
+			$obj->setSpecversion('1.0');
 		}
 
 		return $this->insert(entity: $obj);
@@ -119,16 +119,12 @@ class EventMapper extends QBMapper
 	{
 		$obj = $this->find($id);
 
-		// Set version
-		if (empty($obj->getVersion()) === true) {
-			$object['version'] = '0.0.1';
-		} else if (empty($object['version']) === true) {
-			// Update version
-			$version = explode('.', $obj->getVersion());
-			if (isset($version[2]) === true) {
-				$version[2] = (int) $version[2] + 1;
-				$object['version'] = implode('.', $version);
-			}
+		// Set specversion
+		if (empty($obj->getSpecversion()) === true) {
+			$object['specversion'] = '1.0';
+		} else if (empty($object['specversion']) === true) {
+			// Keep existing specversion
+			$object['specversion'] = $obj->getSpecversion();
 		}
 
 		$obj->hydrate($object);
