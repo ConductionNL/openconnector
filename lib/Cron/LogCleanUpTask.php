@@ -2,7 +2,7 @@
 
 /**
  * LogCleanUpTask
- * 
+ *
  * Background job task for cleaning up old logs in the OpenConnector application.
  * This task removes expired call logs and job logs to maintain system performance.
  *
@@ -18,6 +18,8 @@ namespace OCA\OpenConnector\Cron;
 
 use OCA\OpenConnector\Db\CallLogMapper;
 use OCA\OpenConnector\Db\JobLogMapper;
+use OCA\OpenConnector\Db\SynchronizationContractLogMapper;
+use OCA\OpenConnector\Db\SynchronizationLogMapper;
 use OCP\BackgroundJob\TimedJob;
 use OCP\BackgroundJob\IJob;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -59,7 +61,9 @@ class LogCleanUpTask extends TimedJob
 	public function __construct(
 		ITimeFactory $time,
 		CallLogMapper $callLogMapper,
-		JobLogMapper $jobLogMapper
+		JobLogMapper $jobLogMapper,
+        private readonly SynchronizationContractLogMapper $syncContractLogMapper,
+        private readonly SynchronizationLogMapper $syncLogMapper
 	) {
 		parent::__construct($time);
 		$this->callLogMapper = $callLogMapper;
@@ -72,7 +76,7 @@ class LogCleanUpTask extends TimedJob
 		$this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
 
 		// Only run one instance of this job at a time
-		$this->setAllowParallelRuns(false);
+		$this->setAllowParallelRuns(true);
 	}
 
 	/**
@@ -92,8 +96,13 @@ class LogCleanUpTask extends TimedJob
 	{
 		// Clear expired call logs from the database
 		$this->callLogMapper->clearLogs();
-		
+
 		// Clear expired job logs from the database
 		$this->jobLogMapper->clearLogs();
+
+        // Clear expired synchronization contract logs
+        $this->syncContractLogMapper->clearLogs();
+
+        $this->syncLogMapper->cleanupExpired();
 	}
 }

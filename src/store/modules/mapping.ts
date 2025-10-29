@@ -13,6 +13,8 @@ export const useMappingStore = defineStore('mapping', () => {
 	const mappingMappingKey = ref<string>(null)
 	const mappingCastKey = ref<string>(null)
 	const mappingUnsetKey = ref<string>(null)
+	const editingMode = ref<string>(null)
+	const editingMappingId = ref<string>(null)
 	const viewMode = ref<string>('cards')
 
 	// ################################
@@ -164,6 +166,48 @@ export const useMappingStore = defineStore('mapping', () => {
 	 * @return {string | null} The active mapping unset key
 	 */
 	const getMappingUnsetKey = (): string | null => mappingUnsetKey.value as string | null
+
+	/**
+	 * Set the current editing mode ("mapping" | "cast" | "unset").
+	 * @param mode - The editing mode to set
+	 */
+	const setEditingMode = (mode: string) => {
+		editingMode.value = mode
+		console.info('Editing mode set to ' + mode)
+	}
+
+	/**
+	 * Get the current editing mode.
+	 * @return {string | null} The current editing mode
+	 */
+	const getEditingMode = (): string | null => editingMode.value as string | null
+
+	/**
+	 * Set the mapping id being edited within dialogs.
+	 * @param id - The mapping id to set
+	 */
+	const setEditingMappingId = (id: string) => {
+		editingMappingId.value = id
+		console.info('Editing mapping id set to ' + id)
+	}
+
+	/**
+	 * Get the mapping id being edited.
+	 * @return {string | null} The current editing mapping id
+	 */
+	const getEditingMappingId = (): string | null => editingMappingId.value as string | null
+
+	/**
+	 * Clear editing context (mode, mapping id and any selected keys)
+	 */
+	const clearEditingContext = () => {
+		editingMode.value = null
+		editingMappingId.value = null
+		mappingMappingKey.value = null
+		mappingCastKey.value = null
+		mappingUnsetKey.value = null
+		console.info('Cleared editing context')
+	}
 
 	/**
 	 * Set the view mode.
@@ -475,6 +519,8 @@ export const useMappingStore = defineStore('mapping', () => {
 		mappingMappingKey,
 		mappingCastKey,
 		mappingUnsetKey,
+		editingMode,
+		editingMappingId,
 		viewMode,
 
 		// setters and getters
@@ -488,6 +534,11 @@ export const useMappingStore = defineStore('mapping', () => {
 		getMappingCastKey,
 		setMappingUnsetKey,
 		getMappingUnsetKey,
+		setEditingMode,
+		getEditingMode,
+		setEditingMappingId,
+		getEditingMappingId,
+		clearEditingContext,
 		setViewMode,
 		getViewMode,
 

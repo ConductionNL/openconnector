@@ -80,17 +80,27 @@ import { Endpoint } from '../../entities/index.js'
 				</div>
 			</form>
 
-			<NcButton
-				v-if="success === null"
-				:disabled="loading || !endpointItem.name || !registerOptions.value || !schemaOptions.value"
-				type="primary"
-				@click="editEndpoint()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<ContentSaveOutline v-if="!loading" :size="20" />
-				</template>
-				Save
-			</NcButton>
+			<div class="modal-actions">
+				<NcButton
+					v-if="success === null"
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
+				<NcButton
+					v-if="success === null"
+					:disabled="loading || !endpointItem.name || !registerOptions.value || !schemaOptions.value"
+					type="primary"
+					@click="editEndpoint()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<ContentSaveOutline v-if="!loading" :size="20" />
+					</template>
+					Save
+				</NcButton>
+			</div>
 		</div>
 	</NcModal>
 </template>
@@ -107,6 +117,7 @@ import {
 } from '@nextcloud/vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import _ from 'lodash'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'EditEndpoint',
@@ -118,6 +129,7 @@ export default {
 		NcNoteCard,
 		NcTextField,
 		NcTextArea,
+		CancelIcon,
 	},
 	data() {
 		return {

@@ -64,7 +64,14 @@ import { getTheme } from '../../services/getTheme.js'
 					</NcButton>
 				</div>
 			</form>
-			<div class="buttonContainer">
+			<div class="modal-actions">
+				<NcButton v-if="!success"
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
 				<NcButton
 					v-if="success === null"
 					:disabled="loading || !consumerItem.name || !isAuthConfigValid"
@@ -95,6 +102,7 @@ import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue
 import AutoFix from 'vue-material-design-icons/AutoFix.vue'
 import { json, jsonParseLinter } from '@codemirror/lang-json'
 import CodeMirror from 'vue-codemirror6'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'EditConsumer',
@@ -109,6 +117,7 @@ export default {
 		CodeMirror,
 		ContentSaveOutline,
 		AutoFix,
+		CancelIcon,
 	},
 	data() {
 		return {
@@ -315,12 +324,5 @@ export default {
 }
 .codeMirrorContainer.dark :deep(.cm-line .ͼd)::selection {
 	color: #623907;
-}
-
-.buttonContainer {
-	display: flex;
-	gap: 10px;
-	flex-direction: row-reverse;
-	margin-top: 15px;
 }
 </style>

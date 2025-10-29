@@ -9,17 +9,25 @@ import { jobStore, navigationStore } from '../../store/store.js'
 		<div class="modalContent">
 			<h2>Run job</h2>
 
-			<NcButton
-				:disabled="loading"
-				type="primary"
-				@click="runJob()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<Sync v-if="!loading" :size="20" />
-				</template>
-				Run job
-			</NcButton>
-
+			<div class="modal-actions">
+				<NcButton v-if="!success"
+					@click="closeModal">
+					<template #icon>
+						<CancelIcon size="20" />
+					</template>
+					Cancel
+				</NcButton>
+				<NcButton
+					:disabled="loading"
+					type="primary"
+					@click="runJob()">
+					<template #icon>
+						<NcLoadingIcon v-if="loading" :size="20" />
+						<Sync v-if="!loading" :size="20" />
+					</template>
+					Run job
+				</NcButton>
+			</div>
 			<div v-if="jobStore.jobRun">
 				<NcNoteCard v-if="jobStore.jobRun?.level === 'INFO'" type="success">
 					<p>The job run was successful. {{ jobStore.jobRun?.message }}</p>
@@ -101,6 +109,7 @@ import {
 	NcNoteCard,
 } from '@nextcloud/vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import CancelIcon from 'vue-material-design-icons/Cancel.vue'
 
 export default {
 	name: 'RunJob',
@@ -109,6 +118,7 @@ export default {
 		NcButton,
 		NcLoadingIcon,
 		NcNoteCard,
+		CancelIcon,
 	},
 	data() {
 		return {

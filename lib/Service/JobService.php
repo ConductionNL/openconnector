@@ -120,6 +120,40 @@ class JobService
     }
 
     /**
+     * Truncate message if it exceeds safe database limits
+     *
+     * This method ensures that job log messages don't exceed reasonable length
+     * limits that could cause database performance issues or memory problems.
+     * While the database column is now TEXT type, very long messages should
+     * still be truncated for performance and readability.
+     *
+     * @param string $message The original message to truncate
+     * @param int $maxLength Maximum allowed message length (default: 10000 characters)
+     *
+     * @return string The truncated message with truncation indicator if needed
+     *
+     * @psalm-param string $message
+     * @psalm-param int $maxLength
+     * @psalm-return string
+     * @phpstan-param string $message
+     * @phpstan-param int $maxLength
+     * @phpstan-return string
+     */
+    private function truncateMessage(string $message, int $maxLength = 10000): string
+    {
+        // If message is within limits, return as-is
+        if (strlen($message) <= $maxLength) {
+            return $message;
+        }
+
+        // Truncate and add indicator
+        $truncated = substr($message, 0, $maxLength - 50);
+        $truncated .= '... [Message truncated - original length: ' . strlen($message) . ' characters]';
+        
+        return $truncated;
+    }
+
+    /**
      * Schedule a job for execution
      *
      * This method handles the scheduling of jobs in the background job list.
@@ -316,7 +350,9 @@ class JobService
                 $jobLog->setLevel($result['level']);
             }
             if (isset($result['message']) === true) {
-                $jobLog->setMessage($result['message']);
+                // Truncate message if it's too long for database safety
+                $message = $this->truncateMessage($result['message']);
+                $jobLog->setMessage($message);
             }
             if (isset($result['stackTrace']) === true) {
                 $stackTrace = array_merge($stackTrace, $result['stackTrace']);

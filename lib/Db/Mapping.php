@@ -99,6 +99,7 @@ class Mapping extends Entity implements JsonSerializable
 	/**
 	 * Get the slug for the endpoint.
 	 * If the slug is not set, generate one from the name.
+	 * Falls back to a deterministic value when transliteration yields an empty result.
 	 *
 	 * @return string The slug for the endpoint
 	 * @phpstan-return non-empty-string
@@ -106,18 +107,47 @@ class Mapping extends Entity implements JsonSerializable
 	 */
 	public function getSlug(): string
 	{
-		// Check if the slug is already set
+		// Return existing slug when present
 		if (!empty($this->slug)) {
 			return $this->slug;
 		}
 
-		// Generate a slug from the name if not set
-		// Convert the name to lowercase, replace spaces with hyphens, and remove non-alphanumeric characters
-		$generatedSlug = preg_replace('/[^a-z0-9]+/', '-', strtolower(trim($this->name)));
+		// Prepare name
+		$name = trim((string)($this->name ?? ''));
 
-		// Ensure the generated slug is not empty
-		if (empty($generatedSlug)) {
-			throw new \RuntimeException('Unable to generate a valid slug from the name.');
+		// Attempt transliteration to ASCII for non-Latin names
+		$transliterated = $name;
+		if ($name !== '') {
+			if (class_exists('\Transliterator')) {
+				$transliterator = \Transliterator::create('Any-Latin; Latin-ASCII');
+				if ($transliterator !== false) {
+					$transliterated = (string)$transliterator->transliterate($name);
+				}
+			} elseif (function_exists('iconv')) {
+				$converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name);
+				if ($converted !== false) {
+					$transliterated = $converted;
+				}
+			}
+		}
+
+		// Convert to slug: lowercase, non-alphanumeric to hyphens, trim
+		$generatedSlug = strtolower($transliterated);
+		$generatedSlug = preg_replace('/[^a-z0-9]+/', '-', $generatedSlug ?? '');
+		$generatedSlug = trim((string)$generatedSlug, '-');
+
+		// Safe fallback if empty (e.g., name only contains symbols or could not transliterate)
+		if ($generatedSlug === '') {
+			$prefix = 'mapping';
+			if (isset($this->id) && (string)$this->id !== '') {
+				$generatedSlug = $prefix . '-' . (string)$this->id;
+			} else {
+				try {
+					$generatedSlug = $prefix . '-' . bin2hex(random_bytes(4));
+				} catch (\Exception $e) {
+					$generatedSlug = $prefix . '-' . substr(md5((string)$name), 0, 8);
+				}
+			}
 		}
 
 		return $generatedSlug;

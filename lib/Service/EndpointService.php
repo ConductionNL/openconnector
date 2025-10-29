@@ -154,17 +154,20 @@ class EndpointService
     {
         if ($result->getStatus() < 200 || $result->getStatus() >= 300) {
 
+            $resultData = $result->getData();
+            $message = $resultData['message'] ?? null;
+            $error = $resultData['error'] ?? null;
 
             $responseData = [
-                'type' => $result->getData()['message'],
+                'type' => $message,
                 'code' => $result->getStatus(),
-                'title'   => $result->getData()['message'],
+                'title'   => $message,
                 'status' => $result->getStatus(),
                 'instance' => $request->getId(),
-                'detail'  => $result->getData()['error'],
+                'detail'  => $error,
             ];
 
-            $responseData = $this->parseMessage(response: $responseData, responseData: $result->getData());
+            $responseData = $this->parseMessage(response: $responseData, responseData: $resultData);
 
             return new JSONResponse(data: $responseData, statusCode: $result->getStatus());
 
@@ -310,6 +313,10 @@ class EndpointService
                         break;
                 }
 
+                if (isset($endpoint->getConfigurations()['defaultStatusCode']) === true) {
+                    $statusCode = $endpoint->getConfigurations()['defaultStatusCode'];
+                }
+
                 return new JSONResponse(data: $ruleResult['body'], statusCode: $statusCode, headers: $ruleResult['headers']);
             }
 
@@ -393,6 +400,7 @@ class EndpointService
         } else if ($serializedObject === null) {
             return $serializedObject;
         } else {
+            $this->objectService->getOpenRegisters()->clearCurrents();
             $object = $mapper->find($serializedObject['id']);
         }
 
@@ -638,7 +646,12 @@ class EndpointService
     ): Entity|array
     {
         if (isset($pathParams['id']) === true && $pathParams['id'] === end($pathParams)) {
-			$serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
+            try {
+                $serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
+            } catch (DoesNotExistException $e) {
+                $status = 404;
+                return ['error' => 'not found', 'message' => "the object with id {$pathParams['id']} does not exist"];
+            }
             $result = $this->replaceInternalReferences(
 				mapper: $mapper,
 				serializedObject: $serializedObject,
@@ -686,7 +699,7 @@ class EndpointService
 
             }
 
-            $results = $mapper->findMultiple($ids);
+            $results = $mapper->findAll(['ids' => $ids]);
             foreach ($results as $key => $result) {
                 $results[$key] = $this->replaceInternalReferences(mapper: $mapper, object: $result);
             }
@@ -1086,6 +1099,7 @@ class EndpointService
 
                 // Check rule conditions
                 if ($this->checkRuleConditions(rule: $rule, data: $data, logicResult:  $logicResult) === false || $rule->getTiming() !== $timing) {
+                    $this->logger->info('Rule condition check failed for endpoint ' . $endpoint->getName() . ' and rule ' . $rule->getName() . ' of type: ' . $rule->getType());
                     continue;
                 }
 
@@ -1095,25 +1109,33 @@ class EndpointService
                     $data['logicResult'] = $logicResult;
                 }
 
+                $this->logger->info('Applying rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
+
                 // Process rule based on type
-                $result = match ($rule->getType()) {
-                    'save_object' => $this->processSaveObjectRule($rule, $data),
-                    'authentication' => $this->processAuthenticationRule($rule, $data),
-                    'error' => $this->processErrorRule($rule, $data),
-                    'mapping' => $this->processMappingRule($rule, $data),
-                    'synchronization' => $this->processSyncRule($rule, $data),
-                    'javascript' => $this->processJavaScriptRule($rule, $data),
-                    'fileparts_create' => $this->processFilePartRule($rule, $data, $endpoint, $objectId),
-                    'filepart_upload' => $this->processFilePartUploadRule(rule: $rule, data: $data, request: $request, objectId: $objectId),
-                    'download' => $this->processDownloadRule(rule: $rule, data: $data, objectId: $objectId),
-                    'extend_input' => $this->processExtendInputRule(rule: $rule, data: $data),
-					'extend_external_input' => $this->ruleService->extendExternalUrl(rule: $rule, data: $data),
-                    'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
-                    'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
-                    'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
-                    'custom' => $this->processCustomRule(rule: $rule, data: $data),
-                    default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
-                };
+                try {
+                    $result = match ($rule->getType()) {
+                        'save_object' => $this->processSaveObjectRule($rule, $data),
+                        'authentication' => $this->processAuthenticationRule($rule, $data),
+                        'error' => $this->processErrorRule($rule, $data),
+                        'mapping' => $this->processMappingRule($rule, $data),
+                        'synchronization' => $this->processSyncRule($rule, $data),
+                        'javascript' => $this->processJavaScriptRule($rule, $data),
+                        'fileparts_create' => $this->processFilePartRule($rule, $data, $endpoint, $objectId),
+                        'filepart_upload' => $this->processFilePartUploadRule(rule: $rule, data: $data, request: $request, objectId: $objectId),
+                        'download' => $this->processDownloadRule(rule: $rule, data: $data, objectId: $objectId),
+                        'extend_input' => $this->processExtendInputRule(rule: $rule, data: $data),
+                        'extend_external_input' => $this->ruleService->extendExternalUrl(rule: $rule, data: $data),
+                        'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
+                        'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
+                        'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
+                        'custom' => $this->processCustomRule(rule: $rule, data: $data),
+                        default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
+                    };
+                } catch (Exception $e) {
+                    $message = 'Failed to apply rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType() . '. With error message: ' . $e->getMessage();
+                    $this->logger->error($message);
+                    return new JSONResponse(['error' => $message], 500);
+                }
 
                 // If result is JSONResponse, return error immediately
                 if ($result instanceof JSONResponse === true || $result instanceof DataDownloadResponse === true ) {
@@ -1122,6 +1144,8 @@ class EndpointService
 
                 // Update data with rule result
                 $data = $result;
+
+                $this->logger->info('Successfully applied rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
 			}
 
 			unset($data['body']['_extendedInput']);
@@ -1328,6 +1352,11 @@ class EndpointService
                 $value = end($exploded);
             }
 
+            // Only allow uuids in the extend_input rule
+            if(Uuid::isValid($value) === false) {
+                continue;
+            }
+
 			$extends = [];
 			if(isset($config['extend_input']['extends']) === true && isset($config['extend_input']['extends'][$property]) === true) {
 				$extends = $config['extend_input']['extends'][$property];
@@ -1335,7 +1364,9 @@ class EndpointService
 
             try {
                 $object = $this->objectService->getOpenRegisters()->find(id: $value, extend: $extends);
+                $this->objectService->getOpenRegisters()->clearCurrents();
             } catch (DoesNotExistException $exception) {
+                $this->objectService->getOpenRegisters()->clearCurrents();
                 continue;
             }
             $extendedParameters->add($property, $object->jsonSerialize());
@@ -1577,7 +1608,12 @@ class EndpointService
         $sendObject = $object;
 
         // Run synchronization.
-        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, data: $object);
+        $mutationType = null;
+        $sourceConfig = $synchronization->getSourceConfig();
+        if (isset($sourceConfig['synchronizationType']) === true && $sourceConfig['synchronizationType'] === 'delete') {
+            $mutationType = 'delete';
+        }
+        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, mutationType: $mutationType, data: $object);
 
         // $object got updated through reference.
         $returnedObject = $object;

@@ -1,132 +1,144 @@
 <script setup>
-import { synchronizationStore } from '../../store/store.js'
+import { synchronizationStore, navigationStore } from '../../store/store.js'
 </script>
 
 <template>
-	<div class="sidebar">
-		<div class="sidebar-header">
-			<h3>{{ t('openconnector', 'Contracts') }}</h3>
-			<p>{{ t('openconnector', 'Filter and manage contracts') }}</p>
-		</div>
+	<NcAppSidebar
+		ref="sidebar"
+		v-model="activeTab"
+		:name="t('openconnector', 'Contracts')"
+		:subtitle="t('openconnector', 'Filter and manage contracts')"
+		:subname="t('openconnector', 'Export, view, or delete contracts')"
+		:open="navigationStore.sidebarState.contracts"
+		@update:open="(e) => navigationStore.setSidebarState('contracts', e)">
+		<NcAppSidebarTab id="filters-tab" :name="t('openconnector', 'Filters')" :order="1">
+			<template #icon>
+				<FilterOutline :size="20" />
+			</template>
 
-		<!-- Filters Section -->
-		<div class="section">
-			<h4>{{ t('openconnector', 'Filters') }}</h4>
-
-			<!-- Synchronization Filter -->
-			<div class="filter-group">
-				<label>{{ t('openconnector', 'Synchronization') }}</label>
-				<NcSelect
-					v-model="filters.synchronization"
-					:options="synchronizationOptions"
-					:placeholder="t('openconnector', 'All synchronizations')"
-					:input-label="t('openconnector', 'Synchronization')"
-					:clearable="true"
-					@input="applyFilters" />
-			</div>
-
-			<!-- Sync Status Filter -->
-			<div class="filter-group">
-				<label>{{ t('openconnector', 'Sync Status') }}</label>
-				<NcSelect
-					v-model="filters.syncStatus"
-					:options="syncStatusOptions"
-					:placeholder="t('openconnector', 'All sync statuses')"
-					:input-label="t('openconnector', 'Sync Status')"
-					:clearable="true"
-					@input="applyFilters" />
-			</div>
-
-			<!-- Date Range Filter -->
-			<div class="filter-group">
-				<label>{{ t('openconnector', 'Last Synced') }}</label>
-				<div class="date-range">
-					<NcDateTimePickerNative
-						id="contracts-date-from"
-						v-model="filters.dateFrom"
-						type="date"
-						:placeholder="t('openconnector', 'From')"
+			<!-- Filter Section -->
+			<div class="filterSection">
+				<h3>{{ t('openconnector', 'Filter Contracts') }}</h3>
+				<div class="filterGroup">
+					<label>{{ t('openconnector', 'Synchronization') }}</label>
+					<NcSelect
+						v-model="filters.synchronization"
+						:options="synchronizationOptions"
+						:placeholder="t('openconnector', 'All synchronizations')"
+						:input-label="t('openconnector', 'Synchronization')"
+						:clearable="true"
 						@input="applyFilters" />
-					<NcDateTimePickerNative
-						id="contracts-date-to"
-						v-model="filters.dateTo"
-						type="date"
-						:placeholder="t('openconnector', 'To')"
+				</div>
+
+				<div class="filterGroup">
+					<label>{{ t('openconnector', 'Sync Status') }}</label>
+					<NcSelect
+						v-model="filters.syncStatus"
+						:options="syncStatusOptions"
+						:placeholder="t('openconnector', 'All sync statuses')"
+						:input-label="t('openconnector', 'Sync Status')"
+						:clearable="true"
 						@input="applyFilters" />
+				</div>
+
+				<div class="filterGroup">
+					<label>{{ t('openconnector', 'Last Synced') }}</label>
+					<DateRangeInput
+						:start="filters.dateFrom"
+						:end="filters.dateTo"
+						:max-start="new Date()"
+						@update:start="(v) => { filters.dateFrom = v }"
+						@update:end="(v) => { filters.dateTo = v }"
+						@change="applyFilters" />
 				</div>
 			</div>
 
-			<!-- Clear Filters -->
-			<NcButton v-if="hasActiveFilters" @click="clearFilters">
-				{{ t('openconnector', 'Clear Filters') }}
-			</NcButton>
-		</div>
-
-		<!-- Bulk Actions Section -->
-		<div v-if="selectedCount > 0" class="section">
-			<h4>{{ t('openconnector', 'Bulk Actions') }}</h4>
-			<p class="selection-info">
-				{{ t('openconnector', '{count} contracts selected', { count: selectedCount }) }}
-			</p>
-			<div class="bulk-actions">
-				<NcButton type="error" @click="bulkDelete">
-					<template #icon>
-						<Delete :size="20" />
-					</template>
-					{{ t('openconnector', 'Delete Selected') }}
+			<div class="actionGroup">
+				<NcButton v-if="hasActiveFilters" @click="clearFilters">
+					{{ t('openconnector', 'Clear Filters') }}
 				</NcButton>
 			</div>
-		</div>
 
-		<!-- Statistics Section -->
-		<div class="section">
-			<h4>{{ t('openconnector', 'Statistics') }}</h4>
-			<div v-if="statisticsLoading" class="loading-small">
-				<NcLoadingIcon :size="24" />
-			</div>
-			<div v-else class="stats-grid">
-				<div class="stat-item">
-					<span class="stat-label">{{ t('openconnector', 'Total Contracts') }}</span>
-					<span class="stat-value">{{ filteredCount }}</span>
+			<!-- Bulk Actions Section -->
+			<div v-if="selectedCount > 0" class="filterSection">
+				<h3>{{ t('openconnector', 'Bulk Actions') }}</h3>
+				<p class="selection-info">
+					{{ t('openconnector', '{count} contracts selected', { count: selectedCount }) }}
+				</p>
+				<div class="filterGroup">
+					<NcButton type="error" @click="bulkDelete">
+						<template #icon>
+							<Delete :size="20" />
+						</template>
+						{{ t('openconnector', 'Delete Selected') }}
+					</NcButton>
 				</div>
 			</div>
-		</div>
 
-		<!-- Export Section -->
-		<div class="section">
-			<h4>{{ t('openconnector', 'Export') }}</h4>
-			<NcButton @click="exportFiltered">
-				<template #icon>
-					<Download :size="20" />
-				</template>
-				{{ t('openconnector', 'Export Filtered Contracts') }}
-			</NcButton>
-		</div>
-	</div>
+			<!-- Export Section -->
+			<div class="filterSection">
+				<h3>{{ t('openconnector', 'Export') }}</h3>
+				<div class="filterGroup">
+					<NcButton @click="exportFiltered">
+						<template #icon>
+							<Download :size="20" />
+						</template>
+						{{ t('openconnector', 'Export Filtered Contracts') }}
+					</NcButton>
+				</div>
+			</div>
+		</NcAppSidebarTab>
+
+		<NcAppSidebarTab id="stats-tab" :name="t('openconnector', 'Statistics')" :order="2">
+			<template #icon>
+				<ChartLine :size="20" />
+			</template>
+
+			<div class="statsSection">
+				<h3>{{ t('openconnector', 'Contracts Statistics') }}</h3>
+				<div class="statCard">
+					<div class="statNumber">
+						{{ filteredCount }}
+					</div>
+					<div class="statLabel">
+						{{ t('openconnector', 'Total Contracts') }}
+					</div>
+				</div>
+			</div>
+		</NcAppSidebarTab>
+	</NcAppSidebar>
 </template>
 
 <script>
 import {
+	NcAppSidebar,
+	NcAppSidebarTab,
 	NcSelect,
 	NcButton,
-	NcLoadingIcon,
-	NcDateTimePickerNative,
 } from '@nextcloud/vue'
+import FilterOutline from 'vue-material-design-icons/FilterOutline.vue'
+import ChartLine from 'vue-material-design-icons/ChartLine.vue'
 import Download from 'vue-material-design-icons/Download.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
+import DateRangeInput from '../../components/DateRangeInput.vue'
+import { translate as t } from '@nextcloud/l10n'
 
 export default {
 	name: 'ContractsSideBar',
 	components: {
+		NcAppSidebar,
+		NcAppSidebarTab,
 		NcSelect,
 		NcButton,
-		NcLoadingIcon,
-		NcDateTimePickerNative,
+		FilterOutline,
+		ChartLine,
 		Download,
 		Delete,
+		DateRangeInput,
 	},
 	data() {
 		return {
+			activeTab: 'filters-tab',
 			filters: {
 				synchronization: null,
 				syncStatus: null,
@@ -187,6 +199,7 @@ export default {
 		}
 	},
 	methods: {
+		t,
 		/**
 		 * Load statistics data
 		 * @return {Promise<void>}
@@ -280,163 +293,52 @@ export default {
 </script>
 
 <style scoped>
-.sidebar {
-	padding: 20px;
-	background: var(--color-main-background);
-	border-left: 1px solid var(--color-border);
-	height: 100%;
-	overflow-y: auto;
-}
-
-.sidebar-header {
-	margin-bottom: 30px;
-}
-
-.sidebar-header h3 {
-	margin: 0 0 10px 0;
-	font-size: 1.5rem;
-	font-weight: 300;
-}
-
-.sidebar-header p {
-	color: var(--color-text-maxcontrast);
-	margin: 0;
-}
-
-.section {
-	margin-bottom: 30px;
-	padding-bottom: 20px;
+.filterSection,
+.statsSection {
+	padding: 12px 0;
 	border-bottom: 1px solid var(--color-border);
 }
 
-.section:last-child {
+.filterSection:last-child,
+.statsSection:last-child {
 	border-bottom: none;
 }
 
-.section h4 {
-	margin: 0 0 15px 0;
-	font-size: 1.1rem;
-	font-weight: 500;
+.filterSection h3,
+.statsSection h3 {
+	color: var(--color-text-maxcontrast);
+	font-size: 14px;
+	font-weight: bold;
+	padding: 0 16px;
+	margin: 0 0 12px 0;
 }
 
-.section h5 {
-	margin: 15px 0 10px 0;
-	font-size: 1rem;
-	font-weight: 500;
+.filterGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 0 16px;
+	margin-bottom: 16px;
 }
 
-.filter-group {
-	margin-bottom: 15px;
-}
-
-.filter-group label {
-	display: block;
-	margin-bottom: 5px;
-	font-weight: 500;
+.filterGroup label {
+	font-size: 0.9em;
 	color: var(--color-text-maxcontrast);
 }
 
-.date-range {
-	display: flex;
-	gap: 10px;
-}
-
-.date-range > * {
-	flex: 1;
-}
-
-.loading-small {
-	text-align: center;
-	padding: 20px;
+.actionGroup {
+	padding: 12px;
+	margin-bottom: 12px;
 }
 
 .selection-info {
 	color: var(--color-text-maxcontrast);
-	margin-bottom: 15px;
+	padding: 0 16px 8px;
+	margin: 0;
 }
 
-.bulk-actions {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-}
-
-.stats-grid {
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: 15px;
-}
-
-.stat-item {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: 10px;
-	background: var(--color-background-hover);
-	border-radius: var(--border-radius);
-}
-
-.stat-label {
-	font-size: 0.9rem;
-	color: var(--color-text-maxcontrast);
-}
-
-.stat-value {
-	font-weight: 600;
-	font-size: 1.1rem;
-}
-
-.stat-value.error {
-	color: var(--color-error);
-}
-
-.stat-value.warning {
-	color: var(--color-warning);
-}
-
-.stat-value.success {
-	color: var(--color-success);
-}
-
-.chart-container {
-	margin-top: 20px;
-}
-
-.performance-chart {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.performance-bar {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	font-size: 0.85rem;
-}
-
-.period-label {
-	min-width: 80px;
-	font-weight: 500;
-}
-
-.performance-progress {
-	flex: 1;
-	height: 8px;
-	background: var(--color-background-dark);
-	border-radius: 4px;
-	overflow: hidden;
-}
-
-.performance-fill {
-	height: 100%;
-	background: var(--color-success);
-	transition: width 0.3s ease;
-}
-
-.performance-rate {
-	min-width: 40px;
-	text-align: right;
-	font-weight: 500;
+/* Add some spacing between select inputs */
+:deep(.v-select) {
+	margin-bottom: 8px;
 }
 </style>

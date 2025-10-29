@@ -15,7 +15,7 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 					@trailing-button-click="searchStore.clearSearch()">
 					<Magnify :size="20" />
 				</NcTextField>
-				<NcActions>
+				<NcActions class="listHeaderActions">
 					<NcActionButton close-after-click @click="mappingStore.refreshMappingList()">
 						<template #icon>
 							<Refresh :size="20" />
