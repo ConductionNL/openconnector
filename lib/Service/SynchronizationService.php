@@ -48,6 +48,7 @@ use React\Promise\Timer;
 use React\Async;
 use React\Promise\Deferred;
 use function React\Promise\resolve;
+use Psr\Log\LoggerInterface;
 
 /**
  * SynchronizationService
@@ -100,6 +101,7 @@ class SynchronizationService
 		private readonly ObjectService   $objectService,
         private readonly StorageService  $storageService,
         private readonly RuleMapper      $ruleMapper,
+        private readonly LoggerInterface $logger,
 	)
 	{
 		$this->callService = $callService;
@@ -2358,8 +2360,11 @@ class SynchronizationService
             foreach ($ruleEntities as $rule) {
                 // Check rule conditions
                 if ($this->checkRuleConditions($rule, $data) === false || $rule->getTiming() !== $timing) {
+                    $this->logger->info('Rule condition check failed for synchronization ' . $synchronization->getName() . ' and rule ' . $rule->getName() . ' of type: ' . $rule->getType());
                     continue;
                 }
+
+                $this->logger->info('Applying rule for synchronization ' . $synchronization->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
 
                 // Process rule based on type
                 $result = match ($rule->getType()) {
@@ -2380,11 +2385,13 @@ class SynchronizationService
 
                 // Update data with rule result
                 $data = $result;
+
+                $this->logger->info('Successfully applied rule for synchronization ' . $synchronization->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
             }
 
             return $data;
         } catch (Exception $e) {
-//            $this->logger->error('Error processing rules: ' . $e->getMessage());
+            $this->logger->error('Error processing rules for synchronization ' . $synchronization->getName() . ': ' . $e->getMessage());
             return new JSONResponse(['error' => 'Rule processing failed: ' . $e->getMessage()], 500);
         }
     }
