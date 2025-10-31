@@ -1,6 +1,3 @@
-<script setup>
-</script>
-
 <template>
 	<NcAppContent>
 		<h2 class="pageHeader">
