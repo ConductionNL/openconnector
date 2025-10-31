@@ -673,6 +673,26 @@
   padding-left: 24px;
 }
 
+/* Table wrapper for modals to prevent expansion */
+.modal-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+}
+
+.modal-table-wrapper .statisticsTable {
+  min-width: 300px;
+  margin: 0;
+}
+
+.modal-table-wrapper .statisticsTable td.truncatedText {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Table styling variations */
 .tableOfContents thead th {
   background-color: var(--color-primary-light);
