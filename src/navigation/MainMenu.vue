@@ -1,133 +1,131 @@
 <script setup>
-import { navigationStore } from '../store/store.js'
 </script>
 
 <template>
 	<NcAppNavigation>
 		<NcAppNavigationList>
-			<NcAppNavigationItem :active="navigationStore.selected === 'dashboard'" name="Dashboard" @click="navigationStore.setSelected('dashboard')">
+			<NcAppNavigationItem :active="$route.path === '/'" name="Dashboard" @click="handleNavigate('/')">
 				<template #icon>
 					<Finance :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'sources'"
+			<NcAppNavigationItem :active="$route.path === '/sources'"
 				name="Sources"
 				:allow-collapse="true"
 				:open="true"
-				@click="navigationStore.setSelected('sources')">
+				@click="handleNavigate('/sources')">
 				<template #icon>
 					<DatabaseArrowLeftOutline :size="20" />
 				</template>
 				<!-- This is correct according to the documentation, thats why there is a disable comment -->
 				<!-- eslint-disable-next-line vue/no-lone-template -->
 				<template>
-					<NcAppNavigationItem :active="navigationStore.selected === 'source-logs'" name="Logs" @click="navigationStore.setSelected('source-logs')">
+					<NcAppNavigationItem :active="$route.path === '/sources/logs'" name="Logs" @click="handleNavigate('/sources/logs')">
 						<template #icon>
 							<TextBoxOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'endpoints'"
+			<NcAppNavigationItem :active="$route.matched[0].path === '/endpoints' || $route.matched[0].path === '/endpoints/:id'"
 				name="Endpoints"
 				:allow-collapse="true"
 				:open="true"
-				@click="navigationStore.setSelected('endpoints')">
+				@click="handleNavigate('/endpoints')">
 				<template #icon>
 					<Api :size="20" />
 				</template>
 				<!-- This is correct according to the documentation, thats why there is a disable comment -->
 				<!-- eslint-disable-next-line vue/no-lone-template -->
 				<template>
-					<NcAppNavigationItem :active="navigationStore.selected === 'endpoint-logs'" name="Logs" @click="navigationStore.setSelected('endpoint-logs')">
+					<NcAppNavigationItem :active="$route.matched[0].path === '/endpoints/logs'" name="Logs" @click="handleNavigate('/endpoints/logs')">
 						<template #icon>
 							<TextBoxOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'consumers'" name="Consumers" @click="navigationStore.setSelected('consumers')">
+			<NcAppNavigationItem :active="$route.path.startsWith('/consumers')" name="Consumers" @click="handleNavigate('/consumers')">
 				<template #icon>
 					<Webhook :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'mappings'" name="Mappings" @click="navigationStore.setSelected('mappings')">
+			<NcAppNavigationItem :active="$route.path.startsWith('/mappings')" name="Mappings" @click="handleNavigate('/mappings')">
 				<template #icon>
 					<SitemapOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'jobs'"
+			<NcAppNavigationItem :active="$route.path === '/jobs'"
 				name="Jobs"
 				:allow-collapse="true"
 				:open="true"
-				@click="navigationStore.setSelected('jobs')">
+				@click="handleNavigate('/jobs')">
 				<template #icon>
 					<Update :size="20" />
 				</template>
 				<!-- This is correct according to the documentation, thats why there is a disable comment -->
 				<!-- eslint-disable-next-line vue/no-lone-template -->
 				<template>
-					<NcAppNavigationItem :active="navigationStore.selected === 'job-logs'" name="Logs" @click="navigationStore.setSelected('job-logs')">
+					<NcAppNavigationItem :active="$route.path === '/jobs/logs'" name="Logs" @click="handleNavigate('/jobs/logs')">
 						<template #icon>
 							<TextBoxOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'notifications'"
+			<NcAppNavigationItem
 				name="Cloud Events"
 				:allow-collapse="true"
-				:open="true"
-				@click="navigationStore.setSelected('notifications')">
+				:open="true">
 				<template #icon>
 					<CloudUploadOutline :size="20" />
 				</template>
 				<!-- This is correct according to the documentation, thats why there is a disable comment -->
 				<!-- eslint-disable-next-line vue/no-lone-template -->
 				<template>
-					<NcAppNavigationItem :active="navigationStore.selected === 'events'" name="Events" @click="navigationStore.setSelected('events')">
+					<NcAppNavigationItem :active="$route.path.startsWith('/cloud-events/events')" name="Events" @click="handleNavigate('/cloud-events/events')">
 						<template #icon>
 							<MessageTextFastOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
-					<NcAppNavigationItem :active="navigationStore.selected === 'event-logs'" name="Logs" @click="navigationStore.setSelected('event-logs')">
+					<NcAppNavigationItem :active="$route.path === '/cloud-events/logs'" name="Logs" @click="handleNavigate('/cloud-events/logs')">
 						<template #icon>
 							<TextBoxOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'synchronizations'"
+			<NcAppNavigationItem :active="$route.path === '/synchronizations'"
 				name="Synchronization"
 				:allow-collapse="true"
 				:open="true"
-				@click="navigationStore.setSelected('synchronizations')">
+				@click="handleNavigate('/synchronizations')">
 				<template #icon>
 					<VectorPolylinePlus :size="20" />
 				</template>
 				<!-- This is correct according to the documentation, thats why there is a disable comment -->
 				<!-- eslint-disable-next-line vue/no-lone-template -->
 				<template>
-					<NcAppNavigationItem :active="navigationStore.selected === 'contracts'" name="Contracts" @click="navigationStore.setSelected('contracts')">
+					<NcAppNavigationItem :active="$route.path === '/synchronizations/contracts'" name="Contracts" @click="handleNavigate('/synchronizations/contracts')">
 						<template #icon>
 							<FileDocumentOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
-					<NcAppNavigationItem :active="navigationStore.selected === 'synchronization-logs'" name="Logs" @click="navigationStore.setSelected('synchronization-logs')">
+					<NcAppNavigationItem :active="$route.path === '/synchronizations/logs'" name="Logs" @click="handleNavigate('/synchronizations/logs')">
 						<template #icon>
 							<TextBoxOutline :size="20" />
 						</template>
 					</NcAppNavigationItem>
 				</template>
 			</NcAppNavigationItem>
-			<NcAppNavigationItem :active="navigationStore.selected === 'rules'" name="Rules" @click="navigationStore.setSelected('rules')">
+			<NcAppNavigationItem :active="$route.path.startsWith('/rules')" name="Rules" @click="handleNavigate('/rules')">
 				<template #icon>
 					<SitemapOutline :size="20" />
 				</template>
 			</NcAppNavigationItem>
 		</NcAppNavigationList>
 		<NcAppNavigationSettings>
-			<NcAppNavigationItem :active="navigationStore.selected === 'imports'" name="Import" @click="navigationStore.setSelected('imports')">
+			<NcAppNavigationItem :active="$route.path === '/import'" name="Import" @click="handleNavigate('/import')">
 				<template #icon>
 					<FileImportOutline :size="20" />
 				</template>
@@ -181,6 +179,9 @@ export default {
 		TextBoxOutline,
 	},
 	methods: {
+		handleNavigate(path) {
+			this.$router.push(path)
+		},
 		openLink(url, type = '') {
 			window.open(url, type)
 		},

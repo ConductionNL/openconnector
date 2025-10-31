@@ -34,11 +34,11 @@ import { eventStore, navigationStore, searchStore } from '../../store/store.js'
 				<NcListItem v-for="(event, i) in eventStore.eventList.filter(event => searchStore.search === '' || event.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${event}${i}`"
 					:name="event.name"
-					:active="eventStore.eventItem?.id === event?.id"
+					:active="String($route.params.id || '') === String(event?.id || '')"
 					:force-display-actions="true"
-					@click="eventStore.setEventItem(event)">
+					@click="$router.push('/cloud-events/events/' + event.id)">
 					<template #icon>
-						<Update :class="eventStore.eventItem?.id === event.id && 'selectedEventIcon'"
+						<Update :class="String($route.params.id || '') === String(event?.id || '') && 'selectedEventIcon'"
 							disable-menu
 							:size="44" />
 					</template>

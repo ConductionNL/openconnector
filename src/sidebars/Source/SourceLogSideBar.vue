@@ -228,10 +228,30 @@ export default {
 	},
 	data() {
 		return {
+			statusCodeOptions: [
+				{ label: '200 - OK', value: '200' },
+				{ label: '201 - Created', value: '201' },
+				{ label: '400 - Bad Request', value: '400' },
+				{ label: '401 - Unauthorized', value: '401' },
+				{ label: '403 - Forbidden', value: '403' },
+				{ label: '404 - Not Found', value: '404' },
+				{ label: '500 - Internal Server Error', value: '500' },
+				{ label: '502 - Bad Gateway', value: '502' },
+				{ label: '503 - Service Unavailable', value: '503' },
+			],
+			methodOptions: [
+				{ label: 'GET', value: 'GET' },
+				{ label: 'POST', value: 'POST' },
+				{ label: 'PUT', value: 'PUT' },
+				{ label: 'PATCH', value: 'PATCH' },
+				{ label: 'DELETE', value: 'DELETE' },
+			],
+
 			activeTab: 'filters-tab',
 			selectedSource: null,
 			selectedStatusCodes: [],
 			selectedMethods: [],
+			// uses DateRangeInput component, value is NOT date object, but instead string (e.g. 2025-10-01T00:00)
 			dateFrom: null,
 			dateTo: null,
 			endpointFilter: '',
@@ -248,28 +268,6 @@ export default {
 		}
 	},
 	computed: {
-		statusCodeOptions() {
-			return [
-				{ label: '200 - OK', value: '200' },
-				{ label: '201 - Created', value: '201' },
-				{ label: '400 - Bad Request', value: '400' },
-				{ label: '401 - Unauthorized', value: '401' },
-				{ label: '403 - Forbidden', value: '403' },
-				{ label: '404 - Not Found', value: '404' },
-				{ label: '500 - Internal Server Error', value: '500' },
-				{ label: '502 - Bad Gateway', value: '502' },
-				{ label: '503 - Service Unavailable', value: '503' },
-			]
-		},
-		methodOptions() {
-			return [
-				{ label: 'GET', value: 'GET' },
-				{ label: 'POST', value: 'POST' },
-				{ label: 'PUT', value: 'PUT' },
-				{ label: 'PATCH', value: 'PATCH' },
-				{ label: 'DELETE', value: 'DELETE' },
-			]
-		},
 		sourceOptions() {
 			return sourceStore.sourceList?.map(source => ({
 				value: source,
@@ -288,10 +286,10 @@ export default {
 			this.applyFilters()
 		},
 	},
-	mounted() {
+	async mounted() {
 		// Load required data
 		if (!sourceStore.sourceList?.length) {
-			sourceStore.refreshSourceList()
+			await sourceStore.refreshSourceList()
 		}
 
 		// Load initial log data
@@ -309,6 +307,8 @@ export default {
 		this.updateFilteredCount()
 
 		this.selectedSource = this.selectedSourceValue
+		// Initialize SPOT from URL
+		this.applyQueryParamsFromRoute()
 	},
 	beforeDestroy() {
 		this.$root.$off('source-log-filtered-count')
@@ -346,6 +346,9 @@ export default {
 
 			// Refresh without applying filters
 			sourceStore.refreshSourceLogs()
+
+			// Write SPOT to URL
+			this.updateRouteQueryFromState()
 		},
 		/**
 		 * Clear filters (alias for clearAllFilters for template compatibility)
@@ -418,6 +421,8 @@ export default {
 
 			// Also emit for legacy compatibility
 			this.$root.$emit('source-log-filters-changed', filters)
+			// Write URL (SPOT)
+			this.updateRouteQueryFromState()
 		},
 		/**
 		 * Debounced version of applyFilters for text input
@@ -427,6 +432,74 @@ export default {
 			this.filterTimeout = setTimeout(() => {
 				this.applyFilters()
 			}, 500)
+		},
+		buildQueryFromState() {
+			const query = {}
+			if (Array.isArray(this.selectedStatusCodes) && this.selectedStatusCodes.length > 0) {
+				const statusCodes = this.selectedStatusCodes.filter(s => s && (s.value || typeof s === 'string')).map(s => (typeof s === 'string' ? s : s.value))
+				if (statusCodes.length > 0) query.statusCode = statusCodes.join(',')
+			}
+			if (Array.isArray(this.selectedMethods) && this.selectedMethods.length > 0) {
+				const methods = this.selectedMethods.filter(m => m && (m.value || typeof m === 'string')).map(m => (typeof m === 'string' ? m : m.value))
+				if (methods.length > 0) query.method = methods.join(',')
+			}
+			if (this.selectedSource && this.selectedSource.value && this.selectedSource.value.id) query.source_id = String(this.selectedSource.value.id)
+			if (this.dateFrom) query.dateFrom = this.dateFrom
+			if (this.dateTo) query.dateTo = this.dateTo
+			if (this.endpointFilter) query.endpoint = this.endpointFilter
+			if (this.showOnlyErrors) query.onlyErrors = 'true'
+			if (this.showSlowRequests) query.slowRequests = 'true'
+			return query
+		},
+		queriesEqual(a, b) {
+			const aKeys = Object.keys(a)
+			const bKeys = Object.keys(b)
+			if (aKeys.length !== bKeys.length) return false
+			return aKeys.every(k => {
+				const aVal = a[k] === undefined ? '' : String(a[k])
+				const bVal = b[k] === undefined ? '' : String(b[k])
+				return aVal === bVal
+			})
+		},
+		updateRouteQueryFromState() {
+			if (this.$route.path !== '/sources/logs') return
+			const next = this.buildQueryFromState()
+			if (this.queriesEqual(next, this.$route.query || {})) return
+			this.$router.replace({ path: this.$route.path, query: next })
+		},
+		applyQueryParamsFromRoute() {
+			if (this.$route.path !== '/sources/logs') return
+			const q = this.$route.query || {}
+			// Status codes
+			if (typeof q.statusCode === 'string') {
+				const parts = q.statusCode.split(',').map(s => s.trim()).filter(Boolean)
+				this.selectedStatusCodes = parts
+					.map(code => this.statusCodeOptions.find(opt => opt.value === code))
+					.filter(Boolean)
+			}
+			// Methods
+			if (typeof q.method === 'string') {
+				const parts = q.method.split(',').map(s => s.trim()).filter(Boolean)
+				this.selectedMethods = parts
+					.map(method => this.methodOptions.find(opt => opt.value === method))
+					.filter(Boolean)
+			}
+			// Source
+			if (q.source_id) {
+				const id = Number(q.source_id)
+				const found = sourceStore.sourceList?.find(s => s.id === id)
+				this.selectedSource = found ? { value: found, label: found.name, title: found.name } : null
+			}
+			// Dates
+			this.dateFrom = q.dateFrom || null
+			this.dateTo = q.dateTo || null
+			// Endpoint
+			this.endpointFilter = q.endpoint || ''
+			// Flags
+			this.showOnlyErrors = String(q.onlyErrors) === 'true'
+			this.showSlowRequests = String(q.slowRequests) === 'true'
+			// Apply
+			this.applyFilters()
 		},
 		/**
 		 * Update filtered count from store

@@ -362,7 +362,7 @@ export default {
 		 */
 		viewRule(rule) {
 			ruleStore.setRuleItem(rule)
-			navigationStore.setSelected('rules')
+			this.$router.push('/rules/' + rule.id)
 		},
 		/**
 		 * Edit rule
@@ -377,14 +377,14 @@ export default {
 		 */
 		viewSynchronizationLogs() {
 			synchronizationStore.setSynchronizationItem(synchronizationStore.synchronizationItem)
-			navigationStore.setSelected('synchronization-logs')
+			this.$router.push('/synchronizations/logs?synchronization=' + synchronizationStore.synchronizationItem.id)
 		},
 		/**
 		 * View synchronization contracts
 		 */
 		viewSynchronizationContracts() {
 			synchronizationStore.setSynchronizationItem(synchronizationStore.synchronizationItem)
-			navigationStore.setSelected('synchronization-contracts')
+			this.$router.push('/synchronizations/contracts?synchronization=' + synchronizationStore.synchronizationItem.id)
 		},
 		/**
 		 * Get valid ISO string

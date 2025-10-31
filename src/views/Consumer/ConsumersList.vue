@@ -34,11 +34,11 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 				<NcListItem v-for="(consumer, i) in consumerStore.consumerList.filter(consumer => searchStore.search === '' || consumer.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${consumer}${i}`"
 					:name="consumer.name"
-					:active="consumerStore.consumerItem?.id === consumer?.id"
+					:active="String($route.params.id) === String(consumer?.id)"
 					:force-display-actions="true"
-					@click="consumerStore.setConsumerItem(consumer)">
+					@click="$router.push('/consumers/' + consumer.id)">
 					<template #icon>
-						<Api :class="consumerStore.consumerItem?.id === consumer.id && 'selectedConsumerIcon'"
+						<Api :class="String($route.params.id) === String(consumer.id) && 'selectedConsumerIcon'"
 							disable-menu
 							:size="44" />
 					</template>

@@ -233,7 +233,7 @@ export default {
 		 */
 		viewJobLogs() {
 			jobStore.setJobItem(jobStore.jobItem)
-			navigationStore.setSelected('job-logs')
+			this.$router.push('/jobs/logs')
 		},
 		/**
 		 * Refresh job logs

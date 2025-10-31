@@ -173,7 +173,7 @@ import { sourceStore, navigationStore, logStore, synchronizationStore } from '..
 									{{ sync.description }}
 								</template>
 								<template #actions>
-									<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(sync); navigationStore.setSelected('synchronizations')">
+									<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(sync); $router.push('/synchronizations/' + sync.id)">
 										<template #icon>
 											<EyeOutline :size="20" />
 										</template>
@@ -356,7 +356,7 @@ export default {
 		 */
 		viewSourceLogs() {
 			sourceStore.setSourceItem(sourceStore.sourceItem)
-			navigationStore.setSelected('source-logs')
+			this.$router.push('/sources/logs')
 		},
 	},
 }

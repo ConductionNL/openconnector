@@ -8,7 +8,7 @@ import { webhookStore, navigationStore } from '../../store/store.js'
 			<WebhooksList />
 		</template>
 		<template #default>
-			<NcEmptyContent v-if="!webhookStore.webhookItem || navigationStore.selected != 'webhooks'"
+			<NcEmptyContent v-if="!webhookStore.webhookItem || $route.path != '/webhooks'"
 				class="detailContainer"
 				name="Geen webhook"
 				description="Nog geen webhook geselecteerd">
@@ -21,7 +21,7 @@ import { webhookStore, navigationStore } from '../../store/store.js'
 					</NcButton>
 				</template>
 			</NcEmptyContent>
-			<WebhookDetails v-if="webhookStore.webhookItem && navigationStore.selected === 'webhooks'" />
+			<WebhookDetails v-if="webhookStore.webhookItem && $route.path === '/webhooks'" />
 		</template>
 	</NcAppContent>
 </template>

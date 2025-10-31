@@ -40,11 +40,11 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 				<NcListItem v-for="(endpoint, i) in endpointStore.endpointList.filter(endpoint => searchStore.search === '' || endpoint.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${endpoint}${i}`"
 					:name="endpoint.name"
-					:active="endpointStore.endpointItem?.id === endpoint?.id"
+					:active="$route.params.id == endpoint.id"
 					:force-display-actions="true"
-					@click="endpointStore.setEndpointItem(endpoint)">
+					@click="$router.push('/endpoints/' + endpoint.id)">
 					<template #icon>
-						<Api :class="endpointStore.endpointItem?.id === endpoint.id && 'selectedEndpointIcon'"
+						<Api :class="$route.params.id == endpoint.id && 'selectedEndpointIcon'"
 							disable-menu
 							:fill-color="getEndpointColor(endpoint.method)"
 							:size="44" />

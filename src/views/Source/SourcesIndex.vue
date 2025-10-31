@@ -117,7 +117,7 @@
 										</template>
 										Test
 									</NcActionButton>
-									<NcActionButton close-after-click @click="sourceStore.setSourceItem(source); navigationStore.setSelected('source-logs')">
+									<NcActionButton close-after-click @click="sourceStore.setSourceItem(source); $router.push('/sources/logs?source=' + source.id)">
 										<template #icon>
 											<TextBoxOutline :size="20" />
 										</template>
@@ -567,7 +567,7 @@
 												</template>
 												Test
 											</NcActionButton>
-											<NcActionButton close-after-click @click="sourceStore.setSourceItem(source); navigationStore.setSelected('source-logs')">
+											<NcActionButton close-after-click @click="sourceStore.setSourceItem(source); $router.push('/sources/logs?source=' + source.id)">
 												<template #icon>
 													<TextBoxOutline :size="20" />
 												</template>
