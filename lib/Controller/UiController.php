@@ -33,7 +33,7 @@ class UiController extends Controller
     {
         // Create the SPA template response
         $response = new TemplateResponse(
-            'openconnector',
+            $this->appName,
             'index',
             []
         );

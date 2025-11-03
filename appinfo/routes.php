@@ -92,6 +92,7 @@ return [
 		['name' => 'settings#rebase', 'url' => '/api/settings/rebase', 'verb' => 'POST'],
 
 		// UI page routes for SPA deep links
+		['name' => 'ui#dashboard', 'url' => '/', 'verb' => 'GET'],
 		['name' => 'ui#sources', 'url' => '/sources', 'verb' => 'GET'],
 		['name' => 'ui#sourcesLogs', 'url' => '/sources/logs', 'verb' => 'GET'],
 		['name' => 'ui#endpoints', 'url' => '/endpoints', 'verb' => 'GET'],

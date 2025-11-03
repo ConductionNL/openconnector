@@ -145,6 +145,11 @@ export default {
 
 		return {
 			isLoading: true,
+			// Track if component is mounted to prevent updates after unmount
+			isMounted: false,
+			// Track active requests to cancel them if component unmounts
+			activeRequests: [],
+
 			stats: {
 				sources: 0,
 				mappings: 0,
@@ -165,7 +170,7 @@ export default {
 				from,
 				to,
 			},
-			// mock data
+			// Chart data - initialized lazily in created() to avoid blocking
 			sourcesCalls: {
 				options: {
 					theme: {
@@ -175,7 +180,7 @@ export default {
 						id: 'source-calls',
 						type: 'area',
 						stacked: true,
-						foreColor: this.oppositeThemeColor(),
+						foreColor: getTheme() === 'light' ? '#000000' : '#ffffff',
 					},
 					dataLabels: {
 						enabled: false,
@@ -193,7 +198,7 @@ export default {
 							},
 							format: 'dd MMM',
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
@@ -211,12 +216,12 @@ export default {
 						title: {
 							text: 'Number of Calls',
 							style: {
-								color: this.oppositeThemeColor(),
+								color: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
@@ -241,7 +246,7 @@ export default {
 						id: 'calls-per-hour',
 						type: 'area',
 						stacked: true,
-						foreColor: this.oppositeThemeColor(),
+						foreColor: getTheme() === 'light' ? '#000000' : '#ffffff',
 					},
 					dataLabels: {
 						enabled: false,
@@ -253,7 +258,7 @@ export default {
 						categories: Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00'),
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
@@ -266,18 +271,18 @@ export default {
 						title: {
 							text: 'Average Number of Calls',
 							style: {
-								color: this.oppositeThemeColor(),
+								color: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
 					legend: {
 						labels: {
-							colors: this.oppositeThemeColor(),
+							colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 						},
 					},
 				},
@@ -301,7 +306,7 @@ export default {
 						id: 'job-calls',
 						type: 'area',
 						stacked: true,
-						foreColor: this.oppositeThemeColor(),
+						foreColor: getTheme() === 'light' ? '#000000' : '#ffffff',
 					},
 					dataLabels: {
 						enabled: false,
@@ -313,7 +318,7 @@ export default {
 						type: 'datetime',
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
@@ -326,12 +331,12 @@ export default {
 						title: {
 							text: 'Number of Logs',
 							style: {
-								color: this.oppositeThemeColor(),
+								color: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
@@ -364,7 +369,7 @@ export default {
 						id: 'job-calls-per-hour',
 						type: 'area',
 						stacked: true,
-						foreColor: this.oppositeThemeColor(),
+						foreColor: getTheme() === 'light' ? '#000000' : '#ffffff',
 					},
 					dataLabels: {
 						enabled: false,
@@ -376,7 +381,7 @@ export default {
 						categories: Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00'),
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
@@ -389,18 +394,18 @@ export default {
 						title: {
 							text: 'Average Number of Logs',
 							style: {
-								color: this.oppositeThemeColor(),
+								color: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
 					legend: {
 						labels: {
-							colors: this.oppositeThemeColor(),
+							colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 						},
 					},
 				},
@@ -432,7 +437,7 @@ export default {
 						id: 'sync-calls',
 						type: 'area',
 						stacked: true,
-						foreColor: this.oppositeThemeColor(),
+						foreColor: getTheme() === 'light' ? '#000000' : '#ffffff',
 					},
 					dataLabels: {
 						enabled: false,
@@ -444,7 +449,7 @@ export default {
 						type: 'datetime',
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
@@ -457,12 +462,12 @@ export default {
 						title: {
 							text: 'Number of Executions',
 							style: {
-								color: this.oppositeThemeColor(),
+								color: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
@@ -483,7 +488,7 @@ export default {
 						id: 'sync-calls-per-hour',
 						type: 'area',
 						stacked: true,
-						foreColor: this.oppositeThemeColor(),
+						foreColor: getTheme() === 'light' ? '#000000' : '#ffffff',
 					},
 					dataLabels: {
 						enabled: false,
@@ -495,7 +500,7 @@ export default {
 						categories: Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00'),
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
@@ -508,18 +513,18 @@ export default {
 						title: {
 							text: 'Average Number of Executions',
 							style: {
-								color: this.oppositeThemeColor(),
+								color: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 						labels: {
 							style: {
-								colors: this.oppositeThemeColor(),
+								colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 							},
 						},
 					},
 					legend: {
 						labels: {
-							colors: this.oppositeThemeColor(),
+							colors: getTheme() === 'light' ? '#000000' : '#ffffff',
 						},
 					},
 				},
@@ -534,35 +539,70 @@ export default {
 	},
 	/**
 	 * Fetch stats when component is mounted
+	 * Use requestIdleCallback or setTimeout to avoid blocking initial render
 	 * @return {Promise<void>}
 	 */
-	async mounted() {
-		await Promise.all([
-			this.fetchStats(),
-			this.fetchCallStats(),
-			this.fetchJobStats(),
-			this.fetchSyncStats(),
-		])
+	mounted() {
+		this.isMounted = true
+		// Use nextTick to ensure DOM is rendered before starting heavy operations
+		this.$nextTick(() => {
+			// Start API calls without blocking - use requestIdleCallback if available
+			if (window.requestIdleCallback) {
+				window.requestIdleCallback(() => {
+					if (this.isMounted) {
+						this.fetchAllStats()
+					}
+				}, { timeout: 100 })
+			} else {
+				// Fallback for browsers without requestIdleCallback
+				setTimeout(() => {
+					if (this.isMounted) {
+						this.fetchAllStats()
+					}
+				}, 0)
+			}
+		})
+	},
+	/**
+	 * Cleanup when component is destroyed
+	 * Cancel any pending requests and prevent memory leaks
+	 */
+	beforeDestroy() {
+		this.isMounted = false
+		// Cancel any active requests
+		this.activeRequests.forEach(request => {
+			if (request && typeof request.cancel === 'function') {
+				request.cancel()
+			}
+		})
+		this.activeRequests = []
 	},
 	methods: {
-		oppositeThemeColor() {
-			return getTheme() === 'light' ? '#000000' : '#ffffff'
-		},
 		/**
 		 * Fetches statistics from the backend
 		 * @return {Promise<void>}
 		 * @throws {Error} When the API call fails
 		 */
 		async fetchStats() {
-			this.isLoading = true
+			// Only set loading if stats haven't been loaded yet
+			if (this.stats.sources === 0 && this.stats.mappings === 0) {
+				this.isLoading = true
+			}
 			try {
 				const response = await axios.get(generateUrl('/apps/openconnector/api/dashboard'))
-				this.stats = response.data
+				// Only update if component is still mounted
+				if (this.isMounted) {
+					this.stats = response.data
+				}
 			} catch (error) {
-				console.error('Error fetching stats:', error)
-				// You might want to show an error message to the user here
+				// Only log if component is still mounted
+				if (this.isMounted) {
+					console.error('Error fetching stats:', error)
+				}
 			} finally {
-				this.isLoading = false
+				if (this.isMounted) {
+					this.isLoading = false
+				}
 			}
 		},
 
@@ -577,6 +617,9 @@ export default {
 					generateUrl('/apps/openconnector/api/dashboard/callstats'),
 					{ params },
 				)
+				// Only update if component is still mounted
+				if (!this.isMounted) return
+				
 				const { daily, hourly } = response.data
 
 				// Ensure dates are properly formatted for the chart
@@ -616,7 +659,9 @@ export default {
 					},
 				]
 			} catch (error) {
-				console.error('Error fetching call stats:', error)
+				if (this.isMounted) {
+					console.error('Error fetching call stats:', error)
+				}
 			}
 		},
 
@@ -631,6 +676,9 @@ export default {
 					generateUrl('/apps/openconnector/api/dashboard/jobstats'),
 					{ params },
 				)
+				// Only update if component is still mounted
+				if (!this.isMounted) return
+				
 				const { daily, hourly } = response.data
 
 				// Update daily stats
@@ -697,7 +745,9 @@ export default {
 					},
 				]
 			} catch (error) {
-				console.error('Error fetching job stats:', error)
+				if (this.isMounted) {
+					console.error('Error fetching job stats:', error)
+				}
 			}
 		},
 
@@ -712,6 +762,9 @@ export default {
 					generateUrl('/apps/openconnector/api/dashboard/syncstats'),
 					{ params },
 				)
+				// Only update if component is still mounted
+				if (!this.isMounted) return
+				
 				const { daily, hourly } = response.data
 
 				// Update daily stats
@@ -738,7 +791,9 @@ export default {
 					},
 				]
 			} catch (error) {
-				console.error('Error fetching sync stats:', error)
+				if (this.isMounted) {
+					console.error('Error fetching sync stats:', error)
+				}
 			}
 		},
 
@@ -802,17 +857,20 @@ export default {
 
 		/**
 		 * Fetch all statistics
+		 * Runs API calls in parallel but doesn't block initial render
+		 * @return {Promise<void>}
 		 */
 		async fetchAllStats() {
-			this.isLoading = true
-			try {
-				await Promise.all([
-					this.fetchStats(),
-					this.fetchGraphStats(),
-				])
-			} finally {
-				this.isLoading = false
-			}
+			// Don't await - let calls run in parallel without blocking
+			Promise.all([
+				// loading is being exclusively handled by the fetchStats() method
+				this.fetchStats(),
+				this.fetchCallStats(),
+				this.fetchJobStats(),
+				this.fetchSyncStats(),
+			]).catch(error => {
+				console.error('Error fetching dashboard stats:', error)
+			})
 		},
 
 		/**
