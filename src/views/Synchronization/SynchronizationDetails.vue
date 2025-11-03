@@ -303,7 +303,7 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 										{{ rule.description }}
 									</template>
 									<template #actions>
-										<NcActionButton close-after-click @click="ruleStore.setRuleItem(rule); navigationStore.setSelected('rules')">
+										<NcActionButton close-after-click @click="ruleStore.setRuleItem(rule); $router.push('/rules/' + rule.id)">
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>

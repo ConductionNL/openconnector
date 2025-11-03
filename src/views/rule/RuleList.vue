@@ -40,11 +40,11 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 				<NcListItem v-for="(rule, i) in ruleStore.ruleList.filter(rule => searchStore.search === '' || rule.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${rule}${i}`"
 					:name="rule.name"
-					:active="ruleStore.ruleItem?.id === rule?.id"
+					:active="String($route.params.id || '') === String(rule?.id || '')"
 					:force-display-actions="true"
-					@click="ruleStore.setRuleItem(rule)">
+					@click="$router.push('/rules/' + rule.id)">
 					<template #icon>
-						<Update :class="ruleStore.ruleItem?.id === rule.id && 'selectedRuleIcon'"
+						<Update :class="String($route.params.id || '') === String(rule?.id || '') && 'selectedRuleIcon'"
 							disable-menu
 							:size="44" />
 					</template>

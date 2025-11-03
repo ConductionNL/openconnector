@@ -8,7 +8,7 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 			<RuleList />
 		</template>
 		<template #default>
-			<NcEmptyContent v-if="!ruleStore.ruleItem || navigationStore.selected != 'rules'"
+			<NcEmptyContent v-if="!$route.params.id"
 				class="detailContainer"
 				name="No rule"
 				description="No rule selected">
@@ -21,13 +21,41 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 					</NcButton>
 				</template>
 			</NcEmptyContent>
-			<RuleDetails v-if="ruleStore.ruleItem && navigationStore.selected === 'rules'" />
+			<NcEmptyContent v-else-if="loading"
+				class="detailContainer"
+				name="Loading..."
+				description="Fetching rule details">
+				<template #icon>
+					<NcLoadingIcon />
+				</template>
+			</NcEmptyContent>
+			<NcEmptyContent v-else-if="loadError"
+				class="detailContainer"
+				name="Error"
+				description="Failed to load rule.">
+				<template #icon>
+					<Update />
+				</template>
+				<template #action>
+					<div style="display: flex; gap: 0.5rem;">
+						<NcButton type="secondary" @click="ruleStore.setRuleItem(null); loadError = false; $router.push('/rules')">
+							Back
+						</NcButton>
+						<NcButton type="primary" @click="ruleStore.setRuleItem(null); loadError = false; $router.push('/rules'); navigationStore.setModal('editRule')">
+							Add rule
+						</NcButton>
+					</div>
+				</template>
+			</NcEmptyContent>
+			<RuleDetails v-else
+				:item="ruleStore.ruleItem"
+				:loading="loading" />
 		</template>
 	</NcAppContent>
 </template>
 
 <script>
-import { NcAppContent, NcEmptyContent, NcButton } from '@nextcloud/vue'
+import { NcAppContent, NcEmptyContent, NcButton, NcLoadingIcon } from '@nextcloud/vue'
 import RuleList from './RuleList.vue'
 import RuleDetails from './RuleDetails.vue'
 import Update from 'vue-material-design-icons/Update.vue'
@@ -41,6 +69,45 @@ export default {
 		RuleList,
 		RuleDetails,
 		Update,
+	},
+	data() {
+		return {
+			ruleStore,
+			navigationStore,
+			loading: false,
+			loadError: false,
+		}
+	},
+	watch: {
+		'$route.params.id'() {
+			this.syncFromRoute()
+		},
+	},
+	mounted() {
+		this.syncFromRoute()
+	},
+	methods: {
+		async syncFromRoute() {
+			const id = this.$route.params.id
+			if (!id) {
+				this.ruleStore.setRuleItem(null)
+				this.loadError = false
+				return
+			}
+			try {
+				this.loading = true
+				this.loadError = false
+				const { response } = await this.ruleStore.fetchRule(String(id))
+				if (!response.ok) {
+					this.ruleStore.setRuleItem(null)
+					throw new Error(response.status >= 400 && response.status < 500 ? 'Not found' : 'Server error')
+				}
+			} catch (e) {
+				this.loadError = true
+			} finally {
+				this.loading = false
+			}
+		},
 	},
 }
 </script>
