@@ -2,53 +2,45 @@
 
 namespace OCA\OpenConnector\Service;
 
+use Adbar\Dot;
+use DateTime;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use JWadhams\JsonLogic;
 use OC\User\NoUserException;
 use OCA\OpenConnector\Db\CallLog;
 use OCA\OpenConnector\Db\Mapping;
+use OCA\OpenConnector\Db\MappingMapper;
 use OCA\OpenConnector\Db\Rule;
 use OCA\OpenConnector\Db\RuleMapper;
 use OCA\OpenConnector\Db\Source;
 use OCA\OpenConnector\Db\SourceMapper;
 use OCA\OpenConnector\Db\Synchronization;
-use OCA\OpenConnector\Db\SynchronizationMapper;
-use OCA\OpenConnector\Db\SynchronizationLog;
-use OCA\OpenConnector\Db\SynchronizationLogMapper;
 use OCA\OpenConnector\Db\SynchronizationContract;
-use OCA\OpenConnector\Db\SynchronizationContractLog;
 use OCA\OpenConnector\Db\SynchronizationContractLogMapper;
 use OCA\OpenConnector\Db\SynchronizationContractMapper;
-use OCA\OpenConnector\Service\CallService;
-use OCA\OpenConnector\Service\MappingService;
+use OCA\OpenConnector\Db\SynchronizationLog;
+use OCA\OpenConnector\Db\SynchronizationLogMapper;
+use OCA\OpenConnector\Db\SynchronizationMapper;
+use OCA\OpenConnector\Service\Helper\FlowToken;
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\Files\File;
 use OCP\Files\GenericFileException;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
 use OCP\Lock\LockedException;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
+use React\Promise\Timer;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\Uid\Uuid;
-use OCP\AppFramework\Db\DoesNotExistException;
-use Adbar\Dot;
-use OCP\Files\File;
-use Psr\Container\ContainerInterface;
-use DateTime;
-use OCA\OpenConnector\Db\MappingMapper;
 use Twig\Error\LoaderError;
 use Twig\Error\SyntaxError;
-use React\Promise\Promise;
-use React\Promise\PromiseInterface;
-use React\EventLoop\Loop;
-use React\Promise\Timer;
-use React\Async;
-use React\Promise\Deferred;
-use function React\Promise\resolve;
-use Psr\Log\LoggerInterface;
 
 /**
  * SynchronizationService
@@ -144,9 +136,10 @@ class SynchronizationService
 		Synchronization $synchronization,
 		\OCA\OpenRegister\Db\ObjectEntity|array &$object,
 		SynchronizationLog $log,
+        FlowToken &$flowToken,
 		?bool $isTest = false,
 		?bool $force = false,
-		?string $mutationType = null
+		?string $mutationType = null,
 	): SynchronizationContract|array|null
 	{
 		if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $object)) {
@@ -191,7 +184,7 @@ class SynchronizationService
 				$synchronizationContract->setOriginId($originId);
 			}
 
-			$synchronizationContract = $this->synchronizeContract(synchronizationContract: $synchronizationContract, synchronization: $synchronization, object: $object, isTest: $isTest, force: $force, log: $log, mutationType: $mutationType);
+			$synchronizationContract = $this->synchronizeContract(synchronizationContract: $synchronizationContract, synchronization: $synchronization,  flowToken: $flowToken, object: $object, isTest: $isTest, force: $force, log: $log, mutationType: $mutationType);
 
 			if ($isTest === true && is_array($synchronizationContract) === true) {
 				// If this is a log and contract array return for the test endpoint.
@@ -201,7 +194,7 @@ class SynchronizationService
 			}
 		} else {
 			// @todo this is wierd
-			$synchronizationContract = $this->synchronizeContract(synchronizationContract: $synchronizationContract, synchronization: $synchronization, object: $object, isTest: $isTest, force: $force, log: $log, mutationType: $mutationType);
+			$synchronizationContract = $this->synchronizeContract(synchronizationContract: $synchronizationContract, synchronization: $synchronization, flowToken: $flowToken, object: $object, isTest: $isTest, force: $force, log: $log, mutationType: $mutationType);
 			if ($isTest === false && $synchronizationContract instanceof SynchronizationContract === true) {
 				// If this is a regular synchronizationContract update it to the database.
 				$this->synchronizationContractMapper->update(entity: $synchronizationContract);
@@ -244,6 +237,7 @@ class SynchronizationService
     private function synchronizeExternToIntern(
         Synchronization $synchronization,
         SynchronizationLog $log,
+        FlowToken &$flowToken,
         ?bool $isTest = false,
         ?bool $force = false,
         ?string $source = null,
@@ -282,6 +276,7 @@ class SynchronizationService
             'description' => 'Configuration loading and source validation'
         ];
 
+
         if ($data !== null && $mutationType === 'delete') {
             $processResult = $this->processSynchronizationObject(
                 synchronization: $synchronization,
@@ -290,6 +285,7 @@ class SynchronizationService
                 isTest: $isTest,
                 force: $force,
                 log: $log,
+                flowToken: $flowToken,
                 mutationType: $mutationType
             );
         } else {
@@ -336,6 +332,7 @@ class SynchronizationService
 
                 $processResult = $this->processSynchronizationObject(
                     synchronization: $synchronization,
+                    flowToken: $flowToken,
                     object: $object,
                     result: $result,
                     isTest: $isTest,
@@ -458,9 +455,14 @@ class SynchronizationService
         array|\OCA\OpenRegister\Db\ObjectEntity|null &$object = null,
 		?string $mutationType = null,
 		?string $source = null,
-		?array $data = null
+		?array $data = null,
+        ?FlowToken &$flowToken = null,
 	): array|SynchronizationContract|null
 	{
+        if($flowToken === null) {
+            $flowToken = new FlowToken();
+        }
+
 		if ($mutationType !== null && in_array($mutationType, $this::VALID_MUTATION_TYPES) === false) {
 			throw new Exception(sprintf('Invalid mutation type: %s given. Allowed mutation types are: %s', $mutationType, implode(', ', $this::VALID_MUTATION_TYPES)));
 		}
@@ -498,8 +500,9 @@ class SynchronizationService
                 synchronization: $synchronization,
                 object: $object,
                 log: $log,
+                flowToken: $flowToken,
                 force: $force,
-                mutationType: $mutationType
+                mutationType: $mutationType,
             );
         }
 
@@ -509,7 +512,16 @@ class SynchronizationService
 		$log = $this->synchronizationLogMapper->createFromArray($log);
 
         // Handle full extern-to-intern sync
-        $log = $this->synchronizeExternToIntern(synchronization: $synchronization, log: $log, isTest: $isTest, force: $force, source: $source, data: $data, mutationType: $mutationType);
+        $log = $this->synchronizeExternToIntern(
+            synchronization: $synchronization,
+            log: $log,
+            flowToken: $flowToken,
+            isTest: $isTest,
+            force: $force,
+            source: $source,
+            data: $data,
+            mutationType: $mutationType
+        );
 
         // Finalize log
         $executionTime = round((microtime(true) - $startTime) * 1000);
@@ -898,11 +910,12 @@ class SynchronizationService
 	 */
 	public function synchronizeContract(
 		SynchronizationContract $synchronizationContract,
-		Synchronization $synchronization = null,
-		array &$object = [],
-		?bool $isTest = false,
-		?bool $force = false,
-		?SynchronizationLog $log = null,
+        Synchronization $synchronization = null,
+        FlowToken &$flowToken,
+        array &$object = [],
+        ?bool $isTest = false,
+        ?bool $force = false,
+        ?SynchronizationLog $log = null,
 		?string $mutationType = null
 		): SynchronizationContract|Exception|array
 	{
@@ -925,6 +938,8 @@ class SynchronizationService
 			$contractLog->setSynchronizationLogId($log->getId());
 		}
 
+        $flowToken->setSyncInputOriginal($object);
+
 		$sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
 
 		// Check if extra data needs to be fetched
@@ -932,6 +947,8 @@ class SynchronizationService
         if (isset($sourceConfig[$this::EXTRA_DATA_BEFORE_CONDITIONS_LOCATION]) === false || ($sourceConfig[$this::EXTRA_DATA_BEFORE_CONDITIONS_LOCATION] !== true && $sourceConfig[$this::EXTRA_DATA_BEFORE_CONDITIONS_LOCATION] !== 'true')) {
 		    $object = $this->fetchMultipleExtraData(synchronization: $synchronization, sourceConfig: $sourceConfig, object: $object);
         }
+
+        $flowToken->setSyncOutputAmended($object);
 
 		// Get mapped hash object (some fields can make it look the object has changed even if it hasn't)
 		$hashObject = $this->mapHashObject(synchronization: $synchronization, object: $object);
@@ -984,6 +1001,7 @@ class SynchronizationService
 		$objectBeforeMapping = $object;
         if ($sourceTargetMapping) {
             $object = $this->mappingService->executeMapping(mapping: $sourceTargetMapping, input: $object);
+            $flowToken->setSyncOutputAmended($object);
         }
 
         if (isset($contractLog) === true) {
@@ -991,9 +1009,11 @@ class SynchronizationService
         }
 
         $object = $this->replaceRelatedOriginIds(object: $object, config: $sourceConfig['idsToReplaceWithTargetIdsBeforeRules'] ?? [], replaceIdWithTargetId: true);
+        $flowToken->setSyncOutputAmended($object);
 
         if ($synchronization->getActions() !== []) {
-            $object = $this->processRules(synchronization: $synchronization, data: $object, timing: 'before');
+            $object = $this->processRules(synchronization: $synchronization, data: $object, timing: 'before', flowToken: $flowToken);
+            $flowToken->setSyncOutputAmended($object);
         }
 
             // set the target hash
@@ -1026,10 +1046,10 @@ class SynchronizationService
 
         if ($synchronization->getTargetType() === 'register/schema') {
             [$registerId, $schemaId] = explode(separator: '/', string: $synchronization->getTargetId());
-            $this->processRules(synchronization: $synchronization, data: array_merge($object, ['_objectBeforeMapping' => $objectBeforeMapping]), timing: 'after', objectId: $synchronizationContract->getTargetId(), registerId: $registerId, schemaId: $schemaId);
+            $this->processRules(synchronization: $synchronization, data: array_merge($object, ['_objectBeforeMapping' => $objectBeforeMapping]), timing: 'after', objectId: $synchronizationContract->getTargetId(), registerId: $registerId, schemaId: $schemaId, flowToken: $flowToken);
         } else if ($synchronization->getTargetType() === 'api' && $synchronization->getSourceType() === 'register/schema') {
             [$registerId, $schemaId] = explode(separator: '/', string: $synchronization->getSourceId());
-            $this->processRules(synchronization: $synchronization, data: array_merge($object, ['_objectBeforeMapping' => $objectBeforeMapping]), timing: 'after', objectId: $synchronizationContract->getSourceId(), registerId: $registerId, schemaId: $schemaId);
+            $this->processRules(synchronization: $synchronization, data: array_merge($object, ['_objectBeforeMapping' => $objectBeforeMapping]), timing: 'after', objectId: $synchronizationContract->getSourceId(), registerId: $registerId, schemaId: $schemaId, flowToken: $flowToken);
 		}
 
 
@@ -2337,7 +2357,7 @@ class SynchronizationService
 	 * @throws NotFoundExceptionInterface
 	 * @throws Exception
 	 */
-    private function processRules(Synchronization $synchronization, array $data, string $timing, ?string $objectId = null, ?int $registerId = null, ?int $schemaId = null): array|JSONResponse
+    private function processRules(Synchronization $synchronization, array $data, string $timing, ?string $objectId = null, ?int $registerId = null, ?int $schemaId = null, ?FlowToken $flowToken = null): array|JSONResponse
     {
         $rules = $synchronization->getActions();
         if (empty($rules) === true) {
@@ -2358,11 +2378,16 @@ class SynchronizationService
 
             // Process each rule in order
             foreach ($ruleEntities as $rule) {
+                if($flowToken !== null) {
+                    $data['flowToken'] = $flowToken->__serialize();
+                }
+
                 // Check rule conditions
                 if ($this->checkRuleConditions($rule, $data) === false || $rule->getTiming() !== $timing) {
                     $this->logger->info('Rule condition check failed for synchronization ' . $synchronization->getName() . ' and rule ' . $rule->getName() . ' of type: ' . $rule->getType());
                     continue;
                 }
+                unset ($data['flowToken']);
 
                 $this->logger->info('Applying rule for synchronization ' . $synchronization->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
 
@@ -2547,7 +2572,7 @@ class SynchronizationService
 
 		// Determine if file should be published based on the published parameter
 		$shouldPublish = $this->shouldPublishFile($published);
-        
+
 		try {
 			$objectService = $this->containerInterface->get('OCA\OpenRegister\Service\ObjectService');
 			$objectEntity = $objectService->findByUuid(uuid: $objectId);
@@ -3337,6 +3362,7 @@ class SynchronizationService
 		bool $isTest,
 		bool $force,
 		SynchronizationLog $log,
+        FlowToken &$flowToken,
         ?string $mutationType = null
 	): array {
 		// We can only deal with arrays (based on the source empty values or string might be returned)
@@ -3385,11 +3411,12 @@ class SynchronizationService
 
 			$synchronizationContractResult = $this->synchronizeContract(
 				synchronizationContract: $synchronizationContract,
-				synchronization: $synchronization,
-				object: $object,
-				isTest: $isTest,
-				force: $force,
-				log: $log,
+                synchronization: $synchronization,
+                flowToken: $flowToken,
+                object: $object,
+                isTest: $isTest,
+                force: $force,
+                log: $log,
                 mutationType: $mutationType
 			);
 
@@ -3407,6 +3434,7 @@ class SynchronizationService
 			$synchronizationContractResult = $this->synchronizeContract(
 				synchronizationContract: $synchronizationContract,
 				synchronization: $synchronization,
+                flowToken: $flowToken,
 				object: $object,
 				isTest: $isTest,
 				force: $force,
