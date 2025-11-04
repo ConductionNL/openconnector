@@ -353,6 +353,7 @@ class SearchService
 	 */
 	public function parseQueryString (string $queryString = ''): array
 	{
+		$vars = [];
 		$pairs = explode(separator: '&', string: $queryString);
 
 		foreach ($pairs as $pair) {
@@ -373,7 +374,7 @@ class SearchService
 					length: strpos(
 						haystack: $key,
 						needle: '['
-					)
+					) ?: strlen($key)
 				),
 				value: $value
 			);

@@ -245,13 +245,14 @@ class EndpointsController extends Controller
 				method: $this->request->getMethod()
 			);
 
-			// If no matching endpoint found, return 404
-			if ($endpoint === null) {
-				return new JSONResponse(
-					data: ['error' => 'No matching endpoint found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
-					statusCode: 404
-				);
-			}
+		// If no matching endpoint found, return 404
+		if ($endpoint === null) {
+			$response = new JSONResponse(
+				data: ['error' => 'No matching endpoint found for path and method: ' . $_path . ' ' . $this->request->getMethod()],
+				statusCode: 404
+			);
+			return $this->authorizationService->corsAfterController($this->request, $response);
+		}
 		} catch (\Exception $e) {
 			// Multiple endpoints found (handled by cache service)
 			return new JSONResponse(
@@ -495,8 +496,16 @@ class EndpointsController extends Controller
 						return new JSONResponse($object->jsonSerialize());
 					}
 
-									// Handle collection request (list objects)
-				$result = $mapper->findAllPaginated(requestParams: $parameters);
+				// Handle collection request (list objects)
+			$result = $mapper->findAll(
+				$parameters['limit'] ?? null,
+				$parameters['offset'] ?? null,
+				$parameters['filters'] ?? [],
+				$parameters['searchConditions'] ?? [],
+				$parameters['searchParams'] ?? [],
+				$parameters['sort'] ?? [],
+				$parameters['search'] ?? null
+			);
 
 				// Debug: log the register and schema we're querying
 				$this->logger->info('Simple endpoint query', [

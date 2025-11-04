@@ -273,14 +273,13 @@ class LogsController extends Controller
             $logs = $this->synchronizationLogMapper->findAll(null, null, $filters);
 
             // Create CSV content
-            $csvData = "ID,UUID,Level,Message,Synchronization ID,User ID,Session ID,Created,Expires\n";
+            $csvData = "ID,UUID,Message,Synchronization ID,User ID,Session ID,Created,Expires\n";
             
             foreach ($logs as $log) {
                 $csvData .= sprintf(
-                    "%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                    "%s,%s,%s,%s,%s,%s,%s,%s\n",
                     $log->getId() ?? '',
                     $log->getUuid() ?? '',
-                    $log->getLevel() ?? '',
                     '"' . str_replace('"', '""', $log->getMessage() ?? '') . '"',
                     $log->getSynchronizationId() ?? '',
                     $log->getUserId() ?? '',

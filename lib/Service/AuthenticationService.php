@@ -31,6 +31,7 @@ use Twig\Loader\ArrayLoader;
  */
 class AuthenticationService
 {
+	private Environment $twig;
 
 	public const REQUIRED_PARAMETERS_CLIENT_CREDENTIALS = [
 		'grant_type',

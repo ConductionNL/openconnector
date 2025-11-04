@@ -41,6 +41,7 @@ class CallService
 	private Environment $twig;
 
 	private CookieJar $cookieJar;
+	private ?Source $source = null;
 
 	private const BASE_FILENAME_LOCATION = "%s-%s";
 

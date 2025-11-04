@@ -104,29 +104,29 @@ class UserController extends Controller
      * @param IUserManager $userManager The user manager for user operations
      * @param IUserSession $userSession The user session manager
      * @param AuthorizationService $authorizationService The authorization service
-     * @param ICacheFactory $cacheFactory The cache factory for rate limiting
-     * @param LoggerInterface $logger The logger for security events
+     * @param SecurityService $securityService The security service for rate limiting and XSS protection
      * @param UserService $userService The user service for user-related operations
      * @param OrganisationBridgeService $organisationBridgeService The organization bridge service
+     * @param LoggerInterface $logger The logger for security events
      *
      * @psalm-param string $appName
      * @psalm-param IRequest $request
      * @psalm-param IUserManager $userManager
      * @psalm-param IUserSession $userSession
      * @psalm-param AuthorizationService $authorizationService
-     * @psalm-param ICacheFactory $cacheFactory
-     * @psalm-param LoggerInterface $logger
+     * @psalm-param SecurityService $securityService
      * @psalm-param UserService $userService
      * @psalm-param OrganisationBridgeService $organisationBridgeService
+     * @psalm-param LoggerInterface $logger
      * @phpstan-param string $appName
      * @phpstan-param IRequest $request
      * @phpstan-param IUserManager $userManager
      * @phpstan-param IUserSession $userSession
      * @phpstan-param AuthorizationService $authorizationService
-     * @phpstan-param ICacheFactory $cacheFactory
-     * @phpstan-param LoggerInterface $logger
+     * @phpstan-param SecurityService $securityService
      * @phpstan-param UserService $userService
      * @phpstan-param OrganisationBridgeService $organisationBridgeService
+     * @phpstan-param LoggerInterface $logger
      */
     public function __construct(
         string $appName,
@@ -134,16 +134,16 @@ class UserController extends Controller
         IUserManager $userManager,
         IUserSession $userSession,
         AuthorizationService $authorizationService,
-        ICacheFactory $cacheFactory,
-        LoggerInterface $logger,
+        SecurityService $securityService,
         UserService $userService,
-        OrganisationBridgeService $organisationBridgeService
+        OrganisationBridgeService $organisationBridgeService,
+        LoggerInterface $logger
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
         $this->userSession = $userSession;
         $this->authorizationService = $authorizationService;
-        $this->securityService = new SecurityService($cacheFactory, $logger);
+        $this->securityService = $securityService;
         $this->userService = $userService;
         $this->organisationBridgeService = $organisationBridgeService;
         $this->logger = $logger;
