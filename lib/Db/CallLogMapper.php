@@ -145,7 +145,7 @@ class CallLogMapper extends QBMapper
            ->groupBy('date')
            ->orderBy('date', 'ASC');
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $counts = [];
 
         // Fetch results and build the return array
@@ -197,7 +197,7 @@ class CallLogMapper extends QBMapper
         $qb->select($qb->createFunction('COUNT(*) as count'))
            ->from('openconnector_call_logs');
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $row = $result->fetch();
 
         // Return the total count
@@ -252,7 +252,7 @@ class CallLogMapper extends QBMapper
             ->groupBy('date')
             ->orderBy('date', 'ASC');
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $stats = [];
 
         // Create DatePeriod to iterate through all dates
@@ -306,7 +306,7 @@ class CallLogMapper extends QBMapper
             ->groupBy('hour')
             ->orderBy('hour', 'ASC');
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $stats = [];
 
         while ($row = $result->fetch()) {
@@ -341,7 +341,7 @@ class CallLogMapper extends QBMapper
             }
         }
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $row = $result->fetch();
 
         return (int)$row['count'];
