@@ -164,7 +164,7 @@ class JobLogMapper extends QBMapper
             ->groupBy('date')
             ->orderBy('date', 'ASC');
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $stats = [];
 
         // Create DatePeriod to iterate through all dates
@@ -224,7 +224,7 @@ class JobLogMapper extends QBMapper
             ->groupBy('hour')
             ->orderBy('hour', 'ASC');
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $stats = [];
 
         while ($row = $result->fetch()) {
@@ -309,7 +309,7 @@ class JobLogMapper extends QBMapper
             }
         }
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $row = $result->fetch();
 
         // Return the total count
