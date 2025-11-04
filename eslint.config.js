@@ -1,4 +1,3 @@
-/* eslint-disable n/no-extraneous-require */
 const {
 	defineConfig,
 } = require('@eslint/config-helpers')
