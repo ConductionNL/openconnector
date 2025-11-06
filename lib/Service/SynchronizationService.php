@@ -3384,6 +3384,11 @@ class SynchronizationService
 
 		$conditionsObject = $this->encodeArrayKeys($object, '.', '&#46;');
 
+		// Add flow token to conditions object if it exists
+		if ($flowToken !== null) {
+			$conditionsObject['flowToken'] = $flowToken->__serialize();
+		}
+
 		// Check if object adheres to conditions.
 		// Take note, JsonLogic::apply() returns a range of return types, so checking it with '=== false' or '!== true' does not work properly.
 		if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $conditionsObject)) {
