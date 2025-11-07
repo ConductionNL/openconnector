@@ -671,7 +671,7 @@ jobs:
           echo "============================================================"
           echo "🧹  PHP lint (in-container)"
           echo "============================================================"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && find . -name '*.php' -exec php -l {} \;"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html/custom_apps/openconnector/ && find . -name '*.php' -exec php -l {} \;"
         continue-on-error: true
 
       - name: Run PHP CS Fixer in Nextcloud container (Quality)
@@ -680,7 +680,7 @@ jobs:
           echo "============================================================"
           echo "🎯  Code style (php-cs-fixer --dry-run)"
           echo "============================================================"
-          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && ./lib/composer/bin/php-cs-fixer fix --dry-run --diff"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/php-cs-fixer fix --dry-run --diff"
         continue-on-error: true
 
       - name: Run Psalm static analysis in Nextcloud container (Quality)
@@ -689,7 +689,7 @@ jobs:
           echo "============================================================"
           echo "🔎  Static analysis (Psalm)"
           echo "============================================================"
-          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && ./lib/composer/bin/psalm --threads=1 --no-cache"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/psalm --threads=1 --no-cache"
         continue-on-error: true
 
       - name: Run unit tests inside Nextcloud container (Quality)
@@ -697,7 +697,7 @@ jobs:
           echo "============================================================"
           echo "🧪  Run PHPUnit (with coverage)"
           echo "============================================================"
-          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --bootstrap custom_apps/openconnector/tests/bootstrap.php --coverage-clover custom_apps/openconnector/coverage.xml custom_apps/openconnector/tests"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/phpunit --bootstrap custom_apps/openconnector/tests/bootstrap.php --coverage-clover custom_apps/openconnector/coverage.xml custom_apps/openconnector/tests"
 
       - name: Generate quality status
         if: always()
