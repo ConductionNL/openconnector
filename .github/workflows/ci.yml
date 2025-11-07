@@ -15,6 +15,7 @@ env:
   MARIADB_VERSION: "10.6"
   REDIS_VERSION: "7"
   MAILHOG_VERSION: "latest"
+  # TODO: use the correct development image for Nextcloud
   NEXTCLOUD_IMAGE: "nextcloud:31"
   MARIADB_IMAGE: "mariadb:10.6"
   REDIS_IMAGE: "redis:7"
@@ -518,10 +519,10 @@ jobs:
           echo "============================================================"
           echo "🧰  Install dev tools (php-cs-fixer, Psalm)"
           echo "============================================================"
-          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && composer require --dev friendsofphp/php-cs-fixer:^3 vimeo/psalm:^5 --no-interaction"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && composer require --dev friendsofphp/php-cs-fixer:^3 vimeo/psalm:^5 --no-interaction"
           echo "🔎  Tools versions"
-        
-          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && ./lib/composer/bin/psalm --version"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/php-cs-fixer --version"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/psalm --version"
           echo "✅  Dev tools ready"
         continue-on-error: false
 
