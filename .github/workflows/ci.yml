@@ -520,7 +520,7 @@ jobs:
           echo "============================================================"
           docker exec nextcloud-test-quality bash -lc "cd /var/www/html && composer require --dev friendsofphp/php-cs-fixer:^3 vimeo/psalm:^5 --no-interaction"
           echo "🔎  Tools versions"
-          docker exec nextcloud-test-quality bash -lc "cd /var/www/html && ./lib/composer/bin/php-cs-fixer --version"
+        
           docker exec nextcloud-test-quality bash -lc "cd /var/www/html && ./lib/composer/bin/psalm --version"
           echo "✅  Dev tools ready"
         continue-on-error: false
