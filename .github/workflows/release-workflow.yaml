@@ -73,7 +73,7 @@ jobs:
       - run: npm run build
 
       # Step 7: Build composer dependencies
-      - run: composer i
+      - run: composer i --no-dev
 
       # Step 8: Copy the files into the package directory
       - name: Copy the package files into the package

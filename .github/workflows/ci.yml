@@ -209,7 +209,7 @@ jobs:
           docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:list"
 
           echo "📦  composer install (app deps)"
-          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html/custom_apps/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html/custom_apps/openconnector && composer install --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
 
           echo "🧰  maintenance:repair"
           docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ maintenance:repair"
@@ -543,7 +543,7 @@ jobs:
           docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:list"
 
           echo "📦  composer install (app deps)"
-          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector && composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector && composer install --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
 
           echo "🧰  maintenance:repair"
           docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ maintenance:repair"
