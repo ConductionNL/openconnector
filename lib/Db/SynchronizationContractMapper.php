@@ -59,27 +59,36 @@ class SynchronizationContractMapper extends QBMapper
 	/**
 	 * Find a synchronization contract by synchronization ID and origin ID
 	 *
-	 * @param string $synchronizationId The synchronization ID
-	 * @param string $originId The origin ID
+	 * @param string    $synchronizationId The synchronization ID
+	 * @param string    $originId          The origin ID
+	 * @param bool|null $justByOriginId 
 	 *
 	 * @return SynchronizationContract|null The found contract or null if not found
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
 	 */
-    public function findSyncContractByOriginId(string $synchronizationId, string $originId): ?SynchronizationContract
+    public function findSyncContractByOriginId(string $synchronizationId, string $originId, ?bool $justByOriginId = false): ?SynchronizationContract
     {
         // Create query builder
         $qb = $this->db->getQueryBuilder();
 
         // Build select query with synchronization and origin ID filters
-        $qb->select('*')
-            ->from('openconnector_synchronization_contracts')
-            ->where(
-                $qb->expr()->eq('synchronization_id', $qb->createNamedParameter($synchronizationId))
-            )
-            ->andWhere(
-                $qb->expr()->eq('origin_id', $qb->createNamedParameter($originId))
-            );
+        if ($justByOriginId === true) {
+            $qb->select('*')
+                ->from('openconnector_synchronization_contracts')
+                ->where(
+                    $qb->expr()->eq('origin_id', $qb->createNamedParameter($originId))
+                );
+        } else {
+            $qb->select('*')
+                ->from('openconnector_synchronization_contracts')
+                ->where(
+                    $qb->expr()->eq('synchronization_id', $qb->createNamedParameter($synchronizationId))
+                )
+                ->andWhere(
+                    $qb->expr()->eq('origin_id', $qb->createNamedParameter($originId))
+                );
+        }
 
         try {
             return $this->findEntity($qb);

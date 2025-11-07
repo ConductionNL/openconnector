@@ -74,6 +74,18 @@ class JobLogMapper extends QBMapper
 
 		$object = array_merge($jobObject, $object);
 
+        switch($object['level']) {
+            case 'INFO':
+                $object['expires'] = new DateTime('+1 hour');
+                break;
+            case 'WARNING':
+            case 'ERROR':
+                $object['expires'] = new DateTime('+3 days');
+                break;
+            default:
+                $object['expires'] = new DateTime('+30 days');
+        }
+
 		return $this->createFromArray($object);
 	}
 
@@ -152,7 +164,7 @@ class JobLogMapper extends QBMapper
             ->groupBy('date')
             ->orderBy('date', 'ASC');
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $stats = [];
 
         // Create DatePeriod to iterate through all dates
@@ -212,7 +224,7 @@ class JobLogMapper extends QBMapper
             ->groupBy('hour')
             ->orderBy('hour', 'ASC');
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $stats = [];
 
         while ($row = $result->fetch()) {
@@ -262,7 +274,7 @@ class JobLogMapper extends QBMapper
                 'app' => 'openconnector',
                 'exception' => $e
             ]);
-            
+
             // Re-throw the exception so the caller knows something went wrong
             throw $e;
         }
@@ -297,7 +309,7 @@ class JobLogMapper extends QBMapper
             }
         }
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $row = $result->fetch();
 
         // Return the total count

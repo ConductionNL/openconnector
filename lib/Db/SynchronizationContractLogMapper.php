@@ -120,6 +120,8 @@ class SynchronizationContractLogMapper extends QBMapper
 			$obj->setSynchronizationLogId('n.a.');
 		}
 
+        $obj->setExpires(new DateTime('+3 days'));
+
 		return $this->insert($obj);
 	}
 
@@ -183,7 +185,7 @@ class SynchronizationContractLogMapper extends QBMapper
 	 *
 	 * @param DateTime $from Start date
 	 * @param DateTime $to End date
-	 * 
+	 *
 	 * @return array Array of hourly execution counts
 	 * @throws Exception
 	 */
@@ -210,4 +212,20 @@ class SynchronizationContractLogMapper extends QBMapper
 
 		return $stats;
 	}
+
+
+    /**
+     * Cleans up expired log entries
+     *
+     * @return int Number of deleted entries
+     */
+    public function clearLogs(): int
+    {
+        $qb = $this->db->getQueryBuilder();
+
+        $qb->delete('openconnector_synchronization_contract_logs')
+            ->andWhere($qb->expr()->lt('expires', $qb->createFunction('NOW()')));
+
+        return $qb->executeStatement();
+    }
 }

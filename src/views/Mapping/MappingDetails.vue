@@ -8,7 +8,7 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 			<div>
 				<div class="detailHeader">
 					<h1 class="h1">
-						{{ mappingStore.mappingItem.name }}
+						{{ item?.name || '-' }}
 					</h1>
 
 					<NcActions :primary="true" menu-name="Actions">
@@ -59,24 +59,24 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 						</NcActionButton>
 					</NcActions>
 				</div>
-				<span>{{ mappingStore.mappingItem?.description || '-' }}</span>
+				<span>{{ item?.description || '-' }}</span>
 
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
 						<b>Id:</b>
-						<p>{{ mappingStore.mappingItem?.id || '-' }}</p>
+						<p>{{ item?.id || '-' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>Uuid:</b>
-						<p>{{ mappingStore.mappingItem?.uuid || '-' }}</p>
+						<p>{{ item?.uuid || '-' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>Reference:</b>
-						<p>{{ mappingStore.mappingItem?.reference || '-' }}</p>
+						<p>{{ item?.reference || '-' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
 						<b>Version:</b>
-						<p>{{ mappingStore.mappingItem?.version || '-' }}</p>
+						<p>{{ item?.version || '-' }}</p>
 					</div>
 				</div>
 				<div class="tabContainer">
@@ -93,8 +93,8 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 									Add Mapping
 								</NcButton>
 							</div>
-							<div v-if="mappingStore.mappingItem?.mapping !== null && Object.keys(mappingStore.mappingItem?.mapping || {}).length">
-								<NcListItem v-for="(value, key, i) in mappingStore.mappingItem?.mapping"
+							<div v-if="item?.mapping !== null && Object.keys(item?.mapping || {}).length">
+								<NcListItem v-for="(value, key, i) in item?.mapping"
 									:key="`${key}${i}`"
 									:name="key"
 									:bold="false"
@@ -126,7 +126,7 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 									</template>
 								</NcListItem>
 							</div>
-							<div v-if="!Object.keys(mappingStore.mappingItem?.mapping || {}).length" class="tabPanel">
+							<div v-if="!Object.keys(item?.mapping || {}).length" class="tabPanel">
 								No mapping found
 							</div>
 						</BTab>
@@ -142,8 +142,8 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 									Add Cast
 								</NcButton>
 							</div>
-							<div v-if="mappingStore.mappingItem?.cast !== null && Object.keys(mappingStore.mappingItem?.cast || {}).length">
-								<NcListItem v-for="(value, key, i) in mappingStore.mappingItem?.cast"
+							<div v-if="item?.cast !== null && Object.keys(item?.cast || {}).length">
+								<NcListItem v-for="(value, key, i) in item?.cast"
 									:key="`${key}${i}`"
 									:name="key"
 									:bold="false"
@@ -175,7 +175,7 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 									</template>
 								</NcListItem>
 							</div>
-							<div v-if="!Object.keys(mappingStore.mappingItem?.cast || {}).length" class="tabPanel">
+							<div v-if="!Object.keys(item?.cast || {}).length" class="tabPanel">
 								No cast found
 							</div>
 						</BTab>
@@ -191,8 +191,8 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 									Add Unset
 								</NcButton>
 							</div>
-							<div v-if="mappingStore.mappingItem?.unset?.length">
-								<NcListItem v-for="(value, i) in mappingStore.mappingItem?.unset"
+							<div v-if="item?.unset?.length">
+								<NcListItem v-for="(value, i) in item?.unset"
 									:key="`${value}${i}`"
 									:name="value"
 									:bold="false"
@@ -219,7 +219,7 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 									</template>
 								</NcListItem>
 							</div>
-							<div v-if="!mappingStore.mappingItem?.unset?.length" class="tabPanel">
+							<div v-if="!item?.unset?.length" class="tabPanel">
 								No unset found
 							</div>
 						</BTab>
@@ -255,6 +255,16 @@ export default {
 		BTabs,
 		NcButton,
 		Plus,
+	},
+	props: {
+		item: {
+			type: Object,
+			default: null,
+		},
+		loading: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	methods: {
 		deleteMappingMapping(key) {

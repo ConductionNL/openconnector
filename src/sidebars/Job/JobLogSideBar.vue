@@ -191,6 +191,7 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import FilterOffOutline from 'vue-material-design-icons/FilterOffOutline.vue'
 import { translate as t } from '@nextcloud/l10n'
 import DateRangeInput from '../../components/DateRangeInput.vue'
+import getValidISOstring from '@/services/getValidISOstring.js'
 
 export default {
 	name: 'JobLogSideBar',
@@ -215,6 +216,18 @@ export default {
 	},
 	data() {
 		return {
+			levelOptions: [
+				{ label: 'SUCCESS', value: 'SUCCESS' },
+				{ label: 'INFO', value: 'INFO' },
+				{ label: 'NOTICE', value: 'NOTICE' },
+				{ label: 'WARNING', value: 'WARNING' },
+				{ label: 'ERROR', value: 'ERROR' },
+				{ label: 'CRITICAL', value: 'CRITICAL' },
+				{ label: 'ALERT', value: 'ALERT' },
+				{ label: 'EMERGENCY', value: 'EMERGENCY' },
+				{ label: 'DEBUG', value: 'DEBUG' },
+			],
+
 			activeTab: 'filters-tab',
 			selectedJob: null,
 			selectedLevels: [],
@@ -241,19 +254,6 @@ export default {
 		}
 	},
 	computed: {
-		levelOptions() {
-			return [
-				{ label: 'SUCCESS', value: 'SUCCESS' },
-				{ label: 'INFO', value: 'INFO' },
-				{ label: 'NOTICE', value: 'NOTICE' },
-				{ label: 'WARNING', value: 'WARNING' },
-				{ label: 'ERROR', value: 'ERROR' },
-				{ label: 'CRITICAL', value: 'CRITICAL' },
-				{ label: 'ALERT', value: 'ALERT' },
-				{ label: 'EMERGENCY', value: 'EMERGENCY' },
-				{ label: 'DEBUG', value: 'DEBUG' },
-			]
-		},
 		jobOptions() {
 			return jobStore.jobList?.map(job => ({
 				value: job,
@@ -294,6 +294,8 @@ export default {
 		this.updateFilteredCount()
 
 		this.selectedJob = this.selectedJobValue
+		// Initialize SPOT from URL
+		this.applyQueryParamsFromRoute()
 	},
 	beforeDestroy() {
 		this.$root.$off('job-log-filtered-count')
@@ -402,6 +404,8 @@ export default {
 
 			// Also emit for legacy compatibility
 			this.$root.$emit('job-log-filters-changed', filters)
+			// Write the filters to URL (SPOT)
+			this.updateRouteQueryFromState()
 		},
 		/**
 		 * Debounced version of applyFilters for text input
@@ -411,6 +415,63 @@ export default {
 			this.filterTimeout = setTimeout(() => {
 				this.applyFilters()
 			}, 500)
+		},
+		buildQueryFromState() {
+			const query = {}
+			if (Array.isArray(this.selectedLevels) && this.selectedLevels.length > 0) {
+				const levels = this.selectedLevels
+					.filter(l => (l && (l.value || typeof l === 'string')))
+					.map(l => (typeof l === 'string' ? l : l.value))
+				if (levels.length > 0) query.level = levels.join(',')
+			}
+			if (this.selectedJob && (this.selectedJob.value || this.selectedJob.id)) {
+				const jobObj = this.selectedJob.value ? this.selectedJob.value : this.selectedJob
+				if (jobObj && jobObj.id) query.job_id = String(jobObj.id)
+			}
+			if (this.dateFrom) query.dateFrom = getValidISOstring(this.dateFrom)
+			if (this.dateTo) query.dateTo = getValidISOstring(this.dateTo)
+			if (this.messageFilter) query.message = this.messageFilter
+			if (this.filters.showOnlyErrors) query.onlyErrors = 'true'
+			if (this.filters.showOnlySlow) query.slowExecutions = 'true'
+			return query
+		},
+		queriesEqual(a, b) {
+			const aKeys = Object.keys(a)
+			const bKeys = Object.keys(b)
+			if (aKeys.length !== bKeys.length) return false
+			return aKeys.every(k => String(a[k] || '') === String(b[k] || ''))
+		},
+		updateRouteQueryFromState() {
+			if (!this.$route.path.startsWith('/jobs/logs')) return
+			const next = this.buildQueryFromState()
+			if (this.queriesEqual(next, this.$route.query || {})) return
+			this.$router.replace({ path: this.$route.path, query: next })
+		},
+		applyQueryParamsFromRoute() {
+			if (!this.$route.path.startsWith('/jobs/logs')) return
+			const q = this.$route.query || {}
+			// Levels
+			if (typeof q.level === 'string') {
+				const parts = q.level.split(',').map(s => s.trim()).filter(Boolean)
+				this.selectedLevels = parts
+			}
+			// Job id
+			if (q.job_id) {
+				const id = Number(q.job_id)
+				const found = jobStore.jobList?.find(j => j.id === id)
+				this.selectedJob = found ? { value: found, label: found.name, title: found.name } : null
+				this.filters.jobId = found ? found.id : null
+			}
+			// Dates
+			this.dateFrom = q.dateFrom && !isNaN(new Date(q.dateFrom)) ? new Date(q.dateFrom) : null
+			this.dateTo = q.dateTo && !isNaN(new Date(q.dateTo)) ? new Date(q.dateTo) : null
+			// Message
+			this.messageFilter = q.message || ''
+			// Flags
+			this.filters.showOnlyErrors = String(q.onlyErrors) === 'true'
+			this.filters.showOnlySlow = String(q.slowExecutions) === 'true'
+			// Apply
+			this.applyFilters()
 		},
 		/**
 		 * Update filtered count from store

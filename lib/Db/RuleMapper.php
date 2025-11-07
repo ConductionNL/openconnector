@@ -282,7 +282,7 @@ class RuleMapper extends QBMapper
 		$qb->select('id', 'slug')
 		   ->from($this->getTableName());
 
-		$result = $qb->execute();
+		$result = $qb->executeQuery();
 		$map = [];
 		while ($row = $result->fetch()) {
 			$map[$row['id']] = $row['slug'];
@@ -303,7 +303,7 @@ class RuleMapper extends QBMapper
 		$qb->select('id', 'slug')
 		   ->from($this->getTableName());
 
-		$result = $qb->execute();
+		$result = $qb->executeQuery();
 		$map = [];
 		while ($row = $result->fetch()) {
 			$map[$row['slug']] = $row['id'];

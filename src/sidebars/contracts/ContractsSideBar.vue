@@ -122,6 +122,7 @@ import Download from 'vue-material-design-icons/Download.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import DateRangeInput from '../../components/DateRangeInput.vue'
 import { translate as t } from '@nextcloud/l10n'
+import getValidISOstring from '@/services/getValidISOstring.js'
 
 export default {
 	name: 'ContractsSideBar',
@@ -153,6 +154,13 @@ export default {
 		}
 	},
 	computed: {
+		syncStatusOptions() {
+			return [
+				{ id: 'synced', label: this.t('openconnector', 'Synced') },
+				{ id: 'stale', label: this.t('openconnector', 'Stale') },
+				{ id: 'unsynced', label: this.t('openconnector', 'Unsynced') },
+			]
+		},
 		/**
 		 * Get synchronization filter options
 		 * @return {Array} Array of synchronization options
@@ -162,17 +170,6 @@ export default {
 				id: sync.id,
 				label: sync.name || `Synchronization ${sync.id}`,
 			}))
-		},
-		/**
-		 * Get sync status filter options
-		 * @return {Array} Array of sync status options
-		 */
-		syncStatusOptions() {
-			return [
-				{ id: 'synced', label: this.t('openconnector', 'Synced') },
-				{ id: 'stale', label: this.t('openconnector', 'Stale') },
-				{ id: 'unsynced', label: this.t('openconnector', 'Unsynced') },
-			]
 		},
 		/**
 		 * Check if any filters are active
@@ -189,6 +186,8 @@ export default {
 		// Listen for events from main view
 		this.$root.$on('contracts-selection-count', this.updateSelectionCount)
 		this.$root.$on('contracts-filtered-count', this.updateFilteredCount)
+		// Initialize SPOT from URL
+		this.applyQueryParamsFromRoute()
 	},
 	beforeDestroy() {
 		this.$root.$off('contracts-selection-count')
@@ -244,6 +243,41 @@ export default {
 
 			// Emit filters to main view
 			this.$root.$emit('contracts-filters-changed', cleanFilters)
+			// Write URL (SPOT)
+			this.updateRouteQueryFromState()
+		},
+		buildQueryFromState() {
+			const q = {}
+			if (this.filters.synchronization) q.synchronization = String(this.filters.synchronization.id || this.filters.synchronization)
+			if (this.filters.syncStatus) q.syncStatus = String(this.filters.syncStatus.id || this.filters.syncStatus)
+			if (this.filters.dateFrom) q.dateFrom = getValidISOstring(this.filters.dateFrom)
+			if (this.filters.dateTo) q.dateTo = getValidISOstring(this.filters.dateTo)
+			return q
+		},
+		queriesEqual(a, b) {
+			const aKeys = Object.keys(a)
+			const bKeys = Object.keys(b)
+			if (aKeys.length !== bKeys.length) return false
+			return aKeys.every(k => String(a[k]) === String(b[k] || ''))
+		},
+		updateRouteQueryFromState() {
+			if (this.$route.path !== '/synchronizations/contracts') return
+			const next = this.buildQueryFromState()
+			if (this.queriesEqual(next, this.$route.query || {})) return
+			this.$router.replace({ path: this.$route.path, query: next })
+		},
+		applyQueryParamsFromRoute() {
+			if (this.$route.path !== '/synchronizations/contracts') return
+			const q = this.$route.query || {}
+			this.filters.synchronization = q.synchronization
+				? this.synchronizationOptions.find(opt => String(opt.id) === String(q.synchronization)) || null
+				: null
+			this.filters.syncStatus = q.syncStatus
+				? this.syncStatusOptions.find(opt => opt.id === q.syncStatus) || null
+				: null
+			this.filters.dateFrom = q.dateFrom && new Date(q.dateFrom).getDate() ? new Date(q.dateFrom) : null
+			this.filters.dateTo = q.dateTo && new Date(q.dateTo).getDate() ? new Date(q.dateTo) : null
+			this.applyFilters()
 		},
 		/**
 		 * Clear all filters

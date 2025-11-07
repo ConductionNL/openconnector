@@ -254,7 +254,7 @@ class EndpointMapper extends QBMapper
             }
         }
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $row = $result->fetch();
 
         return (int)$row['count'];
@@ -358,7 +358,7 @@ class EndpointMapper extends QBMapper
         $qb->select('id', 'slug')
             ->from($this->getTableName());
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $mappings = [];
         while ($row = $result->fetch()) {
             $mappings[$row['id']] = $row['slug'];
@@ -377,7 +377,7 @@ class EndpointMapper extends QBMapper
         $qb->select('id', 'slug')
             ->from($this->getTableName());
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $mappings = [];
         while ($row = $result->fetch()) {
             $mappings[$row['slug']] = $row['id'];

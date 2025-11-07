@@ -191,22 +191,19 @@ class MappingService
         // If something has been defined to work on root level (i.e. the object lives on root level), we can use # to define writing the root object.
         $keys = array_keys($output);
         if (count($keys) === 1 && $keys[0] === '#') {
-            $output = $output['#'];
+            // Ensure we always return an array, even if the value is null
+            $rootValue = $output['#'];
+            if ($rootValue === null) {
+                $output = [];
+            } else {
+                $output = is_array($rootValue) ? $rootValue : [$rootValue];
+            }
         }
 
-        // Log the result.
-        // @todo: error handling
-        /*
-        isset($this->style) === true && $this->style->info(
-            'Mapped object',
-            [
-                'input'      => $input,
-                'output'     => $output,
-                'passThrough' => $mappingObject->getPassThrough(),
-                'mapping'    => $mappingObject->getMapping(),
-            ]
-        );
-        */
+        // Ensure output is always an array
+        if (is_array($output) === false) {
+            $output = $output === null ? [] : [$output];
+        }
 
         return $output;
 

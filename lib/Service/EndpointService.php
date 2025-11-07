@@ -3,38 +3,27 @@
 namespace OCA\OpenConnector\Service;
 
 use Adbar\Dot;
+use DateTime;
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use JWadhams\JsonLogic;
 use OC\AppFramework\Http;
 use OC\AppFramework\Http\Request;
-use OC\AppFramework\Http\RequestId;
-use OC\Config;
 use OC\Files\Node\File;
-use OC\Security\SecureRandom;
-use OCA\OpenConnector\Db\EndpointMapper;
-use OCA\OpenConnector\Db\SourceMapper;
-use OCA\OpenConnector\Exception\AuthenticationException;
-use OCA\OpenConnector\Service\AuthenticationService;
-use OCA\OpenConnector\Service\CallService;
-use OCA\OpenConnector\Service\MappingService;
-use OCA\OpenConnector\Service\ObjectService;
-use OCA\OpenConnector\Service\RuleService;
-use OCA\OpenConnector\Db\Source;
 use OCA\OpenConnector\Db\Endpoint;
+use OCA\OpenConnector\Db\EndpointMapper;
 use OCA\OpenConnector\Db\Mapping;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ServerException;
+use OCA\OpenConnector\Db\Rule;
+use OCA\OpenConnector\Db\RuleMapper;
+use OCA\OpenConnector\Exception\AuthenticationException;
+use OCA\OpenConnector\Service\Helper\FlowToken;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Exception\ValidationException;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCA\OpenRegister\Db\ObjectEntity;
 use OCP\AppFramework\Db\Entity;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
 use OCP\AppFramework\Http\DataDownloadResponse;
-use OCP\AppFramework\Http\DownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -42,16 +31,13 @@ use OCP\IConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Uid\Uuid;
 use Twig\Error\LoaderError;
 use Twig\Error\SyntaxError;
-use Symfony\Component\Uid\Uuid;
 use ValueError;
-use OCA\OpenConnector\Db\Rule;
-use OCA\OpenConnector\Db\RuleMapper;
-use Psr\Container\ContainerInterface;
-use DateTime;
 
 /**
  * Service class for handling endpoint requests
@@ -154,17 +140,20 @@ class EndpointService
     {
         if ($result->getStatus() < 200 || $result->getStatus() >= 300) {
 
+            $resultData = $result->getData();
+            $message = $resultData['message'] ?? null;
+            $error = $resultData['error'] ?? null;
 
             $responseData = [
-                'type' => $result->getData()['message'],
+                'type' => $message,
                 'code' => $result->getStatus(),
-                'title'   => $result->getData()['message'],
+                'title'   => $message,
                 'status' => $result->getStatus(),
                 'instance' => $request->getId(),
-                'detail'  => $result->getData()['error'],
+                'detail'  => $error,
             ];
 
-            $responseData = $this->parseMessage(response: $responseData, responseData: $result->getData());
+            $responseData = $this->parseMessage(response: $responseData, responseData: $resultData);
 
             return new JSONResponse(data: $responseData, statusCode: $result->getStatus());
 
@@ -194,57 +183,61 @@ class EndpointService
             return new JSONResponse(['error' => 'The following parameters are not correctly set', 'fields' => $errors], 400);
         }
 
+
         try {
 
-            // Process initial data
-            $responseBody = $this->parseContent(
-                request: $request,
+            $flowToken = new FlowToken(requestOriginal: $request, path: $path);
 
-            );
-
-            if ($responseBody == '') {
-                $responseBody = [];
-            }
-
+//            // Process initial data
+//            $responseBody = $this->parseContent(
+//                request: $request,
+//
+//            );
+//
+//            if ($responseBody == '') {
+//                $responseBody = [];
+//            }
+//
             $currentDate = (new DateTime())->format('c');
+//
+//            // This is double becuase mapping needs it in body but other rules seek directly in data.
+//
+//            $incomingMethod = $request->getMethod();
+//            $incomingHeaders = $this->getHeaders($request->server, true);
+//            $incomingParams = array_merge($request->getParams(), $responseBody);
+//
+//            $incomingData = [
+//                'method' => $incomingMethod,
+//                'headers' => $incomingHeaders,
+//                'params' => $incomingParams
+//            ];
 
-            // This is double becuase mapping needs it in body but other rules seek directly in data.
-
-            $incomingMethod = $request->getMethod();
-            $incomingHeaders = $this->getHeaders($request->server, true);
-            $incomingParams = array_merge($request->getParams(), $responseBody);
-
-            $incomingData = [
-                'method' => $incomingMethod,
-                'headers' => $incomingHeaders,
-                'params' => $incomingParams
-            ];
-
-
+            // @todo: This should eventually be merged into the flow tokens
             $data = [
                 'utility' => [
                     'currentDate' => $currentDate
                 ],
-                'parameters' => array_merge($incomingParams, $this->getPathParameters($endpoint->getEndpointArray(), $path)),
-                'headers' => $incomingHeaders,
-                'path' => $path,
-                'method' => $incomingMethod,
+                'parameters' => array_merge($flowToken->getRequestOriginal()['parameters'], $this->getPathParameters($endpoint->getEndpointArray(), $path)),
+                'headers' => $flowToken->getRequestOriginal()['headers'],
+                'path' => $flowToken->getRequestOriginal()['path'],
+                'method' => $flowToken->getRequestOriginal()['method'],
                 'body' => array_merge([
                     '_utility' => [
                         'currentDate' => $currentDate
                     ],
-                    '_parameters' => $incomingParams,
-                    '_headers' => $incomingHeaders,
-                    '_path' => $path,
-                    '_method' => $incomingMethod,
-                ], $responseBody)];
+                    '_parameters' => $flowToken->getRequestOriginal()['parameters'],
+                    '_headers' => $flowToken->getRequestOriginal()['headers'],
+                    '_path' => $flowToken->getRequestOriginal()['path'],
+                    '_method' => $flowToken->getRequestOriginal()['method'],
+                ], $flowToken->getRequestOriginal()['parameters'])];
 
             // Process rules before handling the request
             $ruleResult = $this->processRules(
                 endpoint: $endpoint,
                 request: $request,
                 data: $data,
-                timing: 'before'
+                timing: 'before',
+                flowToken: $flowToken,
             );
 
             if ($ruleResult instanceof JSONResponse === true) {
@@ -252,24 +245,24 @@ class EndpointService
             }
 
             // Update request data with rule processing results
-            $request = $this->updateRequestWithRuleData(request: $request, ruleData: $ruleResult, incomingData: $incomingData);
+            $flowToken = $this->updateRequestWithRuleData(flowToken: $flowToken, ruleData: $ruleResult);
 
             // Check if endpoint connects to a schema
             if ($endpoint->getTargetType() === 'register/schema') {
                 // Handle CRUD operations via ObjectService
-                $result = $this->handleSchemaRequest($endpoint, $request, $path);
+                $result = $this->handleSchemaRequest($endpoint, $flowToken, $path);
 
                 // Process initial data
                 $data = [
                     'utility' => [
                         'currentDate' => (new DateTime())->format('c')
                     ],
-                    'parameters' => $request->getParams(),
-                    'requestHeaders' => $this->getHeaders($request->server, true),
-                    'headers' => $result->getHeaders(),
-                    'path' => $path,
-                    'method' => $request->getMethod(),
-                    'body' => $result->getData(),
+                    'parameters' => $flowToken->getRequestAmended()['parameters'],
+                    'requestHeaders' => $flowToken->getRequestAmended()['headers'],
+                    'headers' => $flowToken->getResponseAmended()['headers'],
+                    'path' => $flowToken->getRequestAmended()['path'],
+                    'method' => $flowToken->getRequestAmended()['method'],
+                    'body' => $flowToken->getResponseOriginal()['data'],
                 ];
 
                 $ruleResult = $this->processRules(
@@ -277,7 +270,8 @@ class EndpointService
                     request: $request,
                     data: $data,
                     timing: 'after',
-                    objectId: $result->getData()['id'] ?? null
+                    objectId: $result->getData()['id'] ?? null,
+                    flowToken: $flowToken
                 );
 
                 if ($ruleResult instanceof Response === true && $ruleResult->getStatus() >= 200 && $ruleResult->getStatus() < 300) {
@@ -295,7 +289,7 @@ class EndpointService
 
                 // Set the proper status code for the method.
                 //@TODO: we might want an override from rule processing.
-                switch ($incomingMethod) {
+                switch ($flowToken->getRequestAmended()['method']) {
                     case 'POST':
                         $statusCode = Http::STATUS_CREATED;
                         break;
@@ -310,7 +304,11 @@ class EndpointService
                         break;
                 }
 
-                return new JSONResponse(data: $ruleResult['body'], statusCode: $statusCode, headers: $ruleResult['headers']);
+                if (isset($endpoint->getConfigurations()['defaultStatusCode']) === true) {
+                    $statusCode = $endpoint->getConfigurations()['defaultStatusCode'];
+                }
+
+                return new JSONResponse(data: $ruleResult['body'], statusCode: $statusCode, headers: $ruleResult['headers'] ?? []);
             }
 
             // Check if endpoint connects to a source
@@ -393,6 +391,7 @@ class EndpointService
         } else if ($serializedObject === null) {
             return $serializedObject;
         } else {
+            $this->objectService->getOpenRegisters()->clearCurrents();
             $object = $mapper->find($serializedObject['id']);
         }
 
@@ -638,7 +637,12 @@ class EndpointService
     ): Entity|array
     {
         if (isset($pathParams['id']) === true && $pathParams['id'] === end($pathParams)) {
-			$serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
+            try {
+                $serializedObject = $mapper->find($pathParams['id'], extend: $parameters['extend'] ?? $parameters['_extend'] ?? null)->jsonSerialize();
+            } catch (DoesNotExistException $e) {
+                $status = 404;
+                return ['error' => 'not found', 'message' => "the object with id {$pathParams['id']} does not exist"];
+            }
             $result = $this->replaceInternalReferences(
 				mapper: $mapper,
 				serializedObject: $serializedObject,
@@ -686,7 +690,7 @@ class EndpointService
 
             }
 
-            $results = $mapper->findMultiple($ids);
+            $results = $mapper->findAll(['ids' => $ids]);
             foreach ($results as $key => $result) {
                 $results[$key] = $this->replaceInternalReferences(mapper: $mapper, object: $result);
             }
@@ -750,10 +754,11 @@ class EndpointService
      * @throws DoesNotExistException|LoaderError|MultipleObjectsReturnedException|SyntaxError
      * @throws ContainerExceptionInterface|NotFoundExceptionInterface
      */
-    private function handleSchemaRequest(Endpoint $endpoint, IRequest $request, string $path): JSONResponse
+    private function handleSchemaRequest(Endpoint $endpoint, FlowToken &$flowToken, string $path): JSONResponse
     {
+        // @TODO: CONVERT TO FLOWTOKENS
         // Get request method
-        $method = $request->getMethod();
+        $method = $flowToken->getRequestAmended()['method'];
         $target = explode('/', $endpoint->getTargetId());
 
         $register = $target[0];
@@ -762,7 +767,7 @@ class EndpointService
 
         $mapper = $this->objectService->getMapper(schema: (int)$schema, register: (int)$register);
 
-        $parameters = $request->getParams();
+        $parameters = $flowToken->getRequestAmended()['parameters'];
 
         if ($endpoint->getInputMapping() !== null) {
             $inputMapping = $this->mappingService->getMapping($endpoint->getInputMapping());
@@ -781,49 +786,64 @@ class EndpointService
 
         $status = 200;
 
-        $headers = $request->getHeader('Accept-Crs') === '' ? [] : ['Content-Crs' => $request->getHeader('Accept-Crs')];
+        $headers = $flowToken->getRequestAmended()['headers']['Accept-Crs'] === '' ? [] : ['Content-Crs' => $flowToken->getRequestAmended()['headers']['Accept-Crs']];
 
 
         // Route to appropriate ObjectService method based on HTTP method
         try {
             switch ($method) {
                 case 'GET':
-                    return new JSONResponse(
+                    $response =  new JSONResponse(
                         $this->getObjects(mapper: $mapper, parameters: $parameters, pathParams: $pathParams, status: $status),
                         statusCode: $status,
                         headers: $headers
                     );
+                    $flowToken->setResponseOriginal($response);
+                    return $response;
                 case 'POST':
-                    return new JSONResponse(
+                    $response =  new JSONResponse(
                         $this->replaceInternalReferences(
                             mapper: $mapper,
                             serializedObject: $mapper->createFromArray(object: $parameters)->jsonSerialize()
                         )
                     );
+                    $flowToken->setResponseOriginal($response);
+                    return $response;
                 case 'PUT':
-                    return new JSONResponse(
+                    $response = new JSONResponse(
                         $this->replaceInternalReferences(
                             mapper: $mapper,
-                            serializedObject: $mapper->updateFromArray($parameters['id'], $request->getParams(), true, false)->jsonSerialize()
+                            serializedObject: $mapper->updateFromArray($parameters['id'], $flowToken->getRequestAmended()['parameters'], true, false)->jsonSerialize()
                         )
                     );
+                    $flowToken->setResponseOriginal($response);
+                    return $response;
                 case 'PATCH':
-                    return new JSONResponse(
+                    $response =  new JSONResponse(
                         $this->replaceInternalReferences(
                             mapper: $mapper,
-                            serializedObject: $mapper->updateFromArray($parameters['id'], $request->getParams(), true, true)->jsonSerialize()
+                            serializedObject: $mapper->updateFromArray($parameters['id'], $flowToken->getRequestAmended()['parameters'], true, true)->jsonSerialize()
                         )
                     );
+                    $flowToken->setResponseOriginal($response);
+                    return $response;
                 case 'DELETE':
                     if (isset($parameters['id']) === false) {
-                        return new JSONResponse(data: ['error' => 'No id given to delete'], statusCode: 400);
+                        $response =  new JSONResponse(data: ['error' => 'No id given to delete'], statusCode: 400);
+                        $flowToken->setResponseOriginal($response);
+                        return $response;
+
                     }
 
                     if ($mapper->delete(['id' => $parameters['id']]) !== true) {
-                        return new JSONResponse(data: ['error' => sprintf('Something went wrong deleting object: %s', $parameters['id'])], statusCode: 500);
+                        $response = new JSONResponse(data: ['error' => sprintf('Something went wrong deleting object: %s', $parameters['id'])], statusCode: 500);
+                        $flowToken->setResponseOriginal($response);
+                        return $response;
                     }
 
-                    return new JSONResponse(statusCode: 200);
+                    $response = new JSONResponse(statusCode: 204);
+                    $flowToken->setResponseOriginal($response);
+                    return $response;
 
                 default:
                     throw new Exception('Unsupported HTTP method');
@@ -1054,7 +1074,7 @@ class EndpointService
      *
      * @return array|JSONResponse Returns modified data or error response if rule fails
      */
-    private function processRules(Endpoint $endpoint, IRequest $request, array $data, string $timing, ?string $objectId = null): array|Response
+    private function processRules(Endpoint $endpoint, IRequest $request, array $data, string $timing, ?string $objectId = null, FlowToken $flowToken = null): array|Response
     {
 
         $rules = $endpoint->getRules();
@@ -1084,8 +1104,11 @@ class EndpointService
 
                 $logicResult = null;
 
+                $data['flowToken'] = $flowToken->__serialize();
+
                 // Check rule conditions
                 if ($this->checkRuleConditions(rule: $rule, data: $data, logicResult:  $logicResult) === false || $rule->getTiming() !== $timing) {
+                    $this->logger->info('Rule condition check failed for endpoint ' . $endpoint->getName() . ' and rule ' . $rule->getName() . ' of type: ' . $rule->getType());
                     continue;
                 }
 
@@ -1095,25 +1118,36 @@ class EndpointService
                     $data['logicResult'] = $logicResult;
                 }
 
+                $this->logger->info('Applying rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
+
+                // At this moment, setting flowToken in $data when processing rules will result in data contamination.
+                unset($data['flowToken']);
+
                 // Process rule based on type
-                $result = match ($rule->getType()) {
-                    'save_object' => $this->processSaveObjectRule($rule, $data),
-                    'authentication' => $this->processAuthenticationRule($rule, $data),
-                    'error' => $this->processErrorRule($rule, $data),
-                    'mapping' => $this->processMappingRule($rule, $data),
-                    'synchronization' => $this->processSyncRule($rule, $data),
-                    'javascript' => $this->processJavaScriptRule($rule, $data),
-                    'fileparts_create' => $this->processFilePartRule($rule, $data, $endpoint, $objectId),
-                    'filepart_upload' => $this->processFilePartUploadRule(rule: $rule, data: $data, request: $request, objectId: $objectId),
-                    'download' => $this->processDownloadRule(rule: $rule, data: $data, objectId: $objectId),
-                    'extend_input' => $this->processExtendInputRule(rule: $rule, data: $data),
-					'extend_external_input' => $this->ruleService->extendExternalUrl(rule: $rule, data: $data),
-                    'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
-                    'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
-                    'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
-                    'custom' => $this->processCustomRule(rule: $rule, data: $data),
-                    default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
-                };
+                try {
+                    $result = match ($rule->getType()) {
+                        'save_object' => $this->processSaveObjectRule($rule, $data),
+                        'authentication' => $this->processAuthenticationRule($rule, $data),
+                        'error' => $this->processErrorRule($rule, $data),
+                        'mapping' => $this->processMappingRule($rule, $data),
+                        'synchronization' => $this->processSyncRule(rule: $rule, data: $data, flowToken: $flowToken),
+                        'javascript' => $this->processJavaScriptRule($rule, $data),
+                        'fileparts_create' => $this->processFilePartRule($rule, $data, $endpoint, $objectId),
+                        'filepart_upload' => $this->processFilePartUploadRule(rule: $rule, data: $data, request: $request, objectId: $objectId),
+                        'download' => $this->processDownloadRule(rule: $rule, data: $data, objectId: $objectId),
+                        'extend_input' => $this->processExtendInputRule(rule: $rule, data: $data),
+                        'extend_external_input' => $this->ruleService->extendExternalUrl(rule: $rule, data: $data),
+                        'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
+                        'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
+                        'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
+                        'custom' => $this->processCustomRule(rule: $rule, data: $data),
+                        default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
+                    };
+                } catch (Exception $e) {
+                    $message = 'Failed to apply rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType() . '. With error message: ' . $e->getMessage();
+                    $this->logger->error($message);
+                    return new JSONResponse(['error' => $message], 500);
+                }
 
                 // If result is JSONResponse, return error immediately
                 if ($result instanceof JSONResponse === true || $result instanceof DataDownloadResponse === true ) {
@@ -1122,6 +1156,8 @@ class EndpointService
 
                 // Update data with rule result
                 $data = $result;
+
+                $this->logger->info('Successfully applied rule for endpoint ' . $endpoint->getName() . ' with rule ' . $rule->getName() . ' of type ' . $rule->getType());
 			}
 
 			unset($data['body']['_extendedInput']);
@@ -1328,6 +1364,11 @@ class EndpointService
                 $value = end($exploded);
             }
 
+            // Only allow uuids in the extend_input rule
+            if(Uuid::isValid($value) === false) {
+                continue;
+            }
+
 			$extends = [];
 			if(isset($config['extend_input']['extends']) === true && isset($config['extend_input']['extends'][$property]) === true) {
 				$extends = $config['extend_input']['extends'][$property];
@@ -1335,7 +1376,9 @@ class EndpointService
 
             try {
                 $object = $this->objectService->getOpenRegisters()->find(id: $value, extend: $extends);
+                $this->objectService->getOpenRegisters()->clearCurrents();
             } catch (DoesNotExistException $exception) {
+                $this->objectService->getOpenRegisters()->clearCurrents();
                 continue;
             }
             $extendedParameters->add($property, $object->jsonSerialize());
@@ -1527,7 +1570,7 @@ class EndpointService
      *
      * @return array The data after synchronization processing
      */
-    private function processSyncRule(Rule $rule, array $data): array
+    private function processSyncRule(Rule $rule, array $data, FlowToken $flowToken): array
     {
         $config = $rule->getConfiguration();
 
@@ -1577,7 +1620,12 @@ class EndpointService
         $sendObject = $object;
 
         // Run synchronization.
-        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, data: $object);
+        $mutationType = null;
+        $sourceConfig = $synchronization->getSourceConfig();
+        if (isset($sourceConfig['synchronizationType']) === true && $sourceConfig['synchronizationType'] === 'delete') {
+            $mutationType = 'delete';
+        }
+        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, mutationType: $mutationType, data: $object, flowToken: $flowToken);
 
         // $object got updated through reference.
         $returnedObject = $object;
@@ -1874,36 +1922,21 @@ class EndpointService
      *
      * @return IRequest The updated request object
      */
-    private function updateRequestWithRuleData(IRequest $request, array $ruleData, array $incomingData): IRequest
+    private function updateRequestWithRuleData(FlowToken $flowToken, array $ruleData): FlowToken
     {
-        $queryParameters = $ruleData['body']['_parameters'] ?? $incomingData['params'];
-        $method = $ruleData['body']['_method'] ?? $incomingData['method'];
-        $headers = $ruleData['body']['_headers'] ?? $incomingData['headers'];
+        $parameters = $ruleData['body']['_parameters'] ?? $flowToken->getRequestAmended()['parameters'];
+        $method = $ruleData['body']['_method'] ?? $flowToken->getRequestAmended()['method'];
+        $headers = $ruleData['body']['_headers'] ?? $flowToken->getRequestAmended()['headers'];
 
-        // create items array of request
-        $items = [
-            'get'		 => [],
-            'post'		 => $_POST,
-            'files'		 => $_FILES,
-            'server'	 => $_SERVER,
-            'env'		 => $_ENV,
-            'cookies'	 => $_COOKIE,
-            'urlParams'  => $queryParameters,
-            'params' => $queryParameters,
-            'method'     => $method,
-            'requesttoken' => false,
-        ];
+        $requestAmended = $flowToken->getRequestAmended();
 
-        $items['server']['headers'] = $headers;
+        $requestAmended['method'] = $method;
+        $requestAmended['parameters'] = $parameters;
+        $requestAmended['headers'] = $headers;
 
-        // build the new request
-        $request = new Request(
-            vars: $items,
-            requestId: new RequestId($request->getId(), new SecureRandom()),
-            config: $this->config
-        );
+        $flowToken->setRequestAmended($requestAmended);
 
-        return $request; // Return the overridden request
+        return $flowToken; // Return the overridden request
     }
 
     /**
