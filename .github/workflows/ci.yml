@@ -412,6 +412,19 @@ jobs:
           echo "constraint=^10.5" >> $GITHUB_OUTPUT
           echo "Using PHPUnit constraint: $(cat $GITHUB_OUTPUT | sed -n 's/constraint=//p')"
 
+      - name: Install dependencies on GitHub Actions runner (Quality)
+        run: |
+          echo "============================================================"
+          echo "📦  Install Composer dependencies (runner)"
+          echo "============================================================"
+          composer install --no-interaction --prefer-dist
+          if [ ! -f "./vendor/bin/phpunit" ]; then
+            echo "📦  Install PHPUnit (runner)"
+            composer require --dev phpunit/phpunit:${{ steps.phpunit-constraint-quality.outputs.constraint }} --no-interaction
+          fi
+          echo "🔎  PHPUnit version:"
+          ./vendor/bin/phpunit --version
+
       - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
         run: |
           set -euo pipefail
