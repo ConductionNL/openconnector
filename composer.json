@@ -50,6 +50,7 @@
 		"web-token/jwt-framework": "^3"
 	},
 	"require-dev": {
+		"composer/xdebug-handler": "*",
 		"friendsofphp/php-cs-fixer": "^3",
 		"nextcloud/ocp": "dev-stable29",
 		"phpunit/phpunit": "^9.6 || ^10.5",
