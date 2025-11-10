@@ -13,13 +13,14 @@ Documentation is available at [https://conduction.nl/openconnector](https://cond
 - Database: MySQL/MariaDB
 
 
-## Installation
+<!-- ## Installation
 
-[Installation instructions](https://conduction.nl/openconnector/installation)
+[Installation instructions](https://conduction.nl/openconnector/installation) -->
 
+<!--
 ## Support
 
-[Support information](https://conduction.nl/openconnector/support)
+[Support information](https://conduction.nl/openconnector/support) -->
 
 ## Project Structure
 
@@ -39,9 +40,9 @@ This monorepo is a Nextcloud app, it is based on the following structure:
 
 When running locally, or in development mode the folders nodus_modules and vendor are added. Thes shoudl however not be commited.
 
-## Contributing
+<!-- ## Contributing
 
-Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to contribute to this project.
+Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to contribute to this project. -->
 
 ## License
 
