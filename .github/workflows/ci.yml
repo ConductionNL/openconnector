@@ -15,8 +15,6 @@ env:
   MARIADB_VERSION: "10.6"
   REDIS_VERSION: "7"
   MAILHOG_VERSION: "latest"
-  # TODO: use the correct development image for Nextcloud
-  NEXTCLOUD_IMAGE: "nextcloud:31"
   MARIADB_IMAGE: "mariadb:10.6"
   REDIS_IMAGE: "redis:7"
   MAILHOG_IMAGE: "ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest"
@@ -51,6 +49,13 @@ jobs:
           php-version: ${{ matrix.php-version }}
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql, bcmath
           tools: composer:v2
+
+      - name: Set Nextcloud image based on PHP version
+        id: nextcloud-image
+        run: |
+          PHP_VERSION=$(echo "${{ matrix.php-version }}" | tr -d '.')
+          echo "image=ghcr.io/juliusknorr/nextcloud-dev-php${PHP_VERSION}:latest" >> $GITHUB_OUTPUT
+          echo "Using Nextcloud image: ghcr.io/juliusknorr/nextcloud-dev-php${PHP_VERSION}:latest"
 
       - name: Get composer cache directory
         id: composer-cache
@@ -144,7 +149,7 @@ jobs:
             -e NEXTCLOUD_ADMIN_PASSWORD=admin \
             -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
             -e WITH_REDIS=YES \
-            ${{ env.NEXTCLOUD_IMAGE }}
+            ${{ steps.nextcloud-image.outputs.image }}
 
           echo "⏳  WAIT: Nextcloud init (status.php)"
           timeout 600 bash -c 'until curl -sSf http://localhost:8080/status.php | grep -q "installed.*true"; do echo "… waiting"; sleep 10; done'
@@ -392,6 +397,12 @@ jobs:
           extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql, bcmath
           tools: composer:v2
 
+      - name: Set Nextcloud image based on PHP version
+        id: nextcloud-image-quality
+        run: |
+          echo "image=ghcr.io/juliusknorr/nextcloud-dev-php83:latest" >> $GITHUB_OUTPUT
+          echo "Using Nextcloud image: ghcr.io/juliusknorr/nextcloud-dev-php83:latest"
+
       - name: Get composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
@@ -478,7 +489,7 @@ jobs:
             -e NEXTCLOUD_ADMIN_PASSWORD=admin \
             -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
             -e WITH_REDIS=YES \
-            ${{ env.NEXTCLOUD_IMAGE }}
+            ${{ steps.nextcloud-image-quality.outputs.image }}
 
           echo "⏳  WAIT: Nextcloud init (status.php)"
           timeout 600 bash -c 'until curl -sSf http://localhost:8081/status.php | grep -q "installed.*true"; do echo "… waiting"; sleep 10; done'

@@ -6,10 +6,10 @@ This document tracks the evolution of OpenConnector's GitHub Actions workflows f
 ---
 
 ## 🚀 Version
-**Current Version:** 1.50 - Per-job PHPUnit constraint, bcmath, tool path fixes  
+**Current Version:** 1.51 - PHP version-specific Nextcloud Docker images  
 **Date:** October 10, 2025  
 **Status:** ✅ Completed  
-**Approach:** Define PHPUnit constraint separately in each job (tests vs quality), add missing `bcmath` PHP extension, and use container-managed tool paths under `./lib/composer/bin` for reliability.
+**Approach:** Use PHP version-specific Nextcloud development images (`ghcr.io/juliusknorr/nextcloud-dev-php82` and `ghcr.io/juliusknorr/nextcloud-dev-php83`) dynamically selected per job based on matrix PHP version, ensuring each test runs against the correct PHP version environment.
 
 ## 🎯 Strategy
 Run unit tests inside a real Nextcloud Docker container with comprehensive diagnostics and host-based autoloader generation to ensure proper class loading and test execution.
@@ -18,7 +18,7 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 - **MariaDB 10.6** — Database (matching local setup)
 - **Redis 7** — Caching and sessions
 - **MailHog** — Email testing (`ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest`)
-- **Nextcloud** — Real environment (`nextcloud:31`)
+- **Nextcloud** — PHP version-specific development images (`ghcr.io/juliusknorr/nextcloud-dev-php82:latest` for PHP 8.2, `ghcr.io/juliusknorr/nextcloud-dev-php83:latest` for PHP 8.3) (v1.51)
 - **Networking (v1.49)** — Dedicated per-job Docker networks (`nc-net-tests`, `nc-net-quality`) replace deprecated `--link`, improving isolation and name-based service discovery.
 - **PHP Extensions (v1.50)** — Added `bcmath` to align CI with runtime expectations.
 
@@ -99,6 +99,16 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 ---
 
 ## 📜 Changelog
+
+### Version 1.51 - PHP version-specific Nextcloud Docker images
+**Date:** October 10, 2025  
+**Status:** ✅ Completed  
+**Changes:**
+- 🐳 **Dynamic Nextcloud Image Selection** — Removed hardcoded `nextcloud-dev-php83:latest` from global `env:` section; each job now dynamically selects the correct PHP version-specific Nextcloud image based on the PHP version being tested
+- 🧪 **Tests Job** — Uses `ghcr.io/juliusknorr/nextcloud-dev-php82:latest` for PHP 8.2 matrix entry and `ghcr.io/juliusknorr/nextcloud-dev-php83:latest` for PHP 8.3 matrix entry
+- 🔍 **Quality Job** — Uses `ghcr.io/juliusknorr/nextcloud-dev-php83:latest` for PHP 8.3 (matches the PHP version used in the quality job)
+- 🎯 **Version Alignment** — Ensures each test runs against a Nextcloud container with the exact PHP version being tested, improving test accuracy and eliminating version mismatches
+- 📦 **Image Registry** — All images now use the `ghcr.io/juliusknorr/` prefix for consistency with MailHog image (`ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest`)
 
 ### Version 1.50 - Per-job PHPUnit constraint, bcmath, tool path fixes
 **Date:** October 10, 2025  
@@ -443,4 +453,4 @@ Run unit tests inside a real Nextcloud Docker container with comprehensive diagn
 
 ---
 
-*Last Updated: October 10, 2025 | Version: 1.50 | Status: Per-job PHPUnit constraint, bcmath, tool path fixes*
+*Last Updated: October 10, 2025 | Version: 1.51 | Status: PHP version-specific Nextcloud Docker images*
