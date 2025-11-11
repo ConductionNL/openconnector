@@ -41,7 +41,7 @@ class SynchronizationContractMapper extends QBMapper
      * @return SynchronizationContract The found contract entity
      * @throws \OCP\AppFramework\Db\DoesNotExistException If contract not found
      */
-    public function find(int $id): SynchronizationContract
+    public function find(int|string $id): SynchronizationContract
     {
         // Create query builder
         $qb = $this->db->getQueryBuilder();
@@ -50,7 +50,7 @@ class SynchronizationContractMapper extends QBMapper
         $qb->select('*')
             ->from('openconnector_synchronization_contracts')
             ->where(
-                $qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
+                $qb->expr()->eq('id', $qb->createNamedParameter((int)$id, IQueryBuilder::PARAM_INT))
             );
 
         return $this->findEntity(query: $qb);
@@ -226,6 +226,7 @@ class SynchronizationContractMapper extends QBMapper
      * @param array|null $filters Associative array of field => value filters
      * @param array|null $searchConditions Array of search conditions
      * @param array|null $searchParams Array of search parameters
+     * @param array|null $ids Array of IDs to filter by (for compatibility)
      * @return array<SynchronizationContract> Array of found contracts
      */
     public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = []): array

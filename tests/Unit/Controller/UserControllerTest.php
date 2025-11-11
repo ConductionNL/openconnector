@@ -20,11 +20,16 @@ namespace OCA\OpenConnector\Tests\Unit\Controller;
 
 use OCA\OpenConnector\Controller\UserController;
 use OCA\OpenConnector\Service\AuthorizationService;
+use OCA\OpenConnector\Service\SecurityService;
+use OCA\OpenConnector\Service\UserService;
+use OCA\OpenConnector\Service\OrganisationBridgeService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\IUser;
+use OCP\ICacheFactory;
+use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -75,6 +80,34 @@ class UserControllerTest extends TestCase
     private MockObject $authorizationService;
 
     /**
+     * Mock security service
+     *
+     * @var MockObject|SecurityService
+     */
+    private MockObject $securityService;
+
+    /**
+     * Mock user service
+     *
+     * @var MockObject|UserService
+     */
+    private MockObject $userService;
+
+    /**
+     * Mock logger
+     *
+     * @var MockObject|LoggerInterface
+     */
+    private MockObject $logger;
+
+    /**
+     * Mock organisation bridge service
+     *
+     * @var MockObject|OrganisationBridgeService
+     */
+    private MockObject $organisationBridgeService;
+
+    /**
      * Mock user object
      *
      * @var MockObject|IUser
@@ -101,6 +134,10 @@ class UserControllerTest extends TestCase
         $this->userManager = $this->createMock(IUserManager::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->authorizationService = $this->createMock(AuthorizationService::class);
+        $this->securityService = $this->createMock(SecurityService::class);
+        $this->userService = $this->createMock(UserService::class);
+        $this->organisationBridgeService = $this->createMock(OrganisationBridgeService::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
         $this->user = $this->createMock(IUser::class);
 
         // Initialize the controller with mocked dependencies
@@ -109,7 +146,11 @@ class UserControllerTest extends TestCase
             $this->request,
             $this->userManager,
             $this->userSession,
-            $this->authorizationService
+            $this->authorizationService,
+            $this->securityService,
+            $this->userService,
+            $this->organisationBridgeService,
+            $this->logger
         );
     }
 
@@ -129,10 +170,29 @@ class UserControllerTest extends TestCase
         // Setup mock user data
         $this->setupMockUserData();
 
-        // Mock user session to return the authenticated user
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to return the authenticated user
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willReturn($this->user);
+
+        // Mock user service to return user data
+        $userData = [
+            'uid' => 'testuser',
+            'displayName' => 'Test User',
+            'email' => 'test@example.com',
+            'enabled' => true
+        ];
+        $this->userService->expects($this->once())
+            ->method('buildUserDataArray')
+            ->with($this->user)
+            ->willReturn($userData);
+
+        // Mock security service to return the response with security headers
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
 
         // Execute the method
         $response = $this->controller->me();
@@ -162,10 +222,17 @@ class UserControllerTest extends TestCase
      */
     public function testMeUnauthenticated(): void
     {
-        // Mock user session to return null (no authenticated user)
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to return null (no authenticated user)
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willReturn(null);
+
+        // Mock security service to return the response with security headers
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
 
         // Execute the method
         $response = $this->controller->me();
@@ -192,9 +259,9 @@ class UserControllerTest extends TestCase
         // Setup mock user data
         $this->setupMockUserData();
 
-        // Mock user session to return the authenticated user
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to return the authenticated user
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willReturn($this->user);
 
         // Mock request parameters with update data
@@ -207,24 +274,30 @@ class UserControllerTest extends TestCase
             ->method('getParams')
             ->willReturn($updateData);
 
-        // Mock user update methods
-        $this->user->expects($this->once())
-            ->method('canChangeDisplayName')
-            ->willReturn(true);
-        $this->user->expects($this->once())
-            ->method('setDisplayName')
-            ->with('Updated User Name');
+        // Mock security service for input sanitization
+        $this->securityService->expects($this->once())
+            ->method('sanitizeInput')
+            ->with($updateData)
+            ->willReturn($updateData);
 
-        $this->user->expects($this->once())
-            ->method('canChangeMailAddress')
-            ->willReturn(true);
-        $this->user->expects($this->once())
-            ->method('setEMailAddress')
-            ->with('updated@example.com');
+        // Mock user service update method
+        $this->userService->expects($this->once())
+            ->method('updateUserProperties')
+            ->with($this->user, $updateData)
+            ->willReturn(['success' => true, 'organisation_updated' => false]);
 
-        $this->user->expects($this->once())
-            ->method('setLanguage')
-            ->with('en');
+        // Mock user service to return user data
+        $this->userService->expects($this->once())
+            ->method('buildUserDataArray')
+            ->with($this->user)
+            ->willReturn(['uid' => 'testuser', 'displayName' => 'Updated User Name']);
+
+        // Mock security service to return the response with security headers
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
 
         // Execute the method
         $response = $this->controller->updateMe();
@@ -247,10 +320,17 @@ class UserControllerTest extends TestCase
      */
     public function testUpdateMeUnauthenticated(): void
     {
-        // Mock user session to return null (no authenticated user)
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to return null (no authenticated user)
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willReturn(null);
+
+        // Mock security service to return the response with security headers
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
 
         // Execute the method
         $response = $this->controller->updateMe();
@@ -286,6 +366,32 @@ class UserControllerTest extends TestCase
             ->method('getParams')
             ->willReturn($loginData);
 
+        // Mock security service methods for login flow
+        $this->securityService->expects($this->once())
+            ->method('getClientIpAddress')
+            ->with($this->request)
+            ->willReturn('127.0.0.1');
+
+        $this->securityService->expects($this->once())
+            ->method('validateLoginCredentials')
+            ->with($loginData)
+            ->willReturn(['valid' => true, 'credentials' => $loginData]);
+
+        $this->securityService->expects($this->once())
+            ->method('checkLoginRateLimit')
+            ->with('testuser', '127.0.0.1')
+            ->willReturn(['allowed' => true]);
+
+        $this->securityService->expects($this->once())
+            ->method('recordSuccessfulLogin')
+            ->with('testuser', '127.0.0.1');
+
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
+
         // Mock user manager to return authenticated user
         $this->userManager->expects($this->once())
             ->method('checkPassword')
@@ -296,6 +402,18 @@ class UserControllerTest extends TestCase
         $this->userSession->expects($this->once())
             ->method('setUser')
             ->with($this->user);
+
+        // Mock user service to return user data
+        $userData = [
+            'uid' => 'testuser',
+            'displayName' => 'Test User',
+            'email' => 'test@example.com',
+            'enabled' => true
+        ];
+        $this->userService->expects($this->once())
+            ->method('buildUserDataArray')
+            ->with($this->user)
+            ->willReturn($userData);
 
         // Execute the method
         $response = $this->controller->login();
@@ -332,6 +450,32 @@ class UserControllerTest extends TestCase
         $this->request->expects($this->once())
             ->method('getParams')
             ->willReturn($loginData);
+
+        // Mock security service methods for login flow
+        $this->securityService->expects($this->once())
+            ->method('getClientIpAddress')
+            ->with($this->request)
+            ->willReturn('127.0.0.1');
+
+        $this->securityService->expects($this->once())
+            ->method('validateLoginCredentials')
+            ->with($loginData)
+            ->willReturn(['valid' => true, 'credentials' => $loginData]);
+
+        $this->securityService->expects($this->once())
+            ->method('checkLoginRateLimit')
+            ->with('testuser', '127.0.0.1')
+            ->willReturn(['allowed' => true]);
+
+        $this->securityService->expects($this->once())
+            ->method('recordFailedLoginAttempt')
+            ->with('testuser', '127.0.0.1', 'invalid_credentials');
+
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
 
         // Mock user manager to return false for invalid credentials
         $this->userManager->expects($this->once())
@@ -370,6 +514,23 @@ class UserControllerTest extends TestCase
             ->method('getParams')
             ->willReturn($loginData);
 
+        // Mock security service methods for login flow
+        $this->securityService->expects($this->once())
+            ->method('getClientIpAddress')
+            ->with($this->request)
+            ->willReturn('127.0.0.1');
+
+        $this->securityService->expects($this->once())
+            ->method('validateLoginCredentials')
+            ->with($loginData)
+            ->willReturn(['valid' => false, 'error' => 'Username and password are required']);
+
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
+
         // Execute the method
         $response = $this->controller->login();
 
@@ -401,6 +562,23 @@ class UserControllerTest extends TestCase
             ->method('getParams')
             ->willReturn($loginData);
 
+        // Mock security service methods for login flow
+        $this->securityService->expects($this->once())
+            ->method('getClientIpAddress')
+            ->with($this->request)
+            ->willReturn('127.0.0.1');
+
+        $this->securityService->expects($this->once())
+            ->method('validateLoginCredentials')
+            ->with($loginData)
+            ->willReturn(['valid' => false, 'error' => 'Username and password are required']);
+
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
+
         // Execute the method
         $response = $this->controller->login();
 
@@ -423,10 +601,17 @@ class UserControllerTest extends TestCase
      */
     public function testMeException(): void
     {
-        // Mock user session to throw exception
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to throw exception
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willThrowException(new \Exception('Test exception'));
+
+        // Mock security service to return the response with security headers
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
 
         // Execute the method
         $response = $this->controller->me();
@@ -434,7 +619,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Failed to retrieve user information', $response->getData()['error']);
+        $this->assertStringContainsString('Failed to retrieve user information', $response->getData()['error']);
     }
 
     /**
@@ -450,10 +635,17 @@ class UserControllerTest extends TestCase
      */
     public function testUpdateMeException(): void
     {
-        // Mock user session to throw exception
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to throw exception
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willThrowException(new \Exception('Test exception'));
+
+        // Mock security service to return the response with security headers
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
 
         // Execute the method
         $response = $this->controller->updateMe();
@@ -461,7 +653,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Failed to update user information', $response->getData()['error']);
+        $this->assertStringContainsString('Failed to update user information', $response->getData()['error']);
     }
 
     /**
@@ -486,6 +678,28 @@ class UserControllerTest extends TestCase
             ->method('getParams')
             ->willReturn($loginData);
 
+        // Mock security service methods for login flow
+        $this->securityService->expects($this->once())
+            ->method('getClientIpAddress')
+            ->with($this->request)
+            ->willReturn('127.0.0.1');
+
+        $this->securityService->expects($this->once())
+            ->method('validateLoginCredentials')
+            ->with($loginData)
+            ->willReturn(['valid' => true, 'credentials' => $loginData]);
+
+        $this->securityService->expects($this->once())
+            ->method('checkLoginRateLimit')
+            ->with('testuser', '127.0.0.1')
+            ->willReturn(['allowed' => true]);
+
+        $this->securityService->expects($this->once())
+            ->method('addSecurityHeaders')
+            ->willReturnCallback(function($response) {
+                return $response;
+            });
+
         // Mock user manager to throw exception
         $this->userManager->expects($this->once())
             ->method('checkPassword')
@@ -497,7 +711,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Login failed', $response->getData()['error']);
+        $this->assertStringContainsString('Login failed', $response->getData()['error']);
     }
 
     /**
@@ -519,17 +733,7 @@ class UserControllerTest extends TestCase
         $this->user->method('getEMailAddress')->willReturn('test@example.com');
         $this->user->method('isEnabled')->willReturn(true);
         $this->user->method('getQuota')->willReturn('1 GB');
-        $this->user->method('getUsedSpace')->willReturn(524288000); // 500 MB in bytes
-        $this->user->method('getAvatarScope')->willReturn('contacts');
         $this->user->method('getLastLogin')->willReturn(1640995200); // Unix timestamp
         $this->user->method('getBackendClassName')->willReturn('Database');
-        $this->user->method('getLanguage')->willReturn('en');
-        $this->user->method('getLocale')->willReturn('en_US');
-        
-        // Configure capability methods
-        $this->user->method('canChangeDisplayName')->willReturn(true);
-        $this->user->method('canChangeMailAddress')->willReturn(true);
-        $this->user->method('canChangePassword')->willReturn(true);
-        $this->user->method('canChangeAvatar')->willReturn(true);
     }
 } 

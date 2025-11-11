@@ -53,7 +53,7 @@ class ViewDeletedEventListener implements IEventListener
             return;
         }
 
-        $identifier = $object->jsonSerialize()['identifier'];
+        $identifier = $object->jsonSerialize()['@self']['id'];
 
 
         $schema = $this->schemaMapper->find('extendview');
