@@ -143,7 +143,7 @@ class MappingService
             }
 
             try {
-			    $dotArray->set($key, $this->twig->createTemplate($value)->render($originalInput));
+			    $dotArray->set($key, html_entity_decode($this->twig->createTemplate($value)->render($originalInput)));
             } catch (Throwable $e) {
                 throw new Exception("Error for mapping: {$mapping->getName()}, key: $key, value: $value and with message thrown: {$e->getMessage()}");
             }
