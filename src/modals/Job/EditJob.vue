@@ -202,7 +202,7 @@ export default {
 	methods: {
 		initializeJobItem() {
 			if (jobStore.jobItem?.id) {
-				const scheduleAfter = jobStore.jobItem.scheduleAfter ? new Date(jobStore.jobItem.scheduleAfter.date) || '' : null
+				const scheduleAfter = jobStore.jobItem.scheduleAfter ? new Date(jobStore.jobItem.scheduleAfter.date) : null
 
 				const activeJobClass = this.classOptions.options.find(option => option.label === jobStore.jobItem.jobClass)
 				activeJobClass && (this.classOptions.value = activeJobClass)

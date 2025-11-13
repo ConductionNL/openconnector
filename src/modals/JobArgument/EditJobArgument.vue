@@ -145,7 +145,7 @@ export default {
 
 			const jobItemClone = jobStore.jobItem.cloneRaw()
 
-			const scheduleAfter = jobItemClone.scheduleAfter ? new Date(jobItemClone.scheduleAfter.date) || '' : null
+			const scheduleAfter = jobItemClone.scheduleAfter ? new Date(jobItemClone.scheduleAfter.date) : null
 
 			const newJobItem = {
 				...jobItemClone,

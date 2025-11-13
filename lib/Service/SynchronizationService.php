@@ -1003,6 +1003,7 @@ class SynchronizationService
         // Execute mapping if found
 		$objectBeforeMapping = $object;
         if ($sourceTargetMapping) {
+            $flowToken->setSyncOutputOriginal($object);
             $object = $this->mappingService->executeMapping(mapping: $sourceTargetMapping, input: $object);
             $flowToken->setSyncOutputAmended($object);
         }
@@ -2390,6 +2391,7 @@ class SynchronizationService
                 // Check rule conditions
                 if ($this->checkRuleConditions($rule, $data) === false || $rule->getTiming() !== $timing) {
                     $this->logger->info('Rule condition check failed for synchronization ' . $synchronization->getName() . ' and rule ' . $rule->getName() . ' of type: ' . $rule->getType());
+                    unset ($data['flowToken']);
                     continue;
                 }
                 unset ($data['flowToken']);
