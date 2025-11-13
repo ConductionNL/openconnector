@@ -81,7 +81,7 @@ export default {
 			const jobItemClone = jobStore.jobItem.cloneRaw()
 			delete jobItemClone?.arguments[jobStore.jobArgumentKey]
 
-			const scheduleAfter = jobItemClone.scheduleAfter ? new Date(jobItemClone.scheduleAfter.date) || '' : null
+			const scheduleAfter = jobItemClone.scheduleAfter ? new Date(jobItemClone.scheduleAfter.date) : null
 
 			const jobItem = new Job({
 				...jobItemClone,
