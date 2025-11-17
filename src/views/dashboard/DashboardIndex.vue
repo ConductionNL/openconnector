@@ -540,7 +540,6 @@ export default {
 	/**
 	 * Fetch stats when component is mounted
 	 * Use requestIdleCallback or setTimeout to avoid blocking initial render
-	 * @return {Promise<void>}
 	 */
 	mounted() {
 		this.isMounted = true
@@ -619,7 +618,7 @@ export default {
 				)
 				// Only update if component is still mounted
 				if (!this.isMounted) return
-				
+
 				const { daily, hourly } = response.data
 
 				// Ensure dates are properly formatted for the chart
@@ -678,7 +677,7 @@ export default {
 				)
 				// Only update if component is still mounted
 				if (!this.isMounted) return
-				
+
 				const { daily, hourly } = response.data
 
 				// Update daily stats
@@ -764,7 +763,7 @@ export default {
 				)
 				// Only update if component is still mounted
 				if (!this.isMounted) return
-				
+
 				const { daily, hourly } = response.data
 
 				// Update daily stats

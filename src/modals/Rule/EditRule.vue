@@ -993,7 +993,7 @@ export default {
 			}
 
 			this.authenticationTypeOptions.value = this.authenticationTypeOptions.options.find(
-				option => option.value === originalConfig.authentication?.type ?? Symbol('backup value'),
+				option => option.value === (originalConfig.authentication?.type ?? Symbol('backup value')),
 			)
 		}
 		if (!this.IS_EDIT) {
@@ -1048,7 +1048,7 @@ export default {
 				if (mappings?.length) {
 
 					// Set active filepart upload mapping
-					const activeFilepartUploadMapping = mappings.find((mapping) => mapping?.id.toString() === this.ruleItem.configuration.filepart_upload.mappingId?.toString() ?? '')
+					const activeFilepartUploadMapping = mappings.find((mapping) => mapping?.id.toString() === (this.ruleItem.configuration.filepart_upload.mappingId?.toString() ?? ''))
 					this.filepartUploadMappingOptions = {
 						options: mappings.map(mapping => ({
 							label: mapping.name,
@@ -1063,7 +1063,7 @@ export default {
 					}
 
 					// Set active filepart upload mapping
-					const activeFilepartsCreateMapping = mappings.find((mapping) => mapping?.id.toString() === this.ruleItem.configuration.fileparts_create.mappingId?.toString() ?? '')
+					const activeFilepartsCreateMapping = mappings.find((mapping) => mapping?.id.toString() === (this.ruleItem.configuration.fileparts_create.mappingId?.toString() ?? ''))
 					this.filepartsCreateMappingOptions = {
 						options: mappings.map(mapping => ({
 							label: mapping.name,
@@ -1108,7 +1108,7 @@ export default {
 
 					const sources = sourceStore.sourceList
 
-					const activeSourceSource = sources.find(source => source.id.toString() === this.ruleItem.configuration.fetch_file.source.toString() ?? '')
+					const activeSourceSource = sources.find(source => source.id.toString() === (this.ruleItem.configuration.fetch_file.source.toString() ?? ''))
 
 					this.sourceOptions = {
 						options: sources.map(source => ({
@@ -1161,7 +1161,7 @@ export default {
 
 			const responseData = (await response.json()).results
 
-			const activeSchema = responseData.find(schema => schema.id.toString() === this.ruleItem.configuration.fileparts_create.schemaId.toString() ?? '')
+			const activeSchema = responseData.find(schema => schema.id.toString() === (this.ruleItem.configuration.fileparts_create.schemaId.toString() ?? ''))
 
 			this.schemaOptions = {
 				options: responseData.map((schema) => ({

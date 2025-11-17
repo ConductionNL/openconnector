@@ -363,7 +363,8 @@ class SynchronizationService
                 $result = $processResult['result'];
                 $result['_embed']['contracts'] = array_map(function($contractId) {
                     $contracts = $this->synchronizationContractMapper->findAll(filters: ['uuid' => $contractId]);
-                    return array_shift($contracts)->jsonSerialize();
+                    $contract = array_shift($contracts);
+                    return $contract !== null ? $contract->jsonSerialize() : null;
                 }, $result['contracts']);
 
                 if ($processResult['targetId'] !== null) {
@@ -1004,9 +1005,11 @@ class SynchronizationService
 			$synchronizationContract->setSourceLastChecked(new DateTime());
             $contractLog->setExpires($this->calculateExpires($this->successRetention));
 			// The object has not changed and neither config nor mapping have been updated since last check
-			$contractLog = $this->synchronizationContractLogMapper->update($contractLog);
+			if (isset($contractLog) === true) {
+				$contractLog = $this->synchronizationContractLogMapper->update($contractLog);
+			}
 			return [
-				'log' => $contractLog->jsonSerialize(),
+				'log' => isset($contractLog) === true ? $contractLog->jsonSerialize() : null,
 				'contract' => $synchronizationContract->jsonSerialize(),
 				'resultAction' => 'skip'
 			];
@@ -1049,11 +1052,13 @@ class SynchronizationService
 		// Handle synchronization based on test mode
 		if ($isTest === true) {
 			// Return test data without updating target
-			$contractLog->setTargetResult('test');
-            $contractLog->setExpires($this->calculateExpires($this->successRetention));
-			$contractLog = $this->synchronizationContractLogMapper->update($contractLog);
+			if (isset($contractLog) === true) {
+			    $contractLog->setTargetResult('test');
+                $contractLog->setExpires($this->calculateExpires($this->successRetention));
+			    $contractLog = $this->synchronizationContractLogMapper->update($contractLog);
+			}
 			return [
-				'log' => $contractLog->jsonSerialize(),
+				'log' => isset($contractLog) === true ? $contractLog->jsonSerialize() : null,
 				'contract' => $synchronizationContract->jsonSerialize(),
 				'resultAction' => 'skip'
 			];
@@ -1609,7 +1614,7 @@ class SynchronizationService
             usesPagination: $usesPagination
 		);
 
-		if(array_is_list($objects) === false) {
+		if (array_is_list($objects) === false) {
 			$objects = [$objects];
 		}
 
@@ -1710,12 +1715,12 @@ class SynchronizationService
 			$pageCount++;
 
 			// If test mode is enabled, return only the first object from the first page
-			if ($isTest === true && !empty($pageObjects)) {
+			if ($isTest === true && empty($pageObjects) === false) {
 				return [$pageObjects[0]];
 			}
 
 			// If no objects found, we've reached the end
-			if (empty($pageObjects)) {
+			if (empty($pageObjects) === true) {
 				break;
 			}
 
@@ -3402,6 +3407,11 @@ class SynchronizationService
         }
 
 		$conditionsObject = $this->encodeArrayKeys($object, '.', '&#46;');
+
+		// Add flow token to conditions object if it exists
+		if ($flowToken !== null) {
+			$conditionsObject['flowToken'] = $flowToken->__serialize();
+		}
 
 		// Check if object adheres to conditions.
 		// Take note, JsonLogic::apply() returns a range of return types, so checking it with '=== false' or '!== true' does not work properly.
