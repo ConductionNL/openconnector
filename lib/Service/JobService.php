@@ -99,6 +99,8 @@ class JobService
      * @param int[] $retentions The list of retentions in milliseconds to find the maximum duration for.
      * @return \DateTime|null The calculated expiry
      * @throws \DateMalformedStringException
+     *
+     * @TODO: At a later point in time this should be changed to using the most specific source for expiration
      */
     private function calculateExpires(...$retentions): ?\DateTime
     {
