@@ -453,6 +453,28 @@
 							<div class="retention-label">
 								<strong>Call Log Retention</strong>
 								<p class="retention-description">
+									Retention period for logs with success status and request/response data
+								</p>
+							</div>
+							<div class="retention-input">
+								<div class="retention-input-wrapper">
+									<input
+										v-model.number="retentionOptions.successLogRetention"
+										type="number"
+										:disabled="loading || saving"
+										placeholder="3600000"
+										class="retention-input-field">
+									<span class="retention-unit">ms</span>
+								</div>
+							</div>
+							<div class="retention-display">
+								{{ formatRetentionPeriod(retentionOptions.successLogRetention) }}
+							</div>
+						</div>
+						<div class="retention-row">
+							<div class="retention-label">
+								<strong>Call Log Retention</strong>
+								<p class="retention-description">
 									Retention period for API call logs and request/response data
 								</p>
 							</div>
@@ -714,6 +736,7 @@ export default defineComponent({
 				appVersion: '0.2.0',
 			},
 			retentionOptions: {
+				successLogRetention: 3600000, // 1 hour default
 				callLogRetention: 2592000000, // 1 month default
 				eventMessageRetention: 604800000, // 1 week default
 				jobLogRetention: 2592000000, // 1 month default
@@ -815,6 +838,7 @@ export default defineComponent({
 				// Retention settings
 				if (data.retention) {
 					this.retentionOptions = {
+						successLogRetention: data.retention.successLogRetention || 2592000000,
 						callLogRetention: data.retention.callLogRetention || 2592000000,
 						eventMessageRetention: data.retention.eventMessageRetention || 604800000,
 						jobLogRetention: data.retention.jobLogRetention || 2592000000,
@@ -842,6 +866,7 @@ export default defineComponent({
 			try {
 				const settingsData = {
 					retention: {
+						successLogRetention: this.retentionOptions.successLogRetention,
 						callLogRetention: this.retentionOptions.callLogRetention,
 						eventMessageRetention: this.retentionOptions.eventMessageRetention,
 						jobLogRetention: this.retentionOptions.jobLogRetention,
@@ -868,6 +893,7 @@ export default defineComponent({
 				// Update local state with server response
 				if (result.retention) {
 					this.retentionOptions = {
+						successLogRetention: result.retention.successLogRetention,
 						callLogRetention: result.retention.callLogRetention,
 						eventMessageRetention: result.retention.eventMessageRetention,
 						jobLogRetention: result.retention.jobLogRetention,
