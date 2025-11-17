@@ -27,7 +27,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Service for handling settings-related operations.
  *
- * Provides functionality for retrieving database statistics and 
+ * Provides functionality for retrieving database statistics and
  * system information for the OpenConnector application.
  */
 class SettingsService
@@ -117,7 +117,7 @@ class SettingsService
             ];
 
             // **OPTIMIZED QUERIES**: Use direct SQL COUNT queries for maximum performance
-            
+
             // All tables - simple counts (OpenConnector tables don't have size/expires columns like OpenRegister)
             $allTables = [
                 'callLogs' => '`*PREFIX*openconnector_call_logs`',
@@ -143,7 +143,7 @@ class SettingsService
                     $result = $this->db->executeQuery($countQuery);
                     $count = $result->fetchColumn();
                     $result->closeCursor();
-                    
+
                     $stats['totals']['total' . ucfirst($key)] = (int) ($count ?? 0);
                 } catch (\Exception $e) {
                     // Table might not exist, set to 0 and continue
@@ -188,8 +188,9 @@ class SettingsService
             $retentionConfig = $this->config->getValueString($this->appName, 'retention', '');
             if (empty($retentionConfig)) {
                 $data['retention'] = [
+                    'successLogRetention'          => 3600000,     // 1 Hour default
                     'callLogRetention'             => 2592000000,  // 1 month default
-                    'eventMessageRetention'        => 604800000,   // 1 week default  
+                    'eventMessageRetention'        => 604800000,   // 1 week default
                     'jobLogRetention'              => 2592000000,  // 1 month default
                     'syncContractLogRetention'     => 7776000000,  // 3 months default
                     'syncLogRetention'             => 2592000000,  // 1 month default
@@ -197,6 +198,7 @@ class SettingsService
             } else {
                 $retentionData     = json_decode($retentionConfig, true);
                 $data['retention'] = [
+                    'successLogRetention'          => $retentionData['successLogRetention'] ?? 3600000,
                     'callLogRetention'             => $retentionData['callLogRetention'] ?? 2592000000,
                     'eventMessageRetention'        => $retentionData['eventMessageRetention'] ?? 604800000,
                     'jobLogRetention'              => $retentionData['jobLogRetention'] ?? 2592000000,
@@ -232,6 +234,7 @@ class SettingsService
             if (isset($data['retention'])) {
                 $retentionData   = $data['retention'];
                 $retentionConfig = [
+                    'successLogRetention'          => $retentionData['successLogRetention'] ?? 3600000,
                     'callLogRetention'             => $retentionData['callLogRetention'] ?? 2592000000,
                     'eventMessageRetention'        => $retentionData['eventMessageRetention'] ?? 604800000,
                     'jobLogRetention'              => $retentionData['jobLogRetention'] ?? 2592000000,
@@ -278,13 +281,32 @@ class SettingsService
             $retention = $settings['retention'] ?? [];
 
             // **DATABASE-OPTIMIZED REBASE**: Use direct SQL UPDATE queries for maximum performance
-            
+
+            // 0. Update successful logs expiry dates
+            if (isset($retention['successLogRetention']) && $retention['successLogRetention'] > 0) {
+                try {
+                    $retentionMs = $retention['successLogRetention'];
+                    $expiryQuery = "
+                        UPDATE `*PREFIX*openconnector_call_logs`
+                        SET expires = DATE_ADD(created, INTERVAL ? MICROSECOND)
+                        WHERE expires IS NULL OR expires = ''
+                    ";
+                    $stmt = $this->db->prepare($expiryQuery);
+                    $stmt->execute([$retentionMs * 1000]); // Convert ms to microseconds
+                    $results['retentionResults']['callLogsUpdated'] = $stmt->rowCount();
+                } catch (\Exception $e) {
+                    $error = 'Failed to set call logs expiry dates: '.$e->getMessage();
+                    $results['errors'][] = $error;
+                    $this->logger->error($error);
+                }
+            }
+
             // 1. Update call logs expiry dates
             if (isset($retention['callLogRetention']) && $retention['callLogRetention'] > 0) {
                 try {
                     $retentionMs = $retention['callLogRetention'];
                     $expiryQuery = "
-                        UPDATE `*PREFIX*openconnector_call_logs` 
+                        UPDATE `*PREFIX*openconnector_call_logs`
                         SET expires = DATE_ADD(created, INTERVAL ? MICROSECOND)
                         WHERE expires IS NULL OR expires = ''
                     ";
@@ -307,7 +329,7 @@ class SettingsService
                     $checkResult = $this->db->executeQuery($checkQuery);
                     if ($checkResult->fetchColumn() !== false) {
                         $expiryQuery = "
-                            UPDATE `*PREFIX*openconnector_event_messages` 
+                            UPDATE `*PREFIX*openconnector_event_messages`
                             SET expires = DATE_ADD(created, INTERVAL ? MICROSECOND)
                             WHERE expires IS NULL OR expires = ''
                         ";
@@ -329,7 +351,7 @@ class SettingsService
                 try {
                     $retentionMs = $retention['jobLogRetention'];
                     $expiryQuery = "
-                        UPDATE `*PREFIX*openconnector_job_logs` 
+                        UPDATE `*PREFIX*openconnector_job_logs`
                         SET expires = DATE_ADD(created, INTERVAL ? MICROSECOND)
                         WHERE expires IS NULL OR expires = ''
                     ";
@@ -348,7 +370,7 @@ class SettingsService
                 try {
                     $retentionMs = $retention['syncContractLogRetention'];
                     $expiryQuery = "
-                        UPDATE `*PREFIX*openconnector_synchronization_contract_logs` 
+                        UPDATE `*PREFIX*openconnector_synchronization_contract_logs`
                         SET expires = DATE_ADD(COALESCE(created, NOW()), INTERVAL ? MICROSECOND)
                         WHERE expires IS NULL OR expires = '' OR expires = '0000-00-00 00:00:00' OR created IS NOT NULL
                     ";
@@ -367,7 +389,7 @@ class SettingsService
                 try {
                     $retentionMs = $retention['syncLogRetention'];
                     $expiryQuery = "
-                        UPDATE `*PREFIX*openconnector_synchronization_logs` 
+                        UPDATE `*PREFIX*openconnector_synchronization_logs`
                         SET expires = DATE_ADD(COALESCE(created, NOW()), INTERVAL ? MICROSECOND)
                         WHERE expires IS NULL OR expires = '' OR expires = '0000-00-00 00:00:00' OR created IS NOT NULL
                     ";

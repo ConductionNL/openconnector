@@ -5,6 +5,8 @@ namespace OCA\OpenConnector\Service;
 use Adbar\Dot;
 use Exception;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ConnectException;
 use OCA\OpenConnector\Db\SourceMapper;
 use OCA\OpenConnector\Service\AuthenticationService;
 use OCA\OpenConnector\Service\MappingService;
@@ -20,6 +22,7 @@ use OCA\OpenConnector\Db\CallLog;
 use OCA\OpenConnector\Db\CallLogMapper;
 use OCA\OpenConnector\Twig\AuthenticationExtension;
 use OCA\OpenConnector\Twig\AuthenticationRuntimeLoader;
+use OCP\IAppConfig;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\Uid\Uuid;
 use Twig\Environment;
@@ -42,7 +45,13 @@ class CallService
 
 	private CookieJar $cookieJar;
 
+    private int $errorRetention;
+    private int $successRetention;
+
 	private const BASE_FILENAME_LOCATION = "%s-%s";
+
+    private const DEFAULT_SUCCESS_LOG_RETENTION = 3600000;
+    private const DEFAULT_ERROR_LOG_RETENTION = 2592000000;
 
 	/**
 	 * The constructor sets al needed variables.
@@ -56,7 +65,8 @@ class CallService
 		private readonly CallLogMapper $callLogMapper,
 		private readonly SourceMapper $sourceMapper,
 		ArrayLoader $loader,
-		AuthenticationService $authenticationService
+		AuthenticationService $authenticationService,
+        IAppConfig $appConfig,
 	)
 	{
 		$this->client = new Client([]);
@@ -64,9 +74,34 @@ class CallService
 		$this->twig->addExtension(new AuthenticationExtension());
 		$this->twig->addRuntimeLoader(new AuthenticationRuntimeLoader($authenticationService));
 		$this->cookieJar = new CookieJar();
+
+        if($appConfig->hasKey(app: 'openconnector', key: 'retention')) {
+            $this->errorRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['callLogRetention'] ?? self::DEFAULT_ERROR_LOG_RETENTION;
+            $this->successRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['successLogRetention'] ?? self::DEFAULT_SUCCESS_LOG_RETENTION;
+        } else {
+            $this->errorRetention = self::DEFAULT_ERROR_LOG_RETENTION;
+            $this->successRetention = self::DEFAULT_SUCCESS_LOG_RETENTION;
+        }
 	}
 
-	/**
+    /**
+     * Calculates the used retention for created logs. Consists of the maximum of the retention from the source, and the global retention, unless either of both is 0, in which case retention is indefinite.
+     *
+     * @param int[] $retentions The list of retentions in milliseconds to find the maximum duration for.
+     * @return \DateTime|null The calculated expiry
+     * @throws \DateMalformedStringException
+     */
+    private function calculateExpires(...$retentions): ?\DateTime
+    {
+        if (in_array(0, $retentions, true)) {
+            return null;
+        }
+
+        return new \DateTime('now +' .max($retentions).'milliseconds');
+    }
+
+
+    /**
 	 * Renders a value using Twig templating if the value contains template syntax.
 	 * If the value is an array, recursively renders each element.
 	 *
@@ -279,6 +314,9 @@ class CallService
 	{
 		$this->source = $source;
 
+        $errorExpires = $this->calculateExpires($source->getErrorRetention() * 1000, $this->errorRetention);
+        $successExpires = $this->calculateExpires($source->getLogRetention() * 1000, $this->successRetention);
+
 		$method = $this->decideMethod(default: $method, configuration: $config, read: $read);
         unset($config['createMethod'], $config['updateMethod'], $config['destroyMethod'], $config['listMethod'], $config['readMethod']);
 
@@ -290,7 +328,7 @@ class CallService
 			$callLog->setStatusCode(409);
 			$callLog->setStatusMessage("This source is not enabled");
 			$callLog->setCreated(new \DateTime());
-			$callLog->setExpires(new \DateTime('now + '.$source->getErrorRetention().' seconds'));
+            $callLog->setExpires($errorExpires);
 
 			$this->callLogMapper->insert($callLog);
 
@@ -305,7 +343,7 @@ class CallService
 			$callLog->setStatusCode(409);
 			$callLog->setStatusMessage("This source has no location");
 			$callLog->setCreated(new \DateTime());
-			$callLog->setExpires(new \DateTime('now + '.$source->getErrorRetention().' seconds'));
+            $callLog->setExpires($errorExpires);
 
 			$this->callLogMapper->insert($callLog);
 
@@ -332,7 +370,7 @@ class CallService
 			$callLog->setStatusCode(429); //
 			$callLog->setStatusMessage("The rate limit for this source has been exceeded. Try again later.");
 			$callLog->setCreated(new \DateTime());
-			$callLog->setExpires(new \DateTime('now + '.$source->getErrorRetention().' seconds'));
+            $callLog->setExpires($errorExpires);
 
 			$this->callLogMapper->insert($callLog);
 
@@ -419,9 +457,12 @@ class CallService
                     // @todo: we want to get rate limit headers from async calls as well
                     return $this->client->requestAsync($method, $url, $config);
                 }
-            } catch (GuzzleHttp\Exception\BadResponseException $e) {
+            } catch (BadResponseException $e) {
                 $this->removeFiles($config);
                 $response = $e->getResponse();
+            } catch (ConnectException $exception) {
+                $this->removeFiles($config);
+                $response = new Response(status: 503, body: $exception->getMessage());
             }
         }
 
@@ -461,7 +502,7 @@ class CallService
 		$callLog->setStatusMessage($data['response']['statusMessage']);
 		$callLog->setRequest($data['request']);
 		$callLog->setCreated(new \DateTime());
-		$callLog->setExpires(new \DateTime('now + '.($data['response']['statusCode'] < 400 ? $source->getLogRetention() : $source->getErrorRetention()).' seconds'));
+        $callLog->setExpires($data['response']['statusCode'] < 400 ? $successExpires : $errorExpires);
 
 		// Only persist response if we get bad requests or server errors.
 		if ($callLog->getStatusCode() >= 400 && $callLog->getStatusCode() < 600 || $logBody === true) {

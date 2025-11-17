@@ -2,7 +2,7 @@
 
 /**
  * JobService
- * 
+ *
  * Service class for handling job execution logic in the OpenConnector application.
  * This service manages job retrieval, validation, execution, and logging.
  *
@@ -19,6 +19,7 @@ namespace OCA\OpenConnector\Service;
 use OCA\OpenConnector\Db\Job;
 use OCA\OpenConnector\Db\JobMapper;
 use OCP\BackgroundJob\IJobList;
+use OCP\IAppConfig;
 use OCP\IDBConnection;
 use OCA\OpenConnector\Db\JobLog;
 use OCA\OpenConnector\Db\JobLogMapper;
@@ -44,40 +45,11 @@ use OCP\BackgroundJob\IJob;
  */
 class JobService
 {
-    /**
-     * Job list manager for background job operations
-     */
-    private readonly IJobList $jobList;
 
-    /**
-     * Job mapper for database operations
-     */
-    private readonly JobMapper $jobMapper;
-
-    /**
-     * Database connection for direct queries
-     */
-    private readonly IDBConnection $connection;
-
-    /**
-     * Job log mapper for logging operations
-     */
-    private readonly JobLogMapper $jobLogMapper;
-
-    /**
-     * Container interface for dependency injection
-     */
-    private readonly ContainerInterface $containerInterface;
-
-    /**
-     * User session manager
-     */
-    private readonly IUserSession $userSession;
-
-    /**
-     * User manager for user operations
-     */
-    private readonly IUserManager $userManager;
+    private int $errorRetention;
+    private int $successRetention;
+    private const DEFAULT_SUCCESS_LOG_RETENTION = 3600000;
+    private const DEFAULT_ERROR_LOG_RETENTION = 2592000000;
 
     /**
      * JobService constructor
@@ -102,21 +74,39 @@ class JobService
      * @psalm-param IUserManager $userManager
      */
     public function __construct(
-        IJobList $jobList,
-        JobMapper $jobMapper,
-        IDBConnection $connection,
-        JobLogMapper $jobLogMapper,
-        ContainerInterface $containerInterface,
-        IUserSession $userSession,
-        IUserManager $userManager
+        private readonly IJobList $jobList,
+        private readonly JobMapper $jobMapper,
+        private readonly IDBConnection $connection,
+        private readonly JobLogMapper $jobLogMapper,
+        private readonly ContainerInterface $containerInterface,
+        private readonly IUserSession $userSession,
+        private readonly IUserManager $userManager,
+        IAppConfig $appConfig,
     ) {
-        $this->jobList = $jobList;
-        $this->jobMapper = $jobMapper;
-        $this->connection = $connection;
-        $this->jobLogMapper = $jobLogMapper;
-        $this->containerInterface = $containerInterface;
-        $this->userSession = $userSession;
-        $this->userManager = $userManager;
+        if($appConfig->hasKey(app: 'openconnector', key: 'retention')) {
+            $this->errorRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['jobLogRetention'] ?? self::DEFAULT_ERROR_LOG_RETENTION;
+            $this->successRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['successLogRetention'] ?? self::DEFAULT_SUCCESS_LOG_RETENTION;
+        } else {
+            $this->errorRetention = self::DEFAULT_ERROR_LOG_RETENTION;
+            $this->successRetention = self::DEFAULT_SUCCESS_LOG_RETENTION;
+        }
+
+    }
+
+    /**
+     * Calculates the used retention for created logs. Consists of the maximum of the retention from the source, and the global retention, unless either of both is 0, in which case retention is indefinite.
+     *
+     * @param int[] $retentions The list of retentions in milliseconds to find the maximum duration for.
+     * @return \DateTime|null The calculated expiry
+     * @throws \DateMalformedStringException
+     */
+    private function calculateExpires(...$retentions): ?\DateTime
+    {
+        if (in_array(0, $retentions, true)) {
+            return null;
+        }
+
+        return new \DateTime('now +' .max($retentions).'milliseconds');
     }
 
     /**
@@ -149,7 +139,7 @@ class JobService
         // Truncate and add indicator
         $truncated = substr($message, 0, $maxLength - 50);
         $truncated .= '... [Message truncated - original length: ' . strlen($message) . ' characters]';
-        
+
         return $truncated;
     }
 
@@ -264,7 +254,7 @@ class JobService
      * @phpstan-param Job $job
      * @phpstan-return JobLog
      */
-    public function executeJob(Job $job, bool $forceRun = false): JobLog
+    public function executeJob(Job $job, bool $forceRun = false): ?JobLog
     {
         // Initialize stack trace for logging
         $stackTrace = [];
@@ -316,7 +306,7 @@ class JobService
         $job->setLastRun(new DateTime());
         if ($forceRun === false) {
             $nextRun = new DateTime('now + ' . $job->getInterval() . ' seconds');
-            
+
             // Handle rate limiting if specified in result
             if (isset($result['nextRun']) === true) {
                 $nextRunRateLimit = DateTime::createFromFormat('U', $result['nextRun'], $nextRun->getTimezone());
@@ -328,12 +318,12 @@ class JobService
                     $nextRun = $nextRunRateLimit;
                 }
             }
-            
+
             // Set time to the current hour and minute (remove seconds)
             $nextRun->setTime(hour: $nextRun->format('H'), minute: $nextRun->format('i'));
             $job->setNextRun($nextRun);
         }
-        
+
         // Persist job updates to database
         $this->jobMapper->update($job);
 
@@ -341,13 +331,18 @@ class JobService
         $jobLog = $this->jobLogMapper->createForJob($job, [
             'level'			=> 'SUCCESS',
             'message'		=> 'Success',
-            'executionTime' => $executionTime
+            'executionTime' => $executionTime,
+            'expires'       => $this->calculateExpires($job->getLogRetention() * 1000, $this->successRetention)
         ]);
 
         // Process job execution result and update log accordingly
         if (is_array($result) === true) {
             if (isset($result['level']) === true) {
                 $jobLog->setLevel($result['level']);
+
+                if($result['level'] !== 'SUCCESS') {
+                    $jobLog->setExpires($this->calculateExpires($job->getErrorRetention() * 1000, $this->errorRetention));
+                }
             }
             if (isset($result['message']) === true) {
                 // Truncate message if it's too long for database safety
