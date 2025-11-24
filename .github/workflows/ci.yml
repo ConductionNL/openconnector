@@ -11,10 +11,6 @@ on:
     branches: [development, main, master]
 
 env:
-  NEXTCLOUD_VERSION: "31"
-  MARIADB_VERSION: "10.6"
-  REDIS_VERSION: "7"
-  MAILHOG_VERSION: "latest"
   MARIADB_IMAGE: "mariadb:10.6"
   REDIS_IMAGE: "redis:7"
   MAILHOG_IMAGE: "ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest"
@@ -153,9 +149,49 @@ jobs:
             -e WITH_REDIS=YES \
             ${{ steps.nextcloud-image.outputs.image }}
 
+          echo "============================================================"
+          echo "🔍  Diagnose Nextcloud container right after start"
+          echo "============================================================"
+          echo "▶️  docker ps:"
+          docker ps
+
+          echo "▶️  Last 30 log lines of nextcloud-test (right after start)"
+          docker logs --tail=30 nextcloud-test || true
+
+          echo "▶️  Check if web server is listening on port 80 in container"
+          docker exec nextcloud-test bash -lc "command -v netstat >/dev/null 2>&1 && netstat -tulnp | grep ':80' || echo 'netstat not available or nothing listening on :80'" || true
+
+          echo "============================================================"
           echo "⏳  WAIT: Nextcloud init (status.php)"
-          timeout 600 bash -c 'until curl -sSf http://localhost:8080/status.php | grep -q "installed.*true"; do echo "… waiting"; sleep 10; done'
-          echo "✅  Nextcloud ready"
+          echo "============================================================"
+
+          ATTEMPTS=60   # 60 * 10s = 600s (10 minutes)
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "⏱️  Attempt $i/$ATTEMPTS - check http://127.0.0.1:8080/status.php"
+
+            if curl -sS http://127.0.0.1:8080/status.php | grep -q '"installed"[[:space:]]*:[[:space:]]*true'; then
+              echo "✅  Nextcloud ready (status.php installed=true)"
+              break
+            else
+              echo "⚠️  Nextcloud not ready yet, curl failed or installed!=true"
+
+              echo "▶️  docker ps (attempt $i)"
+              docker ps
+
+              echo "▶️  Last 20 log lines of nextcloud-test (attempt $i)"
+              docker logs --tail=20 nextcloud-test || true
+            fi
+
+            if [ "$i" -eq "$ATTEMPTS" ]; then
+              echo "❌  Nextcloud did not become ready within $ATTEMPTS attempts (~600s)"
+              echo "🧾  Final logs:"
+              docker logs nextcloud-test || true
+              exit 1
+            fi
+
+            echo "... waiting 10s"
+            sleep 10
+          done
 
           echo "📦  COPY: app → /custom_apps/openconnector"
           docker cp . nextcloud-test:/var/www/html/custom_apps/openconnector
@@ -163,8 +199,8 @@ jobs:
           echo "🔧  CHOWN: www-data"
           docker exec --user 0 nextcloud-test bash -lc "chown -R www-data:www-data /var/www/html/custom_apps/openconnector || true"
 
-          echo "⏳  WAIT: settle"
-          sleep 10
+          echo "⏳  WAIT: let things settle"
+          sleep 10  
 
       - name: Diagnose Nextcloud occ command availability
         run: |
