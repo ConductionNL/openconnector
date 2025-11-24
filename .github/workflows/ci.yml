@@ -56,6 +56,8 @@ jobs:
           PHP_VERSION=$(echo "${{ matrix.php-version }}" | tr -d '.')
           echo "image=ghcr.io/juliusknorr/nextcloud-dev-php${PHP_VERSION}:latest" >> $GITHUB_OUTPUT
           echo "Using Nextcloud image: ghcr.io/juliusknorr/nextcloud-dev-php${PHP_VERSION}:latest"
+          echo "image=ghcr.io/conductionnl/nextcloud-images:fpm-soap" >> $GITHUB_OUTPUT
+          echo "Using Nextcloud image: ghcr.io/conductionnl/nextcloud-images:fpm-soap"
 
       - name: Get composer cache directory
         id: composer-cache
@@ -402,6 +404,8 @@ jobs:
         run: |
           echo "image=ghcr.io/juliusknorr/nextcloud-dev-php83:latest" >> $GITHUB_OUTPUT
           echo "Using Nextcloud image: ghcr.io/juliusknorr/nextcloud-dev-php83:latest"
+          echo "image=ghcr.io/conductionnl/nextcloud-images:fpm-soap" >> $GITHUB_OUTPUT
+          echo "Using Nextcloud image: ghcr.io/conductionnl/nextcloud-images:fpm-soap"
 
       - name: Get composer cache directory
         id: composer-cache
