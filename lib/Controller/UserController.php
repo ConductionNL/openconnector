@@ -449,6 +449,9 @@ class UserController extends Controller
     /**
      * Logs out the user on the active user session
      *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
      * @return JSONResponse
      */
     public function logout(): JSONResponse {
