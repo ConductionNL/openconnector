@@ -75,7 +75,7 @@ class CallService
 		$this->twig->addRuntimeLoader(new AuthenticationRuntimeLoader($authenticationService));
 		$this->cookieJar = new CookieJar();
 
-        if($appConfig->hasKey(app: 'openconnector', key: 'retention')) {
+        if($appConfig->hasKey(app: 'openconnector', key: 'retention') === true) {
             $this->errorRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['callLogRetention'] ?? self::DEFAULT_ERROR_LOG_RETENTION;
             $this->successRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['successLogRetention'] ?? self::DEFAULT_SUCCESS_LOG_RETENTION;
         } else {
@@ -95,7 +95,7 @@ class CallService
      */
     private function calculateExpires(...$retentions): ?\DateTime
     {
-        if (in_array(0, $retentions, true)) {
+        if (in_array(0, $retentions, true) === true) {
             return null;
         }
 

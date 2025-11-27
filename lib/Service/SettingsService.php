@@ -283,7 +283,7 @@ class SettingsService
             // **DATABASE-OPTIMIZED REBASE**: Use direct SQL UPDATE queries for maximum performance
 
             // 0. Update successful logs expiry dates
-            if (isset($retention['successLogRetention']) && $retention['successLogRetention'] > 0) {
+            if (isset($retention['successLogRetention']) === true && $retention['successLogRetention'] > 0) {
                 try {
                     $retentionMs = $retention['successLogRetention'];
                     $expiryQuery = "
