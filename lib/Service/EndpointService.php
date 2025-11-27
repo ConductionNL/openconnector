@@ -34,10 +34,13 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
+use React\Promise\Promise;
 use Symfony\Component\Uid\Uuid;
 use Twig\Error\LoaderError;
 use Twig\Error\SyntaxError;
 use ValueError;
+use function React\Async\await;
+use function React\Promise\all;
 
 /**
  * Service class for handling endpoint requests
@@ -705,11 +708,27 @@ class EndpointService
 
         $parameters = $this->rewriteExternalReferences($parameters, $mapper);
 
-        $result = $mapper->findAllPaginated(requestParams: $parameters);
+        if(isset($parameters['_limit']) === false && isset($parameters['limit']) === false) {
+            $parameters['_limit'] = 30;
+        }
 
-        $result['results'] = array_map(function ($object) use ($mapper) {
-            return $this->replaceInternalReferences(mapper: $mapper, serializedObject: $object->jsonSerialize());
-        }, $result['results']);
+        $result = $mapper->findAllPaginated(requestParams: $parameters);
+        $promises = [];
+
+        foreach ($result['results'] as $index => $object) {
+            $promises[$index] = new Promise(
+                function ($resolve, $reject) use ($object, $mapper) {
+                    try {
+                        $updatedObject = $this->replaceInternalReferences(mapper: $mapper, serializedObject: $object->jsonSerialize());
+                        $resolve($updatedObject);
+                    } catch(\Throwable $e) {
+                        $reject($e);
+                    }
+                }
+            );
+        }
+
+        $result['results'] = await(all($promises));
 
         $returnArray = [
             'count' => $result['total'],
@@ -721,7 +740,7 @@ class EndpointService
 
             $returnArray['next'] = $this->urlGenerator->getAbsoluteURL(
                 $this->urlGenerator->linkToRoute(
-                    routeName: 'openconnector.endpoints.handlepath',
+                    routeName: 'openconnector.endpoints.handlePathRead',
                     arguments: $parameters
                 )
             );
@@ -732,7 +751,7 @@ class EndpointService
 
             $returnArray['previous'] = $this->urlGenerator->getAbsoluteURL(
                 $this->urlGenerator->linkToRoute(
-                    routeName: 'openconnector.endpoints.handlepath',
+                    routeName: 'openconnector.endpoints.handlePathRead',
                     arguments: $parameters
                 )
             );
@@ -763,7 +782,6 @@ class EndpointService
 
         $register = $target[0];
         $schema = $target[1];
-
 
         $mapper = $this->objectService->getMapper(schema: (int)$schema, register: (int)$register);
 
