@@ -31,6 +31,7 @@ use OCP\Files\File;
 use OCP\Files\GenericFileException;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
+use OCP\IAppConfig;
 use OCP\Lock\LockedException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
@@ -59,15 +60,9 @@ use Twig\Error\SyntaxError;
  */
 class SynchronizationService
 {
-	private CallService $callService;
-	private MappingService $mappingService;
-	private ContainerInterface $containerInterface;
-	private SynchronizationMapper $synchronizationMapper;
-	private SourceMapper $sourceMapper;
-	private MappingMapper $mappingMapper;
-	private SynchronizationContractMapper $synchronizationContractMapper;
-	private SynchronizationContractLogMapper $synchronizationContractLogMapper;
-	private SynchronizationLogMapper $synchronizationLogMapper;
+    private int $errorRetention;
+    private int $errorContractRetention;
+    private int $successRetention;
 
     const EXTRA_DATA_CONFIGS_LOCATION           = 'extraDataConfigs';
     const EXTRA_DATA_DYNAMIC_ENDPOINT_LOCATION  = 'dynamicEndpointLocation';
@@ -80,32 +75,54 @@ class SynchronizationService
     const VALID_MUTATION_TYPES                  = ['create', 'update', 'delete'];
     const DEFAULT_MAX_PAGES                     = 50; // Safety limit to prevent infinite page requesting loop
 
+
+    private const DEFAULT_SUCCESS_LOG_RETENTION = 3600000;
+    private const DEFAULT_ERROR_LOG_RETENTION = 259200000;
+
 	public function __construct(
-		CallService                      $callService,
-		MappingService                   $mappingService,
-		ContainerInterface               $containerInterface,
-		SourceMapper                     $sourceMapper,
-		MappingMapper                    $mappingMapper,
-		SynchronizationMapper            $synchronizationMapper,
-		SynchronizationLogMapper         $synchronizationLogMapper,
-		SynchronizationContractMapper    $synchronizationContractMapper,
-		SynchronizationContractLogMapper $synchronizationContractLogMapper,
-		private readonly ObjectService   $objectService,
-        private readonly StorageService  $storageService,
-        private readonly RuleMapper      $ruleMapper,
-        private readonly LoggerInterface $logger,
+		private readonly CallService                      $callService,
+		private readonly MappingService                   $mappingService,
+		private readonly ContainerInterface               $containerInterface,
+		private readonly SourceMapper                     $sourceMapper,
+		private readonly MappingMapper                    $mappingMapper,
+		private readonly SynchronizationMapper            $synchronizationMapper,
+		private readonly SynchronizationLogMapper         $synchronizationLogMapper,
+		private readonly SynchronizationContractMapper    $synchronizationContractMapper,
+		private readonly SynchronizationContractLogMapper $synchronizationContractLogMapper,
+		private readonly ObjectService                    $objectService,
+        private readonly StorageService                   $storageService,
+        private readonly RuleMapper                       $ruleMapper,
+        private readonly LoggerInterface                  $logger,
+        IAppConfig $appConfig,
 	)
 	{
-		$this->callService = $callService;
-		$this->mappingService = $mappingService;
-		$this->containerInterface = $containerInterface;
-		$this->synchronizationMapper = $synchronizationMapper;
-		$this->mappingMapper = $mappingMapper;
-		$this->synchronizationContractMapper = $synchronizationContractMapper;
-		$this->synchronizationLogMapper = $synchronizationLogMapper;
-		$this->synchronizationContractLogMapper = $synchronizationContractLogMapper;
-		$this->sourceMapper = $sourceMapper;
+        if($appConfig->hasKey(app: 'openconnector', key: 'retention') === true) {
+            $this->errorRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['syncLogRetention'] ?? self::DEFAULT_ERROR_LOG_RETENTION;
+            $this->errorContractRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['syncContractLogRetention'] ?? self::DEFAULT_ERROR_LOG_RETENTION;
+            $this->successRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['successLogRetention'] ?? self::DEFAULT_SUCCESS_LOG_RETENTION;;
+        } else {
+            $this->errorRetention = self::DEFAULT_ERROR_LOG_RETENTION;
+            $this->successRetention = self::DEFAULT_SUCCESS_LOG_RETENTION;
+        }
 	}
+
+    /**
+     * Calculates the used retention for created logs. Consists of the maximum of the retention from the source, and the global retention, unless either of both is 0, in which case retention is indefinite.
+     *
+     * @param int[] $retentions The list of retentions in milliseconds to find the maximum duration for.
+     * @return DateTime|null The calculated expiry
+     * @throws \DateMalformedStringException
+     *
+     * @TODO: At a later point in time this should be changed to using the most specific source for expiration
+     */
+    private function calculateExpires(...$retentions): ?\DateTime
+    {
+        if (in_array(0, $retentions, true) === true) {
+            return null;
+        }
+
+        return new \DateTime('now +' .max($retentions).'milliseconds');
+    }
 
     /**
 	 * Finds all synchronizations by the given source ID, which is a combination of register and schema.
@@ -488,7 +505,8 @@ class SynchronizationService
                 'logs' => []
             ],
             'test' => $isTest,
-            'force' => $force
+            'force' => $force,
+            'expires' => $this->calculateExpires($this->errorRetention)
         ];
 
 
@@ -528,7 +546,7 @@ class SynchronizationService
         $executionTime = round((microtime(true) - $startTime) * 1000);
         $log->setExecutionTime($executionTime);
         $log->setMessage('Success');
-        $log->setExpires('+ 1 hour');
+        $log->setExpires($this->calculateExpires($this->successRetention, $this->successRetention));
         $this->synchronizationLogMapper->update($log);
 
         return $log->jsonSerialize();
@@ -931,6 +949,7 @@ class SynchronizationService
                     'source' => $object,
                     'test' => $isTest,
                     'force' => $force,
+                    'expiry' => $this->calculateExpires($this->errorContractRetention)
                 ]
             );
         }
@@ -984,6 +1003,7 @@ class SynchronizationService
             ) {
 			// We checked the source so let log that
 			$synchronizationContract->setSourceLastChecked(new DateTime());
+            $contractLog->setExpires($this->calculateExpires($this->successRetention));
 			// The object has not changed and neither config nor mapping have been updated since last check
 			if (isset($contractLog) === true) {
 				$contractLog = $this->synchronizationContractLogMapper->update($contractLog);
@@ -1033,8 +1053,9 @@ class SynchronizationService
 		if ($isTest === true) {
 			// Return test data without updating target
 			if (isset($contractLog) === true) {
-				$contractLog->setTargetResult('test');
-				$contractLog = $this->synchronizationContractLogMapper->update($contractLog);
+			    $contractLog->setTargetResult('test');
+                $contractLog->setExpires($this->calculateExpires($this->successRetention));
+			    $contractLog = $this->synchronizationContractLogMapper->update($contractLog);
 			}
 			return [
 				'log' => isset($contractLog) === true ? $contractLog->jsonSerialize() : null,
@@ -1062,6 +1083,7 @@ class SynchronizationService
 		// Create log entry for the synchronization
         if (isset($contractLog) === true) {
 		    $contractLog->setTargetResult($synchronizationContract->getTargetLastAction());
+            $contractLog->setExpires($this->calculateExpires($this->successRetention));
 		    $contractLog = $this->synchronizationContractLogMapper->update($contractLog);
         }
 
@@ -1350,7 +1372,7 @@ class SynchronizationService
 			'synchronizationId' => $subContract->getSynchronizationId(),
 			'synchronizationContractId' => $subContract->getId(),
 			'target' => $subObjectData,
-			'expires' => new DateTime('+1 day')
+			'expires' => $this->calculateExpires($this->successRetention, $this->successRetention),
 		]);
 	}
 
