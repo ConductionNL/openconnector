@@ -708,7 +708,7 @@ class EndpointService
 
         $parameters = $this->rewriteExternalReferences($parameters, $mapper);
 
-        if(isset($parameters['_limit']) === false && isset($parameters['limit']) === false) {
+        if (isset($parameters['_limit']) === false && isset($parameters['limit']) === false) {
             $parameters['_limit'] = 30;
         }
 
