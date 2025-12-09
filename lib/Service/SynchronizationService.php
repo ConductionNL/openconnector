@@ -2183,16 +2183,18 @@ class SynchronizationService
 			$response = $this->callService->call(source: $target, endpoint: $endpoint, method: 'POST', config: $targetConfig)->getResponse();
 
 			$body = json_decode($response['body'], true);
-
-			$targetId = $body['id'];
-
+			
             $bodyDot = new Dot($body);
 			if (isset($targetConfig['idPosition']) === true) {
 				$targetId = $bodyDot->get($targetConfig['idPosition']);
 			} else if (isset($targetConfig['idposition']) === true) {
                 // Backwards compatible if older sync still use idposition (lowercase)
 				$targetId = $bodyDot->get($targetConfig['idposition']);
-            }
+            } else if (isset($body['id']) === true) {
+				$targetId = $body['id'];
+			} else {
+				throw new Exception('Could not determine an id from target synchronization');
+			}
 
 			$contract->setTargetId($targetId);
 			return $contract;
