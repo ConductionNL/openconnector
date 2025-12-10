@@ -102,6 +102,7 @@ class SynchronizationService
             $this->successRetention = json_decode($appConfig->getValueString(app: 'openconnector', key: 'retention'), true)['successLogRetention'] ?? self::DEFAULT_SUCCESS_LOG_RETENTION;;
         } else {
             $this->errorRetention = self::DEFAULT_ERROR_LOG_RETENTION;
+            $this->errorContractRetention = self::DEFAULT_ERROR_LOG_RETENTION;
             $this->successRetention = self::DEFAULT_SUCCESS_LOG_RETENTION;
         }
 	}
