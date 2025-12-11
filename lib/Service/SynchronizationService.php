@@ -950,7 +950,7 @@ class SynchronizationService
                     'source' => $object,
                     'test' => $isTest,
                     'force' => $force,
-                    'expiry' => $this->calculateExpires($this->errorContractRetention ?? 0)
+                    'expiry' => $this->calculateExpires($this->errorContractRetention)
                 ]
             );
         }
