@@ -474,14 +474,28 @@ export default {
 	},
 	watch: {
 		'registerOptions.value': {
-			handler() {
-				this.schemaOptions.value = null
+			handler(newVal, oldVal) {
+				// Only clear schema if register ID actually changed
+				// Skip clearing during initialization (when oldVal is null in edit mode)
+				if (oldVal === null && this.IS_EDIT) {
+					return
+				}
+				if (oldVal?.id !== newVal?.id) {
+					this.schemaOptions.value = null
+				}
 			},
 			deep: true,
 		},
 		'registerOptions.sourceValue': {
-			handler() {
-				this.schemaOptions.sourceValue = null
+			handler(newVal, oldVal) {
+				// Only clear schema if register ID actually changed
+				// Skip clearing during initialization (when oldVal is null in edit mode)
+				if (oldVal === null && this.IS_EDIT) {
+					return
+				}
+				if (oldVal?.id !== newVal?.id) {
+					this.schemaOptions.sourceValue = null
+				}
 			},
 			deep: true,
 		},
@@ -679,24 +693,21 @@ export default {
 							: null,
 					}
 
-					// set active schema after register options are set
-					// use $nextTick to ensure the watcher has finished clearing the value
-					this.$nextTick(() => {
-						this.schemaOptions = {
-							value: activeSchema
-								? {
-									label: activeSchema.title || activeSchema.name,
-									id: activeSchema.id,
-								}
-								: null,
-							sourceValue: activeSourceSchema
-								? {
-									label: activeSourceSchema.title || activeSourceSchema.name,
-									id: activeSourceSchema.id,
-								}
-								: null,
-						}
-					})
+					// set active schema
+					this.schemaOptions = {
+						value: activeSchema
+							? {
+								label: activeSchema.title || activeSchema.name,
+								id: activeSchema.id,
+							}
+							: null,
+						sourceValue: activeSourceSchema
+							? {
+								label: activeSourceSchema.title || activeSourceSchema.name,
+								id: activeSourceSchema.id,
+							}
+							: null,
+					}
 				})
 				.finally(() => {
 					this.registerLoading = false
