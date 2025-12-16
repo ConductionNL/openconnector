@@ -2,11 +2,19 @@
 
 namespace OCA\OpenConnector\Twig;
 
+use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenConnector\Db\Mapping;
 use OCA\OpenConnector\Db\MappingMapper;
 use OCA\OpenConnector\Db\Source;
+use OCA\OpenConnector\Db\SourceMapper;
 use OCA\OpenConnector\Service\AuthenticationService;
+use OCA\OpenConnector\Service\CallService;
 use OCA\OpenConnector\Service\MappingService;
+use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
+use OCP\DB\Exception;
+use Twig\Error\LoaderError;
+use Twig\Error\SyntaxError;
 use Twig\Extension\RuntimeExtensionInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV4;
@@ -15,10 +23,78 @@ class MappingRuntime implements RuntimeExtensionInterface
 {
 	public function __construct(
 		private readonly MappingService $mappingService,
-		private readonly MappingMapper  $mappingMapper
+		private readonly MappingMapper  $mappingMapper,
+        private readonly CallService $callService,
+        private readonly SourceMapper $sourceMapper,
 	) {
 
 	}
+
+    /**
+     * Encodes a string to base64.
+     *
+     * @param string $input The unencoded input.
+     * @return string The encoded output.
+     */
+    public function b64enc(string $input): string
+    {
+        return base64_encode(string: $input);
+
+    }//end b64enc()
+
+    /**
+     * Decodes a base64 encoded string to an unencoded string.
+     *
+     * @param string $input The encoded input.
+     * @return string The decoded output.
+     */
+    public function b64dec(string $input): string
+    {
+        return base64_decode(string: $input);
+
+    }//end b64dec()
+
+    /**
+     * Decodes a json encoded string to an unencoded array.
+     *
+     * @param string $input The encoded input.
+     * @return array The decoded output.
+     */
+    public function json_decode(string $input): array
+    {
+        return json_decode(json: $input, associative: true);
+    }
+
+    /**
+     * Call source of given id or reference and return the result.
+     *
+     * @param string $sourceId The source to call
+     * @param string $endpoint The endpoint to call
+     * @param string $method The method to use
+     * @param array $configuration The configuration to use
+     * @param bool $decode Whether or not the output should be decoded (default true)
+     * @return array|string The resulting response.
+     *
+     * @throws GuzzleException
+     * @throws DoesNotExistException
+     * @throws MultipleObjectsReturnedException
+     * @throws Exception
+     * @throws LoaderError
+     * @throws SyntaxError
+     */
+    public function callSource(string $sourceId, string $endpoint, string $method='GET', array $configuration=[], bool $decode=true): array|string
+    {
+        $source = $this->sourceMapper->find(id: $sourceId);
+
+        if (str_contains(haystack: $endpoint, needle: $source->getLocation()) === true) {
+            $endpoint = substr(string: $endpoint, offset: strlen(string: $source->getLocation()));
+        }
+
+        $response = $this->callService->call(source: $source, endpoint: $endpoint, method: $method, config: $configuration);
+
+        return $response->getResponse()['body'];
+
+    }//end call()
 
 	/**
 	 * Execute a mapping with given parameters.

@@ -4,6 +4,7 @@ namespace OCA\OpenConnector\Service;
 
 use OCA\OpenConnector\Db\Mapping;
 use OCA\OpenConnector\Db\MappingMapper;
+use OCA\OpenConnector\Db\SourceMapper;
 use OCA\OpenConnector\Twig\AuthenticationExtension;
 use OCA\OpenConnector\Twig\AuthenticationRuntimeLoader;
 use OCA\OpenConnector\Twig\MappingExtension;
@@ -38,11 +39,13 @@ class MappingService
 	 */
     public function __construct(
 		ArrayLoader $loader,
-		private readonly MappingMapper $mappingMapper
+		private readonly MappingMapper $mappingMapper,
+        CallService $callService,
+        SourceMapper $sourceMapper,
     ) {
         $this->twig = new Environment($loader);
 		$this->twig->addExtension(new MappingExtension());
-		$this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper));
+		$this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper, callService: $callService, sourceMapper: $sourceMapper));
 
     }//end __construct()
 
