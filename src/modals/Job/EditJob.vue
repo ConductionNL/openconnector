@@ -1,5 +1,5 @@
 <script setup>
-import { jobStore, navigationStore } from '../../store/store.js'
+import { jobStore, navigationStore, synchronizationStore } from '../../store/store.js'
 import { Job } from '../../entities/index.js'
 </script>
 
@@ -95,13 +95,25 @@ import { Job } from '../../entities/index.js'
 						label="Error Retention"
 						:value.sync="jobItem.errorRetention" />
 				</div>
+
+				<div v-if="classOptions.value?.label === 'OCA\\OpenConnector\\Action\\SynchronizationAction'" :key="classOptions.value?.label">
+					<NcSelect
+						v-model="syncOptions.value"
+						:options="syncOptions.options"
+						:loading="syncOptions.loading"
+						input-label="Synchronization"
+						placeholder="Select a synchronization"
+						clearable
+    				/>
+				</div>
+
 			</form>
 
 			<div class="modal-actions">
 				<NcButton v-if="!success"
 					@click="closeModal">
 					<template #icon>
-						<CancelIcon size="20" />
+						<CancelIcon :size=20 />
 					</template>
 					Cancel
 				</NcButton>
@@ -170,6 +182,7 @@ export default {
 				userId: '',
 				logRetention: '3600',
 				errorRetention: '86400',
+				arguments: {},
 			},
 			success: false,
 			loading: false,
@@ -188,6 +201,11 @@ export default {
 			],
 			hasUpdated: false,
 			closeTimeoutFunc: null,
+			syncOptions: {
+				loading: false,
+				options: [],
+				value: null,
+			},
 		}
 	},
 	mounted() {
@@ -199,7 +217,65 @@ export default {
 			this.hasUpdated = true
 		}
 	},
+	watch: {
+		'classOptions.value': {
+			immediate: true,
+			handler(selected) {
+				const jobClass = selected?.label || ''
+				this.jobItem.jobClass = jobClass
+
+				if (jobClass === 'OCA\\OpenConnector\\Action\\SynchronizationAction') {
+					this.ensureSynchronizationArguments()
+					this.getSynchronizations()
+				} else {
+					this.syncOptions.value = null
+					if (this.jobItem.arguments && 'synchronizationId' in this.jobItem.arguments) {
+						this.jobItem.arguments.synchronizationId = null
+					}
+				}
+			},
+		},
+	},
 	methods: {
+		ensureSynchronizationArguments() {
+			if (!this.jobItem.arguments) {
+				this.$set(this.jobItem, 'arguments', {})
+			}
+
+			if (!('synchronizationId' in this.jobItem.arguments)) {
+				this.$set(this.jobItem.arguments, 'synchronizationId', null)
+			}
+		},
+		async getSynchronizations() {
+			try {
+				this.syncOptions.loading = true
+				await synchronizationStore.refreshSynchronizationList()
+
+				const synchronizations = synchronizationStore.synchronizationList
+
+				if (synchronizations?.length) {
+					this.syncOptions.options = synchronizations.map(sync => ({
+						label: sync.name,
+						value: sync.id,
+					}))
+
+					// Restore selection when editing an existing job
+					if (this.jobItem.arguments?.synchronizationId) {
+						const active = this.syncOptions.options.find(
+							option => option.value === this.jobItem.arguments.synchronizationId,
+						)
+
+						if (active) {
+							this.syncOptions.value = active
+						}
+					}
+				}
+			} catch (error) {
+				console.error('Failed to fetch synchronizations:', error)
+			} finally {
+				this.syncOptions.loading = false
+			}
+		},
 		initializeJobItem() {
 			if (jobStore.jobItem?.id) {
 				const scheduleAfter = jobStore.jobItem.scheduleAfter ? new Date(jobStore.jobItem.scheduleAfter.date) : null
@@ -252,6 +328,13 @@ export default {
 		async editJob() {
 			this.loading = true
 			try {
+				if (this.jobItem.jobClass === 'OCA\\OpenConnector\\Action\\SynchronizationAction') {
+					if (!this.jobItem.arguments) {
+						this.jobItem.arguments = {}
+					}
+					this.jobItem.arguments.synchronizationId = this.syncOptions.value?.value ?? null
+				}
+
 				const jobItem = new Job({
 					...this.jobItem,
 					jobClass: this.classOptions.value.label,
