@@ -40,7 +40,7 @@ import { sourceStore, navigationStore } from '../../store/store.js'
 				<NcButton
 					@click="closeModal">
 					<template #icon>
-						<CancelIcon size="20" />
+						<CancelIcon :size=20 />
 					</template>
 					Cancel
 				</NcButton>

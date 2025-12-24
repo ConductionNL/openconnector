@@ -36,7 +36,7 @@ import { Source } from '../../entities/index.js'
 					v-if="!success"
 					@click="closeModal">
 					<template #icon>
-						<CancelIcon size="20" />
+						<CancelIcon :size=20 />
 					</template>
 					Cancel
 				</NcButton>
