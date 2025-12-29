@@ -77,7 +77,7 @@ import { navigationStore, importExportStore } from '../../store/store.js'
 					<NcButton v-if="success === null"
 						@click="closeModal">
 						<template #icon>
-							<CancelIcon :size=20 />
+							<CancelIcon :size="20" />
 						</template>
 						Cancel
 					</NcButton>

@@ -37,7 +37,7 @@ import { Synchronization } from '../../entities/index.js'
 				<NcButton v-if="!success"
 					@click="closeModal">
 					<template #icon>
-						<CancelIcon :size=20 />
+						<CancelIcon :size="20" />
 					</template>
 					Cancel
 				</NcButton>
