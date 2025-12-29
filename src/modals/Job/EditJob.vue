@@ -103,17 +103,15 @@ import { Job } from '../../entities/index.js'
 						:loading="syncOptions.loading"
 						input-label="Synchronization"
 						placeholder="Select a synchronization"
-						clearable
-    				/>
+						clearable />
 				</div>
-
 			</form>
 
 			<div class="modal-actions">
 				<NcButton v-if="!success"
 					@click="closeModal">
 					<template #icon>
-						<CancelIcon :size=20 />
+						<CancelIcon :size="20" />
 					</template>
 					Cancel
 				</NcButton>
@@ -208,15 +206,6 @@ export default {
 			},
 		}
 	},
-	mounted() {
-		this.initializeJobItem()
-	},
-	updated() {
-		if (navigationStore.modal === 'editJob' && !this.hasUpdated) {
-			this.initializeJobItem()
-			this.hasUpdated = true
-		}
-	},
 	watch: {
 		'classOptions.value': {
 			immediate: true,
@@ -235,6 +224,15 @@ export default {
 				}
 			},
 		},
+	},
+	mounted() {
+		this.initializeJobItem()
+	},
+	updated() {
+		if (navigationStore.modal === 'editJob' && !this.hasUpdated) {
+			this.initializeJobItem()
+			this.hasUpdated = true
+		}
 	},
 	methods: {
 		ensureSynchronizationArguments() {
