@@ -1363,8 +1363,6 @@ class EndpointService
 
         $data = $this->processMapping(rule: $rule, mapping: $mapping, data: $data);
 
-//        var_dump($data);
-
         return $data;
     }
 
