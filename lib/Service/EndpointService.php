@@ -804,7 +804,7 @@ class EndpointService
 
         $status = 200;
 
-        if(isset($flowToken->getRequestAmended()['headers']['Accept-Crs']) === true) {
+        if (isset($flowToken->getRequestAmended()['headers']['Accept-Crs']) === true) {
             $headers = $flowToken->getRequestAmended()['headers']['Accept-Crs'] === '' ? [] : ['Content-Crs' => $flowToken->getRequestAmended()['headers']['Accept-Crs']];
         }
 
