@@ -804,7 +804,9 @@ class EndpointService
 
         $status = 200;
 
-        $headers = $flowToken->getRequestAmended()['headers']['Accept-Crs'] === '' ? [] : ['Content-Crs' => $flowToken->getRequestAmended()['headers']['Accept-Crs']];
+        if (isset($flowToken->getRequestAmended()['headers']['Accept-Crs']) === true) {
+            $headers = $flowToken->getRequestAmended()['headers']['Accept-Crs'] === '' ? [] : ['Content-Crs' => $flowToken->getRequestAmended()['headers']['Accept-Crs']];
+        }
 
 
         // Route to appropriate ObjectService method based on HTTP method
@@ -817,6 +819,7 @@ class EndpointService
                         headers: $headers
                     );
                     $flowToken->setResponseOriginal($response);
+                    $flowToken->setResponseAmended($flowToken->getResponseOriginal());
                     return $response;
                 case 'POST':
                     $response =  new JSONResponse(
@@ -826,6 +829,7 @@ class EndpointService
                         )
                     );
                     $flowToken->setResponseOriginal($response);
+                    $flowToken->setResponseAmended($flowToken->getResponseOriginal());
                     return $response;
                 case 'PUT':
                     $response = new JSONResponse(
@@ -835,6 +839,7 @@ class EndpointService
                         )
                     );
                     $flowToken->setResponseOriginal($response);
+                    $flowToken->setResponseAmended($flowToken->getResponseOriginal());
                     return $response;
                 case 'PATCH':
                     $response =  new JSONResponse(
@@ -844,6 +849,7 @@ class EndpointService
                         )
                     );
                     $flowToken->setResponseOriginal($response);
+                    $flowToken->setResponseAmended($flowToken->getResponseOriginal());
                     return $response;
                 case 'DELETE':
                     if (isset($parameters['id']) === false) {
@@ -856,11 +862,13 @@ class EndpointService
                     if ($mapper->delete(['id' => $parameters['id']]) !== true) {
                         $response = new JSONResponse(data: ['error' => sprintf('Something went wrong deleting object: %s', $parameters['id'])], statusCode: 500);
                         $flowToken->setResponseOriginal($response);
+                        $flowToken->setResponseAmended($flowToken->getResponseOriginal());
                         return $response;
                     }
 
                     $response = new JSONResponse(statusCode: 204);
                     $flowToken->setResponseOriginal($response);
+                    $flowToken->setResponseAmended($flowToken->getResponseOriginal());
                     return $response;
 
                 default:
@@ -1900,9 +1908,10 @@ class EndpointService
         }
 
         if(isset($data['parameters']['version']) === true) {
-            // @todo this is not supported currently
-            // $file = $fileService->getFile(object: $object, file: $filename, version: $data['parameters']['version']);
-            $file = $fileService->getFile(object: $object, file: $filename);
+             $file = $fileService->getFile(object: $object, file: $filename, version: $data['parameters']['version']);
+        }else if(isset($data['parameters']['versie']) === true) {
+            // @TODO: This can be nicer by mapping, but let's first get something sure
+             $file = $fileService->getFile(object: $object, file: $filename, version: $data['parameters']['versie']);
         } else {
             $file = $fileService->getFile(object: $object, file: $filename);
         }
