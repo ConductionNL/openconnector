@@ -792,23 +792,23 @@ class EndpointService
             $parameters = $this->mappingService->executeMapping(mapping: $inputMapping, input: $parameters);
         }
 
-		$pathParams = $this->getPathParameters($endpoint->getEndpointArray(), $path);
+        $pathParams = $this->getPathParameters($endpoint->getEndpointArray(), $path);
 
-		if (isset($pathParams['id']) === true) {
-			$parameters['id'] = $pathParams['id'];
-		}
-		foreach ($this::UNSET_PARAMETERS as $parameter) {
+        if (isset($pathParams['id']) === true) {
+            $parameters['id'] = $pathParams['id'];
+        }
+        foreach ($this::UNSET_PARAMETERS as $parameter) {
             unset($parameters[$parameter]);
         }
 
 
         $status = 200;
 
-        if (isset($flowToken->getRequestAmended()['headers']['Accept-Crs']) === true) {
-            $headers = $flowToken->getRequestAmended()['headers']['Accept-Crs'] === '' ? [] : ['Content-Crs' => $flowToken->getRequestAmended()['headers']['Accept-Crs']];
+        $headers = [];
+        if (isset($flowToken->getRequestAmended()['headers']['Accept-Crs']) === true && $flowToken->getRequestAmended()['headers']['Accept-Crs'] !== '') {
+            $headers['Content-Crs'] = $flowToken->getRequestAmended()['headers']['Accept-Crs'];
         }
-
-
+        
         // Route to appropriate ObjectService method based on HTTP method
         try {
             switch ($method) {
