@@ -808,7 +808,7 @@ class EndpointService
         if (isset($flowToken->getRequestAmended()['headers']['Accept-Crs']) === true && $flowToken->getRequestAmended()['headers']['Accept-Crs'] !== '') {
             $headers['Content-Crs'] = $flowToken->getRequestAmended()['headers']['Accept-Crs'];
         }
-        
+
         // Route to appropriate ObjectService method based on HTTP method
         try {
             switch ($method) {
@@ -1745,7 +1745,7 @@ class EndpointService
 
         $fileParts = $this->storageService->createUpload($location, $filename, $size, $objectId);
 
-		$fileParts = array_map(function ($filePart) use ($mapping, $registerId, $schemaId) {
+		$fileParts = array_map(function ($filePart) use ($mapping, $registerId, $schemaId, $openRegister) {
 
 			if ($mapping !== null) {
 				$formatted = $this->mappingService->executeMapping(mapping: $mapping, input: $filePart);
@@ -1754,15 +1754,17 @@ class EndpointService
 			}
 
 			try {
-				return $this->objectService->getOpenRegisters()->saveObject(
+				$object = $this->objectService->getOpenRegisters()->saveObject(
 					register: $registerId,
 					schema: $schemaId,
 					object: $formatted,
 					uuid: $formatted['id']
-				)->jsonSerialize();
+				);
+                return $this->replaceInternalReferences($openRegister, $object);
 			} catch (ValidationException $exception) {
 				return $this->objectService->getOpenRegisters()->handleValidationException($exception);
 			}
+
 
 
 		}, $fileParts);
