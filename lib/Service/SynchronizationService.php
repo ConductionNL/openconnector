@@ -177,8 +177,25 @@ class SynchronizationService
 			$originId = $object->getUuid();
 			$object = $object->getObject();
 		}
+
 		if (isset($targetConfig['extend_input']) === true) {
-			$object = array_merge($object, $this->processExtendInputRule(['extend_input' => ['properties' => $targetConfig['extend_input']]], $object));
+            $fetchObject = false;
+
+            // If we allow the object to be fetched again, fetch including extends (so we hook into the existing extend functionality).
+            if (isset($targetConfig['extend_input_fetch_object']) == true) {
+                switch($targetConfig['extend_input_fetch_object']) {
+                    case 0:
+                    case true:
+                    case 'true':
+                        $fetchObject = true;
+                        break;
+                    default:
+                        $fetchObject = false;
+                        break;
+                }
+            }
+
+			$object = array_merge($object, $this->processExtendInputRule(['extend_input' => ['properties' => $targetConfig['extend_input'], 'fetchObject' => $fetchObject]], $object));
 		}
 
 		// If the source configuration contains a dot notation for the id position, we need to extract the id from the source object
@@ -516,6 +533,7 @@ class SynchronizationService
             // lets always create the log entry first, because we need its uuid later on for contractLogs
             $log['result']['type'] = 'internToExtern';
             $log = $this->synchronizationLogMapper->createFromArray($log);
+
             return $this->synchronizeInternToExtern(
                 synchronization: $synchronization,
                 object: $object,
@@ -1025,6 +1043,7 @@ class SynchronizationService
 		$objectBeforeMapping = $object;
         if ($sourceTargetMapping) {
             $flowToken->setSyncOutputOriginal($object);
+
             $object = $this->mappingService->executeMapping(mapping: $sourceTargetMapping, input: $object);
             $flowToken->setSyncOutputAmended($object);
         }
@@ -2184,8 +2203,9 @@ class SynchronizationService
 			$response = $this->callService->call(source: $target, endpoint: $endpoint, method: 'POST', config: $targetConfig)->getResponse();
 
 			$body = json_decode($response['body'], true);
-			
+
             $bodyDot = new Dot($body);
+
 			if (isset($targetConfig['idPosition']) === true) {
 				$targetId = $bodyDot->get($targetConfig['idPosition']);
 			} else if (isset($targetConfig['idposition']) === true) {
@@ -2351,6 +2371,17 @@ class SynchronizationService
     {
         $parameters = new Dot($data);
         $extendedParameters = new Dot();
+
+        // If the extends are given as a comma separated string, separate them into an array.
+        if (is_string($config['extend_input']['properties']) === true) {
+            $config['extend_input']['properties'] = explode(separator: ',', string: $config['extend_input']['properties']);
+        }
+
+        // If we can fetch the object to extend again, use OpenRegister to fetch the extended object.
+        if (isset($data['id']) === true && isset($config['extend_input']['fetchObject']) === true && ($config['extend_input']['fetchObject'] === true || $config['extend_input']['fetchObject'] === 'true')) {
+            $object = $this->objectService->getOpenRegisters()->find(id: $data['id'], extend: $config['extend_input']['properties']);
+            return $object->jsonSerialize();
+        }
 
         foreach ($config['extend_input']['properties'] as $property) {
             $value = $parameters->get($property);

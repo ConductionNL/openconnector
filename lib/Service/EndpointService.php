@@ -1645,13 +1645,32 @@ class EndpointService
         // Set $object to a different variable becuase we might update $object with reference and want to keep what we send to synchronize.
         $sendObject = $object;
 
+        // If we have an objectIdPath, pull the id from the body and fetch the object from the database.
+
+        $fetchedObject = null;
+
+        if (isset($config['synchronization']['objectIdPath']) === true) {
+            $dataDot = new Dot($data['body']);
+
+            $id = $dataDot->get($config['synchronization']['objectIdPath']);
+
+            if (filter_var(value: $id, filter: FILTER_VALIDATE_URL) !== false) {
+                $idExploded = explode(separator: '/', string: $id);
+                $id = end($idExploded);
+            }
+
+            $this->objectService->getOpenRegisters()->clearCurrents();
+            $fetchedObject = $this->objectService->getOpenRegisters()->find($id);
+        }
+
+
         // Run synchronization.
         $mutationType = null;
         $sourceConfig = $synchronization->getSourceConfig();
         if (isset($sourceConfig['synchronizationType']) === true && $sourceConfig['synchronizationType'] === 'delete') {
             $mutationType = 'delete';
         }
-        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, mutationType: $mutationType, data: $object, flowToken: $flowToken);
+        $log = $this->synchronizationService->synchronize(synchronization: $synchronization, isTest: $test, force: $force, object: $fetchedObject, mutationType: $mutationType, data: $object, flowToken: $flowToken);
 
         // $object got updated through reference.
         $returnedObject = $object;
