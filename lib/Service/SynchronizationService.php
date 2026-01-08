@@ -182,7 +182,7 @@ class SynchronizationService
             $fetchObject = false;
 
             // If we allow the object to be fetched again, fetch including extends (so we hook into the existing extend functionality).
-            if (isset($targetConfig['extend_input_fetch_object']) == true) {
+            if (isset($targetConfig['extend_input_fetch_object']) === true) {
                 switch($targetConfig['extend_input_fetch_object']) {
                     case 0:
                     case true:
@@ -2377,9 +2377,13 @@ class SynchronizationService
             $config['extend_input']['properties'] = explode(separator: ',', string: $config['extend_input']['properties']);
         }
 
+        if (isset($data['id']) === true || isset($data['@self']['id']) === true || $data['uuid'] === true) {
+            $id = $data['@self']['id'] ?? $data['id'] ?? $data['uuid'];
+        }
+
         // If we can fetch the object to extend again, use OpenRegister to fetch the extended object.
-        if (isset($data['id']) === true && isset($config['extend_input']['fetchObject']) === true && ($config['extend_input']['fetchObject'] === true || $config['extend_input']['fetchObject'] === 'true')) {
-            $object = $this->objectService->getOpenRegisters()->find(id: $data['id'], extend: $config['extend_input']['properties']);
+        if ($id === true && isset($config['extend_input']['fetchObject']) === true && ($config['extend_input']['fetchObject'] === true || $config['extend_input']['fetchObject'] === 'true')) {
+            $object = $this->objectService->getOpenRegisters()->find(id: $id, extend: $config['extend_input']['properties']);
             return $object->jsonSerialize();
         }
 
