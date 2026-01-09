@@ -1135,6 +1135,7 @@ class EndpointService
                 // Check rule conditions
                 if ($this->checkRuleConditions(rule: $rule, data: $data, logicResult:  $logicResult) === false || $rule->getTiming() !== $timing) {
                     $this->logger->info('Rule condition check failed for endpoint ' . $endpoint->getName() . ' and rule ' . $rule->getName() . ' of type: ' . $rule->getType());
+
                     continue;
                 }
 
@@ -1166,6 +1167,7 @@ class EndpointService
                         'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
                         'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
                         'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
+                        'override' => $this->processOverrideRule(rule: $rule, data: $data, objectId: $objectId),
                         'custom' => $this->processCustomRule(rule: $rule, data: $data),
                         default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
                     };
@@ -1193,6 +1195,18 @@ class EndpointService
             $this->logger->error('Error processing rules: ' . $e->getMessage());
             return new JSONResponse(['error' => 'Rule processing failed: ' . $e->getMessage()], 500);
         }
+    }
+
+    private function processOverrideRule(Rule $rule, array $data, string $objectId): array
+    {
+
+        $this->objectService->getOpenRegisters()->clearCurrents();
+        $object = $this->objectService->getOpenRegisters()->updateFromArray(id: $objectId, object: $data['body'], updateVersion: false);
+        $this->objectService->getOpenRegisters()->clearCurrents();
+
+        $data['body'] = $object->jsonSerialize();
+
+        return $data;
     }
 
     /**
