@@ -474,14 +474,28 @@ export default {
 	},
 	watch: {
 		'registerOptions.value': {
-			handler() {
-				this.schemaOptions.value = null
+			handler(newVal, oldVal) {
+				// Only clear schema if register ID actually changed
+				// Skip clearing during initialization (when oldVal is null in edit mode)
+				if (oldVal === null && this.IS_EDIT) {
+					return
+				}
+				if (oldVal?.id !== newVal?.id) {
+					this.schemaOptions.value = null
+				}
 			},
 			deep: true,
 		},
 		'registerOptions.sourceValue': {
-			handler() {
-				this.schemaOptions.sourceValue = null
+			handler(newVal, oldVal) {
+				// Only clear schema if register ID actually changed
+				// Skip clearing during initialization (when oldVal is null in edit mode)
+				if (oldVal === null && this.IS_EDIT) {
+					return
+				}
+				if (oldVal?.id !== newVal?.id) {
+					this.schemaOptions.sourceValue = null
+				}
 			},
 			deep: true,
 		},

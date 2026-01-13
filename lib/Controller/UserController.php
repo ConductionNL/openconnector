@@ -159,7 +159,7 @@ class UserController extends Controller
      * @NoCSRFRequired
      *
      * @return JSONResponse A JSON response containing the current user's information
-     * 
+     *
      * @psalm-return JSONResponse
      * @phpstan-return JSONResponse
      */
@@ -168,7 +168,7 @@ class UserController extends Controller
         try {
             // Get the current user from the session
             $currentUser = $this->userService->getCurrentUser();
-            
+
             // Check if user is logged in
             if ($currentUser === null) {
                 $response = new JSONResponse(
@@ -203,7 +203,7 @@ class UserController extends Controller
      * @NoCSRFRequired
      *
      * @return JSONResponse A JSON response containing the updated user information
-     * 
+     *
      * @psalm-return JSONResponse
      * @phpstan-return JSONResponse
      */
@@ -212,7 +212,7 @@ class UserController extends Controller
         try {
             // Get the current user from the session
             $currentUser = $this->userService->getCurrentUser();
-            
+
             // Check if user is logged in
             if ($currentUser === null) {
                 $response = new JSONResponse(
@@ -225,7 +225,7 @@ class UserController extends Controller
             // Get and sanitize the request data to prevent XSS
             $data = $this->request->getParams();
             $sanitizedData = $this->securityService->sanitizeInput($data);
-            
+
             // Remove system parameters that shouldn't be updated
             foreach ($sanitizedData as $key => $value) {
                 if (str_starts_with($key, '_') === true) {
@@ -274,7 +274,7 @@ class UserController extends Controller
      * @PublicPage
      *
      * @return JSONResponse A JSON response containing login result and user information
-     * 
+     *
      * @psalm-return JSONResponse
      * @phpstan-return JSONResponse
      */
@@ -284,10 +284,10 @@ class UserController extends Controller
             // MEMORY MONITORING: Check initial memory usage to prevent OOM
             $initialMemoryUsage = memory_get_usage(true);
             $memoryLimit = ini_get('memory_limit');
-            
+
             // Convert memory limit to bytes for comparison
             $memoryLimitBytes = $this->convertToBytes($memoryLimit);
-            
+
             // If we're already using more than 80% of memory limit, return error
             if ($memoryLimitBytes > 0 && $initialMemoryUsage > ($memoryLimitBytes * 0.8)) {
                 $response = new JSONResponse(
@@ -296,13 +296,13 @@ class UserController extends Controller
                 );
                 return $this->securityService->addSecurityHeaders($response);
             }
-            
+
             // Get client IP address for rate limiting
             $clientIp = $this->securityService->getClientIpAddress($this->request);
-            
+
             // Get and sanitize login credentials from request
             $data = $this->request->getParams();
-            
+
             // Validate and sanitize credentials to prevent XSS attacks
             $credentialValidation = $this->securityService->validateLoginCredentials($data);
             if ($credentialValidation['valid'] === false) {
@@ -324,7 +324,7 @@ class UserController extends Controller
                 if (isset($rateLimitCheck['delay']) === true) {
                     sleep($rateLimitCheck['delay']);
                 }
-                
+
                 $response = new JSONResponse(
                     data: [
                         'error' => $rateLimitCheck['reason'],
@@ -343,7 +343,7 @@ class UserController extends Controller
             if ($user === false) {
                 // Record failed login attempt for rate limiting
                 $this->securityService->recordFailedLoginAttempt($username, $clientIp, 'invalid_credentials');
-                
+
                 // Return generic error message to prevent username enumeration
                 $response = new JSONResponse(
                     data: ['error' => 'Invalid username or password'],
@@ -356,7 +356,7 @@ class UserController extends Controller
             if ($user->isEnabled() === false) {
                 // Record failed login attempt for disabled account
                 $this->securityService->recordFailedLoginAttempt($username, $clientIp, 'account_disabled');
-                
+
                 $response = new JSONResponse(
                     data: ['error' => 'Account is disabled'],
                     statusCode: 401
@@ -376,7 +376,7 @@ class UserController extends Controller
             // MEMORY MONITORING: Check memory usage after building user data
             $finalMemoryUsage = memory_get_usage(true);
             $memoryIncreaseBytes = $finalMemoryUsage - $initialMemoryUsage;
-            
+
             // Log memory usage for monitoring
             if ($memoryIncreaseBytes > 10 * 1024 * 1024) { // 10MB threshold
                 $this->logger->warning('High memory usage during login', [
@@ -394,7 +394,7 @@ class UserController extends Controller
                 'user' => $userData,
                 'session_created' => true
             ]);
-            
+
             return $this->securityService->addSecurityHeaders($response);
         } catch (\Exception $e) {
             // Log the error securely without exposing sensitive information
@@ -409,12 +409,12 @@ class UserController extends Controller
     /**
      * Convert PHP memory limit string to bytes
      *
-     * This helper method converts PHP memory limit strings (like "128M", "1G") 
+     * This helper method converts PHP memory limit strings (like "128M", "1G")
      * to bytes for memory usage comparisons.
      *
      * @param string $memoryLimit The memory limit string from PHP ini
      * @return int The memory limit in bytes, or 0 if unlimited
-     * 
+     *
      * @psalm-param string $memoryLimit
      * @psalm-return int
      * @phpstan-param string $memoryLimit
@@ -445,4 +445,18 @@ class UserController extends Controller
 
         return $value;
     }
-} 
+
+    /**
+     * Logs out the user on the active user session
+     *
+     * @NoAdminRequired
+     * @NoCSRFRequired
+     * @PublicPage
+     * @return JSONResponse
+     */
+    public function logout(): JSONResponse {
+        $this->userSession->logout();
+
+        return new JSONResponse(['logout' => true]);
+    }
+}

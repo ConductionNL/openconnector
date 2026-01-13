@@ -8,7 +8,7 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 			<div>
 				<div class="detailHeader">
 					<h1 class="h1">
-						{{ eventStore.eventItem.name }}
+						{{ item?.name || '-' }}
 					</h1>
 
 					<NcActions :primary="true" menu-name="Actions">
@@ -54,55 +54,55 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 						</NcActionButton>
 					</NcActions>
 				</div>
-				<span>{{ eventStore.eventItem.description }}</span>
+				<span>{{ item?.description || '-' }}</span>
 
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
 						<b>id:</b>
-						<p>{{ eventStore.eventItem.id }}</p>
+						<p>{{ item?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Status:</b>
-						<p>{{ eventStore.eventItem.status }}</p>
+						<p>{{ item?.status || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Enabled:</b>
-						<p>{{ eventStore.eventItem.isEnabled }}</p>
+						<p>{{ item?.isEnabled }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Event Class:</b>
-						<p>{{ eventStore.eventItem.eventClass }}</p>
+						<p>{{ item?.eventClass }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Interval:</b>
-						<p>{{ eventStore.eventItem.interval }}</p>
+						<p>{{ item?.interval }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Execution Time:</b>
-						<p>{{ eventStore.eventItem.executionTime }}</p>
+						<p>{{ item?.executionTime }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Time Sensitive:</b>
-						<p>{{ eventStore.eventItem.timeSensitive }}</p>
+						<p>{{ item?.timeSensitive }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Allow Parallel Runs:</b>
-						<p>{{ eventStore.eventItem.allowParallelRuns }}</p>
+						<p>{{ item?.allowParallelRuns }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Single Run:</b>
-						<p>{{ eventStore.eventItem.singleRun }}</p>
+						<p>{{ item?.singleRun }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Next Run:</b>
 						<p>
-							{{ getValidISOstring(eventStore.eventItem.nextRun) ? new Date(eventStore.eventItem.nextRun).toLocaleString() : 'N/A' }}
+							{{ getValidISOstring(item?.nextRun) ? new Date(item?.nextRun).toLocaleString() : 'N/A' }}
 						</p>
 					</div>
 					<div class="gridContent">
 						<b>Last Run:</b>
 						<p>
-							{{ getValidISOstring(eventStore.eventItem.lastRun) ? new Date(eventStore.eventItem.lastRun).toLocaleString() : 'N/A' }}
+							{{ getValidISOstring(item?.lastRun) ? new Date(item?.lastRun).toLocaleString() : 'N/A' }}
 						</p>
 					</div>
 				</div>
@@ -110,8 +110,8 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 				<div class="tabContainer">
 					<BTabs content-class="mt-3" justified>
 						<BTab title="Event Arguments">
-							<div v-if="eventStore.eventItem?.arguments !== null && Object.keys(eventStore.eventItem?.arguments).length > 0">
-								<NcListItem v-for="(value, key, i) in eventStore.eventItem?.arguments"
+							<div v-if="item?.arguments !== null && Object.keys(item?.arguments || {}).length > 0">
+								<NcListItem v-for="(value, key, i) in item?.arguments"
 									:key="`${key}${i}`"
 									:name="key"
 									:bold="false"
@@ -143,7 +143,7 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 									</template>
 								</NcListItem>
 							</div>
-							<div v-if="eventStore.eventItem?.arguments === null || !Object.keys(eventStore.eventItem?.arguments).length" class="tabPanel">
+							<div v-if="item?.arguments === null || !Object.keys(item?.arguments || {}).length" class="tabPanel">
 								No arguments found
 							</div>
 						</BTab>
@@ -216,6 +216,16 @@ export default {
 		BTabs,
 		BTab,
 		NcListItem,
+	},
+	props: {
+		item: {
+			type: Object,
+			default: null,
+		},
+		loading: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	mounted() {
 		eventStore.refreshEventLogs()

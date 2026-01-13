@@ -242,7 +242,7 @@ class EndpointMapper extends QBMapper
         $qb->select($qb->createFunction('COUNT(*) as count'))
            ->from('openconnector_endpoints');
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $row = $result->fetch();
 
         // Return the total count
@@ -347,7 +347,7 @@ class EndpointMapper extends QBMapper
         $qb->select('id', 'slug')
             ->from($this->getTableName());
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $mappings = [];
         while ($row = $result->fetch()) {
             $mappings[$row['id']] = $row['slug'];
@@ -366,7 +366,7 @@ class EndpointMapper extends QBMapper
         $qb->select('id', 'slug')
             ->from($this->getTableName());
 
-        $result = $qb->execute();
+        $result = $qb->executeQuery();
         $mappings = [];
         while ($row = $result->fetch()) {
             $mappings[$row['slug']] = $row['id'];

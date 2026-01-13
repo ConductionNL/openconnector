@@ -1,8 +1,12 @@
 <template>
 	<NcContent app-name="openconnector">
 		<MainMenu />
-		<Views />
-		<SideBars />
+		<NcAppContent>
+			<template #default>
+				<router-view />
+			</template>
+		</NcAppContent>
+		<router-view name="sidebar" />
 		<Modals />
 		<Dialogs />
 	</NcContent>
@@ -10,12 +14,10 @@
 
 <script>
 
-import { NcContent } from '@nextcloud/vue'
+import { NcContent, NcAppContent } from '@nextcloud/vue'
 import MainMenu from './navigation/MainMenu.vue'
 import Modals from './modals/Modals.vue'
 import Dialogs from './dialogs/Dialogs.vue'
-import Views from './views/Views.vue'
-import SideBars from './sidebars/SideBars.vue'
 
 export default {
 	name: 'App',
@@ -24,8 +26,7 @@ export default {
 		MainMenu,
 		Modals,
 		Dialogs,
-		Views,
-		SideBars,
+		NcAppContent,
 	},
 }
 </script>

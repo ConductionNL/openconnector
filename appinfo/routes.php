@@ -72,7 +72,7 @@ return [
 		['name' => 'synchronizations#logsExport', 'url' => '/api/synchronizations/logs/export', 'verb' => 'GET'],
 		['name' => 'synchronizations#deleteLog', 'url' => '/api/synchronizations/logs/{id}', 'verb' => 'DELETE'],
 
-		// Synchronization Contracts endpoints  
+		// Synchronization Contracts endpoints
 		['name' => 'synchronizationContracts#statistics', 'url' => '/api/synchronization-contracts/statistics', 'verb' => 'GET'],
 		['name' => 'synchronizationContracts#performance', 'url' => '/api/synchronization-contracts/performance', 'verb' => 'GET'],
 		['name' => 'synchronizationContracts#export', 'url' => '/api/synchronization-contracts/export', 'verb' => 'GET'],
@@ -84,11 +84,37 @@ return [
 		['name' => 'user#me', 'url' => '/api/user/me', 'verb' => 'GET'],
 		['name' => 'user#updateMe', 'url' => '/api/user/me', 'verb' => 'PUT'],
 		['name' => 'user#login', 'url' => '/api/user/login', 'verb' => 'POST'],
+		['name' => 'user#logout', 'url' => '/api/user/logout', 'verb' => 'POST'],
 
 		// Settings endpoints
 		['name' => 'settings#stats', 'url' => '/api/settings/stats', 'verb' => 'GET'],
 		['name' => 'settings#getSettings', 'url' => '/api/settings', 'verb' => 'GET'],
 		['name' => 'settings#updateSettings', 'url' => '/api/settings', 'verb' => 'PUT'],
 		['name' => 'settings#rebase', 'url' => '/api/settings/rebase', 'verb' => 'POST'],
+
+		// UI page routes for SPA deep links
+		['name' => 'ui#dashboard', 'url' => '/', 'verb' => 'GET'],
+		['name' => 'ui#sources', 'url' => '/sources', 'verb' => 'GET'],
+		['name' => 'ui#sourcesLogs', 'url' => '/sources/logs', 'verb' => 'GET'],
+		['name' => 'ui#endpoints', 'url' => '/endpoints', 'verb' => 'GET'],
+		['name' => 'ui#endpointsLogs', 'url' => '/endpoints/logs', 'verb' => 'GET'],
+		['name' => 'ui#endpointsId', 'url' => '/endpoints/{id}', 'verb' => 'GET'],
+		['name' => 'ui#consumers', 'url' => '/consumers', 'verb' => 'GET'],
+		['name' => 'ui#consumersId', 'url' => '/consumers/{id}', 'verb' => 'GET'],
+		['name' => 'ui#webhooks', 'url' => '/webhooks', 'verb' => 'GET'],
+		['name' => 'ui#jobs', 'url' => '/jobs', 'verb' => 'GET'],
+		['name' => 'ui#jobsLogs', 'url' => '/jobs/logs', 'verb' => 'GET'],
+		['name' => 'ui#mappings', 'url' => '/mappings', 'verb' => 'GET'],
+		['name' => 'ui#mappingsId', 'url' => '/mappings/{id}', 'verb' => 'GET'],
+		['name' => 'ui#rules', 'url' => '/rules', 'verb' => 'GET'],
+		['name' => 'ui#rulesId', 'url' => '/rules/{id}', 'verb' => 'GET'],
+		['name' => 'ui#synchronizations', 'url' => '/synchronizations', 'verb' => 'GET'],
+		['name' => 'ui#synchronizationsContracts', 'url' => '/synchronizations/contracts', 'verb' => 'GET'],
+		['name' => 'ui#synchronizationsLogs', 'url' => '/synchronizations/logs', 'verb' => 'GET'],
+		['name' => 'ui#cloudEvents', 'url' => '/cloud-events', 'verb' => 'GET'],
+		['name' => 'ui#cloudEventsEvents', 'url' => '/cloud-events/events', 'verb' => 'GET'],
+		['name' => 'ui#cloudEventsEventsId', 'url' => '/cloud-events/events/{id}', 'verb' => 'GET'],
+		['name' => 'ui#cloudEventsLogs', 'url' => '/cloud-events/logs', 'verb' => 'GET'],
+		['name' => 'ui#import', 'url' => '/import', 'verb' => 'GET'],
 	],
 ];

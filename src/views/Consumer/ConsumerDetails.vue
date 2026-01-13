@@ -1,5 +1,5 @@
 <script setup>
-import { consumerStore, navigationStore } from '../../store/store.js'
+import { navigationStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 			<div>
 				<div class="detailHeader">
 					<h1 class="h1">
-						{{ consumerStore.consumerItem.name }}
+						{{ consumer?.name }}
 					</h1>
 
 					<NcActions :primary="true" menu-name="Acties">
@@ -30,51 +30,51 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 					</NcActions>
 				</div>
 
-				<span>{{ consumerStore.consumerItem.description }}</span>
+				<span>{{ consumer?.description }}</span>
 
 				<div class="detailGrid">
 					<div class="gridContent">
 						<b>Id:</b>
-						<p>{{ consumerStore.consumerItem?.id || '-' }}</p>
+						<p>{{ consumer?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Uuid:</b>
-						<p>{{ consumerStore.consumerItem?.uuid || '-' }}</p>
+						<p>{{ consumer?.uuid || '-' }}</p>
 					</div>
 					<div class="gridContent" />
 
 					<div class="gridContent">
 						<b>Name:</b>
-						<p>{{ consumerStore.consumerItem?.name || '-' }}</p>
+						<p>{{ consumer?.name || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Description:</b>
-						<p>{{ consumerStore.consumerItem?.description || '-' }}</p>
+						<p>{{ consumer?.description || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Domains:</b>
-						<p>{{ consumerStore.consumerItem?.domains?.join(', ') || '-' }}</p>
+						<p>{{ consumer?.domains?.join(', ') || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>IP's:</b>
-						<p>{{ consumerStore.consumerItem?.ips?.join(', ') || '-' }}</p>
+						<p>{{ consumer?.ips?.join(', ') || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Authorization Type:</b>
-						<p>{{ consumerStore.consumerItem?.authorizationType || '-' }}</p>
+						<p>{{ consumer?.authorizationType || '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Authorization Configuration:</b>
-						<p>{{ consumerStore.consumerItem?.authorizationConfiguration || '-' }}</p>
+						<p>{{ consumer?.authorizationConfiguration || '-' }}</p>
 					</div>
 
 					<div class="gridContent">
 						<b>Created:</b>
-						<p>{{ consumerStore.consumerItem.created ? new Date(consumerStore.consumerItem.created).toLocaleDateString() : '-' }}</p>
+						<p>{{ consumer?.created ? new Date(consumer.created).toLocaleDateString() : '-' }}</p>
 					</div>
 					<div class="gridContent">
 						<b>Updated:</b>
-						<p>{{ consumerStore.consumerItem.updated ? new Date(consumerStore.consumerItem.updated).toLocaleDateString() : '-' }}</p>
+						<p>{{ consumer?.updated ? new Date(consumer.updated).toLocaleDateString() : '-' }}</p>
 					</div>
 				</div>
 				<!-- Add more consumer-specific details here -->
@@ -97,6 +97,13 @@ export default {
 		DotsHorizontal,
 		Pencil,
 		TrashCanOutline,
+	},
+	props: {
+		consumer: {
+			type: Object,
+			required: false,
+			default: null,
+		},
 	},
 }
 </script>

@@ -4,6 +4,7 @@ namespace OCA\OpenConnector\Service;
 
 use OCA\OpenConnector\Db\Mapping;
 use OCA\OpenConnector\Db\MappingMapper;
+use OCA\OpenConnector\Db\SourceMapper;
 use OCA\OpenConnector\Twig\AuthenticationExtension;
 use OCA\OpenConnector\Twig\AuthenticationRuntimeLoader;
 use OCA\OpenConnector\Twig\MappingExtension;
@@ -38,11 +39,13 @@ class MappingService
 	 */
     public function __construct(
 		ArrayLoader $loader,
-		private readonly MappingMapper $mappingMapper
+		private readonly MappingMapper $mappingMapper,
+        CallService $callService,
+        SourceMapper $sourceMapper,
     ) {
         $this->twig = new Environment($loader);
 		$this->twig->addExtension(new MappingExtension());
-		$this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper));
+		$this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper, callService: $callService, sourceMapper: $sourceMapper));
 
     }//end __construct()
 
@@ -143,7 +146,7 @@ class MappingService
             }
 
             try {
-			    $dotArray->set($key, $this->twig->createTemplate($value)->render($originalInput));
+			    $dotArray->set($key, html_entity_decode($this->twig->createTemplate($value)->render($originalInput)));
             } catch (Throwable $e) {
                 throw new Exception("Error for mapping: {$mapping->getName()}, key: $key, value: $value and with message thrown: {$e->getMessage()}");
             }
@@ -191,22 +194,19 @@ class MappingService
         // If something has been defined to work on root level (i.e. the object lives on root level), we can use # to define writing the root object.
         $keys = array_keys($output);
         if (count($keys) === 1 && $keys[0] === '#') {
-            $output = $output['#'];
+            // Ensure we always return an array, even if the value is null
+            $rootValue = $output['#'];
+            if ($rootValue === null) {
+                $output = [];
+            } else {
+                $output = is_array($rootValue) ? $rootValue : [$rootValue];
+            }
         }
 
-        // Log the result.
-        // @todo: error handling
-        /*
-        isset($this->style) === true && $this->style->info(
-            'Mapped object',
-            [
-                'input'      => $input,
-                'output'     => $output,
-                'passThrough' => $mappingObject->getPassThrough(),
-                'mapping'    => $mappingObject->getMapping(),
-            ]
-        );
-        */
+        // Ensure output is always an array
+        if (is_array($output) === false) {
+            $output = $output === null ? [] : [$output];
+        }
 
         return $output;
 

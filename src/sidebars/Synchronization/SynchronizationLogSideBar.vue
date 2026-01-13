@@ -108,6 +108,7 @@ import ChartLine from 'vue-material-design-icons/ChartLine.vue'
 import FilterOffOutline from 'vue-material-design-icons/FilterOffOutline.vue'
 import DateRangeInput from '../../components/DateRangeInput.vue'
 import { translate as t } from '@nextcloud/l10n'
+import getValidISOstring from '@/services/getValidISOstring.js'
 
 export default {
 	name: 'SynchronizationLogSideBar',
@@ -165,6 +166,8 @@ export default {
 	},
 	mounted() {
 		this.$root.$on('synchronization-logs-filtered-count', this.updateFilteredCount)
+		// Initialize SPOT from URL on first load
+		this.applyQueryParamsFromRoute()
 	},
 	beforeDestroy() {
 		this.$root.$off('synchronization-logs-filtered-count')
@@ -182,6 +185,8 @@ export default {
 				}
 			})
 			this.$root.$emit('synchronization-logs-filters-changed', cleanFilters)
+			// Write URL (SPOT)
+			this.updateRouteQueryFromState()
 		},
 		debouncedApplyFilters() {
 			if (this.debounceTimer) clearTimeout(this.debounceTimer)
@@ -193,6 +198,39 @@ export default {
 		},
 		updateFilteredCount(count) {
 			this.filteredCount = count
+		},
+		buildQueryFromState() {
+			const q = {}
+			if (this.filters.level) q.level = String(this.filters.level.id || this.filters.level)
+			if (this.filters.contract) q.contract = String(this.filters.contract.id || this.filters.contract)
+			if (this.filters.synchronization) q.synchronization = String(this.filters.synchronization.id || this.filters.synchronization)
+			if (this.filters.dateFrom) q.dateFrom = getValidISOstring(this.filters.dateFrom)
+			if (this.filters.dateTo) q.dateTo = getValidISOstring(this.filters.dateTo)
+			if (this.filters.message) q.message = this.filters.message
+			return q
+		},
+		queriesEqual(a, b) {
+			const aKeys = Object.keys(a)
+			const bKeys = Object.keys(b || {})
+			if (aKeys.length !== bKeys.length) return false
+			return aKeys.every(k => String(a[k]) === String((b || {})[k] || ''))
+		},
+		updateRouteQueryFromState() {
+			if (this.$route.path !== '/synchronizations/logs') return
+			const next = this.buildQueryFromState()
+			if (this.queriesEqual(next, this.$route.query || {})) return
+			this.$router.replace({ path: this.$route.path, query: next })
+		},
+		applyQueryParamsFromRoute() {
+			if (this.$route.path !== '/synchronizations/logs') return
+			const q = this.$route.query || {}
+			this.filters.level = q.level ? this.levelOptions.find(opt => opt.id === q.level) || null : null
+			this.filters.contract = q.contract ? this.contractOptions.find(opt => opt.id === String(q.contract)) || null : null
+			this.filters.synchronization = q.synchronization ? this.synchronizationOptions.find(opt => opt.id === String(q.synchronization)) || null : null
+			this.filters.dateFrom = q.dateFrom && !isNaN(new Date(q.dateFrom).getTime()) ? new Date(q.dateFrom) : null
+			this.filters.dateTo = q.dateTo && !isNaN(new Date(q.dateTo).getTime()) ? new Date(q.dateTo) : null
+			this.filters.message = q.message || ''
+			this.applyFilters()
 		},
 	},
 }

@@ -40,11 +40,11 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 				<NcListItem v-for="(mapping, i) in mappingStore.mappingList.filter(mapping => searchStore.search === '' || mapping.name.toLowerCase().includes(searchStore.search.toLowerCase()))"
 					:key="`${mapping}${i}`"
 					:name="mapping.name"
-					:active="mappingStore.mappingItem?.id === mapping?.id"
+					:active="String($route.params.id || '') === String(mapping?.id || '')"
 					:force-display-actions="true"
-					@click="mappingStore.setMappingItem(mapping)">
+					@click="$router.push('/mappings/' + mapping.id)">
 					<template #icon>
-						<SitemapOutline :class="mappingStore.mappingItem?.id === mapping.id && 'selectedMappingIcon'"
+						<SitemapOutline :class="String($route.params.id || '') === String(mapping?.id || '') && 'selectedMappingIcon'"
 							disable-menu
 							:size="44" />
 					</template>

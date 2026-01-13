@@ -29,6 +29,7 @@ use Soap\Psr18Transport\Wsdl\Psr18Loader;
 use Soap\Wsdl\Loader\StreamWrapperLoader;
 use stdClass;
 use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * This class contains a basic SOAP client for communicating with SOAP Sources using a WSDL
@@ -55,6 +56,42 @@ class SOAPService
 	public function __construct(private readonly CookieJar $cookieJar) {
 	}
 
+    /**
+     * Fetch the SOAP Version to work in.
+     *
+     * @param string|int|null $soapVersion the specified soap version according to the configuration.
+     * @return int The soap version as specified in constants.
+     */
+    private function getSoapVersion(string|int|null $soapVersion): int
+    {
+        if (is_int($soapVersion) === true && $soapVersion > 0 && $soapVersion < 3) {
+            return $soapVersion;
+        } else if (is_int($soapVersion)) {
+            throw new BadRequestHttpException(
+                message: 'improper configuration, only soap 1.1 and 1.2 are supported'
+            );
+        }
+
+        switch ($soapVersion) {
+            case '1.1':
+            case '1_1':
+            case 'soap1.1':
+            case 'soap1_1':
+            case 'soap_1_1':
+            case 'SOAP_1_1':
+                return SOAP_1_1;
+            case '1.2':
+            case '1_2':
+            case 'soap1.2':
+            case 'soap1_2':
+            case 'soap_1_2':
+            case 'SOAP_1_2':
+            default:
+                return SOAP_1_2;
+        }
+
+    }
+
 	/**
 	 * Setup an SOAP engine for a source.
 	 *
@@ -76,7 +113,9 @@ class SOAPService
 
         $this->client = new Client($passedConfig);
         $wsdl = $config['wsdl'];
-        unset($passedConfig['wsdl']);
+        $soapVersion = $config['soapVersion'] ?? null;
+
+        unset($passedConfig['wsdl'], $passedConfig['soapVersion']);
         try {
             $engine = new SimpleEngine(
                 $driver = ExtSoapDriver::createFromClient(
@@ -85,7 +124,7 @@ class SOAPService
                             'cache_wsdl' => WSDL_CACHE_NONE,
                             'trace' => true,
                             'location' => $source->getLocation(),
-							'soap_version' => SOAP_1_2
+							'soap_version' => $this->getSoapVersion($soapVersion),
                         ])
                             ->withWsdlProvider(new TemporaryWsdlLoaderProvider(new Psr18Loader($this->client, new HttpFactory())))
                             ->disableWsdlCache()
@@ -156,9 +195,14 @@ class SOAPService
 	 */
     public function callSoapSource(Source $source, string $soapAction, array $config): Response
     {
+        if (isset($config['json'])) {
+            $body = $config['json'];
+            unset($config['json']);
+        } else {
+            $body = json_decode(json: $config['body'], associative: true);
+            unset($config['body']);
+        }
 
-        $body = json_decode(json: $config['body'], associative: true);
-        unset($config['body']);
 
         libxml_set_external_entity_loader(static function ($public, $system) {
             return $system;

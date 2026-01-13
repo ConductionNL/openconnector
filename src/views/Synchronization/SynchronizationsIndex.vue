@@ -131,7 +131,7 @@
 										</template>
 										Run
 									</NcActionButton>
-									<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setSelected('synchronization-logs')">
+									<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); $router.push('/synchronizations/logs?synchronization=' + synchronization.id)">
 										<template #icon>
 											<TextBoxOutline :size="20" />
 										</template>
@@ -449,7 +449,7 @@
 												</template>
 												Run
 											</NcActionButton>
-											<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setSelected('synchronization-logs')">
+											<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); $router.push('/synchronizations/logs?synchronization=' + synchronization.id)">
 												<template #icon>
 													<TextBoxOutline :size="20" />
 												</template>
@@ -677,7 +677,7 @@ export default {
 			// Set the selected synchronization item
 			this.synchronizationStore.setSynchronizationItem(synchronization)
 			// Navigate to the contracts view
-			this.navigationStore.setSelected('contracts')
+			this.$router.push('/synchronizations/contracts?synchronization=' + synchronization.id)
 		},
 
 		/**
