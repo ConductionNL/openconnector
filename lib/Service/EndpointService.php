@@ -233,7 +233,6 @@ class EndpointService
                     '_path' => $flowToken->getRequestOriginal()['path'],
                     '_method' => $flowToken->getRequestOriginal()['method'],
                 ], $flowToken->getRequestOriginal()['parameters'])];
-
             // Process rules before handling the request
             $ruleResult = $this->processRules(
                 endpoint: $endpoint,
@@ -1201,7 +1200,9 @@ class EndpointService
     {
 
         $this->objectService->getOpenRegisters()->clearCurrents();
-        $object = $this->objectService->getOpenRegisters()->updateFromArray(id: $objectId, object: $data['body'], updateVersion: false);
+        $object = $this->objectService->getOpenRegisters()->getMapper('objectEntity')->find($objectId);
+        $object->setObject($data['body']);
+        $object = $this->objectService->getOpenRegisters()->saveObject(object: $object, register: $object->getRegister(), schema: $object->getSchema(), uuid: $object->getUuid());
         $this->objectService->getOpenRegisters()->clearCurrents();
 
         $data['body'] = $object->jsonSerialize();
