@@ -1196,6 +1196,20 @@ class EndpointService
         }
     }
 
+    /**
+     * This rule, that only can be run on timing 'after' overrides the content of a written object by the updated contents in the flow token.
+     *
+     * @param Rule $rule The rule to process.
+     * @param array $data The data from the flow token.
+     * @param string $objectId The object to override.
+     * @return array The updated object.
+     *
+     * @throws ContainerExceptionInterface
+     * @throws DoesNotExistException
+     * @throws MultipleObjectsReturnedException
+     * @throws NotFoundExceptionInterface
+     * @throws \OCP\DB\Exception
+     */
     private function processOverrideRule(Rule $rule, array $data, string $objectId): array
     {
 
