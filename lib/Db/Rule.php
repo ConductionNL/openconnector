@@ -184,7 +184,7 @@ class Rule extends Entity implements JsonSerializable
             'timing' => $this->timing,
             'conditions' => $this->conditions,
             'type' => $this->type,
-            'configuration' => $this->parseConfiguration($this->configuration),
+            'configuration' => $this->parseConfiguration($this->configuration ?? []),
             'order' => $this->order,
             'configurations' => $this->configurations,
             'created' => isset($this->created) ? $this->created->format('c') : null,

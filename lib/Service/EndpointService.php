@@ -233,7 +233,6 @@ class EndpointService
                     '_path' => $flowToken->getRequestOriginal()['path'],
                     '_method' => $flowToken->getRequestOriginal()['method'],
                 ], $flowToken->getRequestOriginal()['parameters'])];
-
             // Process rules before handling the request
             $ruleResult = $this->processRules(
                 endpoint: $endpoint,
@@ -1135,6 +1134,7 @@ class EndpointService
                 // Check rule conditions
                 if ($this->checkRuleConditions(rule: $rule, data: $data, logicResult:  $logicResult) === false || $rule->getTiming() !== $timing) {
                     $this->logger->info('Rule condition check failed for endpoint ' . $endpoint->getName() . ' and rule ' . $rule->getName() . ' of type: ' . $rule->getType());
+
                     continue;
                 }
 
@@ -1166,6 +1166,7 @@ class EndpointService
                         'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
                         'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
                         'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
+                        'override' => $this->processOverrideRule(rule: $rule, data: $data, objectId: $objectId),
                         'custom' => $this->processCustomRule(rule: $rule, data: $data),
                         default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
                     };
@@ -1193,6 +1194,34 @@ class EndpointService
             $this->logger->error('Error processing rules: ' . $e->getMessage());
             return new JSONResponse(['error' => 'Rule processing failed: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * This rule, that only can be run on timing 'after' overrides the content of a written object by the updated contents in the flow token.
+     *
+     * @param Rule $rule The rule to process.
+     * @param array $data The data from the flow token.
+     * @param string $objectId The object to override.
+     * @return array The updated object.
+     *
+     * @throws ContainerExceptionInterface
+     * @throws DoesNotExistException
+     * @throws MultipleObjectsReturnedException
+     * @throws NotFoundExceptionInterface
+     * @throws \OCP\DB\Exception
+     */
+    private function processOverrideRule(Rule $rule, array $data, string $objectId): array
+    {
+
+        $this->objectService->getOpenRegisters()->clearCurrents();
+        $object = $this->objectService->getOpenRegisters()->getMapper('objectEntity')->find($objectId);
+        $object->setObject($data['body']);
+        $object = $this->objectService->getOpenRegisters()->saveObject(object: $object, register: $object->getRegister(), schema: $object->getSchema(), uuid: $object->getUuid());
+        $this->objectService->getOpenRegisters()->clearCurrents();
+
+        $data['body'] = $object->jsonSerialize();
+
+        return $data;
     }
 
     /**
