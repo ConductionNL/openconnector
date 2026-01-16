@@ -1675,6 +1675,9 @@ class EndpointService
 
             $this->objectService->getOpenRegisters()->clearCurrents();
             $fetchedObject = $this->objectService->getOpenRegisters()->find($id);
+            $foData = $fetchedObject->jsonSerialize();
+            $foData['synchronization_trigger'] = true;
+            $fetchedObject->setObject($foData);
         }
 
 
