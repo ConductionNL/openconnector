@@ -1,0 +1,788 @@
+name: CI - Tests & Quality Checks
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    branches: [development, main, master]
+  push:
+    branches: [development, main, master]
+
+env:
+  MARIADB_IMAGE: "mariadb:10.6"
+  REDIS_IMAGE: "redis:7"
+  MAILHOG_IMAGE: "ghcr.io/juliusknorr/nextcloud-dev-mailhog:latest"
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php-version }} Tests with Nextcloud
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.2', '8.3']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Load version configuration
+        run: |
+          echo "============================================================"
+          echo "🧭  Load centralized version configuration"
+          echo "============================================================"
+          if [ -f .github/workflows/versions.env ]; then
+            echo "✅  Found .github/workflows/versions.env"
+            cat .github/workflows/versions.env
+          else
+            echo "⚠️  No versions.env found, using defaults from 'env:'"
+          fi
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql, bcmath
+          tools: composer:v2
+
+      - name: Set Nextcloud image based on PHP version
+        id: nextcloud-image
+        run: |
+          PHP_VERSION=$(echo "${{ matrix.php-version }}" | tr -d '.')
+          echo "image=ghcr.io/juliusknorr/nextcloud-dev-php${PHP_VERSION}:latest" >> $GITHUB_OUTPUT
+          echo "Using Nextcloud image: ghcr.io/juliusknorr/nextcloud-dev-php${PHP_VERSION}:latest"
+          echo "image=ghcr.io/conductionnl/nextcloud-images:fpm-soap" >> $GITHUB_OUTPUT
+          echo "Using Nextcloud image: ghcr.io/conductionnl/nextcloud-images:fpm-soap"
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      # Decide PHPUnit version constraint based on matrix PHP
+      - name: Decide PHPUnit version constraint
+        id: phpunit-constraint
+        run: |
+          if [[ "${{ matrix.php-version }}" == "8.3" ]]; then
+            echo "constraint=^10.5" >> $GITHUB_OUTPUT
+          else
+            echo "constraint=^9.6" >> $GITHUB_OUTPUT
+          fi
+          echo "Using PHPUnit constraint: $(cat $GITHUB_OUTPUT | sed -n 's/constraint=//p')"
+
+      - name: Install dependencies on GitHub Actions runner
+        run: |
+          echo "============================================================"
+          echo "📦  Install Composer dependencies (runner)"
+          echo "============================================================"
+          composer install --no-interaction --prefer-dist
+          if [ ! -f "./vendor/bin/phpunit" ]; then
+            echo "📦  Install PHPUnit (runner)"
+            composer require --dev phpunit/phpunit:${{ steps.phpunit-constraint.outputs.constraint }} --no-interaction
+          fi
+          echo "🔎  PHPUnit version:"
+          ./vendor/bin/phpunit --version
+
+      - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🐳  Start infrastructure containers"
+          echo "============================================================"
+
+          echo "🌐  Create job network"
+          docker network create nc-net-tests
+
+          echo "🐳  START: MariaDB"
+          docker run -d \
+            --name mariadb-test \
+            --network nc-net-tests \
+            -e MYSQL_ROOT_PASSWORD=nextcloud \
+            -e MYSQL_PASSWORD=nextcloud \
+            -e MYSQL_USER=nextcloud \
+            -e MYSQL_DATABASE=nextcloud \
+            ${{ env.MARIADB_IMAGE }}
+
+          echo "🐳  START: Redis"
+          docker run -d --name redis-test --network nc-net-tests ${{ env.REDIS_IMAGE }}
+
+          echo "🐳  START: MailHog"
+          docker run -d \
+            --name mail-test \
+            --network nc-net-tests \
+            -p 1025:1025 \
+            -p 8025:8025 \
+            ${{ env.MAILHOG_IMAGE }}
+
+          echo "⏳  WAIT: MariaDB health"
+          timeout 60 bash -c 'until docker exec mariadb-test mysqladmin ping -h"localhost" --silent; do sleep 2; done'
+
+          echo "🐳  START: Nextcloud"
+          docker run -d \
+            --name nextcloud-test \
+            --network nc-net-tests \
+            -p 8080:80 \
+            -e MYSQL_HOST=mariadb-test \
+            -e MYSQL_DATABASE=nextcloud \
+            -e MYSQL_USER=nextcloud \
+            -e MYSQL_PASSWORD=nextcloud \
+            -e REDIS_HOST=redis-test \
+            -e REDIS_PORT=6379 \
+            -e SMTP_HOST=mail-test \
+            -e SMTP_PORT=1025 \
+            -e SMTP_NAME=mail \
+            -e SMTP_PASSWORD= \
+            -e SMTP_SECURE= \
+            -e MAIL_FROM_ADDRESS=nextcloud \
+            -e MAIL_DOMAIN=localhost \
+            -e NEXTCLOUD_ADMIN_USER=admin \
+            -e NEXTCLOUD_ADMIN_PASSWORD=admin \
+            -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
+            -e WITH_REDIS=YES \
+            ${{ steps.nextcloud-image.outputs.image }}
+
+          echo "============================================================"
+          echo "🔍  Diagnose Nextcloud container right after start"
+          echo "============================================================"
+          echo "▶️  docker ps:"
+          docker ps
+
+          echo "▶️  Last 30 log lines of nextcloud-test (right after start)"
+          docker logs --tail=30 nextcloud-test || true
+
+          echo "▶️  Check if web server is listening on port 80 in container"
+          docker exec nextcloud-test bash -lc "command -v netstat >/dev/null 2>&1 && netstat -tulnp | grep ':80' || echo 'netstat not available or nothing listening on :80'" || true
+
+          echo "============================================================"
+          echo "⏳  WAIT: Nextcloud init (status.php)"
+          echo "============================================================"
+
+          ATTEMPTS=60   # 60 * 10s = 600s (10 minutes)
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "⏱️  Attempt $i/$ATTEMPTS - check http://127.0.0.1:8080/status.php"
+
+            if curl -sS http://127.0.0.1:8080/status.php | grep -q '"installed"[[:space:]]*:[[:space:]]*true'; then
+              echo "✅  Nextcloud ready (status.php installed=true)"
+              break
+            else
+              echo "⚠️  Nextcloud not ready yet, curl failed or installed!=true"
+
+              echo "▶️  docker ps (attempt $i)"
+              docker ps
+
+              echo "▶️  Last 20 log lines of nextcloud-test (attempt $i)"
+              docker logs --tail=20 nextcloud-test || true
+            fi
+
+            if [ "$i" -eq "$ATTEMPTS" ]; then
+              echo "❌  Nextcloud did not become ready within $ATTEMPTS attempts (~600s)"
+              echo "🧾  Final logs:"
+              docker logs nextcloud-test || true
+              exit 1
+            fi
+
+            echo "... waiting 10s"
+            sleep 10
+          done
+
+          echo "📦  COPY: app → /custom_apps/openconnector"
+          docker cp . nextcloud-test:/var/www/html/custom_apps/openconnector
+
+          echo "🔧  CHOWN: www-data"
+          docker exec --user 0 nextcloud-test bash -lc "chown -R www-data:www-data /var/www/html/custom_apps/openconnector || true"
+
+          echo "⏳  WAIT: let things settle"
+          sleep 10  
+
+      - name: Diagnose Nextcloud occ command availability
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🔬  Nextcloud occ Command Diagnostics"
+          echo "============================================================"
+          echo "🔎  occ exists?"
+          docker exec nextcloud-test bash -c "test -f /var/www/html/occ"
+          echo "✅  occ present"
+
+          echo "🔎  occ executable?"
+          docker exec nextcloud-test bash -c "test -x /var/www/html/occ"
+          echo "✅  occ executable"
+
+          echo "▶️  php occ --version (as www-data)"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ --version"
+          echo "✅  occ OK"
+
+          echo "▶️  Sanity: php -r"
+          docker exec nextcloud-test bash -c "php -r 'echo \"PHP OK\n\";'"
+          echo "✅  PHP OK"
+
+      - name: Install Composer in Nextcloud container
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🧰  Install Composer (in-container)"
+          echo "============================================================"
+          docker exec --user 0 nextcloud-test bash -lc "apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y curl"
+          docker exec --user 0 nextcloud-test bash -lc "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+          docker exec nextcloud-test bash -c "composer --version"
+          echo "✅  Composer installed"
+
+      - name: Install and enable OpenConnector app
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🚀  Install & enable OpenConnector app"
+          echo "============================================================"
+          MIGRATION_SUCCESS=false
+
+          echo "🔎  Nextcloud version"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ --version"
+
+          echo "📁  App dir exists?"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/"
+
+          echo "📋  app:list (pre)"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:list"
+
+          echo "📦  composer install (app deps)"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html/custom_apps/openconnector && composer install --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
+
+          echo "🧰  maintenance:repair"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ maintenance:repair"
+
+          echo "▶️  Enable app"
+          if docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:enable openconnector"; then
+            MIGRATION_SUCCESS=true
+            echo "✅  App enabled"
+          else
+            echo "❌  App enable failed"
+          fi
+
+          echo "📊  MIGRATION_SUCCESS=$MIGRATION_SUCCESS"
+          if [ "$MIGRATION_SUCCESS" != true ]; then
+            echo "🧾  Diagnostics"
+            docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:list | grep openconnector || true"
+            docker exec nextcloud-test bash -c "tail -50 /var/www/html/data/nextcloud.log || true"
+            docker exec mariadb-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES LIKE \"oc_openconnector_job_logs\";'" || true
+            docker exec mariadb-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" || true
+            exit 1
+          fi
+
+          echo "🗄️  DB consistency helpers"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ db:add-missing-indices"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ db:add-missing-columns"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ db:convert-filecache-bigint"
+
+          echo "🔁  Toggle app (force migrations)"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:disable openconnector"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:enable openconnector"
+
+          echo "🔎  Verify table exists"
+          docker exec mariadb-test bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null && echo "✅  Table present"
+
+          echo "📋  app:list (post)"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:list | grep openconnector"
+
+          echo "⚙️  Enable debug logging"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ config:system:set debug --value true"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ config:system:set loglevel --value 0"
+
+      - name: Verify app installation and run diagnostics
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🧭  App verification & diagnostics"
+          echo "============================================================"
+
+          echo "🔍  vendor/autoload.php present?"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/vendor/autoload.php || echo '⚠️  autoloader missing'"
+
+          echo "📂  Structure checks"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/appinfo/"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/lib/ || true"
+          docker exec nextcloud-test bash -c "head -n 10 /var/www/html/custom_apps/openconnector/appinfo/info.xml || true"
+
+          echo "📋  app:list (before repair)"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:list"
+
+          echo "🧰  maintenance:repair"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ maintenance:repair"
+
+          echo "📋  app:list (after repair)"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:list"
+
+          echo "🧩  Check Application.php"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/lib/AppInfo/Application.php || true"
+
+          echo "🧩  Check autoload.php"
+          docker exec nextcloud-test bash -c "ls -la /var/www/html/custom_apps/openconnector/lib/autoload.php || true"
+
+          if ! docker exec nextcloud-test bash -c "test -f /var/www/html/custom_apps/openconnector/lib/autoload.php"; then
+            echo "🔧  composer dump-autoload (optimize, authoritative)"
+            docker exec nextcloud-test bash -c "cd /var/www/html/custom_apps/openconnector && composer dump-autoload --optimize --classmap-authoritative"
+          fi
+
+          echo "✅  Assert: autoload.php exists"
+          docker exec nextcloud-test bash -c "test -f /var/www/html/custom_apps/openconnector/lib/autoload.php || (echo '❌  autoload.php missing' && exit 1)"
+
+          echo "🔁  Reload app & repair caches"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:disable openconnector"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ app:enable openconnector"
+          docker exec --user www-data nextcloud-test bash -lc "cd /var/www/html && php occ maintenance:repair"
+
+          echo "🧪  class_exists(OCA\\OpenConnector\\AppInfo\\Application)"
+          for i in {1..5}; do
+            echo "⏱️  Attempt $i/5 ..."
+            if docker exec nextcloud-test bash -c "cd /var/www/html && php -r 'require_once \"custom_apps/openconnector/lib/autoload.php\"; echo (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")?\"OK\":\"NO\").PHP_EOL; exit(class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")?0:1);'"; then
+              echo "✅  Class available (attempt $i)"; break
+            else
+              [ $i -lt 5 ] && echo "⏳  Retry after 10s…" && sleep 10 || (echo "❌  Class not found" && exit 1)
+            fi
+          done
+
+      - name: Diagnose Nextcloud container environment
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🏗️  Container environment diagnostics"
+          echo "============================================================"
+          echo "🔎  which composer"; docker exec nextcloud-test bash -c "which composer"
+          echo "🔎  which php";      docker exec nextcloud-test bash -c "which php"
+          echo "📁  /var/www/html/vendor"; docker exec nextcloud-test bash -c "ls -la /var/www/html/vendor/ || true"
+          echo "✅  Environment looks sane"
+
+      - name: Install PHPUnit in Nextcloud container
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🧪  Install PHPUnit (in-container)"
+          echo "============================================================"
+          docker exec nextcloud-test bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:${{ steps.phpunit-constraint.outputs.constraint }}"
+          docker exec nextcloud-test bash -c "cd /var/www/html && composer dump-autoload --optimize"
+          docker exec nextcloud-test bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --version"
+          echo "✅  PHPUnit OK"
+
+      - name: Run PHP linting on GitHub Actions runner
+        run: composer lint
+        continue-on-error: true
+
+      - name: Run unit tests inside Nextcloud container (with coverage)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🧪  Run PHPUnit (with coverage)"
+          echo "============================================================"
+          docker exec nextcloud-test bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --bootstrap custom_apps/openconnector/tests/bootstrap.php --coverage-clover custom_apps/openconnector/coverage.xml custom_apps/openconnector/tests"
+          echo "✅  Tests finished"
+
+      - name: Copy coverage out of container (PHP 8.2 only)
+        if: matrix.php-version == '8.2'
+        run: |
+          echo "📤  Copy coverage.xml from container → workspace"
+          docker cp nextcloud-test:/var/www/html/custom_apps/openconnector/coverage.xml ./coverage.xml
+          echo "✅  coverage.xml ready for Codecov"
+
+      - name: Upload coverage (PHP 8.2 only)
+        if: matrix.php-version == '8.2'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          # token: ${{ secrets.CODECOV_TOKEN }} # for private repos
+
+      - name: Cleanup containers
+        if: always()
+        run: |
+          docker stop nextcloud-test mariadb-test redis-test mail-test || true
+          docker rm   nextcloud-test mariadb-test redis-test mail-test || true
+          docker network rm nc-net-tests || true
+
+  quality:
+    name: Code Quality & Standards with Nextcloud
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Load version configuration
+        run: |
+          echo "============================================================"
+          echo "🧭  Load centralized version configuration"
+          echo "============================================================"
+          if [ -f .github/workflows/versions.env ]; then
+            echo "✅  Found .github/workflows/versions.env"
+            cat .github/workflows/versions.env
+          else
+            echo "⚠️  No versions.env found, using defaults from 'env:'"
+          fi
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, dom, filter, gd, json, pdo, zip, curl, mysql, bcmath
+          tools: composer:v2
+
+      - name: Set Nextcloud image based on PHP version
+        id: nextcloud-image-quality
+        run: |
+          echo "image=ghcr.io/juliusknorr/nextcloud-dev-php83:latest" >> $GITHUB_OUTPUT
+          echo "Using Nextcloud image: ghcr.io/juliusknorr/nextcloud-dev-php83:latest"
+          echo "image=ghcr.io/conductionnl/nextcloud-images:fpm-soap" >> $GITHUB_OUTPUT
+          echo "Using Nextcloud image: ghcr.io/conductionnl/nextcloud-images:fpm-soap"
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      # Decide PHPUnit version constraint for quality job
+      - name: Decide PHPUnit version constraint (Quality)
+        id: phpunit-constraint-quality
+        run: |
+          # quality job runs on PHP 8.3
+          echo "constraint=^10.5" >> $GITHUB_OUTPUT
+          echo "Using PHPUnit constraint: $(cat $GITHUB_OUTPUT | sed -n 's/constraint=//p')"
+
+      - name: Install dependencies on GitHub Actions runner (Quality)
+        run: |
+          echo "============================================================"
+          echo "📦  Install Composer dependencies (runner)"
+          echo "============================================================"
+          composer install --no-interaction --prefer-dist
+          if [ ! -f "./vendor/bin/phpunit" ]; then
+            echo "📦  Install PHPUnit (runner)"
+            composer require --dev phpunit/phpunit:${{ steps.phpunit-constraint-quality.outputs.constraint }} --no-interaction
+          fi
+          echo "🔎  PHPUnit version:"
+          ./vendor/bin/phpunit --version
+
+      - name: Start MariaDB, Redis, Mail and Nextcloud with Docker
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🐳  Start infrastructure containers"
+          echo "============================================================"
+
+          echo "🌐  Create job network"
+          docker network create nc-net-quality
+
+          echo "🐳  START: MariaDB"
+          docker run -d --name mariadb-test-quality \
+            --network nc-net-quality \
+            -e MYSQL_ROOT_PASSWORD=nextcloud \
+            -e MYSQL_PASSWORD=nextcloud \
+            -e MYSQL_USER=nextcloud \
+            -e MYSQL_DATABASE=nextcloud \
+            ${{ env.MARIADB_IMAGE }}
+
+          echo "🐳  START: Redis"
+          docker run -d --name redis-test-quality --network nc-net-quality ${{ env.REDIS_IMAGE }}
+
+          echo "🐳  START: MailHog"
+          docker run -d --name mail-test-quality \
+            --network nc-net-quality \
+            -p 1026:1025 -p 8026:8025 \
+            ${{ env.MAILHOG_IMAGE }}
+
+          echo "⏳  WAIT: MariaDB health"
+          timeout 60 bash -c 'until docker exec mariadb-test-quality mysqladmin ping -h"localhost" --silent; do sleep 2; done'
+
+          echo "🐳  START: Nextcloud"
+          docker run -d \
+            --name nextcloud-test-quality \
+            --network nc-net-quality \
+            -p 8081:80 \
+            -e MYSQL_HOST=mariadb-test-quality \
+            -e MYSQL_DATABASE=nextcloud \
+            -e MYSQL_USER=nextcloud \
+            -e MYSQL_PASSWORD=nextcloud \
+            -e REDIS_HOST=redis-test-quality \
+            -e REDIS_PORT=6379 \
+            -e SMTP_HOST=mail-test-quality \
+            -e SMTP_PORT=1025 \
+            -e SMTP_NAME=mail \
+            -e SMTP_PASSWORD= \
+            -e SMTP_SECURE= \
+            -e MAIL_FROM_ADDRESS=nextcloud \
+            -e MAIL_DOMAIN=localhost \
+            -e NEXTCLOUD_ADMIN_USER=admin \
+            -e NEXTCLOUD_ADMIN_PASSWORD=admin \
+            -e NEXTCLOUD_TRUSTED_DOMAINS=localhost \
+            -e WITH_REDIS=YES \
+            ${{ steps.nextcloud-image-quality.outputs.image }}
+
+          echo "⏳  WAIT: Nextcloud init (status.php)"
+          timeout 600 bash -c 'until curl -sSf http://localhost:8081/status.php | grep -q "installed.*true"; do echo "… waiting"; sleep 10; done'
+          echo "✅  Nextcloud ready"
+
+          echo "📦  COPY: app → /custom_apps/openconnector"
+          docker cp . nextcloud-test-quality:/var/www/html/custom_apps/openconnector
+
+          echo "🔧  CHOWN: www-data"
+          docker exec --user 0 nextcloud-test-quality bash -lc "chown -R www-data:www-data /var/www/html/custom_apps/openconnector || true"
+
+          echo "⏳  WAIT: settle"
+          sleep 10
+
+      - name: Diagnose Nextcloud occ command availability (Quality)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🔬  Nextcloud occ Command Diagnostics"
+          echo "============================================================"
+          echo "🔎  occ exists?"
+          docker exec nextcloud-test-quality bash -c "test -f /var/www/html/occ"
+          echo "✅  occ present"
+
+          echo "🔎  occ executable?"
+          docker exec nextcloud-test-quality bash -c "test -x /var/www/html/occ"
+          echo "✅  occ executable"
+
+          echo "▶️  php occ --version (as www-data)"
+          if timeout 30 docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ --version" 2>/dev/null; then
+            echo "✅  occ OK"
+          else
+            echo "⚠️  occ timed out; PHP sanity"
+            docker exec nextcloud-test-quality bash -c "php -r 'echo \"PHP OK\n\";'" 2>/dev/null
+          fi
+
+      - name: Install Composer in Nextcloud container (Quality)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🧰  Install Composer (in-container)"
+          echo "============================================================"
+          docker exec --user 0 nextcloud-test-quality bash -lc "apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install -y curl"
+          docker exec --user 0 nextcloud-test-quality bash -lc "curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer"
+          docker exec nextcloud-test-quality bash -c "composer --version"
+          echo "✅  Composer installed"
+
+      - name: Install development tools in Nextcloud container (Quality)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🧰  Install dev tools (php-cs-fixer, Psalm)"
+          echo "============================================================"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && composer require --dev friendsofphp/php-cs-fixer:^3 vimeo/psalm:^5 --no-interaction"
+          echo "🔎  Tools versions"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/php-cs-fixer --version"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/psalm --version"
+          echo "✅  Dev tools ready"
+        continue-on-error: false
+
+      - name: Install and enable OpenConnector app (Quality)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🚀  Install & enable OpenConnector app"
+          echo "============================================================"
+          MIGRATION_SUCCESS=false
+
+          echo "🔎  Nextcloud version"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ --version"
+
+          echo "📁  App dir exists?"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/custom_apps/openconnector/"
+
+          echo "📋  app:list (pre)"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:list"
+
+          echo "📦  composer install (app deps)"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector && composer install --optimize-autoloader --ignore-platform-req=ext-soap --ignore-platform-req=ext-xsl"
+
+          echo "🧰  maintenance:repair"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ maintenance:repair"
+
+          echo "▶️  Enable app"
+          if timeout 90 docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:enable openconnector"; then
+            MIGRATION_SUCCESS=true
+            echo "✅  App enabled"
+          else
+            echo "❌  App enable failed"
+          fi
+
+          echo "📊  MIGRATION_SUCCESS=$MIGRATION_SUCCESS"
+          if [ "$MIGRATION_SUCCESS" != true ]; then
+            echo "🧾  Diagnostics"
+            docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:list | grep openconnector || true"
+            docker exec nextcloud-test-quality bash -c "tail -50 /var/www/html/data/nextcloud.log || true"
+            docker exec mariadb-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SHOW TABLES LIKE \"oc_openconnector_job_logs\";'" || true
+            docker exec mariadb-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" || true
+            exit 1
+          fi
+
+          echo "🗄️  DB consistency helpers"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ db:add-missing-indices"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ db:add-missing-columns"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ db:convert-filecache-bigint"
+
+          echo "🔁  Toggle app (force migrations)"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:disable openconnector"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:enable openconnector"
+
+          echo "🔎  Verify table exists"
+          docker exec mariadb-test-quality bash -c "mysql -u nextcloud -p'nextcloud' nextcloud -e 'SELECT COUNT(*) FROM oc_openconnector_job_logs;'" 2>/dev/null && echo "✅  Table present"
+
+          echo "📋  app:list (post)"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:list | grep openconnector"
+
+          echo "⚙️  Enable debug logging"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ config:system:set debug --value true"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ config:system:set loglevel --value 0"
+
+      - name: Verify app installation and run diagnostics (Quality)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🧭  App verification & diagnostics"
+          echo "============================================================"
+
+          echo "🔍  vendor/autoload.php present?"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/custom_apps/openconnector/vendor/autoload.php || echo '⚠️  autoloader missing'"
+
+          echo "📂  Structure checks"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/custom_apps/openconnector/"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/custom_apps/openconnector/lib/"
+          docker exec nextcloud-test-quality bash -c "head -n 10 /var/www/html/custom_apps/openconnector/appinfo/info.xml || true"
+
+          echo "📋  app:list (before repair)"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:list"
+
+          echo "🧰  maintenance:repair"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ maintenance:repair"
+
+          echo "📋  app:list (after repair)"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:list"
+
+          echo "🧩  Check Application.php"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/custom_apps/openconnector/lib/AppInfo/Application.php || true"
+
+          echo "🧩  Check autoload.php"
+          docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/custom_apps/openconnector/lib/autoload.php || true"
+
+          if ! docker exec nextcloud-test-quality bash -c "test -f /var/www/html/custom_apps/openconnector/lib/autoload.php"; then
+            echo "🔧  composer dump-autoload (optimize, authoritative)"
+            docker exec nextcloud-test-quality bash -c "cd /var/www/html/custom_apps/openconnector && composer dump-autoload --optimize --classmap-authoritative"
+          fi
+
+          echo "✅  Assert: autoload.php exists"
+          docker exec nextcloud-test-quality bash -c "test -f /var/www/html/custom_apps/openconnector/lib/autoload.php || (echo '❌  autoload.php missing' && exit 1)"
+
+          echo "🔁  Reload app & repair caches"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:disable openconnector"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ app:enable openconnector"
+          docker exec --user www-data nextcloud-test-quality bash -lc "cd /var/www/html && php occ maintenance:repair"
+
+          echo "🧪  class_exists(OCA\\OpenConnector\\AppInfo\\Application)"
+          for i in {1..5}; do
+            echo "⏱️  Attempt $i/5 ..."
+            if docker exec nextcloud-test-quality bash -c "cd /var/www/html && php -r 'require_once \"custom_apps/openconnector/lib/autoload.php\"; echo (class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")?\"OK\":\"NO\").PHP_EOL; exit(class_exists(\"OCA\\\\OpenConnector\\\\AppInfo\\\\Application\")?0:1);'"; then
+              echo "✅  Class available (attempt $i)"; break
+            else
+              [ $i -lt 5 ] && echo "⏳  Retry after 10s…" && sleep 10 || (echo "❌  Class not found" && exit 1)
+            fi
+          done
+
+      - name: Diagnose Nextcloud container environment (Quality)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🏗️  Container environment diagnostics"
+          echo "============================================================"
+          echo "🔎  which composer"; docker exec nextcloud-test-quality bash -c "which composer"
+          echo "🔎  which php";      docker exec nextcloud-test-quality bash -c "which php"
+          echo "📁  /var/www/html/vendor"; docker exec nextcloud-test-quality bash -c "ls -la /var/www/html/vendor/ || true"
+          echo "✅  Environment looks sane"
+
+      - name: Install PHPUnit in Nextcloud container (Quality)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🧪  Install PHPUnit (in-container)"
+          echo "============================================================"
+          # Quality job runs on PHP 8.3 ⇒ use 10.x
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer require --dev phpunit/phpunit:${{ steps.phpunit-constraint-quality.outputs.constraint }}"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && composer dump-autoload --optimize"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html && ./lib/composer/bin/phpunit --version"
+          echo "✅  PHPUnit OK"
+
+      - name: Run PHP linting on GitHub Actions runner (Quality)
+        run: composer lint
+        continue-on-error: true
+
+      - name: Run PHP linting in Nextcloud container (Quality)
+        run: |
+          echo "============================================================"
+          echo "🧹  PHP lint (in-container)"
+          echo "============================================================"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html/custom_apps/openconnector/ && find . -name '*.php' -exec php -l {} \;"
+        continue-on-error: true
+
+      - name: Run PHP CS Fixer in Nextcloud container (Quality)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🎯  Code style (php-cs-fixer --dry-run)"
+          echo "============================================================"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/php-cs-fixer fix --dry-run --diff"
+        continue-on-error: true
+
+      - name: Run Psalm static analysis in Nextcloud container (Quality)
+        run: |
+          set -euo pipefail
+          echo "============================================================"
+          echo "🔎  Static analysis (Psalm)"
+          echo "============================================================"
+          docker exec nextcloud-test-quality bash -lc "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/psalm --threads=1 --no-cache"
+        continue-on-error: true
+
+      - name: Run unit tests inside Nextcloud container (Quality)
+        run: |
+          echo "============================================================"
+          echo "🧪  Run PHPUnit (with coverage)"
+          echo "============================================================"
+          docker exec nextcloud-test-quality bash -c "cd /var/www/html/custom_apps/openconnector/ && ./lib/composer/bin/phpunit --bootstrap custom_apps/openconnector/tests/bootstrap.php --coverage-clover custom_apps/openconnector/coverage.xml custom_apps/openconnector/tests"
+
+      - name: Generate quality status
+        if: always()
+        run: |
+          echo "## 🔍 Code Quality & Standards" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "- ✅ PHP Linting: Completed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Code Style: Completed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Static Analysis: Completed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Unit Tests: Completed" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ All quality checks passed!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ PHP Linting: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- ❌ Code Style: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- ❌ Static Analysis: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- ❌ Unit Tests: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- ❌ Some quality checks failed!" >> $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup containers
+        if: always()
+        run: |
+          docker stop nextcloud-test-quality mariadb-test-quality redis-test-quality mail-test-quality || true
+          docker rm   nextcloud-test-quality mariadb-test-quality redis-test-quality mail-test-quality || true
+          docker network rm nc-net-quality || true

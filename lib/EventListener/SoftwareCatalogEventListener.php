@@ -89,7 +89,7 @@ class SoftwareCatalogEventListener implements IEventListener
         }
 
         // Handle organization creation
-        if ($object->getSchema() === self::ORGANIZATION_SCHEMA_ID) {
+        if ((string)$object->getSchema() === (string)self::ORGANIZATION_SCHEMA_ID) {
             try {
                 $this->softwareCatalogueService->handleNewOrganization($object);
             } catch (\Exception $e) {
@@ -102,7 +102,7 @@ class SoftwareCatalogEventListener implements IEventListener
         }
 
         // Handle contact creation
-        if ($object->getSchema() === self::CONTACT_SCHEMA_ID) {
+        if ((string)$object->getSchema() === (string)self::CONTACT_SCHEMA_ID) {
             try {
                 $this->softwareCatalogueService->handleNewContact($object);
             } catch (\Exception $e) {
@@ -128,7 +128,7 @@ class SoftwareCatalogEventListener implements IEventListener
         }
 
         // Handle contact updates
-        if ($object->getSchema() === self::CONTACT_SCHEMA_ID) {
+        if ((string)$object->getSchema() === (string)self::CONTACT_SCHEMA_ID) {
             try {
                 $this->softwareCatalogueService->handleContactUpdate($object);
             } catch (\Exception $e) {
@@ -154,7 +154,7 @@ class SoftwareCatalogEventListener implements IEventListener
         }
 
         // Handle contact deletion
-        if ($object->getSchema() === self::CONTACT_SCHEMA_ID) {
+        if ((string)$object->getSchema() === (string)self::CONTACT_SCHEMA_ID) {
             try {
                 $this->softwareCatalogueService->handleContactDeletion($object);
             } catch (\Exception $e) {

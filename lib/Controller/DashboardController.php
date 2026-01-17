@@ -76,12 +76,12 @@ class DashboardController extends Controller
     {
         try {
             $results = [
-                "sources" => $this->sourceMapper->getTotalCallCount(),
-                "mappings" => $this->mappingMapper->getTotalCallCount(),
-                "synchronizations" => $this->synchronizationMapper->getTotalCallCount(),
-                "synchronizationContracts" => $this->synchronizationContractMapper->getTotalCallCount(),
+                "sources" => $this->sourceMapper->getTotalCount(),
+                "mappings" => $this->mappingMapper->getTotalCount(),
+                "synchronizations" => $this->synchronizationMapper->getTotalCount(),
+                "synchronizationContracts" => $this->synchronizationContractMapper->getTotalCount(),
                 "jobs" => $this->jobMapper->getTotalCount(),
-                "endpoints" => $this->endpointMapper->getTotalCallCount()
+                "endpoints" => $this->endpointMapper->getTotalCount()
             ];
             return new JSONResponse($results);
         } catch (\Exception $e) {

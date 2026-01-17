@@ -44,6 +44,7 @@ class CallService
 	private Environment $twig;
 
 	private CookieJar $cookieJar;
+	private ?Source $source = null;
 
     private int $errorRetention;
     private int $successRetention;

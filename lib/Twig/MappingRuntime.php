@@ -119,7 +119,12 @@ class MappingRuntime implements RuntimeExtensionInterface
 			$mapping = $mappingObject;
 		} else if (is_string($mapping) === true || is_int($mapping) === true) {
 			if (is_string($mapping) === true && str_starts_with($mapping, 'http')) {
-				$mapping = $this->mappingMapper->findByRef($mapping)[0];
+				$mappings = $this->mappingMapper->findByRef($mapping);
+				if (count($mappings) > 0) {
+					$mapping = $mappings[0];
+				} else {
+					throw new \InvalidArgumentException('No mapping found for reference: ' . $mapping);
+				}
 			} else {
 				// If the mapping is an int, we assume it's an ID and try to find the mapping by ID.
 				// In the future we should be able to find the mapping by uuid (string) as well.
@@ -135,7 +140,7 @@ class MappingRuntime implements RuntimeExtensionInterface
 	/**
 	 * Generate a uuid.
 	 *
-	 * @return array
+	 * @return UuidV4
 	 */
 	public function generateUuid(): UuidV4
 	{

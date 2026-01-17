@@ -18,6 +18,8 @@ use OCP\AppFramework\Db\Entity;
  * @license AGPL-3.0
  * @version 1.0.0
  * @link https://github.com/OpenConnector/openconnector
+ * 
+ * @psalm-suppress UndefinedMagicMethod
  */
 class Endpoint extends Entity implements JsonSerializable
 {
