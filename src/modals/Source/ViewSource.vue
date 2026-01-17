@@ -14,55 +14,57 @@ import { sourceStore, navigationStore, logStore, synchronizationStore } from '..
 
 			<!-- Source Properties -->
 			<div class="source-properties">
-				<table class="statisticsTable sourceStats">
-					<thead>
-						<tr>
-							<th>{{ t('openconnector', 'Property') }}</th>
-							<th>{{ t('openconnector', 'Value') }}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>{{ t('openconnector', 'Status') }}</td>
-							<td>{{ sourceStore.sourceItem?.status || 'Unknown' }}</td>
-						</tr>
-						<tr>
-							<td>{{ t('openconnector', 'Enabled') }}</td>
-							<td>{{ sourceStore.sourceItem?.isEnabled ? 'Enabled' : 'Disabled' }}</td>
-						</tr>
-						<tr>
-							<td>{{ t('openconnector', 'Type') }}</td>
-							<td>{{ sourceStore.sourceItem?.type || 'Unknown' }}</td>
-						</tr>
-						<tr v-if="sourceStore.sourceItem?.location">
-							<td>{{ t('openconnector', 'Location') }}</td>
-							<td class="truncatedUrl">
-								{{ sourceStore.sourceItem.location }}
-							</td>
-						</tr>
-						<tr v-if="sourceStore.sourceItem?.version">
-							<td>{{ t('openconnector', 'Version') }}</td>
-							<td>{{ sourceStore.sourceItem.version }}</td>
-						</tr>
+				<div class="modal-table-wrapper">
+					<table class="statisticsTable sourceStats">
+						<thead>
+							<tr>
+								<th>{{ t('openconnector', 'Property') }}</th>
+								<th>{{ t('openconnector', 'Value') }}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>{{ t('openconnector', 'Status') }}</td>
+								<td>{{ sourceStore.sourceItem?.status || 'Unknown' }}</td>
+							</tr>
+							<tr>
+								<td>{{ t('openconnector', 'Enabled') }}</td>
+								<td>{{ sourceStore.sourceItem?.isEnabled ? 'Enabled' : 'Disabled' }}</td>
+							</tr>
+							<tr>
+								<td>{{ t('openconnector', 'Type') }}</td>
+								<td>{{ sourceStore.sourceItem?.type || 'Unknown' }}</td>
+							</tr>
+							<tr v-if="sourceStore.sourceItem?.location">
+								<td>{{ t('openconnector', 'Location') }}</td>
+								<td class="truncatedUrl">
+									{{ sourceStore.sourceItem.location }}
+								</td>
+							</tr>
+							<tr v-if="sourceStore.sourceItem?.version">
+								<td>{{ t('openconnector', 'Version') }}</td>
+								<td>{{ sourceStore.sourceItem.version }}</td>
+							</tr>
 
-						<tr v-if="sourceStore.sourceItem?.lastCall">
-							<td>{{ t('openconnector', 'Last Call') }}</td>
-							<td>{{ new Date(sourceStore.sourceItem.lastCall).toLocaleDateString() + ', ' + new Date(sourceStore.sourceItem.lastCall).toLocaleTimeString() }}</td>
-						</tr>
-						<tr v-if="sourceStore.sourceItem?.lastSync">
-							<td>{{ t('openconnector', 'Last Sync') }}</td>
-							<td>{{ new Date(sourceStore.sourceItem.lastSync).toLocaleDateString() + ', ' + new Date(sourceStore.sourceItem.lastSync).toLocaleTimeString() }}</td>
-						</tr>
-						<tr>
-							<td>{{ t('openconnector', 'Created') }}</td>
-							<td>{{ sourceStore.sourceItem?.dateCreated ? new Date(sourceStore.sourceItem.dateCreated).toLocaleDateString() : '-' }}</td>
-						</tr>
-						<tr>
-							<td>{{ t('openconnector', 'Updated') }}</td>
-							<td>{{ sourceStore.sourceItem?.dateModified ? new Date(sourceStore.sourceItem.dateModified).toLocaleDateString() : '-' }}</td>
-						</tr>
-					</tbody>
-				</table>
+							<tr v-if="sourceStore.sourceItem?.lastCall">
+								<td>{{ t('openconnector', 'Last Call') }}</td>
+								<td>{{ new Date(sourceStore.sourceItem.lastCall).toLocaleDateString() + ', ' + new Date(sourceStore.sourceItem.lastCall).toLocaleTimeString() }}</td>
+							</tr>
+							<tr v-if="sourceStore.sourceItem?.lastSync">
+								<td>{{ t('openconnector', 'Last Sync') }}</td>
+								<td>{{ new Date(sourceStore.sourceItem.lastSync).toLocaleDateString() + ', ' + new Date(sourceStore.sourceItem.lastSync).toLocaleTimeString() }}</td>
+							</tr>
+							<tr>
+								<td>{{ t('openconnector', 'Created') }}</td>
+								<td>{{ sourceStore.sourceItem?.dateCreated ? new Date(sourceStore.sourceItem.dateCreated).toLocaleDateString() : '-' }}</td>
+							</tr>
+							<tr>
+								<td>{{ t('openconnector', 'Updated') }}</td>
+								<td>{{ sourceStore.sourceItem?.dateModified ? new Date(sourceStore.sourceItem.dateModified).toLocaleDateString() : '-' }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 			</div>
 
 			<!-- Tabs -->
@@ -289,9 +291,9 @@ export default {
 			if (source.jwt) authData.JWT = source.jwt
 			if (source.secret) authData.Secret = source.secret
 			if (source.authorizationHeader) authData['Authorization Header'] = source.authorizationHeader
-			if (source.authenticationConfig && source.authenticationConfig.length > 0) {
-				source.authenticationConfig.forEach((config, index) => {
-					authData[`Auth Config ${index + 1}`] = typeof config === 'object' ? JSON.stringify(config) : config
+			if (source.configuration?.authentication && typeof source.configuration.authentication === 'object') {
+				Object.entries(source.configuration.authentication).forEach(([key, value]) => {
+					authData[key] = typeof value === 'object' ? JSON.stringify(value) : value
 				})
 			}
 
