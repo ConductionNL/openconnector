@@ -1678,7 +1678,7 @@ class EndpointService
 
         $fetchedObject = null;
 
-        if (isset($config['synchronization']['preDelay']) === true) {
+        if (isset($config['synchronization']['preDelay']) === true && is_int($config['synchronization']['preDelay']) === true) {
             sleep ($config['synchronization']['preDelay']);
         }
 
@@ -1717,7 +1717,7 @@ class EndpointService
             $retainResponse = false;
         }
 
-        if (isset($config['synchronization']['postDelay']) === true) {
+        if (isset($config['synchronization']['postDelay']) === true && is_int($config['synchronization']['postDelay']) === true) {
             sleep ($config['synchronization']['postDelay']);
         }
 
