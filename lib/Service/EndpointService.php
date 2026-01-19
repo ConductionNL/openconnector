@@ -1678,6 +1678,10 @@ class EndpointService
 
         $fetchedObject = null;
 
+        if (isset($config['synchronization']['preDelay']) === true && is_int($config['synchronization']['preDelay']) === true) {
+            sleep ($config['synchronization']['preDelay']);
+        }
+
         if (isset($config['synchronization']['objectIdPath']) === true) {
             $dataDot = new Dot($data['body']);
 
@@ -1711,6 +1715,10 @@ class EndpointService
             $retainResponse = (bool) $config['synchronization']['retainResponse'];
         } else {
             $retainResponse = false;
+        }
+
+        if (isset($config['synchronization']['postDelay']) === true && is_int($config['synchronization']['postDelay']) === true) {
+            sleep ($config['synchronization']['postDelay']);
         }
 
         if (isset($config['synchronizationConfig']['mergeResultToKey']) === true && $retainResponse === false) {
