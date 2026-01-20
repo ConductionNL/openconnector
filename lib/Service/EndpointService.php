@@ -1969,15 +1969,19 @@ class EndpointService
         }
 
         if(isset($data['parameters']['version']) === true) {
+            /** @var File $file */
              $file = $fileService->getFile(object: $object, file: $filename, version: $data['parameters']['version']);
         }else if(isset($data['parameters']['versie']) === true) {
             // @TODO: This can be nicer by mapping, but let's first get something sure
+            /** @var File $file */
              $file = $fileService->getFile(object: $object, file: $filename, version: $data['parameters']['versie']);
         } else {
+            /** @var File $file */
             $file = $fileService->getFile(object: $object, file: $filename);
         }
 
-        $response = new DataDownloadResponse(data: $file->getContent(), filename: $file->getName(), contentType: $file->getType());
+
+        $response = new DataDownloadResponse(data: $file->getContent(), filename: $file->getName(), contentType: $file->getMimeType());
 
         return $response;
     }
