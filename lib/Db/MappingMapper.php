@@ -80,8 +80,7 @@ class MappingMapper extends QBMapper
 		?int $offset = null,
 		?array $filters = [],
 		?array $searchConditions = [],
-		?array $searchParams = [],
-		?array $ids = []
+		?array $searchParams = []
 	): array {
 		$qb = $this->db->getQueryBuilder();
 
@@ -172,22 +171,33 @@ class MappingMapper extends QBMapper
 	}
 
     /**
-     * Get the total count of all call logs.
+     * Get the total count of all mappings.
      *
-     * @return int The total number of call logs in the database.
+     * @param array $filters Optional filters to apply
+     * @return int The total number of mappings in the database.
      */
-    public function getTotalCallCount(): int
+    public function getTotalCount(array $filters = []): int
     {
         $qb = $this->db->getQueryBuilder();
 
-        // Select count of all logs
+        // Select count of all mappings
         $qb->select($qb->createFunction('COUNT(*) as count'))
            ->from('openconnector_mappings');
+
+        // Apply filters if provided
+        foreach ($filters as $filter => $value) {
+            if ($value === 'IS NOT NULL') {
+                $qb->andWhere($qb->expr()->isNotNull($filter));
+            } elseif ($value === 'IS NULL') {
+                $qb->andWhere($qb->expr()->isNull($filter));
+            } else {
+                $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+            }
+        }
 
         $result = $qb->execute();
         $row = $result->fetch();
 
-        // Return the total count
         return (int)$row['count'];
     }
 

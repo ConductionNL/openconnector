@@ -59,11 +59,12 @@ class SynchronizationAction
         }
 
         // Let's find a synchronysation
-        $response['stackTrace'][] = 'Getting synchronization: '.$argument['synchronizationId'];
-        $synchronization = $this->synchronizationMapper->find((int) $argument['synchronizationId']);
-        if ($synchronization === null) {
+        $response['stackTrace'][] = 'Getting synchronization: '.(string)$argument['synchronizationId'];
+        try {
+            $synchronization = $this->synchronizationMapper->find((int) $argument['synchronizationId']);
+        } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
             $response['level'] = 'WARNING';
-			$response['stackTrace'][] = $response['message'] = 'Synchronization not found: '.$argument['synchronizationId'];
+			$response['stackTrace'][] = $response['message'] = 'Synchronization not found: '.(string)$argument['synchronizationId'];
             return $response;
         }
 
@@ -74,9 +75,11 @@ class SynchronizationAction
         } catch (TooManyRequestsHttpException $e) {
 			$response['level'] = 'WARNING';
 			$response['stackTrace'][] = $response['message'] = 'Stopped synchronization: ' . $e->getMessage();
-			if (isset($e->getHeaders()['X-RateLimit-Reset']) === true) {
-				$response['nextRun'] = $e->getHeaders()['X-RateLimit-Reset'];
-				$response['stackTrace'][] = 'Returning X-RateLimit-Reset header to update Job nextRun: ' . $response['nextRun'];
+			$headers = $e->getHeaders();
+			if (isset($headers['X-RateLimit-Reset']) === true) {
+				$resetTime = $headers['X-RateLimit-Reset'];
+				$response['nextRun'] = is_string($resetTime) ? $resetTime : (string)$resetTime;
+				$response['stackTrace'][] = 'Returning X-RateLimit-Reset header to update Job nextRun: ' . (string)$response['nextRun'];
 			}
 			return $response;
 		} catch (Exception $e) {
@@ -88,8 +91,12 @@ class SynchronizationAction
         $response['level'] = 'INFO';
 
         $objectCount = 0;
-        if (is_array($objects) === true) {
-            $objectCount = $objects['result']['contracts'] ? count($objects['result']['contracts']) : $objects['result']['objects']['found'];
+        if (is_array($objects) === true && isset($objects['result']) && is_array($objects['result'])) {
+            if (isset($objects['result']['contracts']) && is_array($objects['result']['contracts'])) {
+                $objectCount = count($objects['result']['contracts']);
+            } elseif (isset($objects['result']['objects']['found'])) {
+                $objectCount = (int)$objects['result']['objects']['found'];
+            }
         }
 		$response['stackTrace'][] = $response['message'] = 'Synchronized '. $objectCount .' successfully';
 

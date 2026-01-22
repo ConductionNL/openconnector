@@ -45,7 +45,7 @@ class Event extends Entity implements JsonSerializable
     }
 
     /**
-     * Constructor to set up data types for properties
+     * Constructor to set up data types for propertiesimage.png
      */
     public function __construct() {
         $this->addType('uuid', 'string');

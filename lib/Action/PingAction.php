@@ -40,7 +40,7 @@ class PingAction
 		$response['stackTrace'][] = 'Running PingAction';
 
         // For now we only have one action, so this is a bit overkill, but it's a good starting point
-        if (isset($arguments['sourceId']) && is_int((int) $arguments['sourceId'])) {
+        if (isset($arguments['sourceId']) && is_numeric($arguments['sourceId'])) {
 			$response['stackTrace'][] = "Found sourceId {$arguments['sourceId']} in arguments";
             $source = $this->sourceMapper->find((int) $arguments['sourceId']);
 		}

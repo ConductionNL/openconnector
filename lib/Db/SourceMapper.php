@@ -52,6 +52,25 @@ class SourceMapper extends QBMapper
 	}
 
 	/**
+	 * Find all sources that belong to a specific reference.
+	 *
+	 * @param string $reference The reference to find sources for
+	 * @return array<Source> Array of Source entities
+	 */
+	public function findByRef(string $reference): array
+	{
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->select('*')
+			->from('openconnector_sources')
+			->where(
+				$qb->expr()->eq('reference', $qb->createNamedParameter($reference))
+			);
+
+		return $this->findEntities(query: $qb);
+	}
+
+	/**
 	 * Find all sources matching the given criteria
 	 *
 	 * @param int|null $limit Maximum number of results to return
@@ -159,22 +178,33 @@ class SourceMapper extends QBMapper
 	}
 
     /**
-     * Get the total count of all call logs.
+     * Get the total count of all sources.
      *
-     * @return int The total number of call logs in the database.
+     * @param array $filters Optional filters to apply
+     * @return int The total number of sources in the database.
      */
-    public function getTotalCallCount(): int
+    public function getTotalCount(array $filters = []): int
     {
         $qb = $this->db->getQueryBuilder();
 
-        // Select count of all logs
+        // Select count of all sources
         $qb->select($qb->createFunction('COUNT(*) as count'))
            ->from('openconnector_sources');
+
+        // Apply filters if provided
+        foreach ($filters as $filter => $value) {
+            if ($value === 'IS NOT NULL') {
+                $qb->andWhere($qb->expr()->isNotNull($filter));
+            } elseif ($value === 'IS NULL') {
+                $qb->andWhere($qb->expr()->isNull($filter));
+            } else {
+                $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
+            }
+        }
 
         $result = $qb->execute();
         $row = $result->fetch();
 
-        // Return the total count
         return (int)$row['count'];
     }
 

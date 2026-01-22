@@ -25,7 +25,7 @@
 		"cs:check": "php-cs-fixer fix --dry-run --diff",
 		"cs:fix": "php-cs-fixer fix",
 		"psalm": "psalm --threads=1 --no-cache",
-		"test:unit": "phpunit tests -c tests/phpunit.xml --colors=always --fail-on-warning --fail-on-risky",
+		"test:unit": "./vendor/bin/phpunit tests -c tests/phpunit.xml --colors=always --fail-on-warning --fail-on-risky",
 		"openapi": "generate-spec"
 	},
 	"require": {
@@ -50,8 +50,12 @@
 		"web-token/jwt-framework": "^3"
 	},
 	"require-dev": {
+		"composer/xdebug-handler": "^3.0",
+		"friendsofphp/php-cs-fixer": "^3",
 		"nextcloud/ocp": "dev-stable29",
-		"roave/security-advisories": "dev-latest"
+		"phpunit/phpunit": "^9.6 || ^10.5",
+		"roave/security-advisories": "dev-latest",
+		"vimeo/psalm": "^5"
 	},
 	"config": {
 		"allow-plugins": {
