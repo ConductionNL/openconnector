@@ -137,11 +137,19 @@ class MappingRuntime implements RuntimeExtensionInterface
 	 *
 	 * @return array
 	 */
-	public function generateUuid(): UuidV4
-	{
-		return Uuid::v4();
-	}
+    public function generateUuid(): UuidV4
+    {
+        return Uuid::v4();
+    }
 
+    /**
+     * Fetch the content of a specific file for an object.
+     *
+     * @param string|int $fileId The file node ID to fetch.
+     * @param string $objectId The object ID that owns the file.
+     * 
+     * @return string|null The file contents when found, otherwise null.
+     */
     public function getFileContents(string|int $fileId, string $objectId): ?string
     {
         $object = $this->objectService->getMapper('objectEntity')->find($objectId);
@@ -154,5 +162,24 @@ class MappingRuntime implements RuntimeExtensionInterface
         }
 
         return get_class($file);
+    }
+
+    /**
+     * Fetch and format all files for an object.
+     *
+     * @param string $objectId The object ID to fetch files for.
+     * 
+     * @return array The formatted file metadata list.
+     */
+    public function getFiles(string $objectId): array
+    {
+        $files = $this->fileService->getFiles(object: $objectId);
+
+        $formattedFiles = [];
+        foreach ($files as $file) {
+            $formattedFiles[] = $this->fileService->formatFile($file);
+        }
+
+        return $formattedFiles;
     }
 }
