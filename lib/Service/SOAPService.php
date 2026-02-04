@@ -115,7 +115,7 @@ class SOAPService
         $this->client = new Client($passedConfig);
         $wsdl = $config['wsdl'];
         $soapVersion = $config['soapVersion'] ?? null;
-        $permanent = $config['permanentWsdl'] ?? false;
+        $permanent = $config['permanentWsdl'] === 'true' || $config['permanentWsdl'] === true;
 
         unset($passedConfig['wsdl'], $passedConfig['soapVersion']);
         try {
