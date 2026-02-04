@@ -23,6 +23,7 @@ use Soap\ExtSoapEngine\ExtSoapDriver;
 use Soap\ExtSoapEngine\Transport\ExtSoapClientTransport;
 use Soap\ExtSoapEngine\Transport\TraceableTransport;
 use Soap\ExtSoapEngine\Wsdl\InMemoryWsdlProvider;
+use Soap\ExtSoapEngine\Wsdl\PermanentWsdlLoaderProvider;
 use Soap\ExtSoapEngine\Wsdl\TemporaryWsdlLoaderProvider;
 use Soap\Psr18Transport\Psr18Transport;
 use Soap\Psr18Transport\Wsdl\Psr18Loader;
@@ -114,6 +115,7 @@ class SOAPService
         $this->client = new Client($passedConfig);
         $wsdl = $config['wsdl'];
         $soapVersion = $config['soapVersion'] ?? null;
+        $permanent = $config['permanentWsdl'] === 'true' || $config['permanentWsdl'] === true;
 
         unset($passedConfig['wsdl'], $passedConfig['soapVersion']);
         try {
@@ -126,7 +128,7 @@ class SOAPService
                             'location' => $source->getLocation(),
 							'soap_version' => $this->getSoapVersion($soapVersion),
                         ])
-                            ->withWsdlProvider(new TemporaryWsdlLoaderProvider(new Psr18Loader($this->client, new HttpFactory())))
+                            ->withWsdlProvider($permanent ? new PermanentWsdlLoaderProvider(new Psr18Loader($this->client, new HttpFactory())) : new TemporaryWsdlLoaderProvider(new Psr18Loader($this->client, new HttpFactory())))
                             ->disableWsdlCache()
                     )
                 ),
