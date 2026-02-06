@@ -32,15 +32,15 @@ class EventSubscriptionMapper extends QBMapper
      * @param int $id The subscription ID
      * @return EventSubscription
      */
-    public function find(int $id): EventSubscription
+    public function find(int|string $id): EventSubscription
     {
         $qb = $this->db->getQueryBuilder();
 
         $qb->select('*')
             ->from('openconnector_event_subscriptions')
-            ->where(
-                $qb->expr()->eq('id', $qb->createNamedParameter($id, IQueryBuilder::PARAM_INT))
-            );
+			->where(
+				$qb->expr()->eq('id', $qb->createNamedParameter((int)$id, IQueryBuilder::PARAM_INT))
+			);
 
         return $this->findEntity($qb);
     }

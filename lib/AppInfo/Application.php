@@ -33,19 +33,30 @@ class Application extends App implements IBootstrap {
 
 		// Register services
 		$context->registerService(SettingsService::class, function($c) {
-			return new SettingsService(
-				$c->get('OCP\IDBConnection'),
-				$c->get('OCP\IAppConfig'),
-				$c->get('Psr\Log\LoggerInterface')
-			);
+			/** @var \OCP\IDBConnection $db */
+			$db = $c->get('OCP\IDBConnection');
+			/** @var \OCP\IAppConfig $config */
+			$config = $c->get('OCP\IAppConfig');
+			/** @var \Psr\Log\LoggerInterface $logger */
+			$logger = $c->get('Psr\Log\LoggerInterface');
+			
+			return new SettingsService($db, $config, $logger);
 		});
 
 		/* @var IEventDispatcher $dispatcher */
 		$dispatcher = $this->getContainer()->get(IEventDispatcher::class);
-		$dispatcher->addServiceListener(eventName: ObjectCreatedEvent::class, className: ObjectCreatedEventListener::class);
-		$dispatcher->addServiceListener(eventName: ObjectUpdatedEvent::class, className: ObjectUpdatedEventListener::class);
-        $dispatcher->addServiceListener(eventName: ObjectDeletedEvent::class, className: ViewDeletedEventListener::class);
-        $dispatcher->addServiceListener(eventName: ObjectDeletedEvent::class, className: ObjectDeletedEventListener::class);
+		/** @var IEventDispatcher $dispatcher */
+		
+		// Check if OpenRegister event classes are available before registering listeners
+		$openRegisterAvailable = class_exists('OCA\OpenRegister\Event\ObjectCreatedEvent');
+		
+		if ($openRegisterAvailable) {
+			$dispatcher->addServiceListener(eventName: ObjectCreatedEvent::class, className: ObjectCreatedEventListener::class);
+			$dispatcher->addServiceListener(eventName: ObjectUpdatedEvent::class, className: ObjectUpdatedEventListener::class);
+			$dispatcher->addServiceListener(eventName: ObjectDeletedEvent::class, className: ViewDeletedEventListener::class);
+			$dispatcher->addServiceListener(eventName: ObjectDeletedEvent::class, className: ObjectDeletedEventListener::class);
+		}
+		
         // @todo: remove this temporary listener to the software catalog application
 //        $dispatcher->addServiceListener(eventName: ViewUpdatedOrCreatedEventListener::class, className: ViewUpdatedOrCreatedEventListener::class);
 

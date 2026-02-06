@@ -14,6 +14,8 @@ use OCP\AppFramework\Db\Entity;
  * and determines authentication and authorizations on all aspects of the platform.
  *
  * @package OCA\OpenConnector\Db
+ * 
+ * @psalm-suppress UndefinedMagicMethod
  */
 class Consumer extends Entity implements JsonSerializable
 {
