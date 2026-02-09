@@ -3,17 +3,18 @@ name: Quality Assurance Checks
 on:
   pull_request:
     branches:
-      - main
-      - master
-      - development
-      - dev
+      # - main
+      # - master
+      # - development
+      # - dev
+      - never
   push:
     branches:
-      - main
-      - master
-      - development
-      - dev
-
+      # - main
+      # - master
+      # - development
+      # - dev
+      - never
 jobs:
   quality-check:
     name: Code Quality Analysis
