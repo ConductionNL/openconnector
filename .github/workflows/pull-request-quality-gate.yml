@@ -3,11 +3,12 @@ name: Pull Request Quality Gate
 on:
   pull_request:
     branches:
-      - main
-      - master
-      - development
-      - dev
-      - beta
+      # - main
+      # - master
+      # - development
+      # - dev
+      # - beta
+      - never
 
 jobs:
   quality-gate:

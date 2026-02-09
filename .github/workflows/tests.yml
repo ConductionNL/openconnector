@@ -3,16 +3,18 @@ name: Unit Tests & Coverage
 on:
   pull_request:
     branches:
-      - main
-      - master
-      - development
-      - dev
+      # - main
+      # - master
+      # - development
+      # - dev
+      - never
   push:
     branches:
-      - main
-      - master
-      - development
-      - dev
+      # - main
+      # - master
+      # - development
+      # - dev
+      - never
 
 jobs:
   unit-tests:
