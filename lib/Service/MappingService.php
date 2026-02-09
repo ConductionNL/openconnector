@@ -9,6 +9,8 @@ use OCA\OpenConnector\Twig\AuthenticationExtension;
 use OCA\OpenConnector\Twig\AuthenticationRuntimeLoader;
 use OCA\OpenConnector\Twig\MappingExtension;
 use OCA\OpenConnector\Twig\MappingRuntimeLoader;
+use OCA\OpenRegister\Service\FileService;
+use OCP\Files\IRootFolder;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 //use Twig\Environment;
@@ -42,10 +44,12 @@ class MappingService
 		private readonly MappingMapper $mappingMapper,
         CallService $callService,
         SourceMapper $sourceMapper,
+        FileService $fileService,
+        ObjectService $objectService,
     ) {
         $this->twig = new Environment($loader);
 		$this->twig->addExtension(new MappingExtension());
-		$this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper, callService: $callService, sourceMapper: $sourceMapper));
+		$this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper, callService: $callService, sourceMapper: $sourceMapper, fileService: $fileService, objectService: $objectService->getOpenRegisters()));
 
     }//end __construct()
 

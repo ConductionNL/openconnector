@@ -3,6 +3,7 @@
 namespace OCA\OpenConnector\Twig;
 
 use GuzzleHttp\Exception\GuzzleException;
+use OC\Files\Node\File;
 use OCA\OpenConnector\Db\Mapping;
 use OCA\OpenConnector\Db\MappingMapper;
 use OCA\OpenConnector\Db\Source;
@@ -10,9 +11,12 @@ use OCA\OpenConnector\Db\SourceMapper;
 use OCA\OpenConnector\Service\AuthenticationService;
 use OCA\OpenConnector\Service\CallService;
 use OCA\OpenConnector\Service\MappingService;
+use OCA\OpenRegister\Service\FileService;
+use OCA\OpenRegister\Service\ObjectService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\Exception;
+use OCP\Files\IRootFolder;
 use Twig\Error\LoaderError;
 use Twig\Error\SyntaxError;
 use Twig\Extension\RuntimeExtensionInterface;
@@ -26,8 +30,9 @@ class MappingRuntime implements RuntimeExtensionInterface
 		private readonly MappingMapper  $mappingMapper,
         private readonly CallService $callService,
         private readonly SourceMapper $sourceMapper,
+        private readonly FileService $fileService,
+        private readonly ObjectService $objectService,
 	) {
-
 	}
 
     /**
@@ -132,8 +137,49 @@ class MappingRuntime implements RuntimeExtensionInterface
 	 *
 	 * @return array
 	 */
-	public function generateUuid(): UuidV4
-	{
-		return Uuid::v4();
-	}
+    public function generateUuid(): UuidV4
+    {
+        return Uuid::v4();
+    }
+
+    /**
+     * Fetch the content of a specific file for an object.
+     *
+     * @param string|int $fileId The file node ID to fetch.
+     * @param string $objectId The object ID that owns the file.
+     * 
+     * @return string|null The file contents when found, otherwise null.
+     */
+    public function getFileContents(string|int $fileId, string $objectId): ?string
+    {
+        $object = $this->objectService->getMapper('objectEntity')->find($objectId);
+        $files = $this->fileService->getFilesForEntity($object);
+
+        $files = array_filter($files, fn ($file) => $file instanceof File === true && $file->getId() === (int) $fileId);
+
+        if (count($files) === 1) {
+            return $files[0]->getContent();
+        }
+
+        return get_class($file);
+    }
+
+    /**
+     * Fetch and format all files for an object.
+     *
+     * @param string $objectId The object ID to fetch files for.
+     * 
+     * @return array The formatted file metadata list.
+     */
+    public function getFiles(string $objectId): array
+    {
+        $files = $this->fileService->getFiles(object: $objectId);
+
+        $formattedFiles = [];
+        foreach ($files as $file) {
+            $formattedFiles[] = $this->fileService->formatFile($file);
+        }
+
+        return $formattedFiles;
+    }
 }

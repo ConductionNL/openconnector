@@ -160,7 +160,13 @@ class SynchronizationService
 		?string $mutationType = null,
 	): SynchronizationContract|array|null
 	{
-		if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $object)) {
+        $serializedObject = $object;
+        if($object instanceof \OCA\OpenRegister\Db\ObjectEntity === true) {
+            $serializedObject = $object->jsonSerialize();
+        }
+
+
+		if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $serializedObject)) {
 			return null;
 		}
 
@@ -2382,7 +2388,7 @@ class SynchronizationService
         }
 
         // If we can fetch the object to extend again, use OpenRegister to fetch the extended object.
-        if ($id === true && isset($config['extend_input']['fetchObject']) === true && ($config['extend_input']['fetchObject'] === true || $config['extend_input']['fetchObject'] === 'true')) {
+        if (isset($id) === true && isset($config['extend_input']['fetchObject']) === true && ($config['extend_input']['fetchObject'] === true || $config['extend_input']['fetchObject'] === 'true')) {
             $object = $this->objectService->getOpenRegisters()->find(id: $id, extend: $config['extend_input']['properties']);
             return $object->jsonSerialize();
         }

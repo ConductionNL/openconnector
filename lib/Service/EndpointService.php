@@ -233,7 +233,6 @@ class EndpointService
                     '_path' => $flowToken->getRequestOriginal()['path'],
                     '_method' => $flowToken->getRequestOriginal()['method'],
                 ], $flowToken->getRequestOriginal()['parameters'])];
-
             // Process rules before handling the request
             $ruleResult = $this->processRules(
                 endpoint: $endpoint,
@@ -1135,6 +1134,7 @@ class EndpointService
                 // Check rule conditions
                 if ($this->checkRuleConditions(rule: $rule, data: $data, logicResult:  $logicResult) === false || $rule->getTiming() !== $timing) {
                     $this->logger->info('Rule condition check failed for endpoint ' . $endpoint->getName() . ' and rule ' . $rule->getName() . ' of type: ' . $rule->getType());
+
                     continue;
                 }
 
@@ -1166,6 +1166,7 @@ class EndpointService
                         'audit_trail' => $this->processAuditTrailRule(rule: $rule, endpoint: $endpoint, data: $data, objectId: $objectId),
                         'write_file' => $this->processWriteFileRule(rule: $rule, data: $data, objectId: $objectId),
                         'locking' => $this->processLockingRule(rule: $rule, data: $data, objectId: $objectId),
+                        'override' => $this->processOverrideRule(rule: $rule, data: $data, objectId: $objectId),
                         'custom' => $this->processCustomRule(rule: $rule, data: $data),
                         default => throw new Exception('Unsupported rule type: ' . $rule->getType()),
                     };
@@ -1193,6 +1194,34 @@ class EndpointService
             $this->logger->error('Error processing rules: ' . $e->getMessage());
             return new JSONResponse(['error' => 'Rule processing failed: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * This rule, that only can be run on timing 'after' overrides the content of a written object by the updated contents in the flow token.
+     *
+     * @param Rule $rule The rule to process.
+     * @param array $data The data from the flow token.
+     * @param string $objectId The object to override.
+     * @return array The updated object.
+     *
+     * @throws ContainerExceptionInterface
+     * @throws DoesNotExistException
+     * @throws MultipleObjectsReturnedException
+     * @throws NotFoundExceptionInterface
+     * @throws \OCP\DB\Exception
+     */
+    private function processOverrideRule(Rule $rule, array $data, string $objectId): array
+    {
+
+        $this->objectService->getOpenRegisters()->clearCurrents();
+        $object = $this->objectService->getOpenRegisters()->getMapper('objectEntity')->find($objectId);
+        $object->setObject($data['body']);
+        $object = $this->objectService->getOpenRegisters()->saveObject(object: $object, register: $object->getRegister(), schema: $object->getSchema(), uuid: $object->getUuid());
+        $this->objectService->getOpenRegisters()->clearCurrents();
+
+        $data['body'] = $object->jsonSerialize();
+
+        return $data;
     }
 
     /**
@@ -1649,6 +1678,10 @@ class EndpointService
 
         $fetchedObject = null;
 
+        if (isset($config['synchronization']['preDelay']) === true && is_int($config['synchronization']['preDelay']) === true) {
+            sleep ($config['synchronization']['preDelay']);
+        }
+
         if (isset($config['synchronization']['objectIdPath']) === true) {
             $dataDot = new Dot($data['body']);
 
@@ -1661,6 +1694,9 @@ class EndpointService
 
             $this->objectService->getOpenRegisters()->clearCurrents();
             $fetchedObject = $this->objectService->getOpenRegisters()->find($id);
+            $foData = $fetchedObject->jsonSerialize();
+            $foData['synchronization_trigger'] = true;
+            $fetchedObject->setObject($foData);
         }
 
 
@@ -1679,6 +1715,10 @@ class EndpointService
             $retainResponse = (bool) $config['synchronization']['retainResponse'];
         } else {
             $retainResponse = false;
+        }
+
+        if (isset($config['synchronization']['postDelay']) === true && is_int($config['synchronization']['postDelay']) === true) {
+            sleep ($config['synchronization']['postDelay']);
         }
 
         if (isset($config['synchronizationConfig']['mergeResultToKey']) === true && $retainResponse === false) {
@@ -1929,15 +1969,19 @@ class EndpointService
         }
 
         if(isset($data['parameters']['version']) === true) {
+            /** @var File $file */
              $file = $fileService->getFile(object: $object, file: $filename, version: $data['parameters']['version']);
         }else if(isset($data['parameters']['versie']) === true) {
             // @TODO: This can be nicer by mapping, but let's first get something sure
+            /** @var File $file */
              $file = $fileService->getFile(object: $object, file: $filename, version: $data['parameters']['versie']);
         } else {
+            /** @var File $file */
             $file = $fileService->getFile(object: $object, file: $filename);
         }
 
-        $response = new DataDownloadResponse(data: $file->getContent(), filename: $file->getName(), contentType: $file->getType());
+
+        $response = new DataDownloadResponse(data: $file->getContent(), filename: $file->getName(), contentType: $file->getMimeType());
 
         return $response;
     }
