@@ -1,4 +1,4 @@
-name: Branch Protection Check
+name: Pull Request Quality Gate
 
 on:
   pull_request:
@@ -7,6 +7,7 @@ on:
       - master
       - development
       - dev
+      - beta
 
 jobs:
   quality-gate:
