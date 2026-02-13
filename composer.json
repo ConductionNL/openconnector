@@ -22,11 +22,28 @@
 			"@composer bin all update --ansi"
 		],
 		"lint": "find . -name \\*.php -not -path './vendor/*' -not -path './vendor-bin/*' -not -path './build/*' -print0 | xargs -0 -n1 php -l",
-		"cs:check": "php-cs-fixer fix --dry-run --diff",
-		"cs:fix": "php-cs-fixer fix",
+		"cs:check": "./vendor/bin/phpcs --standard=phpcs.xml",
+		"cs:fix": "./vendor/bin/phpcbf --standard=phpcs.xml",
+		"phpcs": "./vendor/bin/phpcs --standard=phpcs.xml",
+		"phpcs:fix": "./vendor/bin/phpcbf --standard=phpcs.xml",
+		"phpmd": "phpmd lib text phpmd.xml || echo 'PHPMD not installed, skipping...'",
+		"phpmetrics": "./vendor/bin/phpmetrics --report-html=phpmetrics lib/",
 		"psalm": "psalm --threads=1 --no-cache",
 		"test:unit": "phpunit tests -c tests/phpunit.xml --colors=always --fail-on-warning --fail-on-risky",
-		"openapi": "generate-spec"
+		"test:all": "./vendor/bin/phpunit --colors=always || echo 'Tests require Nextcloud environment, skipping...'",
+		"openapi": "generate-spec",
+		"grumphp": "./vendor/bin/grumphp run",
+		"grumphp:init": "./vendor/bin/grumphp git:init",
+		"grumphp:deinit": "./vendor/bin/grumphp git:deinit",
+		"phpqa": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa",
+		"phpqa:full": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa --tools phpcs:0,phpmd:0,phploc:0,phpmetrics,phpcpd:0,parallel-lint:0",
+		"phpqa:ci": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa --tools phpcs,phpmd,phploc,phpmetrics,phpcpd,parallel-lint",
+		"qa:check": [
+			"@phpqa"
+		],
+		"qa:full": [
+			"@phpqa:full"
+		]
 	},
 	"require": {
 		"php": "^8.1",
@@ -50,13 +67,21 @@
 		"web-token/jwt-framework": "^3"
 	},
 	"require-dev": {
+		"edgedesign/phpqa": "^1.30",
 		"nextcloud/ocp": "dev-stable29",
-		"roave/security-advisories": "dev-latest"
+		"phpmd/phpmd": "^2.15",
+		"phpmetrics/phpmetrics": "^2.8",
+		"phpro/grumphp": "^2.9",
+		"phpunit/phpunit": "^10.5",
+		"roave/security-advisories": "dev-latest",
+		"squizlabs/php_codesniffer": "^3.9"
 	},
 	"config": {
 		"allow-plugins": {
 			"bamarni/composer-bin-plugin": true,
-			"php-http/discovery": true
+			"php-http/discovery": true,
+			"phpro/grumphp": true,
+			"dealerdirect/phpcodesniffer-composer-installer": true
 		},
 		"optimize-autoloader": true,
 		"sort-packages": true,
