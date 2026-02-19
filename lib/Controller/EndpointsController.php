@@ -495,24 +495,27 @@ class EndpointsController extends Controller
 						return new JSONResponse($object->jsonSerialize());
 					}
 
-									// Handle collection request (list objects)
-				$result = $mapper->findAllPaginated(requestParams: $parameters);
+					// Remove _path as parameters (not needed and breaks things)
+					unset($parameters['_path']);
 
-				// Debug: log the register and schema we're querying
-				$this->logger->info('Simple endpoint query', [
-					'endpoint' => $endpoint->getEndpoint(),
-					'register' => $register,
-					'schema' => $schema,
-					'targetId' => $endpoint->getTargetId(),
-					'parameters' => $parameters,
-					'result_total' => $result['total'] ?? 0
-				]);
+					// Handle collection request (list objects)
+					$result = $mapper->findAllPaginated(requestParams: $parameters);
 
-				// Use the existing structure with minimal changes: serialize objects and rename 'total' to 'count'
-				$returnArray = $result;
-				$returnArray['count'] = $result['total'];
-				$returnArray['results'] = array_map(fn($obj) => $obj->jsonSerialize(), $result['results']);
-				unset($returnArray['total']); // Remove 'total' since we renamed it to 'count'
+					// Debug: log the register and schema we're querying
+					$this->logger->info('Simple endpoint query', [
+						'endpoint' => $endpoint->getEndpoint(),
+						'register' => $register,
+						'schema' => $schema,
+						'targetId' => $endpoint->getTargetId(),
+						'parameters' => $parameters,
+						'result_total' => $result['total'] ?? 0
+					]);
+
+					// Use the existing structure with minimal changes: serialize objects and rename 'total' to 'count'
+					$returnArray = $result;
+					$returnArray['count'] = $result['total'];
+					$returnArray['results'] = array_map(fn($obj) => $obj->jsonSerialize(), $result['results']);
+					unset($returnArray['total']); // Remove 'total' since we renamed it to 'count'
 
 					// Add pagination links if needed
 					if ($result['page'] < $result['pages']) {
