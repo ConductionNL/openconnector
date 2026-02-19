@@ -3,7 +3,8 @@ name: Unstable Release
 on:
   push:
     branches:
-      - development-release
+      # - development-release
+      - never
 
 jobs:
   release-management:
