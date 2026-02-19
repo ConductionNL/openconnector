@@ -6,7 +6,8 @@ permissions:
 on:
   push:
     branches:
-      - development
+      # - development
+      - never
 
 jobs:
   sync-to-development-release:
