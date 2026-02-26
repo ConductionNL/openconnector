@@ -1737,7 +1737,8 @@ class SynchronizationService
 
 		for ($i = 0; $i < $maxPages; $i++) {
 			// Fetch the current page
-			$pageObjects = $this->fetchSinglePage($source, $currentEndpoint, $config, $synchronization);
+			$pageData = $this->fetchSinglePageData($source, $currentEndpoint, $config, $synchronization);
+			$pageObjects = $pageData['objects'];
 			$pageCount++;
 
 			// If test mode is enabled, return only the first object from the first page
@@ -1754,7 +1755,7 @@ class SynchronizationService
 			$allObjects = array_merge($allObjects, $pageObjects);
 
 			// Determine the next page URL/config
-			$nextInfo = $this->getNextPageInfo($source, $currentEndpoint, $config, $synchronization, $currentPage, $usesNextEndpoint);
+			$nextInfo = $this->getNextPageInfo($source, $currentEndpoint, $config, $synchronization, $currentPage, $pageData['result'], $usesNextEndpoint);
 
 			if ($nextInfo === null) {
 				// No more pages
@@ -1790,17 +1791,8 @@ class SynchronizationService
 	 *
 	 * @return array|null Next page information or null if no more pages
 	 */
-	private function getNextPageInfo(Source $source, string $currentEndpoint, array $config, Synchronization $synchronization, int $currentPage, ?bool $usesNextEndpoint = null): ?array
+	private function getNextPageInfo(Source $source, string $currentEndpoint, array $config, Synchronization $synchronization, int $currentPage, array $result, ?bool $usesNextEndpoint = null): ?array
 	{
-		// Make a call to get the current page response for pagination analysis
-		$callLog = $this->callService->call(source: $source, endpoint: $currentEndpoint, config: $config);
-		$response = $callLog->getResponse();
-
-		if ($response === null) {
-			return null;
-		}
-
-		$result = json_decode($response['body'], true);
 		if (empty($result)) {
 			return null;
 		}
@@ -1812,7 +1804,7 @@ class SynchronizationService
 
 		if ($usesNextEndpoint === true) {
 			// Use next endpoint URL pagination
-			$nextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation());
+			$nextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation(), currentEndpoint: $currentEndpoint);
 			if ($nextEndpoint === null || $nextEndpoint === $currentEndpoint) {
 				return null; // No more pages
 			}
@@ -1853,6 +1845,24 @@ class SynchronizationService
 	 */
 	private function fetchSinglePage(Source $source, string $endpoint, array $config, Synchronization $synchronization): array
 	{
+		$pageData = $this->fetchSinglePageData($source, $endpoint, $config, $synchronization);
+
+		return $pageData['objects'];
+	}
+
+	/**
+	 * Fetches and parses a single page.
+	 *
+	 * @param Source $source The data source configuration
+	 * @param string $endpoint The page endpoint to fetch
+	 * @param array $config The request configuration
+	 * @param Synchronization $synchronization The synchronization context
+	 *
+	 * @return array{objects: array, result: array}
+	 * @throws TooManyRequestsHttpException When rate limit is exceeded
+	 */
+	private function fetchSinglePageData(Source $source, string $endpoint, array $config, Synchronization $synchronization): array
+	{
 		// Make the API call
 		$callLog = $this->callService->call(source: $source, endpoint: $endpoint, config: $config);
 		$response = $callLog->getResponse();
@@ -1867,7 +1877,7 @@ class SynchronizationService
 		}
 
 		if ($response === null) {
-			return [];
+			return ['objects' => [], 'result' => []];
 		}
 
 		$body = $response['body'];
@@ -1886,11 +1896,14 @@ class SynchronizationService
 		}
 
 		if (empty($result) === true) {
-			return [];
+			return ['objects' => [], 'result' => []];
 		}
 
 		// Process and return the objects from this page
-		return $this->getAllObjectsFromArray(array: $result, synchronization: $synchronization);
+		return [
+			'objects' => $this->getAllObjectsFromArray(array: $result, synchronization: $synchronization),
+			'result' => $result
+		];
 	}
 
 	/**
@@ -1916,7 +1929,8 @@ class SynchronizationService
 		$maxPages = 50; // Safety limit
 
 		for ($i = 0; $i < $maxPages; $i++) {
-			$pageObjects = $this->fetchSinglePage($source, $currentEndpoint, $config, $synchronization);
+			$pageData = $this->fetchSinglePageData($source, $currentEndpoint, $config, $synchronization);
+			$pageObjects = $pageData['objects'];
 
 			// If test mode is enabled, return only the first object
 			if ($isTest === true && !empty($pageObjects)) {
@@ -1929,15 +1943,7 @@ class SynchronizationService
 
 			$allObjects = array_merge($allObjects, $pageObjects);
 
-			// Get next page URL
-			$callLog = $this->callService->call(source: $source, endpoint: $currentEndpoint, config: $config);
-			$response = $callLog->getResponse();
-
-			if ($response === null) {
-				break;
-			}
-
-			$result = json_decode($response['body'], true);
+			$result = $pageData['result'];
 			if (empty($result)) {
 				break;
 			}
@@ -1948,7 +1954,7 @@ class SynchronizationService
 			}
 
 			if ($usesNextEndpoint === true) {
-				$nextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation());
+				$nextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation(), currentEndpoint: $currentEndpoint);
 				if ($nextEndpoint === null || $nextEndpoint === $currentEndpoint) {
 					break;
 				}
@@ -2039,20 +2045,45 @@ class SynchronizationService
 	 *
 	 * @return string|null The next endpoint URL if available, or null if there is no next page.
 	 */
-	private function getNextEndpoint(array $body, string $url): ?string
+	private function getNextEndpoint(array $body, string $url, ?string $currentEndpoint = null): ?string
 	{
 		$nextLink = $this->getNextlinkFromCall($body);
+		if ($nextLink === null || $nextLink === '') {
+			return null;
+		}
 
 		if (str_starts_with($nextLink, $url)) {
-			return substr($nextLink, strlen($url));
+			$nextLink = substr($nextLink, strlen($url));
 		}
 
-		// Fallback for when $nextLink doesn't start with $url
-		if ($nextLink !== null) {
-			return $nextLink;
+		// Preserve missing query params from current endpoint (e.g. expand=...)
+		// when the API next link only contains paging information.
+		if ($currentEndpoint !== null) {
+			$nextParts = parse_url($nextLink);
+			$currentParts = parse_url($currentEndpoint);
+
+			$nextQuery = [];
+			parse_str($nextParts['query'] ?? '', $nextQuery);
+			$currentQuery = [];
+			parse_str($currentParts['query'] ?? '', $currentQuery);
+
+			foreach ($currentQuery as $key => $value) {
+				if (array_key_exists($key, $nextQuery) === false) {
+					$nextQuery[$key] = $value;
+				}
+			}
+
+			$path = $nextParts['path'] ?? $nextLink;
+			$query = http_build_query($nextQuery);
+
+			if ($query !== '') {
+				return $path.'?'.$query;
+			}
+
+			return $path;
 		}
 
-		return null;
+		return $nextLink;
 	}
 
 	/**
