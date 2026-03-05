@@ -71,6 +71,8 @@ class SynchronizationService
     const MERGE_EXTRA_DATA_OBJECT_LOCATION      = 'mergeExtraData';
     const UNSET_CONFIG_KEY_LOCATION             = 'unsetConfigKey';
     const EXTRA_DATA_BEFORE_CONDITIONS_LOCATION = 'fetchExtraDataBeforeConditions';
+    const EXTEND_BEFORE_CONDITIONS_LOCATION     = 'extendInputBeforeConditions';
+    const EXTEND_BEFORE_CONDITIONS_FETCH_OBJECT = 'extendInputFetchObjectBeforeConditions';
     const FILE_TAG_TYPE                         = 'files';
     const VALID_MUTATION_TYPES                  = ['create', 'update', 'delete'];
     const DEFAULT_MAX_PAGES                     = 50; // Safety limit to prevent infinite page requesting loop
@@ -138,6 +140,204 @@ class SynchronizationService
 		return $this->synchronizationMapper->findAll(limit: null, offset: null, filters: ['source_id' => $sourceId]);
 	}
 
+    /**
+     * Handle synchronization for object create/update/delete events.
+     *
+     * This centralizes event listener behavior:
+     * - run direct source synchronizations for the object's register/schema
+     * - run related-object trigger synchronizations
+     *
+     * @param ObjectEntity $object The object from the event.
+     * @param string $eventMutationType The triggering mutation: create|update|delete
+     *
+     * @return void
+     */
+    public function handleObjectEventSynchronization(ObjectEntity $object, string $eventMutationType): void
+    {
+        if (in_array($eventMutationType, self::VALID_MUTATION_TYPES, true) === false) {
+            return;
+        }
+
+        $register = $object->getRegister();
+        $schema = $object->getSchema();
+        if ($register === null || $schema === null) {
+            return;
+        }
+
+        $objectArray = $object->jsonSerialize();
+        $processedSynchronizationIds = [];
+
+        $directSynchronizations = $this->findAllBySourceId(register: $register, schema: $schema);
+        foreach ($directSynchronizations as $synchronization) {
+            try {
+                if ($eventMutationType === 'delete') {
+                    $this->synchronize(
+                        synchronization: $synchronization,
+                        force: true,
+                        object: $object,
+                        mutationType: 'delete'
+                    );
+                } else {
+                    $this->synchronize(
+                        synchronization: $synchronization,
+                        force: true,
+                        object: $objectArray
+                    );
+                }
+
+                $processedSynchronizationIds[] = $synchronization->getId();
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to process object event: ' . $e->getMessage() . ' for synchronization ' . $synchronization->getId(), [
+                    'exception' => $e,
+                    'eventMutationType' => $eventMutationType,
+                    'register' => $register,
+                    'schema' => $schema,
+                ]);
+            }
+        }
+
+        $triggeredSynchronizations = $this->synchronizationMapper->findAllByRelatedObjectTrigger(
+            register: $register,
+            schema: $schema,
+            mutationType: $eventMutationType
+        );
+
+        foreach ($triggeredSynchronizations as $synchronization) {
+            if (in_array($synchronization->getId(), $processedSynchronizationIds, true) === true) {
+                continue;
+            }
+
+            try {
+                $parentObjectArray = $this->resolveParentObjectForRelatedObjectTrigger(
+                    synchronization: $synchronization,
+                    triggerObject: $objectArray,
+                    triggerRegister: $register,
+                    triggerSchema: $schema,
+                    mutationType: $eventMutationType
+                );
+
+                if ($parentObjectArray === null) {
+                    continue;
+                }
+
+                $this->synchronize(
+                    synchronization: $synchronization,
+                    force: true,
+                    object: $parentObjectArray
+                );
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to process related-object trigger: ' . $e->getMessage() . ' for synchronization ' . $synchronization->getId(), [
+                    'exception' => $e,
+                    'eventMutationType' => $eventMutationType,
+                    'register' => $register,
+                    'schema' => $schema,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Resolve and fetch the parent object for a related-object trigger.
+     *
+     * @param Synchronization $synchronization The synchronization that should run.
+     * @param array $triggerObject The related object payload from the event.
+     * @param string|int $triggerRegister The register of the related object source.
+     * @param string|int $triggerSchema The schema of the related object source.
+     *
+     * @return array|null The fetched parent object as array, or null when it cannot be resolved.
+     */
+    public function resolveParentObjectForRelatedObjectTrigger(
+        Synchronization $synchronization,
+        array $triggerObject,
+        string|int $triggerRegister,
+        string|int $triggerSchema,
+        ?string $mutationType = null
+    ): ?array {
+        if ($synchronization->getSourceType() !== 'register/schema') {
+            return null;
+        }
+
+        $sourceId = $synchronization->getSourceId();
+        if (empty($sourceId) === true || str_contains($sourceId, '/') === false) {
+            return null;
+        }
+
+        $triggerSourceId = "$triggerRegister/$triggerSchema";
+        $sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
+        $triggerConfig = $sourceConfig['triggerFromRelatedObjects'];
+
+        $relationKeys = [];
+        if (isset($triggerConfig[$triggerSourceId]) === true && is_array($triggerConfig[$triggerSourceId]) === true) {
+            $relationConfig = $triggerConfig[$triggerSourceId];
+            $firstRelationKey = array_key_first($relationConfig);
+            if (is_string($firstRelationKey) === true && trim($firstRelationKey) !== '') {
+                $relationKeys[] = trim($firstRelationKey);
+            }
+        }
+
+        if ($relationKeys === []) {
+            return null;
+        }
+
+        $triggerObjectDot = new Dot($triggerObject);
+        $relationReference = null;
+        foreach ($relationKeys as $relationKey) {
+            $candidateReference = $triggerObjectDot->get($relationKey);
+            if (is_string($candidateReference) === true && trim($candidateReference) !== '') {
+                $relationReference = trim($candidateReference);
+                break;
+            }
+        }
+
+        if ($relationReference === null) {
+            return null;
+        }
+
+        $parentObjectId = null;
+        if (Uuid::isValid($relationReference) === true) {
+            $parentObjectId = $relationReference;
+        } elseif (filter_var($relationReference, FILTER_VALIDATE_URL) !== false) {
+            $path = trim((string) parse_url($relationReference, PHP_URL_PATH), '/');
+            $segments = array_values(array_filter(explode('/', $path), static fn ($segment) => $segment !== ''));
+            $lastSegment = end($segments) ?: null;
+            if (is_string($lastSegment) === true && Uuid::isValid($lastSegment) === true) {
+                $parentObjectId = $lastSegment;
+            }
+        }
+
+        if ($parentObjectId === null) {
+            return null;
+        }
+
+        [$parentRegister, $parentSchema] = explode('/', $sourceId, 2);
+        $openRegisters = $this->objectService->getOpenRegisters();
+        if ($openRegisters === null) {
+            return null;
+        }
+
+        try {
+            $parentObject = $openRegisters->find(
+                id: $parentObjectId,
+                register: $parentRegister,
+                schema: $parentSchema
+            );
+
+            return $parentObject?->jsonSerialize();
+        } catch (\Throwable $e) {
+            $this->logger->debug('Failed resolving related parent object via configured relation key', [
+                'synchronizationId' => $synchronization->getId(),
+                'sourceId' => $sourceId,
+                'triggerSourceId' => $triggerSourceId,
+                'relationKeys' => $relationKeys,
+                'relationReference' => $relationReference,
+                'parentObjectId' => $parentObjectId,
+                'error' => $e->getMessage()
+            ]);
+
+            return null;
+        }
+    }
+
 	/**
 	 * Synchronizes internal data to external sources based on synchronization rules.
 	 *
@@ -165,9 +365,46 @@ class SynchronizationService
             $serializedObject = $object->jsonSerialize();
         }
 
+        $sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
+        if (isset($sourceConfig[self::EXTEND_BEFORE_CONDITIONS_LOCATION]) === true) {
+            $this->logger->debug('internToExtern before extendInputBeforeConditions', [
+                'objectId' => $serializedObject['@self']['id'] ?? $serializedObject['id'] ?? null,
+                'betrokkeneIdentificatie' => $serializedObject['betrokkeneIdentificatie'] ?? null,
+            ]);
+
+            $fetchObject = false;
+            if (isset($sourceConfig[self::EXTEND_BEFORE_CONDITIONS_FETCH_OBJECT]) === true) {
+                $fetchObject = filter_var(
+                    $sourceConfig[self::EXTEND_BEFORE_CONDITIONS_FETCH_OBJECT],
+                    FILTER_VALIDATE_BOOLEAN
+                ) === true;
+            }
+
+            $serializedObject = $this->processExtendInputRule(
+                config: [
+                    'extend_input' => [
+                        'properties' => $sourceConfig[self::EXTEND_BEFORE_CONDITIONS_LOCATION],
+                        'fetchObject' => $fetchObject,
+                    ]
+                ],
+                data: $serializedObject
+            );
+
+            $this->logger->debug('internToExtern after extendInputBeforeConditions', [
+                'objectId' => $serializedObject['@self']['id'] ?? $serializedObject['id'] ?? null,
+                'betrokkeneIdentificatie' => $serializedObject['betrokkeneIdentificatie'] ?? null,
+            ]);
+        }
+
 
 		if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $serializedObject)) {
 			return null;
+		}
+
+		// Keep the working object in sync with pre-condition enrichment so mapping
+		// and target payload generation use the same extended data.
+		if (is_array($serializedObject) === true) {
+			$object = $serializedObject;
 		}
 
 		$targetConfig = $synchronization->getTargetConfig();
@@ -1737,7 +1974,8 @@ class SynchronizationService
 
 		for ($i = 0; $i < $maxPages; $i++) {
 			// Fetch the current page
-			$pageObjects = $this->fetchSinglePage($source, $currentEndpoint, $config, $synchronization);
+			$pageData = $this->fetchSinglePageData($source, $currentEndpoint, $config, $synchronization);
+			$pageObjects = $pageData['objects'];
 			$pageCount++;
 
 			// If test mode is enabled, return only the first object from the first page
@@ -1754,7 +1992,7 @@ class SynchronizationService
 			$allObjects = array_merge($allObjects, $pageObjects);
 
 			// Determine the next page URL/config
-			$nextInfo = $this->getNextPageInfo($source, $currentEndpoint, $config, $synchronization, $currentPage, $usesNextEndpoint);
+			$nextInfo = $this->getNextPageInfo($source, $currentEndpoint, $config, $synchronization, $currentPage, $pageData['result'], $usesNextEndpoint);
 
 			if ($nextInfo === null) {
 				// No more pages
@@ -1790,17 +2028,8 @@ class SynchronizationService
 	 *
 	 * @return array|null Next page information or null if no more pages
 	 */
-	private function getNextPageInfo(Source $source, string $currentEndpoint, array $config, Synchronization $synchronization, int $currentPage, ?bool $usesNextEndpoint = null): ?array
+	private function getNextPageInfo(Source $source, string $currentEndpoint, array $config, Synchronization $synchronization, int $currentPage, array $result, ?bool $usesNextEndpoint = null): ?array
 	{
-		// Make a call to get the current page response for pagination analysis
-		$callLog = $this->callService->call(source: $source, endpoint: $currentEndpoint, config: $config);
-		$response = $callLog->getResponse();
-
-		if ($response === null) {
-			return null;
-		}
-
-		$result = json_decode($response['body'], true);
 		if (empty($result)) {
 			return null;
 		}
@@ -1812,7 +2041,7 @@ class SynchronizationService
 
 		if ($usesNextEndpoint === true) {
 			// Use next endpoint URL pagination
-			$nextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation());
+			$nextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation(), currentEndpoint: $currentEndpoint);
 			if ($nextEndpoint === null || $nextEndpoint === $currentEndpoint) {
 				return null; // No more pages
 			}
@@ -1853,6 +2082,24 @@ class SynchronizationService
 	 */
 	private function fetchSinglePage(Source $source, string $endpoint, array $config, Synchronization $synchronization): array
 	{
+		$pageData = $this->fetchSinglePageData($source, $endpoint, $config, $synchronization);
+
+		return $pageData['objects'];
+	}
+
+	/**
+	 * Fetches and parses a single page.
+	 *
+	 * @param Source $source The data source configuration
+	 * @param string $endpoint The page endpoint to fetch
+	 * @param array $config The request configuration
+	 * @param Synchronization $synchronization The synchronization context
+	 *
+	 * @return array{objects: array, result: array}
+	 * @throws TooManyRequestsHttpException When rate limit is exceeded
+	 */
+	private function fetchSinglePageData(Source $source, string $endpoint, array $config, Synchronization $synchronization): array
+	{
 		// Make the API call
 		$callLog = $this->callService->call(source: $source, endpoint: $endpoint, config: $config);
 		$response = $callLog->getResponse();
@@ -1867,7 +2114,7 @@ class SynchronizationService
 		}
 
 		if ($response === null) {
-			return [];
+			return ['objects' => [], 'result' => []];
 		}
 
 		$body = $response['body'];
@@ -1886,11 +2133,14 @@ class SynchronizationService
 		}
 
 		if (empty($result) === true) {
-			return [];
+			return ['objects' => [], 'result' => []];
 		}
 
 		// Process and return the objects from this page
-		return $this->getAllObjectsFromArray(array: $result, synchronization: $synchronization);
+		return [
+			'objects' => $this->getAllObjectsFromArray(array: $result, synchronization: $synchronization),
+			'result' => $result
+		];
 	}
 
 	/**
@@ -1916,7 +2166,8 @@ class SynchronizationService
 		$maxPages = 50; // Safety limit
 
 		for ($i = 0; $i < $maxPages; $i++) {
-			$pageObjects = $this->fetchSinglePage($source, $currentEndpoint, $config, $synchronization);
+			$pageData = $this->fetchSinglePageData($source, $currentEndpoint, $config, $synchronization);
+			$pageObjects = $pageData['objects'];
 
 			// If test mode is enabled, return only the first object
 			if ($isTest === true && !empty($pageObjects)) {
@@ -1929,15 +2180,7 @@ class SynchronizationService
 
 			$allObjects = array_merge($allObjects, $pageObjects);
 
-			// Get next page URL
-			$callLog = $this->callService->call(source: $source, endpoint: $currentEndpoint, config: $config);
-			$response = $callLog->getResponse();
-
-			if ($response === null) {
-				break;
-			}
-
-			$result = json_decode($response['body'], true);
+			$result = $pageData['result'];
 			if (empty($result)) {
 				break;
 			}
@@ -1948,7 +2191,7 @@ class SynchronizationService
 			}
 
 			if ($usesNextEndpoint === true) {
-				$nextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation());
+				$nextEndpoint = $this->getNextEndpoint(body: $result, url: $source->getLocation(), currentEndpoint: $currentEndpoint);
 				if ($nextEndpoint === null || $nextEndpoint === $currentEndpoint) {
 					break;
 				}
@@ -2039,20 +2282,45 @@ class SynchronizationService
 	 *
 	 * @return string|null The next endpoint URL if available, or null if there is no next page.
 	 */
-	private function getNextEndpoint(array $body, string $url): ?string
+	private function getNextEndpoint(array $body, string $url, ?string $currentEndpoint = null): ?string
 	{
 		$nextLink = $this->getNextlinkFromCall($body);
+		if ($nextLink === null || $nextLink === '') {
+			return null;
+		}
 
 		if (str_starts_with($nextLink, $url)) {
-			return substr($nextLink, strlen($url));
+			$nextLink = substr($nextLink, strlen($url));
 		}
 
-		// Fallback for when $nextLink doesn't start with $url
-		if ($nextLink !== null) {
-			return $nextLink;
+		// Preserve missing query params from current endpoint (e.g. expand=...)
+		// when the API next link only contains paging information.
+		if ($currentEndpoint !== null) {
+			$nextParts = parse_url($nextLink);
+			$currentParts = parse_url($currentEndpoint);
+
+			$nextQuery = [];
+			parse_str($nextParts['query'] ?? '', $nextQuery);
+			$currentQuery = [];
+			parse_str($currentParts['query'] ?? '', $currentQuery);
+
+			foreach ($currentQuery as $key => $value) {
+				if (array_key_exists($key, $nextQuery) === false) {
+					$nextQuery[$key] = $value;
+				}
+			}
+
+			$path = $nextParts['path'] ?? $nextLink;
+			$query = http_build_query($nextQuery);
+
+			if ($query !== '') {
+				return $path.'?'.$query;
+			}
+
+			return $path;
 		}
 
-		return null;
+		return $nextLink;
 	}
 
 	/**
@@ -2220,8 +2488,8 @@ class SynchronizationService
             } else if (isset($body['id']) === true) {
 				$targetId = $body['id'];
 			} else {
-				throw new Exception('Could not determine an id from target synchronization');
-			}
+					throw new Exception('Could not determine an id from target synchronization');
+				}
 
 			$contract->setTargetId($targetId);
 			return $contract;
@@ -2246,10 +2514,15 @@ class SynchronizationService
             $targetConfig['json'] = $this->processMapping(mapping: $mapping, data: $targetConfig['json']);
 		}
 
-		$response = $this->callService->call(source: $target, endpoint: $endpoint, method: $method, config: $targetConfig)->getResponse();
+			$response = $this->callService->call(source: $target, endpoint: $endpoint, method: $method, config: $targetConfig)->getResponse();
 
-		$body = array_merge(json_decode($response['body'], true), ['targetId' => $targetId]);
-        $targetObject = $body;
+            $decodedResponseBody = json_decode($response['body'] ?? '', true);
+            if (is_array($decodedResponseBody) === false) {
+                $decodedResponseBody = [];
+            }
+
+			$body = array_merge($decodedResponseBody, ['targetId' => $targetId]);
+	        $targetObject = $body;
 
 		return $contract;
 	}
@@ -3459,6 +3732,7 @@ class SynchronizationService
 
 		// Check if object adheres to conditions.
 		// Take note, JsonLogic::apply() returns a range of return types, so checking it with '=== false' or '!== true' does not work properly.
+		
 		if ($synchronization->getConditions() !== [] && !JsonLogic::apply($synchronization->getConditions(), $conditionsObject)) {
 			// Increment skipped count in log since object doesn't meet conditions
 			$result['objects']['skipped']++;

@@ -16,6 +16,7 @@ class MappingExtension extends AbstractExtension
             new TwigFilter('b64enc', [MappingRuntime::class, 'b64enc']),
             new TwigFilter('b64dec', [MappingRuntime::class, 'b64dec']),
             new TwigFilter('json_decode', [MappingRuntime::class, 'json_decode']),
+            new TwigFilter('slugify', [MappingRuntime::class, 'createSlug']),
         ];
 
     }//end getFilters()

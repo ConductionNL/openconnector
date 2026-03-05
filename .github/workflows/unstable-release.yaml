@@ -1,15 +1,16 @@
-name: Beta Release
+name: Unstable Release
 
 on:
   push:
     branches:
-      - beta-release
+      # - development-release
+      - never
 
 jobs:
   release-management:
     runs-on: ubuntu-latest
     steps:
-    
+
       # Step 1: Checkout the repository with full history
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -22,44 +23,44 @@ jobs:
         run: |
           echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
 
-      # Step 3: Calculate the next beta version
-      # This reads the main version, increments the patch, and adds/increments the beta suffix
-      - name: Get current version and append beta suffix
+      # Step 3: Calculate the next unstable version
+      # This reads the main version, increments the patch, and adds/increments the unstable suffix
+      - name: Get current version and append unstable suffix
         id: increment_version
         run: |
           # Get the stable version from main branch as base
           git fetch origin main
           main_version=$(git show origin/main:appinfo/info.xml | grep -oP '(?<=<version>)[^<]+' || echo "")
           
-          # Get current version from beta-release branch
+          # Get current version from development-release branch
           current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml || echo "")
-          
+
           # Split main version into parts (e.g., 1.2.5 -> [1, 2, 5])
           IFS='.' read -ra main_version_parts <<< "$main_version"
           
           # Increment patch version by 1 from main (e.g., 1.2.5 -> 1.2.6)
           next_patch=$((main_version_parts[2] + 1))
-          
-          # Extract beta counter from current version if it exists
-          # If current version is 1.2.6-beta.1, we'll increment to 1.2.6-beta.2
-          beta_counter=1
-          if [[ $current_version =~ -beta\.([0-9]+)$ ]]; then
+
+          # Extract unstable counter from current version if it exists
+          # If current version is 1.2.6-unstable.1, we'll increment to 1.2.6-unstable.2
+          unstable_counter=1
+          if [[ $current_version =~ -unstable\.([0-9]+)$ ]]; then
             # If current patch version matches next patch, increment the counter
             current_patch=$(echo $current_version | grep -oP '^[0-9]+\.[0-9]+\.(\d+)' | cut -d. -f3)
             if [ "$current_patch" -eq "$next_patch" ]; then
-              beta_counter=$((BASH_REMATCH[1] + 1))
+              unstable_counter=$((BASH_REMATCH[1] + 1))
             fi
           fi
-          
-          # Build the new beta version string
-          beta_version="${main_version_parts[0]}.${main_version_parts[1]}.${next_patch}-beta.${beta_counter}"
-          
+
+          # Build the new unstable version string
+          unstable_version="${main_version_parts[0]}.${main_version_parts[1]}.${next_patch}-unstable.${unstable_counter}"
+
           # Export version for use in subsequent steps
-          echo "NEW_VERSION=$beta_version" >> $GITHUB_ENV
-          echo "new_version=$beta_version" >> $GITHUB_OUTPUT
+          echo "NEW_VERSION=$unstable_version" >> $GITHUB_ENV
+          echo "new_version=$unstable_version" >> $GITHUB_OUTPUT
           echo "Main version: $main_version"
           echo "Current version: $current_version"
-          echo "Using beta version: $beta_version"
+          echo "Using unstable version: $unstable_version"
 
       # Step 4: Update the version in info.xml
       - name: Update version in info.xml
@@ -72,13 +73,13 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           # Only commit if there are actual changes
           if git diff --quiet && git diff --cached --quiet; then
             echo "No changes to commit"
           else
             git add appinfo/info.xml
-            git commit -m "Bump beta version to ${{ env.NEW_VERSION }} [skip ci]"
+            git commit -m "Bump unstable version to ${{ env.NEW_VERSION }} [skip ci]"
             git push
           fi
 
@@ -169,14 +170,15 @@ jobs:
         id: version
         uses: codacy/git-version@2.7.1
         with:
-          release-branch: beta-release
+          release-branch: development-release
 
       # Step 15: Create GitHub release (marked as prerelease)
-      - name: Upload Beta Release
+      # skipIfReleaseExists prevents errors if the release was already created
+      - name: Upload Unstable Release
         uses: ncipollo/release-action@v1.12.0
         with:
           tag: v${{ env.NEW_VERSION }}
-          name: Beta Release ${{ env.NEW_VERSION }}
+          name: Unstable Release ${{ env.NEW_VERSION }}
           draft: false
           prerelease: true
           skipIfReleaseExists: true
@@ -192,7 +194,7 @@ jobs:
           overwrite: true
 
       # Step 17: Upload the app to Nextcloud App Store
-      # nightly: false means this is a regular beta release, not a nightly build
+      # nightly: true marks this as a nightly/unstable build in the app store
       - name: Upload app to Nextcloud appstore
         uses: nextcloud-releases/nextcloud-appstore-push-action@a011fe619bcf6e77ddebc96f9908e1af4071b9c1
         with:
@@ -200,7 +202,7 @@ jobs:
           appstore_token: ${{ secrets.NEXTCLOUD_APPSTORE_TOKEN }}
           download_url: https://github.com/${{ github.repository }}/releases/download/v${{ env.NEW_VERSION }}/${{ env.APP_NAME }}-${{ env.NEW_VERSION }}.tar.gz
           app_private_key: ${{ secrets.NEXTCLOUD_SIGNING_KEY }}
-          nightly: false
+          nightly: true
 
       # Step 18: Verify the release contents
       # head -50 limits output to first 50 files for readability

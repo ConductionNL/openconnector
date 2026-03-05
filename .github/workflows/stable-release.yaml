@@ -1,9 +1,9 @@
-name: Release Workflow(nightly)
+name: Stable Release
 
 on:
   push:
     branches:
-      - never
+      - main
   workflow_dispatch:
     inputs:
       version:
@@ -20,33 +20,31 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Set app env
         run: |
           echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
 
-      - name: Get current version and modify for Nightly
-        id: version_update
+      - name: Get current version and increment
+        id: increment_version
         run: |
           current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml)
-          if [[ "${GITHUB_REF_NAME}" == "dev" ]]; then
-            nightly_version="${current_version}-nightly"
-            sed -i "s|<version>.*</version>|<version>${nightly_version}</version>|" appinfo/info.xml
-            echo "VERSION=${nightly_version}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${current_version}" >> $GITHUB_ENV
-          fi
+          IFS='.' read -ra version_parts <<< "$current_version"
+          ((version_parts[2]++))
+          new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
+          echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
-      # - name: Update version in info.xml
-      #   run: |
-      #     sed -i "s|<version>.*</version>|<version>${{ env.NEW_VERSION }}</version>|" appinfo/info.xml
+      - name: Update version in info.xml
+        run: |
+          sed -i "s|<version>.*</version>|<version>${{ env.NEW_VERSION }}</version>|" appinfo/info.xml
 
       - name: Commit version update
-        if: github.ref_name == 'dev'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git commit -am "Bump version to ${{ env.NEW_VERSION }}"
+          git commit -am "Bump version to ${{ env.NEW_VERSION }}" -m "[skip ci]"
           git push
 
       # Step 1: Prepare the signing certificate and key
@@ -88,6 +86,7 @@ jobs:
             --exclude='.vscode' \
             --exclude='docker' \
             --exclude='docs' \
+            --exclude='website' \
             --exclude='node_modules' \
             --exclude='/src' \
             --exclude='test' \
@@ -133,7 +132,7 @@ jobs:
         id: version
         uses: codacy/git-version@2.7.1
         with:
-          release-branch: development
+          release-branch: main
 
       # Step 12: Extract repository description
       - name: Extract repository description
@@ -141,14 +140,6 @@ jobs:
         run: |
           description=$(jq -r '.description' <(curl -s https://api.github.com/repos/${{ github.repository }}))
           echo "REPO_DESCRIPTION=$description" >> $GITHUB_ENV
-
-      # Step 13: Run Changelog CI
-      - name: Run Changelog CI
-        if: github.ref == 'refs/heads/development'
-        uses: saadmk11/changelog-ci@v1.1.2
-        with:
-          release_version: ${{ env.NEW_VERSION }}
-          config_file: changelog-ci-config.json
 
       # Step 14: Output the version
       - name: Use the version
@@ -187,7 +178,8 @@ jobs:
           appstore_token: ${{ secrets.NEXTCLOUD_APPSTORE_TOKEN }}
           download_url: https://github.com/${{ github.repository }}/releases/download/v${{ env.NEW_VERSION }}/${{ env.APP_NAME }}-${{ env.NEW_VERSION }}.tar.gz
           app_private_key: ${{ secrets.NEXTCLOUD_SIGNING_KEY }}
-          nightly: true
+          nightly: false
+
       - name: Verify version and contents
         run: |
           echo "App version: ${{ env.NEW_VERSION }}"
@@ -195,3 +187,35 @@ jobs:
           tar -tvf nextcloud-release.tar.gz
           echo "info.xml contents:"
           tar -xOf nextcloud-release.tar.gz ${{ env.APP_NAME }}/appinfo/info.xml
+
+  update-changelog:
+    runs-on: ubuntu-latest
+    steps:
+    
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set app env
+        run: |
+          echo "APP_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
+  
+      - name: Get current version and increment
+        id: increment_version
+        run: |
+          current_version=$(grep -oP '(?<=<version>)[^<]+' appinfo/info.xml)
+          IFS='.' read -ra version_parts <<< "$current_version"
+          ((version_parts[2]++))
+          new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
+          echo "NEW_VERSION=$new_version" >> $GITHUB_ENV
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+      # Step 13: Run Changelog CI
+      - name: Run Changelog CI
+        if: github.ref == 'refs/heads/main'
+        uses: saadmk11/changelog-ci@v1.1.2
+        with:
+          persist-credentials: true
+          release_version: ${{ env.NEW_VERSION }}
+          config_file: changelog-ci-config.json

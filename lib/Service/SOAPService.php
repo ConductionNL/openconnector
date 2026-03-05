@@ -214,6 +214,15 @@ class SOAPService
          */
         $engine = $this->setupEngine(source: $source, passedConfig: $config);
 
+
+        if (isset($body['edcLk01']['object']['inhoud']) === true) {
+            if (is_array($body['edcLk01']['object']['inhoud']) === false) {
+                $body['edcLk01']['object']['inhoud'] = base64_decode($body['edcLk01']['object']['inhoud']);
+            } else if (isset($body['edcLk01']['object']['inhoud']['_']) === true) {
+                $body['edcLk01']['object']['inhoud']['_'] = base64_decode($body['edcLk01']['object']['inhoud']['_']);
+            }
+        }
+
         // In SOAP the endpoint is decided by the WSDL, however, the SOAP method can be derived from the endpoint property of the call.
         $result = $engine->request($soapAction, $body);
 
