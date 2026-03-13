@@ -10,13 +10,15 @@ use OCA\OpenRegister\Event\ObjectCreatedEvent;
 class ObjectCreatedEventListener implements IEventListener
 {
 
-	public function __construct(
-		private readonly SynchronizationService $synchronizationService,
-	)
-	{
-	}
 
-	/**
+    public function __construct(
+        private readonly SynchronizationService $synchronizationService,
+    ) {
+
+    }//end __construct()
+
+
+    /**
      * @inheritDoc
      */
     public function handle(Event $event): void
@@ -38,5 +40,8 @@ class ObjectCreatedEventListener implements IEventListener
             object: $object,
             eventMutationType: 'create'
         );
-    }
-}
+
+    }//end handle()
+
+
+}//end class

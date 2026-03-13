@@ -25,6 +25,12 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling endpoint related operations
+ *
+ * @SuppressWarnings(PHPMD.CamelCaseParameterName)
+ * @SuppressWarnings(PHPMD.CamelCaseVariableName)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  */
 class EndpointsController extends Controller
 {
@@ -113,6 +119,9 @@ class EndpointsController extends Controller
 	 *
 	 * @return JSONResponse A JSON response containing the list of endpoints
 	 */
+	/**
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) - $objectService injected by framework
+	 */
 	public function index(ObjectService $objectService, SearchService $searchService): JSONResponse
 	{
 		$filters = $this->request->getParams();
@@ -159,11 +168,7 @@ class EndpointsController extends Controller
 	{
 		$data = $this->request->getParams();
 
-		foreach ($data as $key => $value) {
-			if (str_starts_with($key, '_') === true) {
-				unset($data[$key]);
-			}
-		}
+		$data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
 		if (isset($data['id']) === true) {
 			unset($data['id']);
@@ -189,11 +194,7 @@ class EndpointsController extends Controller
 	{
 		$data = $this->request->getParams();
 
-		foreach ($data as $key => $value) {
-			if (str_starts_with($key, '_') === true) {
-				unset($data[$key]);
-			}
-		}
+		$data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 		if (isset($data['id']) === true) {
 			unset($data['id']);
 		}

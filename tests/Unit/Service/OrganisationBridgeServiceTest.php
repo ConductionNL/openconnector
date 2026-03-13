@@ -20,9 +20,9 @@ namespace OCA\OpenConnector\Tests\Unit\Service;
 
 use OCA\OpenConnector\Service\OrganisationBridgeService;
 use OCP\App\IAppManager;
-use OCP\IContainer;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 
@@ -48,7 +48,7 @@ class OrganisationBridgeServiceTest extends TestCase
         $appManager->method('getInstalledApps')
             ->willReturn(['openconnector', 'files']);
 
-        $container = $this->createMock(IContainer::class);
+        $container = $this->createMock(ContainerInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
         $service = new OrganisationBridgeService($appManager, $container, $logger);
@@ -69,7 +69,7 @@ class OrganisationBridgeServiceTest extends TestCase
         $appManager->method('getInstalledApps')
             ->willReturn(['openconnector', 'openregister', 'files']);
 
-        $container = $this->createMock(IContainer::class);
+        $container = $this->createMock(ContainerInterface::class);
         $container->method('get')
             ->with('OCA\OpenRegister\Service\OrganisationService')
             ->willThrowException(new class extends \Exception implements ContainerExceptionInterface {});
@@ -97,7 +97,7 @@ class OrganisationBridgeServiceTest extends TestCase
         $appManager->method('getInstalledApps')
             ->willReturn(['openconnector', 'files']);
 
-        $container = $this->createMock(IContainer::class);
+        $container = $this->createMock(ContainerInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
         $service = new OrganisationBridgeService($appManager, $container, $logger);
@@ -123,7 +123,7 @@ class OrganisationBridgeServiceTest extends TestCase
         $appManager->method('getInstalledApps')
             ->willReturn(['openconnector', 'files']);
 
-        $container = $this->createMock(IContainer::class);
+        $container = $this->createMock(ContainerInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
         $service = new OrganisationBridgeService($appManager, $container, $logger);
@@ -148,10 +148,11 @@ class OrganisationBridgeServiceTest extends TestCase
         $appManager->method('getInstalledApps')
             ->willReturn(['openconnector', 'openregister', 'files']);
 
-        $container = $this->createMock(IContainer::class);
+        $container = $this->createMock(ContainerInterface::class);
+        $mockOrganisationService = $this->createMock(\OCA\OpenRegister\Service\OrganisationService::class);
         $container->method('get')
             ->with('OCA\OpenRegister\Service\OrganisationService')
-            ->willReturn($this->createMock(\OCA\OpenRegister\Service\OrganisationService::class));
+            ->willReturn($mockOrganisationService);
 
         $logger = $this->createMock(LoggerInterface::class);
 
@@ -173,7 +174,7 @@ class OrganisationBridgeServiceTest extends TestCase
         $appManager->method('getInstalledApps')
             ->willReturn(['openconnector', 'files']);
 
-        $container = $this->createMock(IContainer::class);
+        $container = $this->createMock(ContainerInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
         $service = new OrganisationBridgeService($appManager, $container, $logger);
@@ -195,7 +196,7 @@ class OrganisationBridgeServiceTest extends TestCase
         $appManager->method('getInstalledApps')
             ->willReturn(['openconnector', 'files']);
 
-        $container = $this->createMock(IContainer::class);
+        $container = $this->createMock(ContainerInterface::class);
         $logger = $this->createMock(LoggerInterface::class);
 
         $service = new OrganisationBridgeService($appManager, $container, $logger);

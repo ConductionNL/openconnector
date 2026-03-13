@@ -4,6 +4,7 @@ namespace OCA\OpenConnector\Service\ConfigurationHandlers;
 
 use OCA\OpenConnector\Db\Source;
 use OCA\OpenConnector\Db\SourceMapper;
+use InvalidArgumentException;
 use OCP\AppFramework\Db\Entity;
 
 /**
@@ -11,40 +12,44 @@ use OCP\AppFramework\Db\Entity;
  *
  * Handler for exporting and importing source configurations.
  *
- * @package OCA\OpenConnector\Service\ConfigurationHandlers
- * @category Service
- * @author OpenConnector Team
+ * @package   OCA\OpenConnector\Service\ConfigurationHandlers
+ * @category  Service
+ * @author    OpenConnector Team
  * @copyright 2024 OpenConnector
- * @license AGPL-3.0
- * @version 1.0.0
- * @link https://github.com/OpenConnector/openconnector
+ * @license   AGPL-3.0
+ * @version   1.0.0
+ * @link      https://github.com/OpenConnector/openconnector
  */
 class SourceHandler implements ConfigurationHandlerInterface
 {
+
+
     /**
      * @param SourceMapper $sourceMapper The source mapper
      */
     public function __construct(
         private readonly SourceMapper $sourceMapper
     ) {
-    }
+
+    }//end __construct()
+
 
     /**
      * {@inheritDoc}
      */
-    public function export(Entity $entity, array $mappings, array &$mappingIds = []): array
+    public function export(Entity $entity, array $mappings, array &$mappingIds=[]): array
     {
         if (!$entity instanceof Source) {
-            throw new \InvalidArgumentException('Entity must be an instance of Source');
+            throw new InvalidArgumentException('Entity must be an instance of Source');
         }
 
         $sourceArray = $entity->jsonSerialize();
-        
+
         // Ensure slug is set
         if (empty($sourceArray['slug'])) {
             $sourceArray['slug'] = $entity->getSlug();
         }
-        
+
         // Remove sensitive data
         unset(
             $sourceArray['id'],
@@ -63,19 +68,23 @@ class SourceHandler implements ConfigurationHandlerInterface
 
         // Sanitize configuration to remove sensitive headers
         if (isset($sourceArray['configuration']) && is_array($sourceArray['configuration'])) {
-            foreach ($sourceArray['configuration'] as $key => $value) {
-                if (str_starts_with($key, 'headers.') &&
+            $sourceArray['configuration'] = array_filter(
+                $sourceArray['configuration'],
+                static fn(string $key): bool => !(
+                    str_starts_with($key, 'headers.') &&
                     (str_contains(strtolower($key), 'authorization') ||
                      str_contains(strtolower($key), 'token') ||
                      str_contains(strtolower($key), 'key') ||
-                     str_contains(strtolower($key), 'secret'))) {
-                    unset($sourceArray['configuration'][$key]);
-                }
-            }
+                     str_contains(strtolower($key), 'secret'))
+                ),
+                ARRAY_FILTER_USE_KEY
+            );
         }
 
         return $sourceArray;
-    }
+
+    }//end export()
+
 
     /**
      * {@inheritDoc}
@@ -90,7 +99,9 @@ class SourceHandler implements ConfigurationHandlerInterface
 
         // Create new source.
         return $this->sourceMapper->createFromArray($data);
-    }
+
+    }//end import()
+
 
     /**
      * {@inheritDoc}
@@ -98,5 +109,8 @@ class SourceHandler implements ConfigurationHandlerInterface
     public function getEntityType(): string
     {
         return 'source';
-    }
-}
+
+    }//end getEntityType()
+
+
+}//end class

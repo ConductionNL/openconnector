@@ -21,26 +21,29 @@ use OCP\AppFramework\Db\DoesNotExistException;
  */
 class EventsController extends Controller
 {
+
+
     /**
      * Constructor for the EventsController
      *
-     * @param string $appName The name of the app
-     * @param IRequest $request The request object
-     * @param IAppConfig $config The app configuration object
+     * @param string     $appName The name of the app
+     * @param IRequest   $request The request object
+     * @param IAppConfig $config  The app configuration object
      */
     public function __construct(
         $appName,
         IRequest $request,
         private readonly IAppConfig $config,
         private readonly EventMapper $eventMapper,
-//        private readonly EventLogMapper $eventLogMapper, // @todo
+        // private readonly EventLogMapper $eventLogMapper, // @todo
         private readonly EventService $eventService,
         private readonly EventMessageMapper $messageMapper,
         private readonly EventSubscriptionMapper $subscriptionMapper
-    )
-    {
+    ) {
         parent::__construct($appName, $request);
-    }
+
+    }//end __construct()
+
 
     /**
      * Returns the template of the main app's page
@@ -59,7 +62,9 @@ class EventsController extends Controller
             'index',
             []
         );
-    }
+
+    }//end page()
+
 
     /**
      * Retrieves a list of all events
@@ -71,17 +76,27 @@ class EventsController extends Controller
      *
      * @return JSONResponse A JSON response containing the list of events
      */
+
+
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) - $objectService injected by framework
+     */
     public function index(ObjectService $objectService, SearchService $searchService): JSONResponse
     {
-        $filters = $this->request->getParams();
-        $fieldsToSearch = ['name', 'description'];
+        $filters        = $this->request->getParams();
+        $fieldsToSearch = [
+            'name',
+            'description',
+        ];
 
-        $searchParams = $searchService->createMySQLSearchParams(filters: $filters);
+        $searchParams     = $searchService->createMySQLSearchParams(filters: $filters);
         $searchConditions = $searchService->createMySQLSearchConditions(filters: $filters, fieldsToSearch: $fieldsToSearch);
-        $filters = $searchService->unsetSpecialQueryParams(filters: $filters);
+        $filters          = $searchService->unsetSpecialQueryParams(filters: $filters);
 
         return new JSONResponse(['results' => $this->eventMapper->findAll(limit: null, offset: null, filters: $filters, searchConditions: $searchConditions, searchParams: $searchParams)]);
-    }
+
+    }//end index()
+
 
     /**
      * Retrieves a single event by its ID
@@ -91,7 +106,7 @@ class EventsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the event to retrieve
+     * @param  string $id The ID of the event to retrieve
      * @return JSONResponse A JSON response containing the event details
      */
     public function show(string $id): JSONResponse
@@ -101,7 +116,9 @@ class EventsController extends Controller
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(data: ['error' => 'Not Found'], statusCode: 404);
         }
-    }
+
+    }//end show()
+
 
     /**
      * Creates a new event
@@ -117,11 +134,7 @@ class EventsController extends Controller
     {
         $data = $this->request->getParams();
 
-        foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
-                unset($data[$key]);
-            }
-        }
+        $data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
         if (isset($data['id'])) {
             unset($data['id']);
@@ -131,7 +144,9 @@ class EventsController extends Controller
         $event = $this->eventMapper->createFromArray(object: $data);
 
         return new JSONResponse($event);
-    }
+
+    }//end create()
+
 
     /**
      * Updates an existing event
@@ -141,18 +156,14 @@ class EventsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the event to update
+     * @param  string $id The ID of the event to update
      * @return JSONResponse A JSON response containing the updated event details
      */
     public function update(int $id): JSONResponse
     {
         $data = $this->request->getParams();
 
-        foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
-                unset($data[$key]);
-            }
-        }
+        $data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
         if (isset($data['id'])) {
             unset($data['id']);
         }
@@ -161,7 +172,9 @@ class EventsController extends Controller
         $event = $this->eventMapper->updateFromArray(id: (int) $id, object: $data);
 
         return new JSONResponse($event);
-    }
+
+    }//end update()
+
 
     /**
      * Deletes an event
@@ -171,7 +184,7 @@ class EventsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the event to delete
+     * @param  string $id The ID of the event to delete
      * @return JSONResponse An empty JSON response
      */
     public function destroy(int $id): JSONResponse
@@ -179,7 +192,9 @@ class EventsController extends Controller
         $this->eventMapper->delete($this->eventMapper->find((int) $id));
 
         return new JSONResponse([]);
-    }
+
+    }//end destroy()
+
 
     /**
      * Get all messages generated by an event
@@ -187,7 +202,7 @@ class EventsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param int $id Event ID
+     * @param  int $id Event ID
      * @return JSONResponse List of messages
      */
     public function messages(int $id): JSONResponse
@@ -203,14 +218,18 @@ class EventsController extends Controller
                 offset: $this->request->getParam('offset', 0)
             );
 
-            return new JSONResponse([
-                'event' => $event,
-                'messages' => $messages
-            ]);
+            return new JSONResponse(
+                [
+                    'event'    => $event,
+                    'messages' => $messages,
+                ]
+            );
         } catch (DoesNotExistException $e) {
             return new JSONResponse(['error' => 'Event not found'], 404);
         }
-    }
+
+    }//end messages()
+
 
     /**
      * Create a new subscription for events
@@ -226,11 +245,7 @@ class EventsController extends Controller
             $data = $this->request->getParams();
 
             // Remove internal fields
-            foreach ($data as $key => $value) {
-                if (str_starts_with($key, '_')) {
-                    unset($data[$key]);
-                }
-            }
+            $data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
             // Create subscription
             $subscription = $this->subscriptionMapper->createFromArray($data);
@@ -239,7 +254,9 @@ class EventsController extends Controller
         } catch (Exception $e) {
             return new JSONResponse(['error' => $e->getMessage()], 400);
         }
-    }
+
+    }//end subscribe()
+
 
     /**
      * Update an existing subscription
@@ -247,7 +264,7 @@ class EventsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param int $subscriptionId Subscription ID
+     * @param  int $subscriptionId Subscription ID
      * @return JSONResponse The updated subscription
      */
     public function updateSubscription(int $subscriptionId): JSONResponse
@@ -256,11 +273,7 @@ class EventsController extends Controller
             $data = $this->request->getParams();
 
             // Remove internal fields
-            foreach ($data as $key => $value) {
-                if (str_starts_with($key, '_')) {
-                    unset($data[$key]);
-                }
-            }
+            $data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
             // Update subscription
             $subscription = $this->subscriptionMapper->updateFromArray($subscriptionId, $data);
@@ -271,7 +284,9 @@ class EventsController extends Controller
         } catch (Exception $e) {
             return new JSONResponse(['error' => $e->getMessage()], 400);
         }
-    }
+
+    }//end updateSubscription()
+
 
     /**
      * Delete a subscription
@@ -279,7 +294,7 @@ class EventsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param int $subscriptionId Subscription ID
+     * @param  int $subscriptionId Subscription ID
      * @return JSONResponse Empty response
      */
     public function unsubscribe(int $subscriptionId): JSONResponse
@@ -292,7 +307,9 @@ class EventsController extends Controller
         } catch (DoesNotExistException $e) {
             return new JSONResponse(['error' => 'Subscription not found'], 404);
         }
-    }
+
+    }//end unsubscribe()
+
 
     /**
      * List all subscriptions
@@ -307,11 +324,7 @@ class EventsController extends Controller
         $filters = $this->request->getParams();
 
         // Remove internal fields
-        foreach ($filters as $key => $value) {
-            if (str_starts_with($key, '_')) {
-                unset($filters[$key]);
-            }
-        }
+        $filters = array_filter($filters, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
         $subscriptions = $this->subscriptionMapper->findAll(
             limit: $this->request->getParam('limit', 50),
@@ -320,7 +333,9 @@ class EventsController extends Controller
         );
 
         return new JSONResponse(['results' => $subscriptions]);
-    }
+
+    }//end subscriptions()
+
 
     /**
      * Get messages for a specific subscription
@@ -328,7 +343,7 @@ class EventsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param int $subscriptionId Subscription ID
+     * @param  int $subscriptionId Subscription ID
      * @return JSONResponse List of messages
      */
     public function subscriptionMessages(int $subscriptionId): JSONResponse
@@ -340,18 +355,22 @@ class EventsController extends Controller
             // Get messages for this subscription
             $messages = $this->messageMapper->findAll(
                 limit: $this->request->getParam('limit', 50),
-				offset: $this->request->getParam('offset', 0),
-				filters: ['subscriptionId' => $subscriptionId]
+                offset: $this->request->getParam('offset', 0),
+                filters: ['subscriptionId' => $subscriptionId]
             );
 
-            return new JSONResponse([
-                'subscription' => $subscription,
-                'messages' => $messages
-            ]);
+            return new JSONResponse(
+                [
+                    'subscription' => $subscription,
+                    'messages'     => $messages,
+                ]
+            );
         } catch (DoesNotExistException $e) {
             return new JSONResponse(['error' => 'Subscription not found'], 404);
         }
-    }
+
+    }//end subscriptionMessages()
+
 
     /**
      * Pull events for a subscription (for pull-based subscriptions)
@@ -359,7 +378,7 @@ class EventsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param int $subscriptionId Subscription ID
+     * @param  int $subscriptionId Subscription ID
      * @return JSONResponse List of pending messages
      */
     public function pull(int $subscriptionId): JSONResponse
@@ -381,5 +400,8 @@ class EventsController extends Controller
         } catch (DoesNotExistException $e) {
             return new JSONResponse(['error' => 'Subscription not found'], 404);
         }
-    }
-}
+
+    }//end pull()
+
+
+}//end class

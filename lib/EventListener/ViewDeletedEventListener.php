@@ -23,6 +23,8 @@ use Psr\Log\LoggerInterface;
  * @link     https://github.com/ConductionNL/OpenConnector
  * @version  1.0.0
  * @todo     remove this temporary listener to the software catalog application
+ *
+ * @SuppressWarnings(PHPMD.IfStatementAssignment)
  */
 class ViewDeletedEventListener implements IEventListener
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/**
+/*
  * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
@@ -18,45 +18,57 @@ use OCP\Migration\SimpleMigrationStep;
 /**
  * FIXME Auto-generated migration step: Please modify to your needs!
  */
-class Version1Date20241210100000 extends SimpleMigrationStep {
+class Version1Date20241210100000 extends SimpleMigrationStep
+{
 
-	/**
-	 * @param IOutput $output
-	 * @param Closure(): ISchemaWrapper $schemaClosure
-	 * @param array $options
-	 */
-	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
-	}
 
-	/**
-	 * @param IOutput $output
-	 * @param Closure(): ISchemaWrapper $schemaClosure
-	 * @param array $options
-	 * @return null|ISchemaWrapper
-	 */
-	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
-		/**
-		 * @var ISchemaWrapper $schema
-		 */
-		$schema = $schemaClosure();
+    /**
+     * @param IOutput                   $output
+     * @param Closure(): ISchemaWrapper $schemaClosure
+     * @param array                     $options
+     */
+    public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
+    {
 
-		if ($schema->hasTable('openconnector_synchronizations') === true) {
-			$table = $schema->getTable('openconnector_synchronizations');
+    }//end preSchemaChange()
 
-			if ($table->hasColumn('sourceHashMapping') === false) {
-				$table->dropColumn('sourceHashMapping');
-				$table->addColumn('source_hash_mapping', Types::STRING)->setNotnull(false);
-			}
-		}
 
-		return $schema;
-	}
+    /**
+     * @param  IOutput                   $output
+     * @param  Closure(): ISchemaWrapper $schemaClosure
+     * @param  array                     $options
+     * @return null|ISchemaWrapper
+     */
+    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
+    {
+        /*
+         * @var ISchemaWrapper $schema
+         */
+        $schema = $schemaClosure();
 
-	/**
-	 * @param IOutput $output
-	 * @param Closure(): ISchemaWrapper $schemaClosure
-	 * @param array $options
-	 */
-	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
-	}
-}
+        if ($schema->hasTable('openconnector_synchronizations') === true) {
+            $table = $schema->getTable('openconnector_synchronizations');
+
+            if ($table->hasColumn('sourceHashMapping') === false) {
+                $table->dropColumn('sourceHashMapping');
+                $table->addColumn('source_hash_mapping', Types::STRING)->setNotnull(false);
+            }
+        }
+
+        return $schema;
+
+    }//end changeSchema()
+
+
+    /**
+     * @param IOutput                   $output
+     * @param Closure(): ISchemaWrapper $schemaClosure
+     * @param array                     $options
+     */
+    public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
+    {
+
+    }//end postSchemaChange()
+
+
+}//end class
