@@ -15,6 +15,14 @@ use OCA\OpenConnector\Db\MappingMapper;
 use OCA\OpenConnector\Db\RuleMapper;
 use OCA\OpenConnector\Db\JobMapper;
 use OCA\OpenConnector\Db\SynchronizationMapper;
+use OCA\OpenRegister\Db\RegisterMapper;
+use OCA\OpenRegister\Db\SchemaMapper;
+use OCA\OpenConnector\Service\ConfigurationHandlers\EndpointHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\SynchronizationHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\MappingHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\JobHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\SourceHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\RuleHandler;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -39,6 +47,14 @@ class ConfigurationServiceTest extends TestCase
     private RuleMapper $ruleMapper;
     private JobMapper $jobMapper;
     private SynchronizationMapper $synchronizationMapper;
+    private RegisterMapper $registerMapper;
+    private SchemaMapper $schemaMapper;
+    private EndpointHandler $endpointHandler;
+    private SynchronizationHandler $synchronizationHandler;
+    private MappingHandler $mappingHandler;
+    private JobHandler $jobHandler;
+    private SourceHandler $sourceHandler;
+    private RuleHandler $ruleHandler;
 
     protected function setUp(): void
     {
@@ -48,6 +64,14 @@ class ConfigurationServiceTest extends TestCase
         $this->ruleMapper = $this->createMock(RuleMapper::class);
         $this->jobMapper = $this->createMock(JobMapper::class);
         $this->synchronizationMapper = $this->createMock(SynchronizationMapper::class);
+        $this->registerMapper = $this->createMock(RegisterMapper::class);
+        $this->schemaMapper = $this->createMock(SchemaMapper::class);
+        $this->endpointHandler = $this->createMock(EndpointHandler::class);
+        $this->synchronizationHandler = $this->createMock(SynchronizationHandler::class);
+        $this->mappingHandler = $this->createMock(MappingHandler::class);
+        $this->jobHandler = $this->createMock(JobHandler::class);
+        $this->sourceHandler = $this->createMock(SourceHandler::class);
+        $this->ruleHandler = $this->createMock(RuleHandler::class);
 
         $this->configurationService = new ConfigurationService(
             $this->sourceMapper,
@@ -55,7 +79,15 @@ class ConfigurationServiceTest extends TestCase
             $this->mappingMapper,
             $this->ruleMapper,
             $this->jobMapper,
-            $this->synchronizationMapper
+            $this->synchronizationMapper,
+            $this->registerMapper,
+            $this->schemaMapper,
+            $this->endpointHandler,
+            $this->synchronizationHandler,
+            $this->mappingHandler,
+            $this->jobHandler,
+            $this->sourceHandler,
+            $this->ruleHandler
         );
     }
 

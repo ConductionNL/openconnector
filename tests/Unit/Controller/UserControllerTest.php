@@ -20,13 +20,17 @@ namespace OCA\OpenConnector\Tests\Unit\Controller;
 
 use OCA\OpenConnector\Controller\UserController;
 use OCA\OpenConnector\Service\AuthorizationService;
+use OCA\OpenConnector\Service\OrganisationBridgeService;
+use OCA\OpenConnector\Service\UserService;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\ICacheFactory;
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\IUser;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for the UserController
@@ -75,6 +79,34 @@ class UserControllerTest extends TestCase
     private MockObject $authorizationService;
 
     /**
+     * Mock cache factory
+     *
+     * @var MockObject|ICacheFactory
+     */
+    private MockObject $cacheFactory;
+
+    /**
+     * Mock logger
+     *
+     * @var MockObject|LoggerInterface
+     */
+    private MockObject $logger;
+
+    /**
+     * Mock user service
+     *
+     * @var MockObject|UserService
+     */
+    private MockObject $userService;
+
+    /**
+     * Mock organisation bridge service
+     *
+     * @var MockObject|OrganisationBridgeService
+     */
+    private MockObject $organisationBridgeService;
+
+    /**
      * Mock user object
      *
      * @var MockObject|IUser
@@ -101,6 +133,10 @@ class UserControllerTest extends TestCase
         $this->userManager = $this->createMock(IUserManager::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->authorizationService = $this->createMock(AuthorizationService::class);
+        $this->cacheFactory = $this->createMock(ICacheFactory::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->userService = $this->createMock(UserService::class);
+        $this->organisationBridgeService = $this->createMock(OrganisationBridgeService::class);
         $this->user = $this->createMock(IUser::class);
 
         // Initialize the controller with mocked dependencies
@@ -109,7 +145,11 @@ class UserControllerTest extends TestCase
             $this->request,
             $this->userManager,
             $this->userSession,
-            $this->authorizationService
+            $this->authorizationService,
+            $this->cacheFactory,
+            $this->logger,
+            $this->userService,
+            $this->organisationBridgeService
         );
     }
 
@@ -434,7 +474,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Failed to retrieve user information', $response->getData()['error']);
+        $this->assertStringContainsString('Failed to retrieve user information', $response->getData()['error']);
     }
 
     /**
@@ -461,7 +501,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Failed to update user information', $response->getData()['error']);
+        $this->assertStringContainsString('Failed to update user information', $response->getData()['error']);
     }
 
     /**
@@ -497,7 +537,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Login failed', $response->getData()['error']);
+        $this->assertStringContainsString('Login failed', $response->getData()['error']);
     }
 
     /**
