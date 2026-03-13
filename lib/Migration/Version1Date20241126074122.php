@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/**
+/*
  * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
@@ -21,50 +21,62 @@ use OCP\Migration\SimpleMigrationStep;
  * - conditions for json logic
  * - follow_ups for follow up synchronizations
  */
-class Version1Date20241126074122 extends SimpleMigrationStep {
+class Version1Date20241126074122 extends SimpleMigrationStep
+{
 
-	/**
-	 * @param IOutput $output
-	 * @param Closure(): ISchemaWrapper $schemaClosure
-	 * @param array $options
-	 */
-	public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
-	}
 
-	/**
-	 * @param IOutput $output
-	 * @param Closure(): ISchemaWrapper $schemaClosure
-	 * @param array $options
-	 * @return null|ISchemaWrapper
-	 */
-	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
-		/**
-		 * @var ISchemaWrapper $schema
-		 */
-		$schema = $schemaClosure();
-		if ($schema->hasTable(tableName: 'openconnector_synchronizations') === true) {
-			$table = $schema->getTable(tableName: 'openconnector_synchronizations');
-			if ($table->hasColumn(name: 'conditions') === false) {
-				$table->addColumn(name: 'conditions', typeName: Types::JSON)
-					->setDefault(default: '{}')
-					->setNotnull(notnull:false);
-			}
-			if ($table->hasColumn(name: 'follow_ups') === false) {
+    /**
+     * @param IOutput                   $output
+     * @param Closure(): ISchemaWrapper $schemaClosure
+     * @param array                     $options
+     */
+    public function preSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
+    {
 
-				$table->addColumn(name: 'follow_ups', typeName: Types::JSON)
-					->setDefault(default: '{}')
-					->setNotnull(notnull:false);
-			}
-		}
+    }//end preSchemaChange()
 
-		return $schema;
-	}
 
-	/**
-	 * @param IOutput $output
-	 * @param Closure(): ISchemaWrapper $schemaClosure
-	 * @param array $options
-	 */
-	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
-	}
-}
+    /**
+     * @param  IOutput                   $output
+     * @param  Closure(): ISchemaWrapper $schemaClosure
+     * @param  array                     $options
+     * @return null|ISchemaWrapper
+     */
+    public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper
+    {
+        /*
+         * @var ISchemaWrapper $schema
+         */
+        $schema = $schemaClosure();
+        if ($schema->hasTable(tableName: 'openconnector_synchronizations') === true) {
+            $table = $schema->getTable(tableName: 'openconnector_synchronizations');
+            if ($table->hasColumn(name: 'conditions') === false) {
+                $table->addColumn(name: 'conditions', typeName: Types::JSON)
+                    ->setDefault(default: '{}')
+                    ->setNotnull(notnull:false);
+            }
+
+            if ($table->hasColumn(name: 'follow_ups') === false) {
+                $table->addColumn(name: 'follow_ups', typeName: Types::JSON)
+                    ->setDefault(default: '{}')
+                    ->setNotnull(notnull:false);
+            }
+        }
+
+        return $schema;
+
+    }//end changeSchema()
+
+
+    /**
+     * @param IOutput                   $output
+     * @param Closure(): ISchemaWrapper $schemaClosure
+     * @param array                     $options
+     */
+    public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void
+    {
+
+    }//end postSchemaChange()
+
+
+}//end class

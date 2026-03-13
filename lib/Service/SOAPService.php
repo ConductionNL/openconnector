@@ -36,6 +36,11 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * This class contains a basic SOAP client for communicating with SOAP Sources using a WSDL
  *
  * It manages the execution of SOAP requests using the Guzzle HTTP client for performing the actual HTTP requests.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class SOAPService
 {

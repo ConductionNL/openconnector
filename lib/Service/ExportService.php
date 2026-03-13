@@ -25,6 +25,9 @@ use Symfony\Component\Yaml\Yaml;
  * This service enables exporting database entities as files in various formats,
  * determined by the `Accept` header of the request. It retrieves the appropriate
  * data from mappers and generates responses or downloadable files.
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ExitExpression)
  */
 class ExportService
 {

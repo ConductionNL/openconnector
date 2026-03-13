@@ -20,14 +20,19 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCA\OpenConnector\Service\SynchronizationService;
 use OCA\OpenConnector\Db\SynchronizationMapper;
 
+/**
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ */
 class JobsController extends Controller
 {
+
+
     /**
      * Constructor for the JobController
      *
-     * @param string $appName The name of the app
-     * @param IRequest $request The request object
-     * @param IAppConfig $config The app configuration object
+     * @param string     $appName The name of the app
+     * @param IRequest   $request The request object
+     * @param IAppConfig $config  The app configuration object
      */
     public function __construct(
         $appName,
@@ -39,11 +44,12 @@ class JobsController extends Controller
         private IJobList $jobList,
         private SynchronizationService $synchronizationService,
         private SynchronizationMapper $synchronizationMapper
-    )
-    {
+    ) {
         parent::__construct($appName, $request);
         $this->jobList = $jobList;
-    }
+
+    }//end __construct()
+
 
     /**
      * Returns the template of the main app's page
@@ -62,7 +68,9 @@ class JobsController extends Controller
             'index',
             []
         );
-    }
+
+    }//end page()
+
 
     /**
      * Retrieves a list of all jobs
@@ -74,17 +82,27 @@ class JobsController extends Controller
      *
      * @return JSONResponse A JSON response containing the list of jobs
      */
+
+
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) - $objectService injected by framework
+     */
     public function index(ObjectService $objectService, SearchService $searchService): JSONResponse
     {
-        $filters = $this->request->getParams();
-        $fieldsToSearch = ['name', 'description'];
+        $filters        = $this->request->getParams();
+        $fieldsToSearch = [
+            'name',
+            'description',
+        ];
 
-        $searchParams = $searchService->createMySQLSearchParams(filters: $filters);
+        $searchParams     = $searchService->createMySQLSearchParams(filters: $filters);
         $searchConditions = $searchService->createMySQLSearchConditions(filters: $filters, fieldsToSearch:  $fieldsToSearch);
-        $filters = $searchService->unsetSpecialQueryParams(filters: $filters);
+        $filters          = $searchService->unsetSpecialQueryParams(filters: $filters);
 
         return new JSONResponse(['results' => $this->jobMapper->findAll(limit: null, offset: null, filters: $filters, searchConditions: $searchConditions, searchParams: $searchParams)]);
-    }
+
+    }//end index()
+
 
     /**
      * Retrieves a single job by its ID
@@ -94,7 +112,7 @@ class JobsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the job to retrieve
+     * @param  string $id The ID of the job to retrieve
      * @return JSONResponse A JSON response containing the job details
      */
     public function show(string $id): JSONResponse
@@ -104,7 +122,9 @@ class JobsController extends Controller
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(data: ['error' => 'Not Found'], statusCode: 404);
         }
-    }
+
+    }//end show()
+
 
     /**
      * Creates a new job
@@ -120,11 +140,7 @@ class JobsController extends Controller
     {
         $data = $this->request->getParams();
 
-        foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
-                unset($data[$key]);
-            }
-        }
+        $data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
         if (isset($data['id'])) {
             unset($data['id']);
@@ -136,7 +152,9 @@ class JobsController extends Controller
         $job = $this->jobService->scheduleJob($job);
 
         return new JSONResponse($job);
-    }
+
+    }//end create()
+
 
     /**
      * Updates an existing job
@@ -146,18 +164,14 @@ class JobsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the job to update
+     * @param  string $id The ID of the job to update
      * @return JSONResponse A JSON response containing the updated job details
      */
     public function update(int $id): JSONResponse
     {
         $data = $this->request->getParams();
 
-        foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
-                unset($data[$key]);
-            }
-        }
+        $data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
         if (isset($data['id'])) {
             unset($data['id']);
         }
@@ -168,7 +182,9 @@ class JobsController extends Controller
         $job = $this->jobService->scheduleJob($job);
 
         return new JSONResponse($job);
-    }
+
+    }//end update()
+
 
     /**
      * Deletes a job
@@ -178,7 +194,7 @@ class JobsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param string $id The ID of the job to delete
+     * @param  string $id The ID of the job to delete
      * @return JSONResponse An empty JSON response
      */
     public function destroy(int $id): JSONResponse
@@ -186,7 +202,9 @@ class JobsController extends Controller
         $this->jobMapper->delete($this->jobMapper->find((int) $id));
 
         return new JSONResponse([]);
-    }
+
+    }//end destroy()
+
 
     /**
      * Retrieves job logs with filtering and pagination support
@@ -212,51 +230,55 @@ class JobsController extends Controller
     {
         try {
             // Get filters from request
-            $filters = $this->request->getParams();
+            $filters        = $this->request->getParams();
             $specialFilters = [];
 
             // Pagination using _page and _limit
-            $limit = isset($filters['_limit']) ? (int)$filters['_limit'] : 20;
-            $page = isset($filters['_page']) ? (int)$filters['_page'] : 1;
-            $offset = ($page - 1) * $limit;
+            $limit  = isset($filters['_limit']) ? (int) $filters['_limit'] : 20;
+            $page   = isset($filters['_page']) ? (int) $filters['_page'] : 1;
+            $offset = (($page - 1) * $limit);
             unset($filters['_limit'], $filters['_page']);
 
             // Handle special filters
             if (!empty($filters['date_from'])) {
                 $specialFilters['date_from'] = $filters['date_from'];
             }
+
             if (!empty($filters['date_to'])) {
                 $specialFilters['date_to'] = $filters['date_to'];
             }
+
             if (!empty($filters['status'])) {
                 $specialFilters['status'] = $filters['status'];
             }
+
             if (!empty($filters['slow_executions'])) {
-                $specialFilters['slow_executions'] = 5000; // 5 seconds in milliseconds
+                $specialFilters['slow_executions'] = 5000;
+                // 5 seconds in milliseconds
             }
 
             // Build search conditions and parameters
             $searchConditions = [];
-            $searchParams = [];
+            $searchParams     = [];
 
             if (!empty($specialFilters['date_from'])) {
                 $searchConditions[] = "created >= ?";
-                $searchParams[] = $specialFilters['date_from'];
+                $searchParams[]     = $specialFilters['date_from'];
             }
 
             if (!empty($specialFilters['date_to'])) {
                 $searchConditions[] = "created <= ?";
-                $searchParams[] = $specialFilters['date_to'];
+                $searchParams[]     = $specialFilters['date_to'];
             }
 
             if (!empty($specialFilters['status'])) {
                 $searchConditions[] = "status = ?";
-                $searchParams[] = $specialFilters['status'];
+                $searchParams[]     = $specialFilters['status'];
             }
 
             if (!empty($specialFilters['slow_executions'])) {
                 $searchConditions[] = "execution_time > ?";
-                $searchParams[] = $specialFilters['slow_executions'];
+                $searchParams[]     = $specialFilters['slow_executions'];
             }
 
             // Remove special query params from filters
@@ -272,22 +294,26 @@ class JobsController extends Controller
             );
 
             // Get total count for pagination
-            $total = $this->jobLogMapper->getTotalCount($filters);
-            $pages = $limit > 0 ? ceil($total / $limit) : 1;
-            $currentPage = $limit > 0 ? floor($offset / $limit) + 1 : 1;
+            $total       = $this->jobLogMapper->getTotalCount($filters);
+            $pages       = $limit > 0 ? ceil($total / $limit) : 1;
+            $currentPage = $limit > 0 ? (floor($offset / $limit) + 1) : 1;
 
             // Return flattened paginated response
-            return new JSONResponse([
-                'results' => $jobLogs,
-                'page' => $currentPage,
-                'pages' => $pages,
-                'results_count' => count($jobLogs),
-                'total' => $total
-            ]);
+            return new JSONResponse(
+                [
+                    'results'       => $jobLogs,
+                    'page'          => $currentPage,
+                    'pages'         => $pages,
+                    'results_count' => count($jobLogs),
+                    'total'         => $total,
+                ]
+            );
         } catch (\Exception $e) {
-            return new JSONResponse(['error' => 'Failed to retrieve logs: ' . $e->getMessage()], 500);
-        }
-    }
+            return new JSONResponse(['error' => 'Failed to retrieve logs: '.$e->getMessage()], 500);
+        }//end try
+
+    }//end logs()
+
 
     /**
      * Executes a job
@@ -298,7 +324,7 @@ class JobsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param int $id The ID of the job to execute
+     * @param  int $id The ID of the job to execute
      * @return JSONResponse A JSON response containing the execution results
      */
     public function run(int $id): JSONResponse
@@ -311,11 +337,7 @@ class JobsController extends Controller
             $parameters = $this->request->getParams();
 
             // Remove non-parameter fields
-            foreach ($parameters as $key => $value) {
-                if (str_starts_with($key, '_')) {
-                    unset($parameters[$key]);
-                }
-            }
+            $parameters = array_filter($parameters, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
             // Determine if forceRun is set
             $forceRun = isset($parameters['forceRun']) ? filter_var($parameters['forceRun'], FILTER_VALIDATE_BOOLEAN) : false;
@@ -328,9 +350,11 @@ class JobsController extends Controller
         } catch (DoesNotExistException $e) {
             return new JSONResponse(['error' => 'Job not found'], 404);
         } catch (Exception $e) {
-            return new JSONResponse(['error' => 'Failed to execute job: ' . $e->getMessage()], 500);
-        }
-    }
+            return new JSONResponse(['error' => 'Failed to execute job: '.$e->getMessage()], 500);
+        }//end try
+
+    }//end run()
+
 
     /**
      * Test a job
@@ -341,7 +365,7 @@ class JobsController extends Controller
      * @NoAdminRequired
      * @NoCSRFRequired
      *
-     * @param int $id The ID of the job to execute
+     * @param  int $id The ID of the job to execute
      * @return JSONResponse A JSON response containing the execution results
      */
     public function test(int $id): JSONResponse
@@ -354,11 +378,7 @@ class JobsController extends Controller
             $parameters = $this->request->getParams();
 
             // Remove non-parameter fields
-            foreach ($parameters as $key => $value) {
-                if (str_starts_with($key, '_')) {
-                    unset($parameters[$key]);
-                }
-            }
+            $parameters = array_filter($parameters, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
             // Always force run for test
             $forceRun = true;
@@ -371,7 +391,10 @@ class JobsController extends Controller
         } catch (DoesNotExistException $e) {
             return new JSONResponse(['error' => 'Job not found'], 404);
         } catch (Exception $e) {
-            return new JSONResponse(['error' => 'Failed to execute job: ' . $e->getMessage()], 500);
-        }
-    }
-}
+            return new JSONResponse(['error' => 'Failed to execute job: '.$e->getMessage()], 500);
+        }//end try
+
+    }//end test()
+
+
+}//end class

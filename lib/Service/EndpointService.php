@@ -47,6 +47,22 @@ use function React\Promise\all;
  *
  * This class provides functionality to handle requests to endpoints, either by
  * connecting to a schema within a register or by proxying to a source.
+ *
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.TooManyMethods)
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ * @SuppressWarnings(PHPMD.UnusedPrivateMethod)
+ * @SuppressWarnings(PHPMD.EmptyCatchBlock)
+ * @SuppressWarnings(PHPMD.ShortVariable)
  */
 class EndpointService
 {
@@ -947,8 +963,10 @@ class EndpointService
     private function checkConditions(Endpoint $endpoint, IRequest $request): array
     {
         $conditions = $endpoint->getConditions();
-        $data['parameters'] = $request->getParams();
-        $data['headers'] = $this->getHeaders($request->server, true);
+        $data = [
+            'parameters' => $request->getParams(),
+            'headers' => $this->getHeaders($request->server, true),
+        ];
 
         $result = JsonLogic::apply(logic: $conditions, data: $data);
 

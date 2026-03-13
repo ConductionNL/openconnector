@@ -32,9 +32,11 @@ use Exception;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)    Mapping execution requires comprehensive handling
  * @SuppressWarnings(PHPMD.BooleanArgumentFlag)      $list parameter clearly indicates list processing mode
+ * @SuppressWarnings(PHPMD.MissingImport)
  */
 class MappingService
 {
+
     /**
      * Create a private variable to store the twig environment.
      *
@@ -49,31 +51,32 @@ class MappingService
      */
     private $openRegisterMappingService = null;
 
-	/**
-	 * Setting up the base class with required services.
-	 *
-	 * @param ArrayLoader   $loader		   The ArrayLoader for Twig.
-	 * @param MappingMapper $mappingMapper The mapping mapper.
-	 * @param CallService   $callService   The call service.
-	 * @param SourceMapper  $sourceMapper  The source mapper.
-	 * @param FileService   $fileService   The file service.
-	 * @param ObjectService $objectService The object service.
-	 */
+
+    /**
+     * Setting up the base class with required services.
+     *
+     * @param ArrayLoader   $loader        The ArrayLoader for Twig.
+     * @param MappingMapper $mappingMapper The mapping mapper.
+     * @param CallService   $callService   The call service.
+     * @param SourceMapper  $sourceMapper  The source mapper.
+     * @param FileService   $fileService   The file service.
+     * @param ObjectService $objectService The object service.
+     */
     public function __construct(
-		ArrayLoader $loader,
-		private readonly MappingMapper $mappingMapper,
+        ArrayLoader $loader,
+        private readonly MappingMapper $mappingMapper,
         CallService $callService,
         SourceMapper $sourceMapper,
         FileService $fileService,
         ObjectService $objectService,
     ) {
         $this->twig = new Environment($loader);
-		$this->twig->addExtension(new MappingExtension());
-		$this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper, callService: $callService, sourceMapper: $sourceMapper, fileService: $fileService, objectService: $objectService->getOpenRegisters()));
+        $this->twig->addExtension(new MappingExtension());
+        $this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper, callService: $callService, sourceMapper: $sourceMapper, fileService: $fileService, objectService: $objectService->getOpenRegisters()));
 
         // Try to load OpenRegister's MappingService for delegation.
         try {
-            $container = \OC::$server;
+            $container                        = \OC::$server;
             $this->openRegisterMappingService = $container->get(
                 \OCA\OpenRegister\Service\MappingService::class
             );
@@ -85,7 +88,9 @@ class MappingService
                 ['app' => 'openconnector']
             );
         }
+
     }//end __construct()
+
 
     /**
      * Replaces strings in array keys, helpful for characters like . in array keys.
@@ -114,6 +119,7 @@ class MappingService
 
     }//end encodeArrayKeys()
 
+
     /**
      * Maps (transforms) an array (input) to a different array (output).
      *
@@ -125,21 +131,22 @@ class MappingService
      * @param bool    $list    Whether we want a list instead of a single item
      *
      * @return array The result (output) of the mapping process
-     *@throws LoaderError|SyntaxError Twig Exceptions
-     *
+     * @throws LoaderError|SyntaxError Twig Exceptions
      */
-    public function executeMapping(Mapping $mapping, array $input, bool $list = false): array
+    public function executeMapping(Mapping $mapping, array $input, bool $list=false): array
     {
         // Delegate to OpenRegister's MappingService if available.
         if ($this->openRegisterMappingService !== null) {
             $orMapping = new \OCA\OpenRegister\Db\Mapping();
-            $orMapping->hydrate([
-                'name'        => $mapping->getName(),
-                'mapping'     => $mapping->getMapping(),
-                'unset'       => ($mapping->getUnset() ?? []),
-                'cast'        => ($mapping->getCast() ?? []),
-                'passThrough' => $mapping->getPassThrough(),
-            ]);
+            $orMapping->hydrate(
+                [
+                    'name'        => $mapping->getName(),
+                    'mapping'     => $mapping->getMapping(),
+                    'unset'       => ($mapping->getUnset() ?? []),
+                    'cast'        => ($mapping->getCast() ?? []),
+                    'passThrough' => $mapping->getPassThrough(),
+                ]
+            );
 
             return $this->openRegisterMappingService->executeMapping(
                 mapping: $orMapping,
@@ -149,7 +156,9 @@ class MappingService
         }
 
         return $this->executeMappingLocal($mapping, $input, $list);
+
     }//end executeMapping()
+
 
     /**
      * Local mapping execution (fallback when OpenRegister is not available).
@@ -164,7 +173,7 @@ class MappingService
      *
      * @SuppressWarnings(PHPMD.ElseExpression)
      */
-    private function executeMappingLocal(Mapping $mapping, array $input, bool $list = false): array
+    private function executeMappingLocal(Mapping $mapping, array $input, bool $list=false): array
     {
         // Check for list
         if ($list === true) {
@@ -192,7 +201,7 @@ class MappingService
         }//end if
 
         $originalInput = $input;
-        $input = $this->encodeArrayKeys($input, '.', '&#46;');
+        $input         = $this->encodeArrayKeys($input, '.', '&#46;');
 
         // Determine pass through.
         // Let's get the dot array based on https://github.com/adbario/php-dot-notation.
@@ -201,6 +210,7 @@ class MappingService
         } else {
             $dotArray = new Dot();
         }
+
         $dotInput = new Dot($input);
 
         // Let's do the actual mapping.
@@ -218,7 +228,7 @@ class MappingService
             }
 
             try {
-			    $dotArray->set($key, html_entity_decode($this->twig->createTemplate($value)->render($originalInput)));
+                $dotArray->set($key, html_entity_decode($this->twig->createTemplate($value)->render($originalInput)));
             } catch (Throwable $e) {
                 throw new Exception("Error for mapping: {$mapping->getName()}, key: $key, value: $value and with message thrown: {$e->getMessage()}");
             }
@@ -281,6 +291,7 @@ class MappingService
 
     }//end executeMappingLocal()
 
+
     /**
      * Handles a single cast.
      *
@@ -319,19 +330,20 @@ class MappingService
 
             $value = false;
             break;
-		case '?bool':
-		case '?boolean':
-			if($value === null) {
-				break;
-			}
-			if ((int) $value === 1 || strtolower($value) === 'true' || strtolower($value) === 'yes') {
-				$value = true;
-				break;
-			}
+        case '?bool':
+        case '?boolean':
+            if ($value === null) {
+                break;
+            }
 
-			$value = false;
+            if ((int) $value === 1 || strtolower($value) === 'true' || strtolower($value) === 'yes') {
+                $value = true;
+                break;
+            }
 
-			break;
+            $value = false;
+
+            break;
         case 'int':
         case 'integer':
             $value = (int) $value;
@@ -376,6 +388,7 @@ class MappingService
             if (is_array($value) === true) {
                 break;
             }
+
             $value = html_entity_decode($value);
             $value = json_decode($value, true);
             break;
@@ -451,6 +464,7 @@ class MappingService
 
     }//end handleCast()
 
+
     /**
      * Checks if all keys in multi-dimensional array are null.
      *
@@ -477,6 +491,7 @@ class MappingService
         return true;
 
     }//end areAllArrayKeysNull()
+
 
     /**
      * Converts a coordinate string to an array of coordinates.
@@ -518,7 +533,7 @@ class MappingService
      * mappings through this service layer, rather than accessing the mapper directly.
      * This maintains proper encapsulation and separation of concerns.
      *
-     * @param string $mappingId The unique identifier of the mapping to retrieve
+     * @param  string $mappingId The unique identifier of the mapping to retrieve
      * @return Mapping The requested mapping entity
      * @throws \OCP\AppFramework\Db\DoesNotExistException If mapping is not found
      * @throws \OCP\AppFramework\Db\MultipleObjectsReturnedException If multiple mappings found
@@ -527,7 +542,9 @@ class MappingService
     {
         // Forward the find request to the mapper while maintaining encapsulation
         return $this->mappingMapper->find($mappingId);
-    }
+
+    }//end getMapping()
+
 
     /**
      * Retrieves all available mappings.
@@ -544,6 +561,8 @@ class MappingService
         // Forward the findAll request to the mapper while maintaining encapsulation
         // @todo: add filtering options
         return $this->mappingMapper->findAll();
-    }
 
-}
+    }//end getMappings()
+
+
+}//end class

@@ -19,11 +19,17 @@ use Symfony\Component\Uid\Uuid;
  * @package OCA\OpenConnector\Db
  * @extends QBMapper<SynchronizationContract>
  *
- * @psalm-suppress PropertyNotSetInConstructor
+ * @psalm-suppress  PropertyNotSetInConstructor
  * @phpstan-extends QBMapper<SynchronizationContract>
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+ * @SuppressWarnings(PHPMD.MissingImport)
  */
 class SynchronizationContractMapper extends QBMapper
 {
+
+
     /**
      * Constructor for SynchronizationContractMapper
      *
@@ -32,12 +38,14 @@ class SynchronizationContractMapper extends QBMapper
     public function __construct(IDBConnection $db)
     {
         parent::__construct($db, 'openconnector_synchronization_contracts');
-    }
+
+    }//end __construct()
+
 
     /**
      * Find a synchronization contract by ID
      *
-     * @param int $id The ID of the contract to find
+     * @param  int $id The ID of the contract to find
      * @return SynchronizationContract The found contract entity
      * @throws \OCP\AppFramework\Db\DoesNotExistException If contract not found
      */
@@ -54,20 +62,22 @@ class SynchronizationContractMapper extends QBMapper
             );
 
         return $this->findEntity(query: $qb);
-    }
 
-	/**
-	 * Find a synchronization contract by synchronization ID and origin ID
-	 *
-	 * @param string    $synchronizationId The synchronization ID
-	 * @param string    $originId          The origin ID
-	 * @param bool|null $justByOriginId 
-	 *
-	 * @return SynchronizationContract|null The found contract or null if not found
-	 * @throws MultipleObjectsReturnedException
-	 * @throws Exception
-	 */
-    public function findSyncContractByOriginId(string $synchronizationId, string $originId, ?bool $justByOriginId = false): ?SynchronizationContract
+    }//end find()
+
+
+    /**
+     * Find a synchronization contract by synchronization ID and origin ID
+     *
+     * @param string    $synchronizationId The synchronization ID
+     * @param string    $originId          The origin ID
+     * @param bool|null $justByOriginId
+     *
+     * @return SynchronizationContract|null The found contract or null if not found
+     * @throws MultipleObjectsReturnedException
+     * @throws Exception
+     */
+    public function findSyncContractByOriginId(string $synchronizationId, string $originId, ?bool $justByOriginId=false): ?SynchronizationContract
     {
         // Create query builder
         $qb = $this->db->getQueryBuilder();
@@ -95,7 +105,9 @@ class SynchronizationContractMapper extends QBMapper
         } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
             return null;
         }
-    }
+
+    }//end findSyncContractByOriginId()
+
 
     /**
      * Find the target_id for a given origin_id in the synchronization contracts table
@@ -115,22 +127,24 @@ class SynchronizationContractMapper extends QBMapper
             ->where(
                 $qb->expr()->eq('origin_id', $qb->createNamedParameter($originId))
             )
-            ->setMaxResults(1); // Just in case
-
+            ->setMaxResults(1);
+        // Just in case
         try {
-            $stmt = $qb->executeQuery();
+            $stmt   = $qb->executeQuery();
             $result = $stmt->fetchOne();
             return $result !== false ? $result : null;
         } catch (\Throwable $e) {
-            throw new \Exception("Error fetching target_id for origin_id {$originId}: " . $e->getMessage(), 0, $e);
+            throw new \Exception("Error fetching target_id for origin_id {$originId}: ".$e->getMessage(), 0, $e);
         }
-    }
+
+    }//end findTargetIdByOriginId()
+
 
     /**
      * Find a synchronization contract by synchronization ID and target ID
      *
-     * @param string $synchronization The synchronization ID
-     * @param string $targetId The target ID
+     * @param  string $synchronization The synchronization ID
+     * @param  string $targetId        The target ID
      * @return SynchronizationContract|bool|null The found contract, false, or null if not found
      */
     public function findOnTarget(string $synchronization, string $targetId): SynchronizationContract|bool|null
@@ -153,13 +167,15 @@ class SynchronizationContractMapper extends QBMapper
         } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
             return null;
         }
-    }
+
+    }//end findOnTarget()
+
 
     /**
      * Find a synchronization contract by origin ID and target ID
      *
-     * @param string $originId The origin ID
-     * @param string $targetId The target ID
+     * @param  string $originId The origin ID
+     * @param  string $targetId The target ID
      * @return SynchronizationContract|bool|null The found contract, false, or null if not found
      */
     public function findByOriginAndTarget(string $originId, string $targetId): SynchronizationContract|bool|null
@@ -182,7 +198,9 @@ class SynchronizationContractMapper extends QBMapper
         } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
             return null;
         }
-    }
+
+    }//end findByOriginAndTarget()
+
 
     /**
      * Find all synchronization contracts by synchronization ID and where target have the given schema id
@@ -217,18 +235,21 @@ class SynchronizationContractMapper extends QBMapper
         } catch (\Exception $e) {
             return [];
         }
-    }
+
+    }//end findAllBySynchronizationAndSchema()
+
+
     /**
      * Find all synchronization contracts with optional filtering and pagination
      *
-     * @param int|null $limit Maximum number of results to return
-     * @param int|null $offset Number of results to skip
-     * @param array|null $filters Associative array of field => value filters
-     * @param array|null $searchConditions Array of search conditions
-     * @param array|null $searchParams Array of search parameters
+     * @param  int|null   $limit            Maximum number of results to return
+     * @param  int|null   $offset           Number of results to skip
+     * @param  array|null $filters          Associative array of field => value filters
+     * @param  array|null $searchConditions Array of search conditions
+     * @param  array|null $searchParams     Array of search parameters
      * @return array<SynchronizationContract> Array of found contracts
      */
-    public function findAll(?int $limit = null, ?int $offset = null, ?array $filters = [], ?array $searchConditions = [], ?array $searchParams = []): array
+    public function findAll(?int $limit=null, ?int $offset=null, ?array $filters=[], ?array $searchConditions=[], ?array $searchParams=[]): array
     {
         // Create query builder
         $qb = $this->db->getQueryBuilder();
@@ -243,7 +264,7 @@ class SynchronizationContractMapper extends QBMapper
         foreach ($filters as $filter => $value) {
             if ($value === 'IS NOT NULL') {
                 $qb->andWhere($qb->expr()->isNotNull($filter));
-            } elseif ($value === 'IS NULL') {
+            } else if ($value === 'IS NULL') {
                 $qb->andWhere($qb->expr()->isNull($filter));
             } else {
                 $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
@@ -251,20 +272,22 @@ class SynchronizationContractMapper extends QBMapper
         }
 
         // Add search conditions if provided
-		if (empty($searchConditions) === false) {
-            $qb->andWhere('(' . implode(' OR ', $searchConditions) . ')');
+        if (empty($searchConditions) === false) {
+            $qb->andWhere('('.implode(' OR ', $searchConditions).')');
             foreach ($searchParams as $param => $value) {
                 $qb->setParameter($param, $value);
             }
         }
 
         return $this->findEntities(query: $qb);
-    }
+
+    }//end findAll()
+
 
     /**
      * Create a new synchronization contract from array data
      *
-     * @param array $object Array of contract data
+     * @param  array $object Array of contract data
      * @return SynchronizationContract The created contract entity
      */
     public function createFromArray(array $object): SynchronizationContract
@@ -284,13 +307,15 @@ class SynchronizationContractMapper extends QBMapper
         }
 
         return $this->insert(entity: $obj);
-    }
+
+    }//end createFromArray()
+
 
     /**
      * Update an existing synchronization contract from array data
      *
-     * @param int $id ID of contract to update
-     * @param array $object Array of updated contract data
+     * @param  int   $id     ID of contract to update
+     * @param  array $object Array of updated contract data
      * @return SynchronizationContract The updated contract entity
      */
     public function updateFromArray(int $id, array $object): SynchronizationContract
@@ -298,22 +323,24 @@ class SynchronizationContractMapper extends QBMapper
         // Find and hydrate existing contract
         $obj = $this->find($id);
 
-		// Set version
-		if (empty($obj->getVersion()) === true) {
-			$object['version'] = '0.0.1';
-		} else if (empty($object['version']) === true) {
-			// Update version
-			$version = explode('.', $obj->getVersion());
-			if (isset($version[2]) === true) {
-				$version[2] = (int) $version[2] + 1;
-				$object['version'] = implode('.', $version);
-			}
-		}
+        // Set version
+        if (empty($obj->getVersion()) === true) {
+            $object['version'] = '0.0.1';
+        } else if (empty($object['version']) === true) {
+            // Update version
+            $version = explode('.', $obj->getVersion());
+            if (isset($version[2]) === true) {
+                $version[2]        = ((int) $version[2] + 1);
+                $object['version'] = implode('.', $version);
+            }
+        }
 
-		$obj->hydrate($object);
+        $obj->hydrate($object);
 
         return $this->update($obj);
-    }
+
+    }//end updateFromArray()
+
 
     /**
      * Find a synchronization contract by origin ID.
@@ -333,14 +360,18 @@ class SynchronizationContractMapper extends QBMapper
             ->where(
                 $qb->expr()->eq('origin_id', $qb->createNamedParameter($originId))
             )
-            ->setMaxResults(1); // Ensure only one result is returned
-
+            ->setMaxResults(1);
+        // Ensure only one result is returned
         try {
-            return $this->findEntity($qb); // Use findEntity to return a single result
+            return $this->findEntity($qb);
+            // Use findEntity to return a single result
         } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
-            return null; // Return null if no match is found
+            return null;
+            // Return null if no match is found
         }
-    }
+
+    }//end findByOriginId()
+
 
     /**
      * Find a synchronization contract by target ID.
@@ -359,21 +390,24 @@ class SynchronizationContractMapper extends QBMapper
             ->from('openconnector_synchronization_contracts')
             ->where(
                 $qb->expr()->eq('target_id', $qb->createNamedParameter($targetId))
-            ); // Ensure only one result is returned
-
+            );
+        // Ensure only one result is returned
         try {
-            return $this->findEntities($qb); // Use findEntity to return a single result
+            return $this->findEntities($qb);
+            // Use findEntity to return a single result
         } catch (\OCP\AppFramework\Db\DoesNotExistException $e) {
-            return []; // Return null if no match is found
+            return [];
+            // Return null if no match is found
         }
-    }
+
+    }//end findByTargetId()
 
 
     /**
      * Find synchronization contracts by type and ID
      *
-     * @param string $type The type to search for (e.g., 'user', 'group')
-     * @param string $id The ID to search for
+     * @param  string $type The type to search for (e.g., 'user', 'group')
+     * @param  string $id   The ID to search for
      * @return array<SynchronizationContract> Array of matching contracts
      */
     public function findByTypeAndId(string $type, string $id): array
@@ -398,7 +432,9 @@ class SynchronizationContractMapper extends QBMapper
             );
 
         return $this->findEntities($qb);
-    }
+
+    }//end findByTypeAndId()
+
 
     /**
      * Get total count of synchronization contracts
@@ -412,34 +448,36 @@ class SynchronizationContractMapper extends QBMapper
 
         // Build count query
         $qb->select($qb->createFunction('COUNT(*) as count'))
-           ->from('openconnector_synchronization_contracts');
+            ->from('openconnector_synchronization_contracts');
 
         $result = $qb->execute();
-        $row = $result->fetch();
+        $row    = $result->fetch();
 
-        return (int)$row['count'];
-    }
+        return (int) $row['count'];
+
+    }//end getTotalCallCount()
+
 
     /**
      * Get total count of synchronization contracts with optional filters
      *
-     * @param array $filters Optional filters to apply
+     * @param  array $filters Optional filters to apply
      * @return int Total number of contracts matching filters
      */
-    public function getTotalCount(array $filters = []): int
+    public function getTotalCount(array $filters=[]): int
     {
         // Create query builder
         $qb = $this->db->getQueryBuilder();
 
         // Build count query
         $qb->select($qb->createFunction('COUNT(*) as count'))
-           ->from('openconnector_synchronization_contracts');
+            ->from('openconnector_synchronization_contracts');
 
         // Add filters if provided
         foreach ($filters as $filter => $value) {
             if ($value === 'IS NOT NULL') {
                 $qb->andWhere($qb->expr()->isNotNull($filter));
-            } elseif ($value === 'IS NULL') {
+            } else if ($value === 'IS NULL') {
                 $qb->andWhere($qb->expr()->isNull($filter));
             } else {
                 $qb->andWhere($qb->expr()->eq($filter, $qb->createNamedParameter($value)));
@@ -447,11 +485,13 @@ class SynchronizationContractMapper extends QBMapper
         }
 
         $result = $qb->executeQuery();
-        $row = $result->fetch();
+        $row    = $result->fetch();
         $result->closeCursor();
 
-        return (int)$row['count'];
-    }
+        return (int) $row['count'];
+
+    }//end getTotalCount()
+
 
     /**
      * Handle object removal by updating or removing associated contracts
@@ -460,7 +500,7 @@ class SynchronizationContractMapper extends QBMapper
      * clears the appropriate fields (origin or target) and deletes contracts that
      * have no remaining associations.
      *
-     * @param string $objectIdentifier The ID of the removed object
+     * @param  string $objectIdentifier The ID of the removed object
      * @return array
      * @throws Exception If there is an error handling the object removal
      */
@@ -470,13 +510,13 @@ class SynchronizationContractMapper extends QBMapper
             // Find contracts where object ID matches either origin or target
             $qb = $this->db->getQueryBuilder();
             $qb->select('*')
-               ->from('openconnector_synchronization_contracts')
-               ->where(
-                   $qb->expr()->orX(
-                       $qb->expr()->eq('origin_id', $qb->createNamedParameter($objectIdentifier)),
-                       $qb->expr()->eq('target_id', $qb->createNamedParameter($objectIdentifier))
-                   )
-               );
+                ->from('openconnector_synchronization_contracts')
+                ->where(
+                    $qb->expr()->orX(
+                        $qb->expr()->eq('origin_id', $qb->createNamedParameter($objectIdentifier)),
+                        $qb->expr()->eq('target_id', $qb->createNamedParameter($objectIdentifier))
+                    )
+                );
 
             $contracts = $this->findEntities($qb);
 
@@ -500,10 +540,13 @@ class SynchronizationContractMapper extends QBMapper
                     $this->delete($contract);
                 }
             }
-			return $contracts;
 
+            return $contracts;
         } catch (Exception $e) {
-            throw new Exception('Failed to handle object removal: ' . $e->getMessage());
-        }
-    }
-}
+            throw new Exception('Failed to handle object removal: '.$e->getMessage());
+        }//end try
+
+    }//end handleObjectRemoval()
+
+
+}//end class

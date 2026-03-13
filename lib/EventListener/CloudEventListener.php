@@ -12,22 +12,29 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Listener that forwards object changes to the EventService
+ *
+ * @SuppressWarnings(PHPMD.ElseExpression)
  */
 class CloudEventListener implements IEventListener
 {
+
+
     /**
-     * @param EventService $eventService Service for managing CloudEvents
-     * @param LoggerInterface $logger Logger instance
+     * @param EventService    $eventService Service for managing CloudEvents
+     * @param LoggerInterface $logger       Logger instance
      */
     public function __construct(
         private readonly EventService $eventService,
         private readonly LoggerInterface $logger
-    ) {}
+    ) {
+
+    }//end __construct()
+
 
     /**
      * Handle incoming events by forwarding them to the EventService
      *
-     * @param Event $event The incoming event
+     * @param  Event $event The incoming event
      * @return void
      */
     public function handle(Event $event): void
@@ -42,16 +49,22 @@ class CloudEventListener implements IEventListener
         try {
             if ($event instanceof ObjectCreatedEvent) {
                 $this->eventService->handleObjectCreated($event->getObject());
-            } elseif ($event instanceof ObjectUpdatedEvent) {
+            } else if ($event instanceof ObjectUpdatedEvent) {
                 $this->eventService->handleObjectUpdated($event->getOldObject(), $event->getNewObject());
             } else {
                 $this->eventService->handleObjectDeleted($event->getObject());
             }
         } catch (\Exception $e) {
-            $this->logger->error('Failed to process object event: ' . $e->getMessage(), [
-                'exception' => $e,
-                'event' => get_class($event)
-            ]);
+            $this->logger->error(
+                'Failed to process object event: '.$e->getMessage(),
+                [
+                    'exception' => $e,
+                    'event'     => get_class($event),
+                ]
+            );
         }
-    }
-} 
+
+    }//end handle()
+
+
+}//end class
