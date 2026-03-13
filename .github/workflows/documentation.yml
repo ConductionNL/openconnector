@@ -2,11 +2,11 @@ name: Documentation
 
 on:
   push:
-    branches: 
-      - documentation
+    branches:
+      - development
   pull_request:
-    branches: 
-      - documentation
+    branches:
+      - development
 
 jobs:
   deploy:
@@ -22,7 +22,7 @@ jobs:
       - name: List directory structure
         run: |
           ls -la
-          ls -la website/
+          ls -la docusaurus/
 
       # Generate SVG files using PlantUML
       - name: plantuml
@@ -38,7 +38,7 @@ jobs:
         id: deploy
         uses: redkubes/docusaurus-deploy-action@v1.2
         with:
-          source-folder: website
+          source-folder: docusaurus
           git-user: ${{ github.actor }}
           git-password: ${{ secrets.GITHUB_TOKEN }}
           deployment-branch: gh-pages
