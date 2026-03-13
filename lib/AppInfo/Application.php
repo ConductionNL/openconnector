@@ -51,6 +51,9 @@ class Application extends App implements IBootstrap {
 
 	}
 
+	/**
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 */
 	public function boot(IBootContext $context): void {
 	}
 }

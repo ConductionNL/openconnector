@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ruleset name="OpenCatalogi Nextcloud Rules"
+<ruleset name="OpenConnector Nextcloud Rules"
     xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
@@ -9,10 +9,17 @@
         This is a custom ruleset for Open Connector Nextcloud.
     </description>
 
+    <!-- Exclude migration files from most rules — they implement a fixed interface -->
+    <exclude-pattern>lib/Migration/*</exclude-pattern>
+
     <!-- Clean Code Rules -->
     <rule ref="rulesets/cleancode.xml/BooleanArgumentFlag"/>
     <rule ref="rulesets/cleancode.xml/ElseExpression"/>
-    <rule ref="rulesets/cleancode.xml/StaticAccess"/>
+    <rule ref="rulesets/cleancode.xml/StaticAccess">
+        <properties>
+            <property name="exceptions" value="\Symfony\Component\Uid\Uuid,\Jose\Component\KeyManagement\JWKFactory,\Transliterator,\Doctrine\DBAL\Types\Type,\OC,\JWadhams\JsonLogic,\Soap\ExtSoapEngine\ExtSoapDriver,\Soap\ExtSoapEngine\AbusedClient,\Soap\Psr18Transport\Psr18Transport,\Symfony\Component\Yaml\Yaml,\DateTime"/>
+        </properties>
+    </rule>
     <rule ref="rulesets/cleancode.xml/IfStatementAssignment"/>
     <rule ref="rulesets/cleancode.xml/DuplicatedArrayKey"/>
     <rule ref="rulesets/cleancode.xml/MissingImport"/>
@@ -20,16 +27,52 @@
     <rule ref="rulesets/cleancode.xml/ErrorControlOperator"/>
 
     <!-- Code Size Rules -->
-    <rule ref="rulesets/codesize.xml/CyclomaticComplexity"/>
-    <rule ref="rulesets/codesize.xml/NPathComplexity"/>
-    <rule ref="rulesets/codesize.xml/ExcessiveMethodLength"/>
-    <rule ref="rulesets/codesize.xml/ExcessiveClassLength"/>
-    <rule ref="rulesets/codesize.xml/ExcessiveParameterList"/>
+    <rule ref="rulesets/codesize.xml/CyclomaticComplexity">
+        <properties>
+            <property name="reportLevel" value="15"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/NPathComplexity">
+        <properties>
+            <property name="minimum" value="500"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/ExcessiveMethodLength">
+        <properties>
+            <property name="minimum" value="150"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/ExcessiveClassLength">
+        <properties>
+            <property name="minimum" value="1500"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/ExcessiveParameterList">
+        <properties>
+            <property name="minimum" value="15"/>
+        </properties>
+    </rule>
     <rule ref="rulesets/codesize.xml/ExcessivePublicCount"/>
-    <rule ref="rulesets/codesize.xml/TooManyFields"/>
-    <rule ref="rulesets/codesize.xml/TooManyMethods"/>
-    <rule ref="rulesets/codesize.xml/TooManyPublicMethods"/>
-    <rule ref="rulesets/codesize.xml/ExcessiveClassComplexity"/>
+    <rule ref="rulesets/codesize.xml/TooManyFields">
+        <properties>
+            <property name="maxfields" value="45"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/TooManyMethods">
+        <properties>
+            <property name="maxmethods" value="60"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/TooManyPublicMethods">
+        <properties>
+            <property name="maxmethods" value="25"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/codesize.xml/ExcessiveClassComplexity">
+        <properties>
+            <property name="maximum" value="600"/>
+        </properties>
+    </rule>
 
     <!-- Controversial Rules -->
     <rule ref="rulesets/controversial.xml/Superglobals"/>
@@ -45,7 +88,11 @@
     <rule ref="rulesets/design.xml/GotoStatement"/>
     <rule ref="rulesets/design.xml/NumberOfChildren"/>
     <rule ref="rulesets/design.xml/DepthOfInheritance"/>
-    <rule ref="rulesets/design.xml/CouplingBetweenObjects"/>
+    <rule ref="rulesets/design.xml/CouplingBetweenObjects">
+        <properties>
+            <property name="maximum" value="55"/>
+        </properties>
+    </rule>
     <rule ref="rulesets/design.xml/DevelopmentCodeFragment"/>
     <rule ref="rulesets/design.xml/EmptyCatchBlock"/>
     <rule ref="rulesets/design.xml/CountInLoopExpression"/>
@@ -53,9 +100,21 @@
     <!-- Naming Rules -->
     <rule ref="rulesets/naming.xml/LongClassName"/>
     <rule ref="rulesets/naming.xml/ShortClassName"/>
-    <rule ref="rulesets/naming.xml/ShortVariable"/>
-    <rule ref="rulesets/naming.xml/LongVariable"/>
-    <rule ref="rulesets/naming.xml/ShortMethodName"/>
+    <rule ref="rulesets/naming.xml/ShortVariable">
+        <properties>
+            <property name="exceptions" value="id,qb,db,to,e,i,l,a,b,ep,ip"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/naming.xml/LongVariable">
+        <properties>
+            <property name="maximum" value="30"/>
+        </properties>
+    </rule>
+    <rule ref="rulesets/naming.xml/ShortMethodName">
+        <properties>
+            <property name="minimum" value="2"/>
+        </properties>
+    </rule>
     <rule ref="rulesets/naming.xml/ConstructorWithNameAsEnclosingClass"/>
     <rule ref="rulesets/naming.xml/ConstantNamingConventions"/>
     <rule ref="rulesets/naming.xml/BooleanGetMethodName"/>

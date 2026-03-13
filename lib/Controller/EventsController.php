@@ -71,6 +71,9 @@ class EventsController extends Controller
      *
      * @return JSONResponse A JSON response containing the list of events
      */
+    /**
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) - $objectService injected by framework
+     */
     public function index(ObjectService $objectService, SearchService $searchService): JSONResponse
     {
         $filters = $this->request->getParams();
@@ -117,11 +120,7 @@ class EventsController extends Controller
     {
         $data = $this->request->getParams();
 
-        foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
-                unset($data[$key]);
-            }
-        }
+        $data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
         if (isset($data['id'])) {
             unset($data['id']);
@@ -148,11 +147,7 @@ class EventsController extends Controller
     {
         $data = $this->request->getParams();
 
-        foreach ($data as $key => $value) {
-            if (str_starts_with($key, '_')) {
-                unset($data[$key]);
-            }
-        }
+        $data = array_filter($data, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
         if (isset($data['id'])) {
             unset($data['id']);
         }
@@ -307,11 +302,7 @@ class EventsController extends Controller
         $filters = $this->request->getParams();
 
         // Remove internal fields
-        foreach ($filters as $key => $value) {
-            if (str_starts_with($key, '_')) {
-                unset($filters[$key]);
-            }
-        }
+        $filters = array_filter($filters, static fn(string $key): bool => !str_starts_with($key, '_'), ARRAY_FILTER_USE_KEY);
 
         $subscriptions = $this->subscriptionMapper->findAll(
             limit: $this->request->getParam('limit', 50),

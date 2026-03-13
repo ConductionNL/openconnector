@@ -2,6 +2,7 @@
 
 namespace OCA\OpenConnector\Controller;
 
+use DateTime;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -20,6 +21,11 @@ use OCA\OpenConnector\Db\SynchronizationContractLogMapper;
 
 /**
  * @package OCA\OpenConnector\Controller
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.ShortVariable)
  */
 class DashboardController extends Controller
 {
@@ -35,7 +41,7 @@ class DashboardController extends Controller
         private readonly MappingMapper $mappingMapper,
         private readonly CallLogMapper $callLogMapper,
         private readonly JobLogMapper $jobLogMapper,
-        private readonly SynchronizationContractLogMapper $synchronizationContractLogMapper
+        private readonly SynchronizationContractLogMapper $syncContractLogMapper
     ) {
         parent::__construct($appName, $request);
     }
@@ -43,6 +49,7 @@ class DashboardController extends Controller
     /**
      * @NoAdminRequired
      * @NoCSRFRequired
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function page(?string $getParameter): TemplateResponse
 	{
@@ -101,8 +108,8 @@ class DashboardController extends Controller
     public function getCallStats(?string $from = null, ?string $to = null): JSONResponse 
     {
         try {
-            $fromDate = $from ? new \DateTime($from) : (new \DateTime())->modify('-7 days');
-            $toDate = $to ? new \DateTime($to) : new \DateTime();
+            $fromDate = $from ? new DateTime($from) : (new DateTime())->modify('-7 days');
+            $toDate = $to ? new DateTime($to) : new DateTime();
 
             $dailyStats = $this->callLogMapper->getCallStatsByDateRange($fromDate, $toDate);
             $hourlyStats = $this->callLogMapper->getCallStatsByHourRange($fromDate, $toDate);
@@ -128,8 +135,8 @@ class DashboardController extends Controller
     public function getJobStats(?string $from = null, ?string $to = null): JSONResponse 
     {
         try {
-            $fromDate = $from ? new \DateTime($from) : (new \DateTime())->modify('-7 days');
-            $toDate = $to ? new \DateTime($to) : new \DateTime();
+            $fromDate = $from ? new DateTime($from) : (new DateTime())->modify('-7 days');
+            $toDate = $to ? new DateTime($to) : new DateTime();
 
             $dailyStats = $this->jobLogMapper->getJobStatsByDateRange($fromDate, $toDate);
             $hourlyStats = $this->jobLogMapper->getJobStatsByHourRange($fromDate, $toDate);
@@ -155,11 +162,11 @@ class DashboardController extends Controller
     public function getSyncStats(?string $from = null, ?string $to = null): JSONResponse 
     {
         try {
-            $fromDate = $from ? new \DateTime($from) : (new \DateTime())->modify('-7 days');
-            $toDate = $to ? new \DateTime($to) : new \DateTime();
+            $fromDate = $from ? new DateTime($from) : (new DateTime())->modify('-7 days');
+            $toDate = $to ? new DateTime($to) : new DateTime();
 
-            $dailyStats = $this->synchronizationContractLogMapper->getSyncStatsByDateRange($fromDate, $toDate);
-            $hourlyStats = $this->synchronizationContractLogMapper->getSyncStatsByHourRange($fromDate, $toDate);
+            $dailyStats = $this->syncContractLogMapper->getSyncStatsByDateRange($fromDate, $toDate);
+            $hourlyStats = $this->syncContractLogMapper->getSyncStatsByHourRange($fromDate, $toDate);
 
             return new JSONResponse([
                 'daily' => $dailyStats,

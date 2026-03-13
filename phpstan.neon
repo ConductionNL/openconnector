@@ -1,0 +1,21 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    paths:
+        - lib
+    bootstrapFiles:
+        - vendor/autoload.php
+    scanDirectories:
+        - vendor/nextcloud/ocp
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        - '#Call to an undefined method OC::#'
+        - '#Class OC not found#'
+        - '#Access to static property \$server on an unknown class OC#'
+        - '#unknown class OC\\\\#'
+        - '#unknown class OCA\\\\DAV\\\\#'
+        - '#unknown class OC_App#'
+        - '#Caught class OC\\\\#'
+        - '#Class OCA\\\\DAV\\\\#'

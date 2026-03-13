@@ -40,15 +40,16 @@ class PingAction
 		$response['stackTrace'][] = 'Running PingAction';
 
         // For now we only have one action, so this is a bit overkill, but it's a good starting point
+		// @todo log and / or not default to just using the first source
+		$sourceId = 1;
         if (isset($arguments['sourceId']) && is_int((int) $arguments['sourceId'])) {
 			$response['stackTrace'][] = "Found sourceId {$arguments['sourceId']} in arguments";
-            $source = $this->sourceMapper->find((int) $arguments['sourceId']);
+            $sourceId = (int) $arguments['sourceId'];
 		}
-        else {
-			// @todo log and / or not default to just using the first source
+		if ($sourceId === 1) {
 			$response['stackTrace'][] = "No sourceId in arguments, default to sourceId = 1";
-            $source = $this->sourceMapper->find(1);
 		}
+		$source = $this->sourceMapper->find($sourceId);
 
 		$response['stackTrace'][] = "Calling callService...";
 		$callLog = $this->callService->call($source);
