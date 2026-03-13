@@ -416,7 +416,7 @@ class SynchronizationService
             $this->logger->debug(
                 'internToExtern before extendInputBeforeConditions',
                 [
-                    'objectId'                => ($serializedObject['@self']['id'] ?? $serializedObject['id'] ?? ) null,
+                    'objectId'                => ($serializedObject['@self']['id'] ?? $serializedObject['id'] ?? null),
                     'betrokkeneIdentificatie' => $serializedObject['betrokkeneIdentificatie'] ?? null,
                 ]
             );
@@ -442,7 +442,7 @@ class SynchronizationService
             $this->logger->debug(
                 'internToExtern after extendInputBeforeConditions',
                 [
-                    'objectId'                => ($serializedObject['@self']['id'] ?? $serializedObject['id'] ?? ) null,
+                    'objectId'                => ($serializedObject['@self']['id'] ?? $serializedObject['id'] ?? null),
                     'betrokkeneIdentificatie' => $serializedObject['betrokkeneIdentificatie'] ?? null,
                 ]
             );
