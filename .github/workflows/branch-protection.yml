@@ -2,8 +2,8 @@ name: Branch Protection
 
 on:
   pull_request:
-    branches: [main, beta]
+    branches: [main, beta, development]
 
 jobs:
-  check:
+  lint-check:
     uses: ConductionNL/.github/.github/workflows/branch-protection.yml@main
