@@ -149,9 +149,10 @@ class OrganisationBridgeServiceTest extends TestCase
             ->willReturn(['openconnector', 'openregister', 'files']);
 
         $container = $this->createMock(ContainerInterface::class);
+        $mockOrganisationService = $this->createMock(\OCA\OpenRegister\Service\OrganisationService::class);
         $container->method('get')
             ->with('OCA\OpenRegister\Service\OrganisationService')
-            ->willReturn(new \stdClass());
+            ->willReturn($mockOrganisationService);
 
         $logger = $this->createMock(LoggerInterface::class);
 

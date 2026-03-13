@@ -137,6 +137,13 @@ class XMLResponse extends MockResponse {
 
             if (is_array($data) === true) {
                 $this->buildXmlElement($dom, $childElement, $data);
+            } elseif (is_object($data) === true) {
+                // Handle objects: use __toString if available, otherwise use a placeholder
+                if (method_exists($data, '__toString') === true) {
+                    $childElement->appendChild($this->createSafeTextNode($dom, (string)$data));
+                } else {
+                    $childElement->appendChild($this->createSafeTextNode($dom, '[Object of class ' . get_class($data) . ']'));
+                }
             } else {
                 $childElement->appendChild($this->createSafeTextNode($dom, (string)$data));
             }
