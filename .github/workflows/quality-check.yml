@@ -21,3 +21,4 @@ jobs:
       enable-frontend: true
       enable-eslint: true
       enable-phpunit: true
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister"}]'
