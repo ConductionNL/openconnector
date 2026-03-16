@@ -124,3 +124,83 @@ AND the server's certificate is validated against the PKIoverheid chain
 - **PHP SOAP extension**: SOAP client/server functionality
 - **PKIoverheid root certificates**: For mTLS validation
 - **StUF-BG 3.10 and StUF-ZKN 3.10 XSD schemas**: For XML validation
+
+### Using Mock Register Data
+
+The **BRP** and **BAG** mock registers provide test data for StUF-BG person/address queries without requiring external government endpoints.
+
+**Loading the registers:**
+```bash
+# Load BRP register (35 persons, register slug: "brp", schema: "ingeschreven-persoon")
+docker exec -u www-data nextcloud php occ openregister:load-register /var/www/html/custom_apps/openregister/lib/Settings/brp_register.json
+
+# Load BAG register (32 addresses, register slug: "bag", schema: "nummeraanduiding")
+docker exec -u www-data nextcloud php occ openregister:load-register /var/www/html/custom_apps/openregister/lib/Settings/bag_register.json
+```
+
+**Test data for this spec's use cases:**
+- **StUF-BG npsLv01/npsLa01**: BSN `999993653` (Suzanne Moulin) -- test person query and response mapping
+- **StUF-BG adrLv01/adrLa01**: Use BAG `nummeraanduiding` records -- test address query and response mapping
+- **Field mapping validation**: BRP records include all fields from the StUF-BG mapping table (bsn, geslachtsnaam, voorvoegsel, voornamen, geboortedatum, verblijfsadres)
+
+## Current Implementation Status
+
+### Implemented (partial)
+- **SOAP engine** (`lib/Service/SOAPService.php`): A working generic SOAP client that supports WSDL-driven requests, SOAP 1.1/1.2, cookie jar management, and XML response parsing. This is the outbound foundation (STUF-010/030).
+- **edcLk01 handling** (`lib/Service/SOAPService.php`, lines 218-223): There is **specific StUF-ZKN code** — the SOAPService already handles `edcLk01` document messages by detecting `body['edcLk01']['object']['inhoud']` and base64-decoding the document content. This directly relates to STUF-022 (document koppelen).
+- **Source type `soap`** (`src/entities/source/source.types.ts`): Sources can be configured as type `soap` with WSDL URL, SOAP version, and authentication. StUF endpoints can be set up as SOAP sources today.
+- **CallService SOAP routing** (`lib/Service/CallService.php`, line ~448): When a source has type `soap`, calls are automatically routed to the SOAPService.
+- **Certificate handling** (`lib/Service/CallService.php`): Supports writing client certificates and SSL keys to disk for mTLS connections. This is directly relevant for PKIoverheid mTLS (STUF-011).
+- **AuthenticationService** (`lib/Service/AuthenticationService.php`): Has certificate and authentication handling that could support WS-Security (STUF-012).
+
+### Not implemented
+- **Inbound SOAP server** (STUF-001, STUF-020, STUF-023): No SOAP server endpoint exists. The current SOAPService is client-only (outbound). Exposing StUF-BG/ZKN endpoints as a SOAP server requires a fundamentally different architecture.
+- **StUF-BG field mapping** (STUF-002, STUF-003): No mapping between StUF-BG XML paths (`bsn`, `geslachtsnaam`, etc.) and OpenRegister object properties.
+- **StUF-ZKN field mapping** (STUF-021): No mapping between StUF-ZKN zaak fields and Procest/OpenRegister objects.
+- **WSDL files bundled** (STUF-040): No StUF-BG or StUF-ZKN WSDL/XSD files are included in the codebase.
+- **XML namespace handling** (STUF-041): No StUF-specific namespace management (StUF, BG, ZKN, xsi, gml).
+- **Stuurgegevens** (STUF-042): No automatic population of zender/ontvanger/referentienummer/tijdstip.
+- **noValue attribute handling** (STUF-043): No support for StUF noValue semantics.
+- **Configurable field mapping** (STUF-050-053): No mapping configuration UI or storage in OpenRegister.
+- **Scope filtering** (STUF-005): Not implemented.
+- **Fault message handling** (STUF-014, STUF-024): No Fo01/Fo02/Fo03 or Bv03 handling.
+- **WS-Security UsernameToken** (STUF-012): Not implemented as a specific auth method.
+
+### Summary
+The outbound SOAP client infrastructure is in place and already has one piece of StUF-ZKN awareness (edcLk01 document handling). The inbound SOAP server side is entirely missing and represents the larger implementation effort.
+
+## Standards & References
+
+- **StUF-BG 3.10**: Standaard Uitwisseling Formaat - Basisgegevens. SOAP-based standard for person and address data exchange in Dutch government. Maintained by VNG Realisatie.
+- **StUF-ZKN 3.10 / 3.10e**: Standaard Uitwisseling Formaat - Zaak-/Documentservices. SOAP-based standard for case and document management exchange. The "e" extension adds extra message types.
+- **ZGW APIs (Zaakgericht Werken)**: The modern REST-based successor to StUF-ZKN. This adapter bridges the gap between legacy StUF and modern ZGW.
+- **WS-Security**: OASIS standard for SOAP message security. UsernameToken profile is commonly used by Dutch government StUF endpoints.
+- **PKIoverheid**: Dutch government PKI for mTLS authentication. Required for most production StUF endpoints.
+- **GEMMA**: Reference architecture for Dutch municipalities — defines the role of StUF in the information architecture.
+- **BRP (Basisregistratie Personen)**: National person registry, accessed via StUF-BG by municipalities.
+- **RGBZ (Referentiemodel Gemeentelijke Basisgegevens Zaken)**: The information model underlying StUF-ZKN.
+- **CMIS**: Content Management Interoperability Services — sometimes used alongside StUF-ZKN for document management.
+
+## Specificity Assessment
+
+### Sufficient for implementation
+- StUF message types are well-known and standardized (npsLv01, npsLa01, zakLk01, etc.).
+- The requirement IDs clearly separate inbound/outbound and BG/ZKN concerns.
+- The scenarios cover the main integration patterns (query BRP, expose zaken, create zaken, certificate auth).
+- The edcLk01 handling already in the code proves the pattern works.
+
+### Missing or ambiguous
+- **SOAP server architecture**: How to expose inbound SOAP endpoints within Nextcloud is a significant architectural question. Nextcloud routes are REST-based. Running a SOAP server may require a separate endpoint or a raw POST handler that processes SOAP XML.
+- **StUF version specifics**: The spec says "3.10" but doesn't address version negotiation. Some municipalities run 3.01 or custom extensions.
+- **Performance requirements**: No mention of expected throughput, response time SLAs, or concurrent request handling.
+- **Mapping storage format**: STUF-050 says "configurable via mapping objects stored in OpenRegister" but doesn't define the mapping object schema (which register, which schema, what fields).
+- **Pre-seeded mappings scope**: STUF-051 says "default mapping configurations" but doesn't list which specific fields are included in the default BRP and ZGW mappings.
+- **Asynchronous patterns**: STUF-024 mentions Bv03/Fo03 async patterns but doesn't detail the callback mechanism (how does the adapter receive async responses?).
+- **Multi-source routing**: Can the adapter expose multiple StUF endpoints for different registers/schemas, or is it one global SOAP endpoint?
+
+### Open questions
+1. How should the inbound SOAP server be hosted within Nextcloud? As a regular route that parses raw SOAP XML, or as a separate PHP SOAP server process?
+2. Which StUF-BG and StUF-ZKN WSDL/XSD files should be bundled? Where are the official schema packages obtained?
+3. Should the adapter support StUF-BG 3.01 (still in use by some municipalities) alongside 3.10?
+4. What is the expected mapping object schema in OpenRegister for field mappings (STUF-050)?
+5. How does WS-Security UsernameToken integrate with the existing AuthenticationService — as a new auth type, or as middleware on the SOAP transport?

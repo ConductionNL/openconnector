@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.25.3",
+    "@cyclonedx/cyclonedx-npm": "^4.2.1",
     "@eslint/config-helpers": "^0.4.2",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.39.1",
