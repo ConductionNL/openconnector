@@ -151,4 +151,5 @@
         <exclude-pattern>tests/Core/Tokenizer/StableCommentWhitespaceWinTest\.php</exclude-pattern>
     </rule>
 
+    <rule ref="./phpcs-custom-sniffs/CustomSniffs/Sniffs/Functions/NamedParametersSniff.php"/>
 </ruleset>
