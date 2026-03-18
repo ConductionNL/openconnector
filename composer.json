@@ -79,16 +79,15 @@
 		"react/event-loop": "^1.5",
 		"react/promise": "^3.2",
 		"symfony/console": "^5.4",
+		"symfony/options-resolver": "^7.0",
 		"symfony/uid": "^6.4",
+		"symfony/var-exporter": "^7.2.5",
 		"symfony/yaml": "^6.4",
 		"twig/twig": "^3.14",
 		"web-token/jwt-framework": "^3"
 	},
 	"require-dev": {
-		"edgedesign/phpqa": "^1.27",
-		"nextcloud/coding-standard": "^1.4",
 		"nextcloud/ocp": "dev-stable29",
-		"phpcsstandards/phpcsextra": "^1.4",
 		"phpmd/phpmd": "^2.15",
 		"phpmetrics/phpmetrics": "^2.8",
 		"phpunit/phpunit": "^10.5",
