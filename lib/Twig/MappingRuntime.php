@@ -182,4 +182,38 @@ class MappingRuntime implements RuntimeExtensionInterface
 
         return $formattedFiles;
     }
+
+    /**
+     * Creates a URL-friendly slug from text.
+     *
+     * Conversion steps:
+     * 1. Convert to lowercase
+     * 2. Replace spaces and underscores with hyphens
+     * 3. Remove special characters
+     * 4. Remove multiple consecutive hyphens
+     * 5. Trim hyphens from start and end
+     *
+     * @param string $text The text to convert to a slug.
+     *
+     * @return string The generated slug.
+     */
+    public function createSlug(string $text): string
+    {
+        // Convert to lowercase.
+        $slug = strtolower($text);
+
+        // Replace spaces and underscores with hyphens.
+        $slug = str_replace([' ', '_'], '-', $slug);
+
+        // Remove all characters that are not a-z, 0-9, or hyphen.
+        $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
+
+        // Replace multiple consecutive hyphens with single hyphen.
+        $slug = preg_replace('/-+/', '-', $slug);
+
+        // Trim hyphens from start and end.
+        $slug = trim($slug, '-');
+
+        return $slug;
+    }//end createSlug()
 }
