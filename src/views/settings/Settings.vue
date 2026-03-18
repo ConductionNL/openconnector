@@ -832,18 +832,21 @@ export default defineComponent({
 					return
 				}
 
+				// Unwrap config from dependency-check response envelope
+				const config = data.config || data
+
 				// Version information
-				this.versionInfo = data.version
+				this.versionInfo = config.version
 
 				// Retention settings
-				if (data.retention) {
+				if (config.retention) {
 					this.retentionOptions = {
-						successLogRetention: data.retention.successLogRetention || 2592000000,
-						callLogRetention: data.retention.callLogRetention || 2592000000,
-						eventMessageRetention: data.retention.eventMessageRetention || 604800000,
-						jobLogRetention: data.retention.jobLogRetention || 2592000000,
-						syncContractLogRetention: data.retention.syncContractLogRetention || 7776000000,
-						syncLogRetention: data.retention.syncLogRetention || 2592000000,
+						successLogRetention: config.retention.successLogRetention || 2592000000,
+						callLogRetention: config.retention.callLogRetention || 2592000000,
+						eventMessageRetention: config.retention.eventMessageRetention || 604800000,
+						jobLogRetention: config.retention.jobLogRetention || 2592000000,
+						syncContractLogRetention: config.retention.syncContractLogRetention || 7776000000,
+						syncLogRetention: config.retention.syncLogRetention || 2592000000,
 					}
 				}
 
