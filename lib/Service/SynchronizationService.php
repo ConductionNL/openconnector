@@ -1284,7 +1284,7 @@ class SynchronizationService
 
         // Execute mapping if found
 		$objectBeforeMapping = $object;
-        if ($sourceTargetMapping) {
+        if ($sourceTargetMapping && $mutationType !== 'delete') {
             $flowToken->setSyncOutputOriginal($object);
 
             $object = $this->mappingService->executeMapping(mapping: $sourceTargetMapping, input: $object);
