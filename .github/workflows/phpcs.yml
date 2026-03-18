@@ -1,20 +1,9 @@
 name: php-cs
 
+# Disabled: superseded by code-quality.yml
 on:
-  push:
-    branches-ignore:
-      - 'main'
-      - 'master'
-      - 'prod'
-      - 'production'
-      - 'beta'
-      - 'development'
   pull_request:
-    branches-ignore:
-      - 'main'
-      - 'master'
-      - 'prod'
-      - 'production'
+    branches: [never]
 
 jobs:
   build:
