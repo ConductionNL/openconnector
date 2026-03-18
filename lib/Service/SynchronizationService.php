@@ -141,6 +141,36 @@ class SynchronizationService
 	}
 
     /**
+     * Check if a synchronization should trigger for the given object event type.
+     *
+     * Supported sourceConfig key:
+     * - triggerOnlyOnEvents: array|string of CREATE|UPDATE|DELETE
+     */
+    private function shouldTriggerOnEvent(Synchronization $synchronization, string $eventMutationType): bool
+    {
+        $sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig());
+        if (is_array($sourceConfig) === false || array_key_exists('triggerOnlyOnEvents', $sourceConfig) === false) {
+            return true;
+        }
+
+        $allowedEvents = $sourceConfig['triggerOnlyOnEvents'];
+        if (is_string($allowedEvents)) {
+            $allowedEvents = [$allowedEvents];
+        }
+
+        if (is_array($allowedEvents) === false) {
+            return true;
+        }
+
+        $allowedEvents = array_map(
+            static fn ($event): string => strtoupper(trim((string) $event)),
+            $allowedEvents
+        );
+
+        return in_array(strtoupper($eventMutationType), $allowedEvents, true);
+    }
+
+    /**
      * Handle synchronization for object create/update/delete events.
      *
      * This centralizes event listener behavior:
@@ -169,19 +199,24 @@ class SynchronizationService
 
         $directSynchronizations = $this->findAllBySourceId(register: $register, schema: $schema);
         foreach ($directSynchronizations as $synchronization) {
+            if ($this->shouldTriggerOnEvent($synchronization, $eventMutationType) === false) {
+                continue;
+            }
             try {
                 if ($eventMutationType === 'delete') {
+                    $eventObject = $object;
                     $this->synchronize(
                         synchronization: $synchronization,
                         force: true,
-                        object: $object,
+                        object: $eventObject,
                         mutationType: 'delete'
                     );
                 } else {
+                    $eventObjectArray = $objectArray;
                     $this->synchronize(
                         synchronization: $synchronization,
                         force: true,
-                        object: $objectArray
+                        object: $eventObjectArray
                     );
                 }
 
@@ -204,6 +239,9 @@ class SynchronizationService
 
         foreach ($triggeredSynchronizations as $synchronization) {
             if (in_array($synchronization->getId(), $processedSynchronizationIds, true) === true) {
+                continue;
+            }
+            if ($this->shouldTriggerOnEvent($synchronization, $eventMutationType) === false) {
                 continue;
             }
 
@@ -1284,7 +1322,7 @@ class SynchronizationService
 
         // Execute mapping if found
 		$objectBeforeMapping = $object;
-        if ($sourceTargetMapping) {
+        if ($sourceTargetMapping && $mutationType !== 'delete') {
             $flowToken->setSyncOutputOriginal($object);
 
             $object = $this->mappingService->executeMapping(mapping: $sourceTargetMapping, input: $object);

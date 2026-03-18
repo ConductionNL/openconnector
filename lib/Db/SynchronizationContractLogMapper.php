@@ -156,7 +156,7 @@ class SynchronizationContractLogMapper extends QBMapper
 			->groupBy('date')
 			->orderBy('date', 'ASC');
 
-		$result = $qb->execute();
+		$result = $qb->executeQuery();
 		$stats = [];
 
 		// Create DatePeriod to iterate through all dates
@@ -203,7 +203,7 @@ class SynchronizationContractLogMapper extends QBMapper
 			->groupBy('hour')
 			->orderBy('hour', 'ASC');
 
-		$result = $qb->execute();
+		$result = $qb->executeQuery();
 		$stats = [];
 
 		while ($row = $result->fetch()) {
