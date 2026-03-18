@@ -19,7 +19,9 @@ Documentation is available at [https://conduction.nl/openconnector](https://cond
 
 ## Support
 
-[Support information](https://conduction.nl/openconnector/support)
+For support, contact us at [support@conduction.nl](mailto:support@conduction.nl).
+
+For a Service Level Agreement (SLA), contact [sales@conduction.nl](mailto:sales@conduction.nl).
 
 ## Project Structure
 
