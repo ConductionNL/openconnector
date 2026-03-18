@@ -11,6 +11,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -35,7 +36,8 @@ class RulesController extends Controller
         $appName,
         IRequest $request,
         private IAppConfig $config,
-        private RuleMapper $ruleMapper
+        private RuleMapper $ruleMapper,
+        private IL10N $l
     )
     {
         parent::__construct($appName, $request);
@@ -98,7 +100,7 @@ class RulesController extends Controller
         try {
             return new JSONResponse($this->ruleMapper->find(id: (int) $id));
         } catch (DoesNotExistException $exception) {
-            return new JSONResponse(data: ['error' => 'Not Found'], statusCode: 404);
+            return new JSONResponse(data: ['error' => $this->l->t('Not Found')], statusCode: 404);
         }
     }
 

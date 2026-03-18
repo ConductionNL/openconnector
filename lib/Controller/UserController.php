@@ -28,6 +28,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\ICacheFactory;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IUserSession;
@@ -94,6 +95,13 @@ class UserController extends Controller
     private readonly LoggerInterface $logger;
 
     /**
+     * Localization service
+     *
+     * @var IL10N
+     */
+    private readonly IL10N $l;
+
+    /**
      * Constructor for the UserController
      *
      * Initializes the controller with required dependencies for user management
@@ -137,7 +145,8 @@ class UserController extends Controller
         ICacheFactory $cacheFactory,
         LoggerInterface $logger,
         UserService $userService,
-        OrganisationBridgeService $organisationBridgeService
+        OrganisationBridgeService $organisationBridgeService,
+        IL10N $l
     ) {
         parent::__construct($appName, $request);
         $this->userManager = $userManager;
@@ -147,6 +156,7 @@ class UserController extends Controller
         $this->userService = $userService;
         $this->organisationBridgeService = $organisationBridgeService;
         $this->logger = $logger;
+        $this->l = $l;
     }
 
     /**
@@ -172,7 +182,7 @@ class UserController extends Controller
             // Check if user is logged in
             if ($currentUser === null) {
                 $response = new JSONResponse(
-                    data: ['error' => 'User not authenticated'],
+                    data: ['error' => $this->l->t('User not authenticated')],
                     statusCode: 401
                 );
                 return $this->securityService->addSecurityHeaders($response);
@@ -186,7 +196,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             // Log the error and return generic error response
             $response = new JSONResponse(
-                data: ['error' => 'Failed to retrieve user information'],
+                data: ['error' => $this->l->t('Failed to retrieve user information')],
                 statusCode: 500
             );
             return $this->securityService->addSecurityHeaders($response);
@@ -216,7 +226,7 @@ class UserController extends Controller
             // Check if user is logged in
             if ($currentUser === null) {
                 $response = new JSONResponse(
-                    data: ['error' => 'User not authenticated'],
+                    data: ['error' => $this->l->t('User not authenticated')],
                     statusCode: 401
                 );
                 return $this->securityService->addSecurityHeaders($response);
@@ -250,7 +260,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             // Log the error and return generic error response
             $response = new JSONResponse(
-                data: ['error' => 'Failed to update user information'],
+                data: ['error' => $this->l->t('Failed to update user information')],
                 statusCode: 500
             );
             return $this->securityService->addSecurityHeaders($response);
@@ -291,7 +301,7 @@ class UserController extends Controller
             // If we're already using more than 80% of memory limit, return error
             if ($memoryLimitBytes > 0 && $initialMemoryUsage > ($memoryLimitBytes * 0.8)) {
                 $response = new JSONResponse(
-                    data: ['error' => 'Server memory usage too high, please try again later'],
+                    data: ['error' => $this->l->t('Server memory usage too high, please try again later')],
                     statusCode: 503 // Service Unavailable
                 );
                 return $this->securityService->addSecurityHeaders($response);
@@ -346,7 +356,7 @@ class UserController extends Controller
 
                 // Return generic error message to prevent username enumeration
                 $response = new JSONResponse(
-                    data: ['error' => 'Invalid username or password'],
+                    data: ['error' => $this->l->t('Invalid username or password')],
                     statusCode: 401
                 );
                 return $this->securityService->addSecurityHeaders($response);
@@ -358,7 +368,7 @@ class UserController extends Controller
                 $this->securityService->recordFailedLoginAttempt($username, $clientIp, 'account_disabled');
 
                 $response = new JSONResponse(
-                    data: ['error' => 'Account is disabled'],
+                    data: ['error' => $this->l->t('Account is disabled')],
                     statusCode: 401
                 );
                 return $this->securityService->addSecurityHeaders($response);
@@ -390,7 +400,7 @@ class UserController extends Controller
 
             // Create successful response with security headers
             $response = new JSONResponse([
-                'message' => 'Login successful',
+                'message' => $this->l->t('Login successful'),
                 'user' => $userData,
                 'session_created' => true
             ]);
@@ -399,7 +409,7 @@ class UserController extends Controller
         } catch (\Exception $e) {
             // Log the error securely without exposing sensitive information
             $response = new JSONResponse(
-                data: ['error' => 'Login failed due to a system error'],
+                data: ['error' => $this->l->t('Login failed due to a system error')],
                 statusCode: 500
             );
             return $this->securityService->addSecurityHeaders($response);

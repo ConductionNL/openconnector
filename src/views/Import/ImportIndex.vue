@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { ref } from 'vue'
 import { importExportStore } from '../../store/store.js'
 </script>

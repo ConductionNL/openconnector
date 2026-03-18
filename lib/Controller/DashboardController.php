@@ -5,6 +5,7 @@ namespace OCA\OpenConnector\Controller;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCA\OpenConnector\Db\SynchronizationMapper;
@@ -35,7 +36,8 @@ class DashboardController extends Controller
         private readonly MappingMapper $mappingMapper,
         private readonly CallLogMapper $callLogMapper,
         private readonly JobLogMapper $jobLogMapper,
-        private readonly SynchronizationContractLogMapper $synchronizationContractLogMapper
+        private readonly SynchronizationContractLogMapper $synchronizationContractLogMapper,
+        private readonly IL10N $l
     ) {
         parent::__construct($appName, $request);
     }

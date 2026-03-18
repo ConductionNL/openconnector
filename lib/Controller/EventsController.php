@@ -12,6 +12,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCA\OpenConnector\Service\EventService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -36,7 +37,8 @@ class EventsController extends Controller
 //        private readonly EventLogMapper $eventLogMapper, // @todo
         private readonly EventService $eventService,
         private readonly EventMessageMapper $messageMapper,
-        private readonly EventSubscriptionMapper $subscriptionMapper
+        private readonly EventSubscriptionMapper $subscriptionMapper,
+        private readonly IL10N $l
     )
     {
         parent::__construct($appName, $request);
@@ -99,7 +101,7 @@ class EventsController extends Controller
         try {
             return new JSONResponse($this->eventMapper->find(id: (int) $id));
         } catch (DoesNotExistException $exception) {
-            return new JSONResponse(data: ['error' => 'Not Found'], statusCode: 404);
+            return new JSONResponse(data: ['error' => $this->l->t('Not Found')], statusCode: 404);
         }
     }
 
@@ -208,7 +210,7 @@ class EventsController extends Controller
                 'messages' => $messages
             ]);
         } catch (DoesNotExistException $e) {
-            return new JSONResponse(['error' => 'Event not found'], 404);
+            return new JSONResponse(['error' => $this->l->t('Event not found')], 404);
         }
     }
 
@@ -267,7 +269,7 @@ class EventsController extends Controller
 
             return new JSONResponse($subscription);
         } catch (DoesNotExistException $e) {
-            return new JSONResponse(['error' => 'Subscription not found'], 404);
+            return new JSONResponse(['error' => $this->l->t('Subscription not found')], 404);
         } catch (Exception $e) {
             return new JSONResponse(['error' => $e->getMessage()], 400);
         }
@@ -290,7 +292,7 @@ class EventsController extends Controller
 
             return new JSONResponse([]);
         } catch (DoesNotExistException $e) {
-            return new JSONResponse(['error' => 'Subscription not found'], 404);
+            return new JSONResponse(['error' => $this->l->t('Subscription not found')], 404);
         }
     }
 
@@ -349,7 +351,7 @@ class EventsController extends Controller
                 'messages' => $messages
             ]);
         } catch (DoesNotExistException $e) {
-            return new JSONResponse(['error' => 'Subscription not found'], 404);
+            return new JSONResponse(['error' => $this->l->t('Subscription not found')], 404);
         }
     }
 
@@ -368,7 +370,7 @@ class EventsController extends Controller
             $subscription = $this->subscriptionMapper->find($subscriptionId);
 
             if ($subscription->getStyle() !== 'pull') {
-                return new JSONResponse(['error' => 'Subscription is not pull-based'], 400);
+                return new JSONResponse(['error' => $this->l->t('Subscription is not pull-based')], 400);
             }
 
             $result = $this->eventService->pullEvents(
@@ -379,7 +381,7 @@ class EventsController extends Controller
 
             return new JSONResponse($result);
         } catch (DoesNotExistException $e) {
-            return new JSONResponse(['error' => 'Subscription not found'], 404);
+            return new JSONResponse(['error' => $this->l->t('Subscription not found')], 404);
         }
     }
 }

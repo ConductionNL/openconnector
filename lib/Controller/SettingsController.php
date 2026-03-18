@@ -25,6 +25,7 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Container\ContainerInterface;
@@ -66,7 +67,8 @@ class SettingsController extends Controller
         private readonly IGroupManager $groupManager,
         private readonly SettingsService $settingsService,
         private readonly LoggerInterface $logger,
-        private readonly IUserSession $userSession
+        private readonly IUserSession $userSession,
+        private readonly IL10N $l
     ) {
         parent::__construct($appName, $request);
 
@@ -144,7 +146,7 @@ class SettingsController extends Controller
             ]);
 
             return new JSONResponse([
-                'error' => 'Failed to retrieve statistics',
+                'error' => $this->l->t('Failed to retrieve statistics'),
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -190,7 +192,7 @@ class SettingsController extends Controller
             ]);
 
             return new JSONResponse([
-                'error' => 'Failed to retrieve settings',
+                'error' => $this->l->t('Failed to retrieve settings'),
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -232,7 +234,7 @@ class SettingsController extends Controller
             ]);
 
             return new JSONResponse([
-                'error' => 'Failed to update settings',
+                'error' => $this->l->t('Failed to update settings'),
                 'message' => $e->getMessage()
             ], 500);
         }
@@ -276,7 +278,7 @@ class SettingsController extends Controller
             ]);
 
             return new JSONResponse([
-                'error' => 'Failed to perform rebase operation',
+                'error' => $this->l->t('Failed to perform rebase operation'),
                 'message' => $e->getMessage()
             ], 500);
         }

@@ -6,6 +6,7 @@ use OCA\OpenConnector\Service\ExportService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 
 class ExportController extends Controller
@@ -22,7 +23,8 @@ class ExportController extends Controller
         $appName,
         IRequest $request,
         private IAppConfig $config,
-		private readonly ExportService $exportService
+		private readonly ExportService $exportService,
+		private readonly IL10N $l
     )
     {
         parent::__construct($appName, $request);
@@ -44,7 +46,7 @@ class ExportController extends Controller
 		$accept = $this->request->getHeader(name: 'Accept');
 
 		if (empty($accept) === true) {
-			return new JSONResponse(data: ['error' => 'Request is missing header Accept'], statusCode: 400);
+			return new JSONResponse(data: ['error' => $this->l->t('Request is missing header Accept')], statusCode: 400);
 		}
 
 		return $this->exportService->export(objectType: $type, id: $id, accept: $accept);
