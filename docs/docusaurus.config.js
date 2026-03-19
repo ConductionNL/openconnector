@@ -31,6 +31,7 @@ const config = {
       ({
         docs: {
           path: '../docs',
+          exclude: ['**/node_modules/**'],
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl: 'https://github.com/conductionnl/openconnector/tree/main/docs/',
         },
