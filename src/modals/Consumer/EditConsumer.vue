@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t } from '@nextcloud/l10n'
 import { consumerStore, navigationStore } from '../../store/store.js'
 import { Consumer } from '../../entities/index.js'
 import { getTheme } from '../../services/getTheme.js'
@@ -253,7 +252,7 @@ export default {
 }
 </script>
 
-<style lang="css">
+<style lang="css" scoped>
 .editConsumerForm .textarea__helper-text-message {
 	padding-block: 4px;
 	padding-inline: var(--border-radius-large);

@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t } from '@nextcloud/l10n'
 import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 </script>
 
@@ -285,7 +284,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .detailHeader {
 	display: flex;
 	justify-content: space-between;

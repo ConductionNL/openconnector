@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t } from '@nextcloud/l10n'
 import { ruleStore, navigationStore, mappingStore, synchronizationStore, sourceStore } from '../../store/store.js'
 import { getTheme } from '../../services/getTheme.js'
 import { Rule } from '../../entities/index.js'

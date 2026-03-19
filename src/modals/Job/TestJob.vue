@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t } from '@nextcloud/l10n'
 import { jobStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -154,7 +153,7 @@ export default {
 	},
 }
 </script>
-<style>
+<style scoped>
 .testJobDetailGrid {
 	display: grid;
 	grid-template-columns: 1fr;

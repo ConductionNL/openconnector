@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t } from '@nextcloud/l10n'
 import { navigationStore } from '../../store/store.js'
 </script>
 
@@ -98,7 +97,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 /* modal */
 div[class='modal-container']:has(.TestMappingMainModal) {
     width: clamp(1000px, 100%, 1200px) !important;

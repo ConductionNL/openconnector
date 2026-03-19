@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t } from '@nextcloud/l10n'
 import { sourceStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -178,7 +177,7 @@ export default {
 	},
 }
 </script>
-<style>
+<style scoped>
 .detailGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;

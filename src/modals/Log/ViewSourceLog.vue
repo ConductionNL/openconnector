@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t } from '@nextcloud/l10n'
 import { logStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -187,7 +186,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .responseBody {
     word-break: break-all;
     margin-top: 1rem;

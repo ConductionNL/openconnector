@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t } from '@nextcloud/l10n'
 import { navigationStore, mappingStore } from '../../../store/store.js'
 import { Mapping } from '../../../entities/index.js'
 </script>
@@ -173,7 +172,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .zaakDetailsContainer {
     margin-block-start: var(--OC-margin-20);
     margin-inline-start: var(--OC-margin-20);

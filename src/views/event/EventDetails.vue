@@ -1,5 +1,4 @@
 <script setup>
-import { translate as t } from '@nextcloud/l10n'
 import { eventStore, navigationStore, logStore } from '../../store/store.js'
 </script>
 
@@ -292,7 +291,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 	.successLevel * .counter-bubble__counter {
 		background-color: var(--OC-color-status-background-success);
 		color: var(--OC-color-status-success);
