@@ -27,7 +27,6 @@ use DateTime;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
- * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.LongVariable)
  * @SuppressWarnings(PHPMD.StaticAccess)
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
@@ -632,13 +631,11 @@ class RuleService
             // Check if current node has an elementRef property and if it matches the target identificatie
             if (isset($node['elementRef']) === true && $node['elementRef'] === $matchIdentificatie) {
                 // Create a subnode with reference to the newly created element
+                $subnodeUuid = 'id-OutOfUniqueUUIDs-' . $this->currentNodeIdIndex;
                 if ($this->currentNodeIdIndex < count(self::NODE_IDS)) {
                     $subnodeUuid = self::NODE_IDS[$this->currentNodeIdIndex];
-                    $this->currentNodeIdIndex++;
-                } else {
-                    $subnodeUuid = 'id-OutOfUniqueUUIDs-' . $this->currentNodeIdIndex;
-                    $this->currentNodeIdIndex++;
                 }
+                $this->currentNodeIdIndex++;
                 $subnodeId = "id-{$subnodeUuid}";
 
                 // Initialize the nodes array if it doesn't exist properly
@@ -801,9 +798,9 @@ class RuleService
             $this->catalogueService->extendModel(end($explodedPath));
 
             return new JSONResponse(['message' => 'Connected views succesfully'], statusCode: 200);
-        } else {
-            return new JSONResponse(['message' => 'model id was not provided'], 200);
         }
+
+        return new JSONResponse(['message' => 'model id was not provided'], 200);
     }
 
 	/**
@@ -893,11 +890,8 @@ class RuleService
 			}
 		}
 
-		if (isset($data['extendedParameters']) === true) {
-			$data['extendedParameters'] = array_merge($extendedParameters->all(), $data['extendedParameters']);
-		} else {
-			$data['extendedParameters'] = $extendedParameters->all();
-		}
+		$existingParams = $data['extendedParameters'] ?? [];
+		$data['extendedParameters'] = array_merge($extendedParameters->all(), $existingParams);
 
 		$data['body']['_extendedInput'] = $data['extendedParameters'];
 

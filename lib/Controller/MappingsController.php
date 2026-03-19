@@ -25,7 +25,6 @@ use Psr\Container\NotFoundExceptionInterface;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
- * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.MissingImport)
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  * @SuppressWarnings(PHPMD.UnusedLocalVariable)
@@ -354,13 +353,11 @@ class MappingsController extends Controller
         // Check if the OpenRegister service is available
 		$openRegisters = $this->objectService->getOpenRegisters();
         $data = [];
+		$data['openRegisters'] = false;
 		if ($openRegisters !== null) {
 			$data['openRegisters'] = true;
 			$data['availableRegisters'] = $openRegisters->getRegisters();
 		}
-        else {
-            $data['openRegisters'] = false;
-        }
 
         return new JSONResponse($data);
 

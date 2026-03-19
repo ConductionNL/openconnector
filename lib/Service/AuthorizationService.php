@@ -42,7 +42,6 @@ use OCA\OpenConnector\Exception\AuthenticationException;
  * Service class for handling authorization on incoming calls.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.StaticAccess)
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
@@ -121,7 +120,9 @@ class AuthorizationService
 					secret: $publicKey,
 					additional_values: ['alg' => $algorithm, 'use' => 'sig'])
 			]);
-		} else if (in_array(needle: $algorithm, haystack: self::PKCS1_ALGORITHMS) === true
+		}
+
+		if (in_array(needle: $algorithm, haystack: self::PKCS1_ALGORITHMS) === true
 			|| in_array(needle: $algorithm, haystack: self::PSS_ALGORITHMS) === true
 		) {
 			$stamp = microtime() . getmypid();
@@ -131,6 +132,7 @@ class AuthorizationService
 			unlink($filename);
 			return $jwk;
 		}
+
 		throw new AuthenticationException(message: 'The token algorithm is not supported', details: ['algorithm' => $algorithm]);
 	}
 
@@ -145,17 +147,16 @@ class AuthorizationService
 	{
 		$now = new DateTime();
 
-		if (isset($payload['iat']) === true) {
-			$iat = new DateTime('@' . $payload['iat']);
-		} else {
+		if (isset($payload['iat']) === false) {
 			throw new AuthenticationException(message: 'The token has no time of creation', details: ['iat' => null]);
 		}
 
+		$iat = new DateTime('@' . $payload['iat']);
+
+		$exp = clone $iat;
+		$exp->modify('+1 Hour');
 		if (isset($payload['exp']) === true) {
 			$exp = new DateTime('@' . $payload['exp']);
-		} else {
-			$exp = clone $iat;
-			$exp->modify('+1 Hour');
 		}
 
 		if ($exp->diff($now)->format('%R') === '+') {

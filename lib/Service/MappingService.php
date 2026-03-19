@@ -30,7 +30,6 @@ use Exception;
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
- * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
  */
 class MappingService
@@ -135,12 +134,9 @@ class MappingService
 
         // Determine pass through.
         // Let's get the dot array based on https://github.com/adbario/php-dot-notation.
+        $dotArray = new Dot();
         if ($mapping->getPassThrough()) {
             $dotArray = new Dot($input);
-            // @todo: error logging
-        } else {
-            $dotArray = new Dot();
-            // @todo: error logging
         }
         $dotInput = new Dot($input);
 
@@ -209,10 +205,9 @@ class MappingService
         if (count($keys) === 1 && $keys[0] === '#') {
             // Ensure we always return an array, even if the value is null
             $rootValue = $output['#'];
+            $output = is_array($rootValue) ? $rootValue : [$rootValue];
             if ($rootValue === null) {
                 $output = [];
-            } else {
-                $output = is_array($rootValue) ? $rootValue : [$rootValue];
             }
         }
 
@@ -241,10 +236,14 @@ class MappingService
         if (str_starts_with($cast, 'unsetIfValue==') === true) {
             $unsetIfValue = substr($cast, 14);
             $cast         = 'unsetIfValue';
-        } else if (str_starts_with($cast, 'setNullIfValue==') === true) {
+        }
+
+        if (str_starts_with($cast, 'setNullIfValue==') === true) {
             $setNullIfValue = substr($cast, 16);
             $cast           = 'setNullIfValue';
-        } else if (str_starts_with($cast, 'countValue:') === true) {
+        }
+
+        if (str_starts_with($cast, 'countValue:') === true) {
             $countValue = substr($cast, 11);
             $cast       = 'countValue';
         }
@@ -415,7 +414,10 @@ class MappingService
                 if ($this->areAllArrayKeysNull($value) === false) {
                     return false;
                 }
-            } else if (empty($value) === false) {
+                continue;
+            }
+
+            if (empty($value) === false) {
                 return false;
             }
         }

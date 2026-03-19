@@ -24,7 +24,6 @@ use Symfony\Component\Uid\Uuid;
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
- * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.ShortVariable)
  * @SuppressWarnings(PHPMD.LongVariable)
  * @SuppressWarnings(PHPMD.MissingImport)
@@ -73,19 +72,11 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
                     if (str_contains($syncArray['sourceId'], '/')) {
                         [$registerId, $schemaId] = explode('/', $syncArray['sourceId']);
 
-                        // Map register ID to slug
-                        if (isset($mappings['register']['idToSlug'][$registerId])) {
-                            $registerSlug = $mappings['register']['idToSlug'][$registerId];
-                        } else {
-                            $registerSlug = $registerId; // Fallback to original ID if no mapping found.
-                        }
+                        // Map register ID to slug (fallback to original ID if no mapping found)
+                        $registerSlug = $mappings['register']['idToSlug'][$registerId] ?? $registerId;
 
-                        // Map schema ID to slug
-                        if (isset($mappings['schema']['idToSlug'][$schemaId])) {
-                            $schemaSlug = $mappings['schema']['idToSlug'][$schemaId];
-                        } else {
-                            $schemaSlug = $schemaId; // Fallback to original ID if no mapping found.
-                        }
+                        // Map schema ID to slug (fallback to original ID if no mapping found)
+                        $schemaSlug = $mappings['schema']['idToSlug'][$schemaId] ?? $schemaId;
 
                         // Combine the slugs
                         $syncArray['sourceId'] = $registerSlug . '/' . $schemaSlug;
@@ -110,19 +101,11 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
                     if (str_contains($syncArray['targetId'], '/')) {
                         [$registerId, $schemaId] = explode('/', $syncArray['targetId']);
 
-                        // Map register ID to slug
-                        if (isset($mappings['register']['idToSlug'][$registerId])) {
-                            $registerSlug = $mappings['register']['idToSlug'][$registerId];
-                        } else {
-                            $registerSlug = $registerId; // Fallback to original ID if no mapping found.
-                        }
+                        // Map register ID to slug (fallback to original ID if no mapping found)
+                        $registerSlug = $mappings['register']['idToSlug'][$registerId] ?? $registerId;
 
-                        // Map schema ID to slug
-                        if (isset($mappings['schema']['idToSlug'][$schemaId])) {
-                            $schemaSlug = $mappings['schema']['idToSlug'][$schemaId];
-                        } else {
-                            $schemaSlug = $schemaId; // Fallback to original ID if no mapping found.
-                        }
+                        // Map schema ID to slug (fallback to original ID if no mapping found)
+                        $schemaSlug = $mappings['schema']['idToSlug'][$schemaId] ?? $schemaId;
 
                         // Combine the slugs
                         $syncArray['targetId'] = $registerSlug . '/' . $schemaSlug;
@@ -190,19 +173,11 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
                     if (str_contains($data['sourceId'], '/')) {
                         [$registerSlug, $schemaSlug] = explode('/', $data['sourceId']);
 
-                        // Map register slug to ID
-                        if (isset($mappings['register']['slugToId'][$registerSlug])) {
-                            $registerId = $mappings['register']['slugToId'][$registerSlug];
-                        } else {
-                            $registerId = $registerSlug; // Fallback to original slug if no mapping found.
-                        }
+                        // Map register slug to ID (fallback to original slug if no mapping found)
+                        $registerId = $mappings['register']['slugToId'][$registerSlug] ?? $registerSlug;
 
-                        // Map schema slug to ID
-                        if (isset($mappings['schema']['slugToId'][$schemaSlug])) {
-                            $schemaId = $mappings['schema']['slugToId'][$schemaSlug];
-                        } else {
-                            $schemaId = $schemaSlug; // Fallback to original slug if no mapping found.
-                        }
+                        // Map schema slug to ID (fallback to original slug if no mapping found)
+                        $schemaId = $mappings['schema']['slugToId'][$schemaSlug] ?? $schemaSlug;
 
                         // Combine the IDs
                         $data['sourceId'] = $registerId . '/' . $schemaId;
@@ -227,19 +202,11 @@ class SynchronizationHandler implements ConfigurationHandlerInterface
                     if (str_contains($data['targetId'], '/')) {
                         [$registerSlug, $schemaSlug] = explode('/', $data['targetId']);
 
-                        // Map register slug to ID
-                        if (isset($mappings['register']['slugToId'][$registerSlug])) {
-                            $registerId = $mappings['register']['slugToId'][$registerSlug];
-                        } else {
-                            $registerId = $registerSlug; // Fallback to original slug if no mapping found.
-                        }
+                        // Map register slug to ID (fallback to original slug if no mapping found)
+                        $registerId = $mappings['register']['slugToId'][$registerSlug] ?? $registerSlug;
 
-                        // Map schema slug to ID
-                        if (isset($mappings['schema']['slugToId'][$schemaSlug])) {
-                            $schemaId = $mappings['schema']['slugToId'][$schemaSlug];
-                        } else {
-                            $schemaId = $schemaSlug; // Fallback to original slug if no mapping found.
-                        }
+                        // Map schema slug to ID (fallback to original slug if no mapping found)
+                        $schemaId = $mappings['schema']['slugToId'][$schemaSlug] ?? $schemaSlug;
 
                         // Combine the IDs
                         $data['targetId'] = $registerId . '/' . $schemaId;

@@ -20,7 +20,6 @@ use OCP\AppFramework\Db\Entity;
  * @link https://github.com/OpenConnector/openconnector
  *
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
- * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.MissingImport)
  */
 class RuleHandler implements ConfigurationHandlerInterface
@@ -73,23 +72,24 @@ class RuleHandler implements ConfigurationHandlerInterface
             if (is_array($value)) {
                 // Recursively process nested arrays
                 $config[$key] = $this->convertIdsToSlugs($value, $mappings, $mappingIds);
-            } else {
-                // Check if the key is an entity reference
-                foreach ($entityTypes as $type) {
-                    // Check for exact match (e.g., 'source')
-                    if ($key === $type && isset($mappings[$type]['idToSlug'][$value])) {
-						if($type === 'mapping') {
-							$mappingIds[] = $value;
-						}
-                        $config[$key] = $mappings[$type]['idToSlug'][$value];
+                continue;
+            }
+
+            // Check if the key is an entity reference
+            foreach ($entityTypes as $type) {
+                // Check for exact match (e.g., 'source')
+                if ($key === $type && isset($mappings[$type]['idToSlug'][$value])) {
+                    if($type === 'mapping') {
+                        $mappingIds[] = $value;
                     }
-                    // Check for ID suffix (e.g., 'sourceId')
-                    if (str_ends_with($key, $type . 'Id') && isset($mappings[$type]['idToSlug'][$value])) {
-						if($type === 'mapping') {
-							$mappingIds[] = $value;
-						}
-                        $config[$key] = $mappings[$type]['idToSlug'][$value];
+                    $config[$key] = $mappings[$type]['idToSlug'][$value];
+                }
+                // Check for ID suffix (e.g., 'sourceId')
+                if (str_ends_with($key, $type . 'Id') && isset($mappings[$type]['idToSlug'][$value])) {
+                    if($type === 'mapping') {
+                        $mappingIds[] = $value;
                     }
+                    $config[$key] = $mappings[$type]['idToSlug'][$value];
                 }
             }
         }
@@ -140,17 +140,18 @@ class RuleHandler implements ConfigurationHandlerInterface
             if (is_array($value)) {
                 // Recursively process nested arrays
                 $config[$key] = $this->convertSlugsToIds($value, $mappings);
-            } else {
-                // Check if the key is an entity reference
-                foreach ($entityTypes as $type) {
-                    // Check for exact match (e.g., 'source')
-                    if ($key === $type && isset($mappings[$type]['slugToId'][$value])) {
-                        $config[$key] = $mappings[$type]['slugToId'][$value];
-                    }
-                    // Check for ID suffix (e.g., 'sourceId')
-                    if (str_ends_with($key, $type . 'Id') && isset($mappings[$type]['slugToId'][$value])) {
-                        $config[$key] = $mappings[$type]['slugToId'][$value];
-                    }
+                continue;
+            }
+
+            // Check if the key is an entity reference
+            foreach ($entityTypes as $type) {
+                // Check for exact match (e.g., 'source')
+                if ($key === $type && isset($mappings[$type]['slugToId'][$value])) {
+                    $config[$key] = $mappings[$type]['slugToId'][$value];
+                }
+                // Check for ID suffix (e.g., 'sourceId')
+                if (str_ends_with($key, $type . 'Id') && isset($mappings[$type]['slugToId'][$value])) {
+                    $config[$key] = $mappings[$type]['slugToId'][$value];
                 }
             }
         }

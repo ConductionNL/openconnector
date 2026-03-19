@@ -34,7 +34,6 @@ use Psr\Log\LoggerInterface;
  * for monitoring sources, calls, and synchronizations.
  *
  * @SuppressWarnings(PHPMD.ShortVariable)
- * @SuppressWarnings(PHPMD.ElseExpression)
  */
 class MetricsController extends Controller
 {
@@ -134,10 +133,10 @@ class MetricsController extends Controller
 
             if (empty($counts) === true) {
                 $lines[] = 'openconnector_sources_total{type="rest"} 0';
-            } else {
-                foreach ($counts as $type => $count) {
-                    $lines[] = 'openconnector_sources_total{type="'.$type.'"} '.$count;
-                }
+            }
+
+            foreach ($counts as $type => $count) {
+                $lines[] = 'openconnector_sources_total{type="'.$type.'"} '.$count;
             }
         } catch (\Exception $e) {
             $this->logger->warning('Could not count sources for metrics', ['exception' => $e->getMessage()]);
@@ -171,11 +170,11 @@ class MetricsController extends Controller
 
             if (empty($rows) === true) {
                 $lines[] = 'openconnector_calls_total{status="200"} 0';
-            } else {
-                foreach ($rows as $row) {
-                    $statusCode = $row['status_code'] ?? 'unknown';
-                    $lines[]    = 'openconnector_calls_total{status="'.$statusCode.'"} '.(int) $row['cnt'];
-                }
+            }
+
+            foreach ($rows as $row) {
+                $statusCode = $row['status_code'] ?? 'unknown';
+                $lines[]    = 'openconnector_calls_total{status="'.$statusCode.'"} '.(int) $row['cnt'];
             }
         } catch (\Exception $e) {
             $this->logger->warning('Could not count calls for metrics', ['exception' => $e->getMessage()]);
@@ -221,11 +220,11 @@ class MetricsController extends Controller
 
             if (empty($rows) === true) {
                 $lines[] = 'openconnector_synchronization_runs_total{status="success"} 0';
-            } else {
-                foreach ($rows as $row) {
-                    $resultLabel = ($row['result'] !== null && $row['result'] !== '') ? strtolower($row['result']) : 'unknown';
-                    $lines[]     = 'openconnector_synchronization_runs_total{status="'.$resultLabel.'"} '.(int) $row['cnt'];
-                }
+            }
+
+            foreach ($rows as $row) {
+                $resultLabel = ($row['result'] !== null && $row['result'] !== '') ? strtolower($row['result']) : 'unknown';
+                $lines[]     = 'openconnector_synchronization_runs_total{status="'.$resultLabel.'"} '.(int) $row['cnt'];
             }
         } catch (\Exception $e) {
             $this->logger->warning('Could not count sync logs for metrics', ['exception' => $e->getMessage()]);

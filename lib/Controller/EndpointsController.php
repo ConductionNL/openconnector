@@ -34,7 +34,6 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  * @SuppressWarnings(PHPMD.ExcessiveParameterList)
- * @SuppressWarnings(PHPMD.ElseExpression)
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  * @SuppressWarnings(PHPMD.UnusedLocalVariable)
  * @SuppressWarnings(PHPMD.CamelCaseVariableName)
@@ -277,12 +276,9 @@ class EndpointsController extends Controller
 		}
 
 		// OPTIMIZATION: For simple endpoints with no rules/conditions/mappings, bypass EndpointService
-		if ($this->isSimpleEndpoint($endpoint)) {
-			$response = $this->handleSimpleSchemaRequest($endpoint, $_path);
-		} else {
-			// Forward complex requests to the endpoint service
-			$response = $this->endpointService->handleRequest($endpoint, $this->request, $_path);
-		}
+		$response = $this->isSimpleEndpoint($endpoint)
+			? $this->handleSimpleSchemaRequest($endpoint, $_path)
+			: $this->endpointService->handleRequest($endpoint, $this->request, $_path);
 
 		// Check if the Accept header is set to XML
 		$acceptHeader = $this->request->getHeader('Accept');
@@ -308,7 +304,7 @@ class EndpointsController extends Controller
     #[PublicPage]
     public function preflightedCors(): Response {
         // Determine the origin
-        $origin = isset($this->request->server['HTTP_ORIGIN']) === true ? $this->request->server['HTTP_ORIGIN'] : '*';
+        $origin = $this->request->server['HTTP_ORIGIN'] ?? '*';
 
         // Create and configure the response
         $response = new Response();

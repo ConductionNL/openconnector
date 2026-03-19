@@ -13,9 +13,6 @@ use Psr\Log\LoggerInterface;
 /**
  * Listener that forwards object changes to the EventService
  */
-/**
- * @SuppressWarnings(PHPMD.ElseExpression)
- */
 class CloudEventListener implements IEventListener
 {
     /**
@@ -45,9 +42,13 @@ class CloudEventListener implements IEventListener
         try {
             if ($event instanceof ObjectCreatedEvent) {
                 $this->eventService->handleObjectCreated($event->getObject());
-            } elseif ($event instanceof ObjectUpdatedEvent) {
+            }
+
+            if ($event instanceof ObjectUpdatedEvent) {
                 $this->eventService->handleObjectUpdated($event->getOldObject(), $event->getNewObject());
-            } else {
+            }
+
+            if ($event instanceof ObjectDeletedEvent) {
                 $this->eventService->handleObjectDeleted($event->getObject());
             }
         } catch (\Exception $e) {
