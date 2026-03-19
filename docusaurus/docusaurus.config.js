@@ -1,20 +1,24 @@
 // @ts-check
+// `@type` JSDoc annotations allow editor autocompletion and type checking
+// (when paired with `@ts-check`).
+// There are various equivalent ways to declare your Docusaurus config.
+// See: https://docusaurus.io/docs/api/docusaurus-config
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'OpenConnector',
-  tagline: 'API gateway and integration hub for Nextcloud',
+  title: 'Open Connector',
+  tagline: 'Synchronize data between Nextcloud and external sources',
   url: 'https://conductionnl.github.io',
   baseUrl: '/openconnector/',
-
-  // GitHub pages deployment config
-  organizationName: 'ConductionNL',
+  organizationName: 'conductionnl',
   projectName: 'openconnector',
-  trailingSlash: false,
-
+  favicon: 'img/favicon.ico',
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
+  // Even if you don't use internationalization, you can use this field to set
+  // useful metadata like html lang. For example, if your site is Chinese, you
+  // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
@@ -28,8 +32,7 @@ const config = {
         docs: {
           path: '../docs',
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl:
-            'https://github.com/ConductionNL/openconnector/tree/main/docusaurus/',
+          editUrl: 'https://github.com/conductionnl/openconnector/tree/main/docusaurus/',
         },
         blog: false,
         theme: {
@@ -43,9 +46,9 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: 'OpenConnector',
+        title: 'Open Connector',
         logo: {
-          alt: 'OpenConnector Logo',
+          alt: 'Open Connector Logo',
           src: 'img/logo.svg',
         },
         items: [
@@ -56,7 +59,7 @@ const config = {
             label: 'Documentation',
           },
           {
-            href: 'https://github.com/ConductionNL/openconnector',
+            href: 'https://github.com/conductionnl/openconnector',
             label: 'GitHub',
             position: 'right',
           },
@@ -66,11 +69,15 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
+            title: 'Documentation',
             items: [
               {
-                label: 'Documentation',
-                to: '/docs/FEATURES',
+                label: 'Getting Started',
+                to: '/docs/getting-started',
+              },
+              {
+                label: 'Tutorial',
+                to: '/docs/tutorial',
               },
             ],
           },
@@ -79,25 +86,30 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/ConductionNL/openconnector',
+                href: 'https://github.com/conductionnl/openconnector',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} for <a href="https://openwebconcept.nl">Open Webconcept</a> by <a href="https://conduction.nl">Conduction B.V.</a>`,
+        copyright: `Copyright © ${new Date().getFullYear()} Conduction. Built with Docusaurus.`,
       },
       prism: {
-        theme: require('prism-react-renderer/themes/github'),
-        darkTheme: require('prism-react-renderer/themes/dracula'),
-      },
-      mermaid: {
-        theme: { light: 'default', dark: 'dark' },
+        theme: {
+          plain: {
+            color: "#393A34",
+            backgroundColor: "#f6f8fa"
+          },
+          styles: []
+        },
+        darkTheme: {
+          plain: {
+            color: "#F8F8F2",
+            backgroundColor: "#282A36"
+          },
+          styles: []
+        }
       },
     }),
-  markdown: {
-    mermaid: true,
-  },
-  themes: ['@docusaurus/theme-mermaid'],
 };
 
 module.exports = config;

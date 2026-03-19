@@ -104,7 +104,7 @@ export default {
 
 }
 </script>
-<style>
+<style scoped>
 
 .responseHeadersTable {
     margin-inline-start: 65px;
