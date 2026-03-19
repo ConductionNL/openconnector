@@ -234,7 +234,7 @@ export default {
 	},
 }
 </script>
-<style>
+<style scoped>
 div[class='modal-container']:has(.runSynchronization .SuccessMarker) {
 	width: 900px !important;
 }

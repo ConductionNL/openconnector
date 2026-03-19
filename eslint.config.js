@@ -55,6 +55,7 @@ module.exports = defineConfig([
 			'vue/first-attribute-linebreak': 'off',
 			'@typescript-eslint/no-explicit-any': 'off',
 			'n/no-missing-import': 'off',
+			'vue/enforce-style-attribute': ['error', { allow: ['scoped'] }],
 		},
 	},
 ])
