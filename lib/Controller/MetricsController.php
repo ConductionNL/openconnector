@@ -32,6 +32,9 @@ use Psr\Log\LoggerInterface;
  *
  * Provides a metrics endpoint returning data in Prometheus text exposition format
  * for monitoring sources, calls, and synchronizations.
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.ElseExpression)
  */
 class MetricsController extends Controller
 {

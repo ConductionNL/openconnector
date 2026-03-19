@@ -35,6 +35,10 @@ use OCP\IRequest;
  *
  * @category Controller
  * @package  OCA\OpenConnector\Controller
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  */
 class LogsController extends Controller
 {

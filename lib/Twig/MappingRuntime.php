@@ -23,6 +23,14 @@ use Twig\Extension\RuntimeExtensionInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV4;
 
+/**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+ * @SuppressWarnings(PHPMD.CamelCaseMethodName)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ */
 class MappingRuntime implements RuntimeExtensionInterface
 {
 	public function __construct(

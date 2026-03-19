@@ -19,6 +19,16 @@ use Symfony\Component\Uid\Uuid;
  * @license AGPL-3.0
  * @version 1.0.0
  * @link https://github.com/OpenConnector/openconnector
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.MissingImport)
+ * @SuppressWarnings(PHPMD.StaticAccess)
  */
 class SynchronizationHandler implements ConfigurationHandlerInterface
 {

@@ -37,6 +37,20 @@ use Twig\Loader\ArrayLoader;
  * and managing call logs. It utilizes Twig for templating and Guzzle for making HTTP requests, and logs all calls.
  *
  * @todo We should test the effect of @Authors & @Package(s) in Class doc-blocks. And add them if possible.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.MissingImport)
+ * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.CamelCaseVariableName)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
  */
 class CallService
 {

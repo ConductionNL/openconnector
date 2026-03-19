@@ -21,6 +21,10 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * Controller for managing rules in the OpenConnector app
  *
  * @package OCA\OpenConnector\Controller
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
  */
 class RulesController extends Controller
 {

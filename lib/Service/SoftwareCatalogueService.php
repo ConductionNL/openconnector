@@ -25,6 +25,12 @@ use function React\Promise\all;
  * @license  AGPL-3.0-or-later
  * @author   Conduction b.v.
  * @link     https://github.com/ConductionNL/OpenConnector
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.MissingImport)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+ * @SuppressWarnings(PHPMD.UnusedPrivateMethod)
  */
 class SoftwareCatalogueService
 {

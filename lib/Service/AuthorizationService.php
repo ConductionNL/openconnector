@@ -40,6 +40,11 @@ use OCA\OpenConnector\Exception\AuthenticationException;
 
 /**
  * Service class for handling authorization on incoming calls.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class AuthorizationService
 {

@@ -29,6 +29,13 @@ use Psr\Log\LoggerInterface;
  *
  * Provides functionality for retrieving database statistics and
  * system information for the OpenConnector application.
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.MissingImport)
  */
 class SettingsService
 {

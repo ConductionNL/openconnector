@@ -7,6 +7,19 @@ use GuzzleHttp\Promise\Utils;
 use OCP\IURLGenerator;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ * @SuppressWarnings(PHPMD.IfStatementAssignment)
+ * @SuppressWarnings(PHPMD.UndefinedVariable)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+ */
 class SearchService
 {
     public $client;

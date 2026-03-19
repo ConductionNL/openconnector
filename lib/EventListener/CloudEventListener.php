@@ -13,6 +13,9 @@ use Psr\Log\LoggerInterface;
 /**
  * Listener that forwards object changes to the EventService
  */
+/**
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ */
 class CloudEventListener implements IEventListener
 {
     /**

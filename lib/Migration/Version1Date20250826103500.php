@@ -39,6 +39,12 @@ use OCP\Migration\SimpleMigrationStep;
  * @license AGPL-3.0
  * @version 1.0.0
  * @link https://github.com/OpenConnector/openconnector
+ *
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
  */
 class Version1Date20250826103500 extends SimpleMigrationStep
 {

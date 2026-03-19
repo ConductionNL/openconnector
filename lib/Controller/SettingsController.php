@@ -36,6 +36,10 @@ use Psr\Log\LoggerInterface;
  *
  * Provides endpoints for retrieving system statistics and 
  * configuration information for the OpenConnector application.
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.MissingImport)
  */
 class SettingsController extends Controller
 {

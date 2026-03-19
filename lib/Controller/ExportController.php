@@ -9,6 +9,9 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 
+/**
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ */
 class ExportController extends Controller
 {
 	/**

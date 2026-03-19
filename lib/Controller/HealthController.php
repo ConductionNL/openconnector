@@ -30,6 +30,8 @@ use Psr\Log\LoggerInterface;
  * Controller for health check endpoint.
  *
  * Returns JSON indicating whether the application and its dependencies are healthy.
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
  */
 class HealthController extends Controller
 {

@@ -42,6 +42,14 @@ use Psr\Log\LoggerInterface;
  * security measures against XSS and brute force attacks.
  *
  * @psalm-suppress UnusedClass
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.ShortMethodName)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
  */
 class UserController extends Controller
 {

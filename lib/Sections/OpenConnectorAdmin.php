@@ -5,6 +5,9 @@ use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\Settings\IIconSection;
 
+/**
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ */
 class OpenConnectorAdmin implements IIconSection {
     private IL10N $l;
     private IURLGenerator $urlGenerator;

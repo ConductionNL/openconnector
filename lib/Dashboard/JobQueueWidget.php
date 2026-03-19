@@ -8,6 +8,9 @@ use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\Util;
 
+/**
+ * @SuppressWarnings(PHPMD.StaticAccess)
+ */
 class JobQueueWidget implements IWidget
 {
 

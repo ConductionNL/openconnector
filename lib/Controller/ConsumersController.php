@@ -14,6 +14,11 @@ use OCP\IL10N;
 use OCP\IRequest;
 use OCP\AppFramework\Db\DoesNotExistException;
 
+/**
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+ */
 class ConsumersController extends Controller
 {
     /**

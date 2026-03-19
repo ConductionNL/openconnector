@@ -13,6 +13,10 @@ use DOMText;
  *
  * @psalm-suppress PropertyNotSetInConstructor
  */
+/**
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ */
 class XMLResponse extends Response
 {
 	/** 

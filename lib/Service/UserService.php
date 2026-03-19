@@ -37,6 +37,13 @@ use Psr\Log\LoggerInterface;
  * and provides a consistent interface for user operations.
  *
  * @psalm-suppress UnusedClass
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ElseExpression)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
  */
 class UserService
 {

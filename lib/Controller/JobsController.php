@@ -21,6 +21,16 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCA\OpenConnector\Service\SynchronizationService;
 use OCA\OpenConnector\Db\SynchronizationMapper;
 
+/**
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+ */
 class JobsController extends Controller
 {
     /**

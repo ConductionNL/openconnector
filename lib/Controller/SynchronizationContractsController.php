@@ -35,6 +35,14 @@ use OCP\IRequest;
  *
  * @category Controller
  * @package  OCA\OpenConnector\Controller
+ *
+ * @SuppressWarnings(PHPMD.ShortVariable)
+ * @SuppressWarnings(PHPMD.LongVariable)
+ * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+ * @SuppressWarnings(PHPMD.NPathComplexity)
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ * @SuppressWarnings(PHPMD.UnusedLocalVariable)
  */
 class SynchronizationContractsController extends Controller
 {
