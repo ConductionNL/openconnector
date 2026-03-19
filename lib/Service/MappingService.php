@@ -10,12 +10,6 @@ use OCA\OpenConnector\Twig\AuthenticationRuntimeLoader;
 use OCA\OpenConnector\Twig\MappingExtension;
 use OCA\OpenConnector\Twig\MappingRuntimeLoader;
 use OCA\OpenRegister\Service\FileService;
-use OCP\Files\IRootFolder;
-use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
-//use Twig\Environment;
-//use Twig\Error\LoaderError;
-//use Twig\Error\SyntaxError;
 use Adbar\Dot;
 use Twig\Environment;
 use Twig\Error\LoaderError;
@@ -25,12 +19,19 @@ use Throwable;
 use Exception;
 
 /**
+ * Mapping service that delegates core execution to OpenRegister's MappingService
+ * when available, falling back to its own implementation.
+ *
+ * @deprecated The mapping engine has moved to OpenRegister. This service delegates
+ *             to OCA\OpenRegister\Service\MappingService for executeMapping().
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
- * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+ * @SuppressWarnings(PHPMD.ExcessiveMethodLength)    Mapping execution requires comprehensive handling
+ * @SuppressWarnings(PHPMD.BooleanArgumentFlag)      $list parameter clearly indicates list processing mode
  */
 class MappingService
 {
@@ -41,11 +42,22 @@ class MappingService
      */
     private Environment $twig;
 
+    /**
+     * The OpenRegister mapping service (if available).
+     *
+     * @var \OCA\OpenRegister\Service\MappingService|null
+     */
+    private $openRegisterMappingService = null;
+
 	/**
 	 * Setting up the base class with required services.
 	 *
 	 * @param ArrayLoader   $loader		   The ArrayLoader for Twig.
 	 * @param MappingMapper $mappingMapper The mapping mapper.
+	 * @param CallService   $callService   The call service.
+	 * @param SourceMapper  $sourceMapper  The source mapper.
+	 * @param FileService   $fileService   The file service.
+	 * @param ObjectService $objectService The object service.
 	 */
     public function __construct(
 		ArrayLoader $loader,
@@ -59,6 +71,20 @@ class MappingService
 		$this->twig->addExtension(new MappingExtension());
 		$this->twig->addRuntimeLoader(new MappingRuntimeLoader(mappingService: $this, mappingMapper: $this->mappingMapper, callService: $callService, sourceMapper: $sourceMapper, fileService: $fileService, objectService: $objectService->getOpenRegisters()));
 
+        // Try to load OpenRegister's MappingService for delegation.
+        try {
+            $container = \OC::$server;
+            $this->openRegisterMappingService = $container->get(
+                \OCA\OpenRegister\Service\MappingService::class
+            );
+        } catch (\Throwable $e) {
+            // OpenRegister not available, falling back to local implementation.
+            $this->openRegisterMappingService = null;
+            \OC::$server->getLogger()->info(
+                'OpenConnector MappingService: OpenRegister not available, using local implementation',
+                ['app' => 'openconnector']
+            );
+        }
     }//end __construct()
 
     /**
@@ -91,6 +117,9 @@ class MappingService
     /**
      * Maps (transforms) an array (input) to a different array (output).
      *
+     * Delegates to OpenRegister's MappingService when available, otherwise
+     * uses the local implementation.
+     *
      * @param Mapping $mapping The mapping object that forms the recipe for the mapping
      * @param array   $input   The array that need to be mapped (transformed) otherwise known as input
      * @param bool    $list    Whether we want a list instead of a single item
@@ -101,7 +130,42 @@ class MappingService
      */
     public function executeMapping(Mapping $mapping, array $input, bool $list = false): array
     {
+        // Delegate to OpenRegister's MappingService if available.
+        if ($this->openRegisterMappingService !== null) {
+            $orMapping = new \OCA\OpenRegister\Db\Mapping();
+            $orMapping->hydrate([
+                'name'        => $mapping->getName(),
+                'mapping'     => $mapping->getMapping(),
+                'unset'       => ($mapping->getUnset() ?? []),
+                'cast'        => ($mapping->getCast() ?? []),
+                'passThrough' => $mapping->getPassThrough(),
+            ]);
 
+            return $this->openRegisterMappingService->executeMapping(
+                mapping: $orMapping,
+                input: $input,
+                list: $list
+            );
+        }
+
+        return $this->executeMappingLocal($mapping, $input, $list);
+    }//end executeMapping()
+
+    /**
+     * Local mapping execution (fallback when OpenRegister is not available).
+     *
+     * @param Mapping $mapping The mapping object
+     * @param array   $input   The input array
+     * @param bool    $list    Whether to process as list
+     *
+     * @return array The mapped output
+     *
+     * @throws Exception When mapping fails
+     *
+     * @SuppressWarnings(PHPMD.ElseExpression)
+     */
+    private function executeMappingLocal(Mapping $mapping, array $input, bool $list = false): array
+    {
         // Check for list
         if ($list === true) {
             $list        = [];
@@ -130,13 +194,12 @@ class MappingService
         $originalInput = $input;
         $input = $this->encodeArrayKeys($input, '.', '&#46;');
 
-        // @todo: error logging
-
         // Determine pass through.
         // Let's get the dot array based on https://github.com/adbario/php-dot-notation.
-        $dotArray = new Dot();
         if ($mapping->getPassThrough()) {
             $dotArray = new Dot($input);
+        } else {
+            $dotArray = new Dot();
         }
         $dotInput = new Dot($input);
 
@@ -165,7 +228,6 @@ class MappingService
         $unsets = ($mapping->getUnset() ?? []);
         foreach ($unsets as $unset) {
             if ($dotArray->has($unset) === false) {
-                // @todo: error logging
                 continue;
             }
 
@@ -177,7 +239,6 @@ class MappingService
 
         foreach ($casts as $key => $cast) {
             if ($dotArray->has($key) === false) {
-                // @todo: error logging
                 continue;
             }
 
@@ -186,7 +247,6 @@ class MappingService
             }
 
             if ($cast === false) {
-                // @todo: error logging
                 continue;
             }
 
@@ -218,7 +278,7 @@ class MappingService
 
         return $output;
 
-    }//end mapping()
+    }//end executeMappingLocal()
 
     /**
      * Handles a single cast.
@@ -384,8 +444,6 @@ class MappingService
             $value = number_format($value, 2, ',', '.');
             break;
         default:
-            // @todo: error handling
-            //isset($this->style) === true && $this->style->info('Trying to cast to an unsupported cast type: '.$cast);
             break;
         }//end switch
 
