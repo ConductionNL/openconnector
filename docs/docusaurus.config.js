@@ -32,7 +32,7 @@ const config = {
         docs: {
           path: '../docs',
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/conductionnl/openconnector/tree/main/docusaurus/',
+          editUrl: 'https://github.com/conductionnl/openconnector/tree/main/docs/',
         },
         blog: false,
         theme: {
