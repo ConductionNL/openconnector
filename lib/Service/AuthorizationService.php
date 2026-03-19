@@ -42,7 +42,7 @@ use OCA\OpenConnector\Exception\AuthenticationException;
  * Service class for handling authorization on incoming calls.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — JWKFactory uses static factory methods by design
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class AuthorizationService

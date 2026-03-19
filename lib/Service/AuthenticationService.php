@@ -30,7 +30,7 @@ use Twig\Loader\ArrayLoader;
  * @todo We should test the effect of @Authors & @Package(s) in Class doc-blocks. And add them if possible.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — JWKFactory uses static factory methods by design
  * @SuppressWarnings(PHPMD.UndefinedVariable)
  * @SuppressWarnings(PHPMD.UnusedLocalVariable)
  */

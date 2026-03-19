@@ -17,7 +17,7 @@ use Symfony\Component\Uid\Uuid;
  */
 /**
  * @SuppressWarnings(PHPMD.ShortVariable)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — Uuid::v4 is standard Symfony UID pattern
  */
 class EventMessageMapper extends QBMapper
 {
