@@ -1,3 +1,4 @@
 {
-	"@fortawesome/free-solid-svg-icons": "License is (CC-BY-4.0 AND MIT) — both are approved open-source licenses, compound AND expression not parsed by checker"
+	"@fortawesome/free-solid-svg-icons": "License is (CC-BY-4.0 AND MIT) — both are approved open-source licenses, compound AND expression not parsed by checker",
+	"apexcharts": "MIT — apexcharts uses MIT license but npm metadata has custom logo URL in license field"
 }

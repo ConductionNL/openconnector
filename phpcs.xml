@@ -2,8 +2,7 @@
 <ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="PHP_CodeSniffer" xsi:noNamespaceSchemaLocation="phpcs.xsd">
     <description>The coding standard for PHP_CodeSniffer itself, for more config -> for https://github.com/squizlabs/PHP_CodeSniffer/wiki/Configuration-Options.</description>
 
-    <file>README.md</file>
-    <file>src</file>
+    <file>lib</file>
 
     <arg name="basepath" value="."/>
     <arg name="extensions" value="php"/>
@@ -48,12 +47,13 @@
     <rule ref="Squiz.Strings.ConcatenationSpacing"/>
     <rule ref="Squiz.WhiteSpace.ControlStructureSpacing"/>
     <rule ref="Squiz.WhiteSpace.FunctionClosingBraceSpace"/>
-    <rule ref="Squiz.WhiteSpace.FunctionSpacing"/>
+    <rule ref="Squiz.WhiteSpace.FunctionSpacing">
         <properties>
             <property name="spacing" value="1"/>
             <property name="spacingAfterLast" value="0"/>
             <property name="spacingBeforeFirst" value="0"/>
         </properties>
+    </rule>
     <rule ref="Squiz.WhiteSpace.MemberVarSpacing"/>
     <rule ref="Squiz.WhiteSpace.OperatorSpacing"/>
     <rule ref="Squiz.WhiteSpace.SuperfluousWhitespace"/>
