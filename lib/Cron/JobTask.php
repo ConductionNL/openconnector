@@ -29,7 +29,6 @@ use OCP\BackgroundJob\IJob;
  * scheduled intervals and configurations.
  *
  * @psalm-api
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class JobTask extends TimedJob
 {
