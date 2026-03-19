@@ -20,13 +20,18 @@ namespace OCA\OpenConnector\Tests\Unit\Controller;
 
 use OCA\OpenConnector\Controller\UserController;
 use OCA\OpenConnector\Service\AuthorizationService;
+use OCA\OpenConnector\Service\UserService;
+use OCA\OpenConnector\Service\OrganisationBridgeService;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\ICacheFactory;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\IUser;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for the UserController
@@ -75,6 +80,41 @@ class UserControllerTest extends TestCase
     private MockObject $authorizationService;
 
     /**
+     * Mock cache factory
+     *
+     * @var MockObject|ICacheFactory
+     */
+    private MockObject $cacheFactory;
+
+    /**
+     * Mock logger
+     *
+     * @var MockObject|LoggerInterface
+     */
+    private MockObject $logger;
+
+    /**
+     * Mock user service
+     *
+     * @var MockObject|UserService
+     */
+    private MockObject $userService;
+
+    /**
+     * Mock organisation bridge service
+     *
+     * @var MockObject|OrganisationBridgeService
+     */
+    private MockObject $organisationBridgeService;
+
+    /**
+     * Mock localization service
+     *
+     * @var MockObject|IL10N
+     */
+    private MockObject $l;
+
+    /**
      * Mock user object
      *
      * @var MockObject|IUser
@@ -101,6 +141,11 @@ class UserControllerTest extends TestCase
         $this->userManager = $this->createMock(IUserManager::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->authorizationService = $this->createMock(AuthorizationService::class);
+        $this->cacheFactory = $this->createMock(ICacheFactory::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->userService = $this->createMock(UserService::class);
+        $this->organisationBridgeService = $this->createMock(OrganisationBridgeService::class);
+        $this->l = $this->createMock(IL10N::class);
         $this->user = $this->createMock(IUser::class);
 
         // Initialize the controller with mocked dependencies
@@ -109,7 +154,12 @@ class UserControllerTest extends TestCase
             $this->request,
             $this->userManager,
             $this->userSession,
-            $this->authorizationService
+            $this->authorizationService,
+            $this->cacheFactory,
+            $this->logger,
+            $this->userService,
+            $this->organisationBridgeService,
+            $this->l
         );
     }
 
