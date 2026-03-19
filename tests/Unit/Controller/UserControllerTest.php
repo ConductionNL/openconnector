@@ -484,7 +484,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Failed to retrieve user information', $response->getData()['error']);
+        $this->assertStringContainsString('Failed to retrieve user information', $response->getData()['error']);
     }
 
     /**
@@ -511,7 +511,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Failed to update user information', $response->getData()['error']);
+        $this->assertStringContainsString('Failed to update user information', $response->getData()['error']);
     }
 
     /**
@@ -547,7 +547,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Login failed', $response->getData()['error']);
+        $this->assertStringContainsString('Login failed', $response->getData()['error']);
     }
 
     /**
