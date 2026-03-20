@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: reviewed
 ---
 
 # Prometheus Metrics Endpoint
