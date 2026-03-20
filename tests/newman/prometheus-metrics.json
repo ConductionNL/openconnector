@@ -1,0 +1,178 @@
+{
+  "info": {
+    "name": "OpenConnector Prometheus Metrics",
+    "description": "API tests for /api/metrics and /api/health endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/index.php/apps/openconnector"
+    },
+    {
+      "key": "username",
+      "value": "admin"
+    },
+    {
+      "key": "password",
+      "value": "admin"
+    }
+  ],
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "{{username}}"
+      },
+      {
+        "key": "password",
+        "value": "{{password}}"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Metrics Endpoint",
+      "item": [
+        {
+          "name": "GET /api/metrics returns 200 with Prometheus format",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/metrics"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type is text/plain', function () {",
+                  "    var ct = pm.response.headers.get('Content-Type');",
+                  "    pm.expect(ct).to.include('text/plain');",
+                  "});",
+                  "",
+                  "pm.test('Contains openconnector_info metric', function () {",
+                  "    pm.expect(pm.response.text()).to.include('openconnector_info{');",
+                  "});",
+                  "",
+                  "pm.test('Contains openconnector_up metric', function () {",
+                  "    pm.expect(pm.response.text()).to.include('openconnector_up ');",
+                  "});",
+                  "",
+                  "pm.test('Contains openconnector_sources_total metric', function () {",
+                  "    pm.expect(pm.response.text()).to.include('openconnector_sources_total');",
+                  "});",
+                  "",
+                  "pm.test('Contains openconnector_endpoints_total metric', function () {",
+                  "    pm.expect(pm.response.text()).to.include('openconnector_endpoints_total');",
+                  "});",
+                  "",
+                  "pm.test('Contains openconnector_jobs_total metric', function () {",
+                  "    pm.expect(pm.response.text()).to.include('openconnector_jobs_total');",
+                  "});",
+                  "",
+                  "pm.test('Contains openconnector_mappings_total metric', function () {",
+                  "    pm.expect(pm.response.text()).to.include('openconnector_mappings_total');",
+                  "});",
+                  "",
+                  "pm.test('Contains openconnector_rules_total metric', function () {",
+                  "    pm.expect(pm.response.text()).to.include('openconnector_rules_total');",
+                  "});",
+                  "",
+                  "pm.test('All metric lines are valid Prometheus format', function () {",
+                  "    var lines = pm.response.text().split('\\n');",
+                  "    var metricPattern = /^[a-z_]+(\\{[^}]*\\})? [0-9.]+$/;",
+                  "    var commentPattern = /^# (HELP|TYPE) /;",
+                  "    lines.forEach(function(line) {",
+                  "        if (line.trim() !== '') {",
+                  "            pm.expect(",
+                  "                metricPattern.test(line) || commentPattern.test(line)",
+                  "            ).to.be.true;",
+                  "        }",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Health Endpoint",
+      "item": [
+        {
+          "name": "GET /api/health returns ok status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Has status field', function () {",
+                  "    var data = pm.response.json();",
+                  "    pm.expect(data).to.have.property('status');",
+                  "    pm.expect(['ok', 'degraded', 'error']).to.include(data.status);",
+                  "});",
+                  "",
+                  "pm.test('Has checks object', function () {",
+                  "    var data = pm.response.json();",
+                  "    pm.expect(data).to.have.property('checks');",
+                  "    pm.expect(data.checks).to.be.an('object');",
+                  "});",
+                  "",
+                  "pm.test('Database check is ok', function () {",
+                  "    var data = pm.response.json();",
+                  "    pm.expect(data.checks.database).to.equal('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "GET /api/metrics without auth returns 401",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/metrics",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Unauthenticated request is rejected', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
