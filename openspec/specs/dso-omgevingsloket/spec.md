@@ -10,74 +10,193 @@ Provides integration with the Digitaal Stelsel Omgevingswet (DSO) Landelijke Voo
 
 ## Requirements
 
-### DSO-LV Inbound (Receive Verzoeken)
+### REQ-DSO-001: STAM Koppelvlak Endpoint Registration
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DSO-001 | Receive vergunningaanvragen from DSO-LV via the STAM (STAndaard Machtiging) koppelvlak REST API | MUST | Planned |
-| DSO-002 | Receive meldingen (activiteiten waarvoor geen vergunning nodig is) from DSO-LV | MUST | Planned |
-| DSO-003 | Receive informatieverzoeken and vooroverleg-aanvragen from DSO-LV | SHOULD | Planned |
-| DSO-004 | Parse the DSO-verzoek XML/JSON payload into structured data: aanvrager, locatie, activiteiten, bijlagen, projectbeschrijving | MUST | Planned |
-| DSO-005 | Download bijlagen (documenten, tekeningen, rapporten) from DSO-LV and store in Nextcloud Files | MUST | Planned |
-| DSO-006 | Validate the received verzoek against DSO-LV schema and reject malformed requests with descriptive errors | MUST | Planned |
+The adapter MUST register a STAM-compliant inbound REST endpoint in OpenConnector that receives vergunningaanvragen, meldingen, and informatieverzoeken pushed from DSO-LV. The endpoint accepts the DSO-verzoek payload (JSON or XML), validates the request signature, and enqueues it for processing. The endpoint path follows `/api/dso/stam/verzoeken` and returns an HTTP 202 Accepted with verzoekId confirmation.
 
-### Activiteiten-to-Zaaktype Mapping
+**Scenarios:**
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DSO-010 | Map DSO activiteiten (e.g., bouwen, milieu, kappen, uitrit) to Procest zaaktypen via configurable mapping table | MUST | Planned |
-| DSO-011 | Support samenloop: one DSO-verzoek with multiple activiteiten can result in multiple zaak objects or one zaak with multiple deelzaken | MUST | Planned |
-| DSO-012 | Default mapping configuration for common Omgevingswet activiteiten is pre-seeded | MUST | Planned |
-| DSO-013 | Unmapped activiteiten create a zaak with a generic "Onbekend DSO-activiteit" zaaktype and flag for manual triage | MUST | Planned |
-| DSO-014 | Mapping table is editable via the OpenConnector admin UI | SHOULD | Planned |
+1. **GIVEN** the DSO adapter endpoint is registered in OpenConnector with valid PKIoverheid certificates **AND** DSO-LV pushes a vergunningaanvraag payload to the STAM endpoint **WHEN** the request arrives **THEN** the adapter validates the webhook signature, returns HTTP 202, and enqueues the verzoek for asynchronous processing.
 
-### Zaak Creation
+2. **GIVEN** a DSO-LV request arrives at the STAM endpoint **AND** the webhook signature is invalid **WHEN** signature validation fails **THEN** the adapter returns HTTP 401 Unauthorized with a descriptive error message and logs the failed attempt in the CallLog.
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DSO-020 | Automatically create a zaak in Procest for each received DSO-verzoek | MUST | Planned |
-| DSO-021 | Map aanvrager (initiatiefnemer) data to the zaak: BSN/KVK-nummer, naam, adres, contactgegevens | MUST | Planned |
-| DSO-022 | Map locatie to the zaak: BAG-adres, kadastrale aanduiding, GML-geometrie (punt of polygoon) | MUST | Planned |
-| DSO-023 | Set zaak startdatum to DSO-verzoek indieningsdatum | MUST | Planned |
-| DSO-024 | Link downloaded bijlagen to the created zaak | MUST | Planned |
-| DSO-025 | Store the original DSO-verzoek reference (verzoekId, bronorganisatie) on the zaak for traceability | MUST | Planned |
-| DSO-026 | Extract bouwkosten from DSO-verzoek for legesberekening (if provided by aanvrager) | SHOULD | Planned |
+3. **GIVEN** the DSO adapter is configured for the pre-production environment **WHEN** a request arrives from the DSO-LV test environment **THEN** it is accepted and processed identically to production requests but tagged with `environment: pre-productie` in the verzoek record.
 
-### DSO-SWF (Samenwerking)
+4. **GIVEN** DSO-LV sends a malformed payload that does not conform to the STAM schema **WHEN** schema validation fails **THEN** the adapter returns HTTP 400 Bad Request with field-level error details and does not create a verzoek record.
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DSO-030 | Support samenwerking met bevoegd gezag: when another overheidsorgaan is betrokken bij dezelfde aanvraag, coordinate via DSO-SWF | SHOULD | Planned |
-| DSO-031 | Send adviesverzoeken to ketenpartners (provincie, waterschap, omgevingsdienst) via DSO-SWF | SHOULD | Planned |
-| DSO-032 | Receive adviezen from ketenpartners and link to the zaak | SHOULD | Planned |
-| DSO-033 | Track samenwerkingsstatus per zaak: welke organisaties zijn betrokken, welke adviezen zijn ontvangen | SHOULD | Planned |
+5. **GIVEN** the STAM endpoint receives concurrent verzoeken **WHEN** multiple DSO-LV pushes arrive simultaneously **THEN** each is enqueued independently using the JobService background job mechanism with unique verzoekIds, preventing duplicate processing.
 
-### Status Updates (Outbound to DSO-LV)
+### REQ-DSO-002: Melding Reception
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DSO-040 | Push zaak status updates back to DSO-LV so the aanvrager can track progress via the Omgevingsloket | MUST | Planned |
-| DSO-041 | Map Procest zaak statussen to DSO-LV statuscodes: ontvangen, in behandeling, besluit genomen, etc. | MUST | Planned |
-| DSO-042 | Push the vergunningbesluit (verleend, geweigerd, buiten behandeling) to DSO-LV | MUST | Planned |
-| DSO-043 | Push vergunningdocumenten (beschikking PDF) to DSO-LV for publication | SHOULD | Planned |
+The adapter MUST support receiving meldingen (notifications of activities not requiring a permit) from DSO-LV via the same STAM endpoint. Meldingen follow a simplified flow: they create a zaak in Procest with a "Melding" zaaktype but do not require a vergunningbesluit response.
 
-### Authentication & Security
+**Scenarios:**
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DSO-050 | Authenticate with DSO-LV using PKIoverheid certificates (mTLS) | MUST | Planned |
-| DSO-051 | Validate incoming DSO-LV webhook signatures to prevent spoofing | MUST | Planned |
-| DSO-052 | Support DSO-LV test environment (pre-productie) alongside production for acceptance testing | SHOULD | Planned |
-| DSO-053 | Store DSO API credentials and certificates securely in Nextcloud's credential store | MUST | Planned |
+1. **GIVEN** an initiatiefnemer submits a melding via het Omgevingsloket for a sloopactiviteit **WHEN** DSO-LV pushes the melding to the STAM endpoint **THEN** the adapter parses the melding, creates a zaak with zaaktype "Melding Sloop", and pushes status "ontvangen" back to DSO-LV.
 
-### OpenConnector Integration
+2. **GIVEN** a melding is received for an activiteit that has both a melding and a vergunning component **WHEN** the adapter processes the melding **THEN** it creates a melding-zaak for the meldingsplichtige activiteit and flags the vergunningplichtige activiteit for separate aanvraag handling.
 
-| ID | Requirement | Priority | Status |
-|----|------------|----------|--------|
-| DSO-060 | Registered as an OpenConnector source type with DSO-LV-specific configuration | MUST | Planned |
-| DSO-061 | Connection settings: DSO-LV API URL, PKIoverheid certificates, organisatie OIN, bevoegd-gezag code | MUST | Planned |
-| DSO-062 | Health check: validate connectivity and certificate validity against DSO-LV | SHOULD | Planned |
-| DSO-063 | n8n workflow integration: DSO-verzoek ontvangst triggers a configurable n8n workflow for intake processing | SHOULD | Planned |
+3. **GIVEN** a melding contains bijlagen (asbestinventarisatierapport) **WHEN** the adapter processes the melding **THEN** bijlagen are downloaded from DSO-LV and stored in a dedicated Nextcloud Files folder linked to the melding-zaak.
+
+### REQ-DSO-003: Informatieverzoek and Vooroverleg Support
+
+The adapter MUST support receiving informatieverzoeken (requests for information about applicability of rules) and vooroverleg-aanvragen (pre-application consultations) from DSO-LV. These create lightweight zaak objects in Procest with distinct zaaktypen that do not follow the full vergunningbesluit workflow.
+
+**Scenarios:**
+
+1. **GIVEN** a burger submits a vooroverleg-aanvraag via the Omgevingsloket **WHEN** DSO-LV pushes the vooroverleg to the STAM endpoint **THEN** the adapter creates a zaak with zaaktype "Vooroverleg" with a simplified behandelproces (no formal besluit required).
+
+2. **GIVEN** an informatieverzoek arrives with a locatie and activiteit query **WHEN** the adapter processes it **THEN** it creates a lightweight zaak and notifies the VTH-medewerker to provide advies.
+
+3. **GIVEN** a vooroverleg-aanvraag transitions to a formal vergunningaanvraag **WHEN** the initiatiefnemer submits a follow-up aanvraag referencing the vooroverleg **THEN** the adapter links the new zaak to the original vooroverleg-zaak via the DSO verzoekId chain.
+
+### REQ-DSO-004: Verzoek Payload Parsing
+
+The adapter MUST parse the DSO-verzoek XML/JSON payload into structured data including aanvrager (initiatiefnemer), locatie, activiteiten, bijlagen, and projectbeschrijving. Parsing uses configurable mapping rules stored as OpenRegister mapping objects so municipalities can adapt field extraction to their internal data model.
+
+**Scenarios:**
+
+1. **GIVEN** a DSO-verzoek payload contains an aanvrager with BSN, naam, adres, and contactgegevens **WHEN** the parser extracts the aanvrager block **THEN** each field is mapped to the corresponding OpenRegister object property using the configured BRP-to-zaak mapping.
+
+2. **GIVEN** a verzoek payload contains a locatie with BAG-adresgegevens and GML-geometrie **WHEN** the parser extracts locatie data **THEN** the BAG-adres is validated against the BAG register (via OpenConnector source), the GML geometry is converted to GeoJSON, and both are stored on the zaak.
+
+3. **GIVEN** a verzoek payload contains multiple activiteiten with DSO activiteitcodes and omschrijvingen **WHEN** the parser processes the activiteiten array **THEN** each activiteit is looked up in the activiteiten-mapping table and tagged with its corresponding zaaktype.
+
+4. **GIVEN** a verzoek contains a `projectbeschrijving` free-text field with embedded references **WHEN** the parser processes this field **THEN** the text is stored verbatim as a zaak-eigenschap and references are extracted as linked metadata.
+
+5. **GIVEN** the DSO payload format changes between STAM API versions **WHEN** the adapter receives a payload with a version mismatch **THEN** it attempts parsing with the configured version, falls back to auto-detection, and logs a version warning if parsing succeeds on a different version.
+
+### REQ-DSO-005: Bijlagen Download and Storage
+
+The adapter MUST download bijlagen (documenten, tekeningen, rapporten, berekeningen) referenced in the DSO-verzoek from DSO-LV and store them in Nextcloud Files. Each bijlage is stored in a zaak-specific folder structure following the pattern `/DSO-verzoeken/{year}/{verzoekId}/bijlagen/`.
+
+**Scenarios:**
+
+1. **GIVEN** a verzoek references 5 bijlagen including PDFs, DWG drawings, and a structural calculation **WHEN** the adapter processes the verzoek **THEN** each bijlage is downloaded via the DSO-LV document API using mTLS, stored in the zaak folder, and linked to the zaak via Docudesk.
+
+2. **GIVEN** a bijlage download fails due to a network timeout **WHEN** the adapter retries (up to 3 attempts with exponential backoff) **THEN** on persistent failure the zaak is created with a "bijlage ontbreekt" warning and a notification is sent to the behandelaar.
+
+3. **GIVEN** a bijlage exceeds the configured maximum file size (default: 100MB) **WHEN** the download is attempted **THEN** the adapter rejects the file, stores a placeholder reference, and flags the zaak for manual bijlage handling.
+
+### REQ-DSO-006: Verzoek Schema Validation
+
+The adapter MUST validate the received verzoek against the DSO-LV STAM schema definition and reject malformed requests with descriptive HTTP 400 error responses. Validation includes required field checks, enum value validation, date format validation, and BSN/KVK check-digit verification.
+
+**Scenarios:**
+
+1. **GIVEN** a verzoek payload is missing the required `activiteiten` array **WHEN** validation runs **THEN** the adapter returns HTTP 400 with error `{"field": "activiteiten", "error": "required_field_missing", "message": "Activiteiten is verplicht"}`.
+
+2. **GIVEN** a verzoek contains a BSN with an invalid check digit **WHEN** BSN validation runs (11-proef) **THEN** the adapter rejects the verzoek with a specific BSN validation error.
+
+3. **GIVEN** a verzoek contains an `indieningsdatum` in an invalid date format **WHEN** date validation runs **THEN** the adapter returns a format error specifying the expected ISO 8601 format.
+
+### REQ-DSO-010: Activiteiten-to-Zaaktype Mapping
+
+The adapter MUST map DSO activiteiten (bouwen, milieu, kappen, uitrit, etc.) to Procest zaaktypen via a configurable mapping table stored as OpenRegister objects. The mapping supports one-to-one (one activiteit to one zaaktype) and one-to-many (one activiteit generates multiple zaaktypen for different behandelende afdelingen).
+
+**Scenarios:**
+
+1. **GIVEN** the mapping table maps DSO activiteitcode "bouwen-01" to zaaktype "Omgevingsvergunning Bouwen" **WHEN** a verzoek contains activiteit "bouwen-01" **THEN** the adapter creates a zaak with zaaktype "Omgevingsvergunning Bouwen" and populates the zaak-eigenschappen from the verzoek.
+
+2. **GIVEN** the mapping table maps activiteitcode "milieu-complexe-inrichting" to both "Omgevingsvergunning Milieu" and "Omgevingsvergunning Bouwen" **WHEN** a verzoek contains this activiteit **THEN** two deelzaken are created, each with its own zaaktype and behandelaar assignment.
+
+3. **GIVEN** the mapping table is empty (fresh install) **WHEN** an administrator navigates to the DSO-adapter settings **THEN** a "Load default mappings" button seeds 25+ common Omgevingswet activiteit-to-zaaktype mappings from the pre-seeded register data.
+
+4. **GIVEN** an administrator modifies a mapping to change the target zaaktype for "kappen" from "Omgevingsvergunning Kappen" to a custom zaaktype **WHEN** the next verzoek with activiteit "kappen" arrives **THEN** the updated zaaktype is used for zaak creation.
+
+### REQ-DSO-011: Samenloop Handling
+
+The adapter MUST support samenloop: when one DSO-verzoek contains multiple activiteiten, the adapter creates either multiple deelzaken under one hoofdzaak or one combined zaak, based on the configured samenloop strategy per activiteitcombinatie.
+
+**Scenarios:**
+
+1. **GIVEN** a verzoek contains activiteiten "bouwen" and "kappen" **AND** samenloop strategy is "deelzaken" **WHEN** the adapter processes the verzoek **THEN** one hoofdzaak is created plus two deelzaken, each following its own behandelproces while sharing aanvrager and locatie data.
+
+2. **GIVEN** a verzoek contains activiteiten "bouwen" and "afwijken bestemmingsplan" **AND** samenloop strategy is "gecombineerd" **WHEN** the adapter processes the verzoek **THEN** one combined zaak is created with both activiteiten as zaak-eigenschappen and a combined behandelproces.
+
+3. **GIVEN** a verzoek has a samenloop where one deelzaak is afgerond but another is still in behandeling **WHEN** the behandelaar marks the first deelzaak as "Besluit genomen" **THEN** the hoofdzaak status remains "In behandeling" until all deelzaken have a besluit.
+
+4. **GIVEN** samenloop results in deelzaken handled by different afdelingen **WHEN** deelzaken are created **THEN** each deelzaak is routed to its configured afdeling/team via Procest assignment rules.
+
+### REQ-DSO-013: Unmapped Activiteit Fallback
+
+The adapter MUST handle unmapped activiteiten gracefully: creating a zaak with a generic "Onbekend DSO-activiteit" zaaktype, flagging it for manual triage, and notifying the configured VTH-behandelaar.
+
+**Scenarios:**
+
+1. **GIVEN** a verzoek contains activiteitcode "experimenteel-gebruik-2025" which has no mapping **WHEN** the adapter processes the verzoek **THEN** a zaak is created with zaaktype "Onbekend DSO-activiteit", the activiteitcode is stored as zaak-eigenschap, and a Nextcloud notification is sent to the configured DSO-triage user.
+
+2. **GIVEN** a verzoek contains 3 activiteiten of which 2 are mapped and 1 is unmapped **WHEN** the adapter processes the verzoek **THEN** the 2 mapped activiteiten create proper deelzaken and the unmapped activiteit creates a triage-zaak, all linked under the same hoofdzaak.
+
+3. **GIVEN** multiple unmapped activiteiten accumulate over a week **WHEN** an administrator views the DSO dashboard **THEN** a summary widget shows unmapped activiteiten with their frequency, enabling the admin to add mappings for recurring activiteiten.
+
+### REQ-DSO-020: Automatic Zaak Creation
+
+The adapter MUST automatically create a zaak in Procest for each received DSO-verzoek. The zaak includes all parsed data: aanvrager mapped to the zaak (BSN/KVK-nummer, naam, adres, contactgegevens), locatie (BAG-adres, kadastrale aanduiding, GML-geometrie), startdatum set to DSO-verzoek indieningsdatum, linked bijlagen, and the original DSO-verzoek reference (verzoekId, bronorganisatie).
+
+**Scenarios:**
+
+1. **GIVEN** a valid vergunningaanvraag is received and parsed **WHEN** the adapter creates the zaak in Procest **THEN** the zaak has: zaaktype from the activiteiten-mapping, aanvrager from the verzoek, locatie with BAG-adres and geometrie, startdatum equal to indieningsdatum, all bijlagen linked, and verzoekId stored as external reference.
+
+2. **GIVEN** the verzoek aanvrager is a KVK-registered bedrijf **WHEN** the zaak is created **THEN** the bedrijfsnaam, KVK-nummer, and vestigingsnummer are mapped to the zaak initiatiefnemer fields instead of BSN-based person fields.
+
+3. **GIVEN** the verzoek locatie contains GML-geometrie (polygon) **WHEN** the zaak is created **THEN** the GML is parsed to GeoJSON, validated against the BAG register, and stored as a geospatial zaak-eigenschap enabling map-based visualization.
+
+4. **GIVEN** the verzoek contains optional bouwkosten **WHEN** the zaak is created **THEN** bouwkosten are stored as a zaak-eigenschap for use in legesberekening workflows.
+
+5. **GIVEN** a zaak is successfully created **WHEN** creation completes **THEN** an OpenConnector event is dispatched (EventService) enabling n8n workflows to trigger intake processing such as legesberekening, team-toewijzing, and automatische termijnbewaking.
+
+### REQ-DSO-030: DSO-SWF Samenwerking
+
+The adapter MUST support coordination with other bevoegde gezagen (provincies, waterschappen, omgevingsdiensten) via the DSO-SWF (SamenWerkingsFunctionaliteit). This includes sending adviesverzoeken to ketenpartners, receiving adviezen, and tracking samenwerking status per zaak.
+
+**Scenarios:**
+
+1. **GIVEN** a vergunningaanvraag requires advies from the waterschap **WHEN** the behandelaar marks the zaak for samenwerking **THEN** the adapter sends an adviesverzoek to the waterschap via DSO-SWF with the relevant zaak-documenten and a termijn for response.
+
+2. **GIVEN** an adviesverzoek was sent to the provincie **AND** the provincie sends back an advies via DSO-SWF **WHEN** the adapter receives the advies **THEN** it is stored as a document linked to the zaak, the samenwerkingsstatus is updated to "Advies ontvangen", and the behandelaar receives a notification.
+
+3. **GIVEN** a zaak involves 3 ketenpartners **WHEN** the behandelaar views the samenwerking tab **THEN** it shows per partner: organisatienaam, OIN, adviesverzoek-datum, termijn, advies-status (verzonden/ontvangen/termijn verlopen), and linked documenten.
+
+### REQ-DSO-040: Status Push to DSO-LV
+
+The adapter MUST push zaak status updates back to DSO-LV so that the aanvrager can track progress via the Omgevingsloket. Status mapping translates Procest zaak statussen to DSO-LV statuscodes. The vergunningbesluit (verleend, geweigerd, buiten behandeling) and the beschikking PDF are also pushed to DSO-LV.
+
+**Scenarios:**
+
+1. **GIVEN** a zaak originated from a DSO-verzoek **AND** the zaak status changes to "In behandeling" in Procest **WHEN** the status transition event fires **THEN** the adapter pushes status "in behandeling" to DSO-LV via the STAM API using the stored verzoekId.
+
+2. **GIVEN** the vergunning is verleend **WHEN** the zaak status changes to "Besluit genomen" **THEN** the adapter pushes besluitstatus "verleend" to DSO-LV and uploads the beschikking PDF (generated by Docudesk) for publication in the Omgevingsloket.
+
+3. **GIVEN** the aanvraag is buiten behandeling gesteld (e.g., incomplete aanvulling) **WHEN** the zaak is afgesloten **THEN** the adapter pushes status "buiten behandeling" with a reden to DSO-LV.
+
+4. **GIVEN** a status push to DSO-LV fails **WHEN** the adapter encounters an HTTP 5xx from DSO-LV **THEN** the push is retried 3 times with exponential backoff, and on persistent failure a manual-retry task is created and the behandelaar is notified.
+
+5. **GIVEN** a zaak goes through multiple status transitions rapidly **WHEN** statussen change faster than DSO-LV can process **THEN** the adapter queues status pushes and sends them in chronological order, skipping intermediate statussen if configured to do so.
+
+### REQ-DSO-050: PKIoverheid Certificate Authentication
+
+The adapter MUST authenticate with DSO-LV using PKIoverheid certificates for mutual TLS. It MUST validate incoming DSO-LV webhook signatures and support both pre-production and production certificate chains. Certificates are stored securely via Nextcloud's credential store.
+
+**Scenarios:**
+
+1. **GIVEN** a PKIoverheid certificate and private key are uploaded via the OpenConnector admin UI **WHEN** the adapter makes an outbound call to DSO-LV **THEN** the certificate is written to a temporary file by CallService.getCertificate(), used for mTLS, and cleaned up after the request.
+
+2. **GIVEN** the PKIoverheid certificate expires in 30 days **WHEN** the daily health check runs **THEN** a warning notification is sent to the Nextcloud admin with the certificate expiry date and renewal instructions.
+
+3. **GIVEN** an incoming webhook from DSO-LV includes a signature header **WHEN** the adapter validates the signature against the DSO-LV public certificate **THEN** requests with valid signatures are processed and requests with invalid signatures are rejected with HTTP 401.
+
+### REQ-DSO-060: OpenConnector Source Registration
+
+The adapter MUST be registered as an OpenConnector source type with DSO-LV-specific configuration fields. Connection settings include: DSO-LV API URL, PKIoverheid certificates, organisatie OIN, bevoegd-gezag code, and STAM API version. The source supports health checks validating connectivity and certificate validity.
+
+**Scenarios:**
+
+1. **GIVEN** an administrator creates a new source of type "dso" **WHEN** they fill in the DSO-LV API URL, upload PKIoverheid certificates, and enter the organisatie OIN **THEN** a Source entity is created with type "dso" and DSO-specific configuration fields stored in the `configuration` JSON column.
+
+2. **GIVEN** a DSO source is configured **WHEN** the administrator clicks "Test Connection" **THEN** the adapter makes a lightweight STAM API probe (e.g., a capability request) using mTLS and reports success/failure with certificate validity details.
+
+3. **GIVEN** a DSO source is configured **WHEN** an n8n workflow references the DSO source **THEN** it can trigger verzoek polling, status pushes, or bijlagen downloads using the source credentials.
 
 ## Data Model
 
@@ -96,58 +215,23 @@ Provides integration with the Digitaal Stelsel Omgevingswet (DSO) Landelijke Voo
 | bijlagen | array | No | References to downloaded documents in Nextcloud Files |
 | zaakId | string (UUID) | No | Created Procest zaak reference (set after processing) |
 | status | string (enum) | Yes | `ontvangen`, `verwerkt`, `fout` |
+| environment | string (enum) | No | `productie`, `pre-productie` |
+| stamApiVersion | string | No | STAM API version used for this verzoek |
 
-## Scenarios
+### Activiteiten-Mapping (stored in OpenRegister)
 
-### Receive vergunningaanvraag from Omgevingsloket
-
-```
-GIVEN the DSO-LV adapter is configured with valid PKIoverheid certificates
-AND an initiatiefnemer submits a vergunningaanvraag via het Omgevingsloket
-WHEN DSO-LV sends the verzoek to our STAM endpoint
-THEN the verzoek payload is parsed and validated
-AND bijlagen are downloaded and stored in Nextcloud Files
-AND activiteiten are mapped to zaaktypen
-AND a zaak is created in Procest with aanvrager, locatie, and activiteiten data
-AND a status "ontvangen" is pushed back to DSO-LV
-```
-
-### Multiple activiteiten with samenloop
-
-```
-GIVEN a verzoek contains activiteiten "bouwen" and "kappen"
-AND "bouwen" maps to zaaktype "Omgevingsvergunning Bouwen"
-AND "kappen" maps to zaaktype "Omgevingsvergunning Kappen"
-WHEN the adapter processes the verzoek
-THEN two deelzaken are created under one hoofdzaak
-AND both share the same aanvrager and locatie
-AND each deelzaak follows its own behandelproces
-```
-
-### Push besluit to DSO-LV
-
-```
-GIVEN a zaak originated from a DSO-verzoek
-AND the vergunning is verleend
-WHEN the zaak status changes to "Besluit genomen" in Procest
-THEN the adapter pushes status "besluit genomen" to DSO-LV
-AND the beschikking PDF is uploaded to DSO-LV
-AND the aanvrager can view the besluit in het Omgevingsloket
-```
-
-### Unknown activiteit fallback
-
-```
-GIVEN a verzoek contains an activiteit not in the mapping table
-WHEN the adapter processes the verzoek
-THEN a zaak is created with zaaktype "Onbekend DSO-activiteit"
-AND the zaak is flagged for manual triage
-AND a notification is sent to the VTH-behandelaar
-```
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| dsoActiviteitCode | string | Yes | DSO activiteit code (e.g., "bouwen-01") |
+| dsoActiviteitOmschrijving | string | Yes | Human-readable activiteit description |
+| zaaktypeIdentificatie | string | Yes | Target Procest zaaktype identificatie |
+| samenloopStrategie | string (enum) | No | `deelzaken` or `gecombineerd` (default: `deelzaken`) |
+| behandelendeAfdeling | string | No | Default afdeling for routing |
+| isActief | boolean | Yes | Whether this mapping is currently active |
 
 ## Dependencies
 
-- **OpenConnector**: Source registration and connection management
+- **OpenConnector**: Source registration and connection management (Source entity, CallService, EndpointService)
 - **OpenRegister**: Verzoek and mapping table storage
 - **Procest**: Zaak creation and lifecycle management
 - **Docudesk**: PDF generation for beschikkingen pushed to DSO-LV
@@ -166,9 +250,9 @@ docker exec -u www-data nextcloud php occ openregister:load-register /var/www/ht
 ```
 
 **Test data for this spec's use cases:**
-- **Activiteiten-to-zaaktype mapping (DSO-010)**: 20+ activiteit records (bouwen, kappen, uitrit aanleggen, etc.) -- test mapping configuration
-- **Vergunningaanvraag parsing (DSO-004)**: 10+ vergunningaanvraag records with activiteiten, locatie, and aanvrager data
-- **Samenloop testing (DSO-011)**: Vergunningaanvragen referencing multiple activiteiten -- test single-zaak vs multi-deelzaak creation
+- **Activiteiten-to-zaaktype mapping (REQ-DSO-010)**: 20+ activiteit records (bouwen, kappen, uitrit aanleggen, etc.) -- test mapping configuration
+- **Vergunningaanvraag parsing (REQ-DSO-004)**: 10+ vergunningaanvraag records with activiteiten, locatie, and aanvrager data
+- **Samenloop testing (REQ-DSO-011)**: Vergunningaanvragen referencing multiple activiteiten -- test single-zaak vs multi-deelzaak creation
 
 ## Current Implementation Status
 
@@ -178,9 +262,12 @@ docker exec -u www-data nextcloud php occ openregister:load-register /var/www/ht
 ### Partially relevant existing infrastructure
 - **SOAP engine** (`lib/Service/SOAPService.php`): A generic SOAP client exists that can call SOAP sources using WSDL, Guzzle HTTP, and the `php-soap` extension. It already handles SOAP 1.1/1.2, cookie management, WSDL caching, and binary data encoding. This could serve as a foundation for DSO-LV STAM SOAP communication.
 - **Source entity** (`lib/Db/Source.php`, `src/entities/source/source.types.ts`): Sources support types `json`, `xml`, `soap`, `ftp`, `sftp` with configurable authentication (`apikey`, `jwt`, `username-password`, `oauth`, etc.). A new `dso` source type would need to be added.
-- **CallService** (`lib/Service/CallService.php`): Routes SOAP-type sources to the SOAPService (line ~448). Already supports certificate file writing to disk for mTLS connections.
+- **CallService** (`lib/Service/CallService.php`): Routes SOAP-type sources to the SOAPService (line ~466). Already supports certificate file writing to disk for mTLS connections via `getCertificate()` and cleanup via `removeFiles()`.
 - **SynchronizationService** (`lib/Service/SynchronizationService.php`): Full sync framework with contracts, logging, and mapping between external and internal objects. Could be leveraged for DSO-verzoek sync.
-- **AuthenticationService** (`lib/Service/AuthenticationService.php`): Has certificate handling logic that could be extended for PKIoverheid mTLS.
+- **AuthenticationService** (`lib/Service/AuthenticationService.php`): Has certificate handling logic and supports JWT, OAuth, API key, and password authentication methods that could be extended for PKIoverheid mTLS.
+- **EndpointService** (`lib/Service/EndpointService.php`): Manages endpoint routing with target types including `source`, `register/schema`, `job`, and `synchronization`. DSO inbound endpoints can leverage this routing.
+- **EventService** (`lib/Service/EventService.php`): Event dispatching for workflow triggering via n8n or other subscribers.
+- **JobService** (`lib/Service/JobService.php`): Background job execution for asynchronous processing and retry logic.
 
 ### Not implemented
 - DSO-LV STAM koppelvlak endpoint (inbound REST/SOAP receiver)
@@ -199,33 +286,9 @@ docker exec -u www-data nextcloud php occ openregister:load-register /var/www/ht
 
 - **DSO-LV STAM koppelvlak**: REST API specification maintained by Kadaster/RWS for the Digitaal Stelsel Omgevingswet. Defines the verzoek intake interface.
 - **Omgevingswet (2024)**: The Dutch Environment and Planning Act that replaced the Wabo/Wro, effective January 1, 2024.
-- **DSO-SWF**: SamenWerkingsFunctionaliteit — the collaboration API within the DSO-LV for coordinating between bevoegd gezag and ketenpartners.
+- **DSO-SWF**: SamenWerkingsFunctionaliteit -- the collaboration API within the DSO-LV for coordinating between bevoegd gezag and ketenpartners.
 - **PKIoverheid**: Dutch government PKI for mutual TLS authentication (PKIO Server 2020 certificate chain).
 - **BAG (Basisregistratie Adressen en Gebouwen)**: National address registry, used for locatie-validatie.
 - **BRK (Basisregistratie Kadaster)**: Cadastral registry for kadastrale aanduidingen.
 - **GML (Geography Markup Language)**: OGC standard for geospatial data encoding, used for locatie geometrie.
 - **OIN (Organisatie-Identificatienummer)**: Unique identifier for Dutch government organizations.
-
-## Specificity Assessment
-
-### Sufficient for implementation
-- The data model for DSO-Verzoek is well-defined with clear field types.
-- Requirements are granular with individual IDs and clear MUST/SHOULD priorities.
-- Scenarios cover the main flows (receive, samenloop, besluit push, unknown activiteit).
-
-### Missing or ambiguous
-- **STAM API version**: The spec doesn't specify which version of the STAM koppelvlak API to target. The DSO has evolved significantly since its 2024 launch.
-- **Authentication flow details**: How PKIoverheid certificates are obtained, renewed, and stored is not specified. The CallService already writes certs to disk — how does this integrate?
-- **Webhook vs polling**: DSO-001 says "receive" but doesn't clarify whether this is a webhook (DSO pushes to us) or polling (we poll DSO). The STAM interface is typically push-based but the mechanism needs clarification.
-- **Status mapping table**: DSO-041 mentions mapping Procest statussen to DSO statuscodes, but the actual mapping values are not defined.
-- **Error handling**: DSO-006 mentions "descriptive errors" but doesn't define error response format (HTTP status codes, error schema).
-- **Samenloop strategy**: DSO-011 says "multiple zaak objects or one zaak with multiple deelzaken" — which strategy is preferred? This is a significant architectural decision.
-- **Procest dependency**: All zaak creation logic depends on Procest, which is itself under development. The interface between this adapter and Procest is undefined.
-- **n8n workflow template**: DSO-063 mentions n8n integration but doesn't specify the workflow structure or trigger mechanism.
-
-### Open questions
-1. Which STAM API version and environment (pre-prod/prod) endpoints should be targeted first?
-2. Should the adapter support the legacy OLO format during a transition period, or DSO-only?
-3. How are PKIoverheid certificates provisioned — uploaded via UI, or configured via Nextcloud admin settings?
-4. What is the preferred samenloop strategy: one hoofdzaak with deelzaken, or separate independent zaken?
-5. How does the adapter discover which activiteiten mappings exist? Is there a national registry of activiteit codes?
