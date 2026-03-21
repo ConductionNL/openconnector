@@ -187,9 +187,16 @@ class DSOParserService
      * The 11-proef validation multiplies each digit by a weight factor
      * and checks that the sum is divisible by 11.
      *
+     * NOTE: This is intentionally duplicated from OpenRegister's BsnFormat.
+     * OpenConnector cannot depend on OpenRegister being installed since it
+     * connects to external systems independently. If the canonical implementation
+     * changes, this method must be updated to match.
+     *
      * @param string $bsn The BSN to validate.
      *
      * @return bool True if the BSN passes the 11-proef.
+     *
+     * @see \OCA\OpenRegister\Formats\BsnFormat::validate() Canonical BSN validation (ADR-011)
      */
     public function validateBSN(string $bsn): bool
     {
