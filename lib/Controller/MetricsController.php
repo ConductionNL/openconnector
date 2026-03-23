@@ -94,6 +94,15 @@ class MetricsController extends Controller
         // Synchronizations total by status.
         $this->collectSyncMetrics($lines);
 
+        // Endpoints total.
+        $this->collectEndpointMetrics($lines);
+
+        // Jobs total and job runs by status.
+        $this->collectJobMetrics($lines);
+
+        // Mappings and rules totals.
+        $this->collectMappingRuleMetrics($lines);
+
         $body     = implode("\n", $lines)."\n";
         $response = new TextPlainResponse($body);
         $response->addHeader('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
@@ -232,6 +241,120 @@ class MetricsController extends Controller
         }//end try
 
     }//end collectSyncMetrics()
+
+
+    /**
+     * Collect endpoint metrics.
+     *
+     * Counts total registered endpoints from the openconnector_endpoints table.
+     *
+     * @param array $lines Reference to the metrics output lines.
+     *
+     * @return void
+     */
+    private function collectEndpointMetrics(array &$lines): void
+    {
+        $lines[] = '# HELP openconnector_endpoints_total Total registered endpoints';
+        $lines[] = '# TYPE openconnector_endpoints_total gauge';
+
+        try {
+            $total   = $this->countTable('openconnector_endpoints');
+            $lines[] = 'openconnector_endpoints_total '.$total;
+        } catch (\Exception $e) {
+            $this->logger->warning('Could not count endpoints for metrics', ['exception' => $e->getMessage()]);
+            $lines[] = 'openconnector_endpoints_total 0';
+        }
+
+    }//end collectEndpointMetrics()
+
+
+    /**
+     * Collect job queue metrics.
+     *
+     * Counts total configured jobs and job log entries grouped by status
+     * from the openconnector_jobs and openconnector_job_logs tables.
+     *
+     * @param array $lines Reference to the metrics output lines.
+     *
+     * @return void
+     */
+    private function collectJobMetrics(array &$lines): void
+    {
+        $lines[] = '# HELP openconnector_jobs_total Total configured jobs';
+        $lines[] = '# TYPE openconnector_jobs_total gauge';
+
+        try {
+            $total   = $this->countTable('openconnector_jobs');
+            $lines[] = 'openconnector_jobs_total '.$total;
+        } catch (\Exception $e) {
+            $this->logger->warning('Could not count jobs for metrics', ['exception' => $e->getMessage()]);
+            $lines[] = 'openconnector_jobs_total 0';
+        }
+
+        $lines[] = '# HELP openconnector_job_runs_total Total job log entries by status';
+        $lines[] = '# TYPE openconnector_job_runs_total counter';
+
+        try {
+            $qb = $this->db->getQueryBuilder();
+            $qb->select('status', $qb->createFunction('COUNT(*) AS cnt'))
+                ->from('openconnector_job_logs')
+                ->groupBy('status');
+
+            $result = $qb->executeQuery();
+            $rows   = $result->fetchAll();
+            $result->closeCursor();
+
+            if (empty($rows) === true) {
+                $lines[] = 'openconnector_job_runs_total{status="success"} 0';
+            }
+
+            foreach ($rows as $row) {
+                $statusLabel = ($row['status'] !== null && $row['status'] !== '') ? strtolower($row['status']) : 'unknown';
+                $lines[]     = 'openconnector_job_runs_total{status="'.$statusLabel.'"} '.(int) $row['cnt'];
+            }
+        } catch (\Exception $e) {
+            $this->logger->warning('Could not count job logs for metrics', ['exception' => $e->getMessage()]);
+            $lines[] = 'openconnector_job_runs_total{status="success"} 0';
+        }//end try
+
+    }//end collectJobMetrics()
+
+
+    /**
+     * Collect mapping and rule metrics.
+     *
+     * Counts total configured mappings and rules from the
+     * openconnector_mappings and openconnector_rules tables.
+     *
+     * @param array $lines Reference to the metrics output lines.
+     *
+     * @return void
+     */
+    private function collectMappingRuleMetrics(array &$lines): void
+    {
+        $lines[] = '# HELP openconnector_mappings_total Total configured mappings';
+        $lines[] = '# TYPE openconnector_mappings_total gauge';
+
+        try {
+            $total   = $this->countTable('openconnector_mappings');
+            $lines[] = 'openconnector_mappings_total '.$total;
+        } catch (\Exception $e) {
+            $this->logger->warning('Could not count mappings for metrics', ['exception' => $e->getMessage()]);
+            $lines[] = 'openconnector_mappings_total 0';
+        }
+
+        $lines[] = '# HELP openconnector_rules_total Total configured rules';
+        $lines[] = '# TYPE openconnector_rules_total gauge';
+
+        try {
+            $total   = $this->countTable('openconnector_rules');
+            $lines[] = 'openconnector_rules_total '.$total;
+        } catch (\Exception $e) {
+            $this->logger->warning('Could not count rules for metrics', ['exception' => $e->getMessage()]);
+            $lines[] = 'openconnector_rules_total 0';
+        }
+
+    }//end collectMappingRuleMetrics()
 
 
     /**
