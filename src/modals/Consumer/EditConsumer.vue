@@ -252,7 +252,7 @@ export default {
 }
 </script>
 
-<style lang="css">
+<style lang="css" scoped>
 .editConsumerForm .textarea__helper-text-message {
 	padding-block: 4px;
 	padding-inline: var(--border-radius-large);

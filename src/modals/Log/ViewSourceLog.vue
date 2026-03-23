@@ -186,7 +186,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .responseBody {
     word-break: break-all;
     margin-top: 1rem;

@@ -1,0 +1,9 @@
+/**
+ * Global (unscoped) styles for OpenConnector.
+ */
+.open-register-missing {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	min-height: 100% !important;
+}

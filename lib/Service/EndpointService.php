@@ -47,6 +47,8 @@ use function React\Promise\all;
  *
  * This class provides functionality to handle requests to endpoints, either by
  * connecting to a schema within a register or by proxying to a source.
+ *
+ * @SuppressWarnings(PHPMD)
  */
 class EndpointService
 {
