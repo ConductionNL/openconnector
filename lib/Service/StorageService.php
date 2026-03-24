@@ -30,7 +30,7 @@ use Symfony\Component\Uid\Uuid;
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.LongVariable)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — Uuid::v4 is standard Symfony UID pattern
  * @SuppressWarnings(PHPMD.UnusedLocalVariable)
  */
 class StorageService

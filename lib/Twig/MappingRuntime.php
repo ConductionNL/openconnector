@@ -25,9 +25,8 @@ use Symfony\Component\Uid\UuidV4;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
  * @SuppressWarnings(PHPMD.CamelCaseMethodName)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — Uuid::v4/isValid are standard Symfony UID patterns
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class MappingRuntime implements RuntimeExtensionInterface
@@ -93,6 +92,8 @@ class MappingRuntime implements RuntimeExtensionInterface
      * @throws Exception
      * @throws LoaderError
      * @throws SyntaxError
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $decode is a simple output-format toggle
      */
     public function callSource(string $sourceId, string $endpoint, string $method='GET', array $configuration=[], bool $decode=true): array|string
     {
@@ -116,6 +117,8 @@ class MappingRuntime implements RuntimeExtensionInterface
 	 * @param bool $list Whether the mapping runs on multiple instances of the object.
 	 *
 	 * @return array
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $list is a simple processing-mode toggle
 	 */
 	public function executeMapping(Mapping|array|string|int $mapping, array $input, bool $list = false): array
 	{

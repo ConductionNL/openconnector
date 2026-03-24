@@ -26,9 +26,8 @@ use Throwable;
  */
 /**
  * @SuppressWarnings(PHPMD.ShortVariable)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — Uuid::v4 is standard Symfony UID pattern
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class SynchronizationContractMapper extends QBMapper
@@ -75,6 +74,8 @@ class SynchronizationContractMapper extends QBMapper
 	 * @return SynchronizationContract|null The found contract or null if not found
 	 * @throws MultipleObjectsReturnedException
 	 * @throws Exception
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $justByOriginId is a simple query-scope toggle
 	 */
     public function findSyncContractByOriginId(string $synchronizationId, string $originId, ?bool $justByOriginId = false): ?SynchronizationContract
     {

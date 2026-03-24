@@ -39,7 +39,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — ExtSoapDriver/ExtSoapOptions/Psr18Transport use static factory patterns
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  * @SuppressWarnings(PHPMD.UnusedLocalVariable)
  */

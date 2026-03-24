@@ -42,7 +42,6 @@ use OCA\OpenConnector\Service\ConfigurationHandlers\RuleHandler;
  * @SuppressWarnings(PHPMD.NPathComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
  * @SuppressWarnings(PHPMD.ExcessiveParameterList)
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
  * @SuppressWarnings(PHPMD.LongVariable)
  * @SuppressWarnings(PHPMD.MissingImport)
  */
@@ -500,6 +499,8 @@ class ConfigurationService
      * @param bool $searchSource Whether to search in source fields for synchronizations (default: true)
      * @param bool $searchTarget Whether to search in target fields for synchronizations (default: true)
      * @return array<string,array> JSON-serializable array containing all connected entities
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Export-scope toggles for entity types
      */
     public function exportRegister(
         string $registerId,

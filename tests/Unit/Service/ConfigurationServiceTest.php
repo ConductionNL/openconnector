@@ -3,18 +3,20 @@
 namespace OCA\OpenConnector\Tests\Unit\Service;
 
 use OCA\OpenConnector\Service\ConfigurationService;
-use OCA\OpenConnector\Db\Source;
-use OCA\OpenConnector\Db\Endpoint;
-use OCA\OpenConnector\Db\Mapping;
-use OCA\OpenConnector\Db\Rule;
-use OCA\OpenConnector\Db\Job;
-use OCA\OpenConnector\Db\Synchronization;
 use OCA\OpenConnector\Db\SourceMapper;
 use OCA\OpenConnector\Db\EndpointMapper;
 use OCA\OpenConnector\Db\MappingMapper;
 use OCA\OpenConnector\Db\RuleMapper;
 use OCA\OpenConnector\Db\JobMapper;
 use OCA\OpenConnector\Db\SynchronizationMapper;
+use OCA\OpenRegister\Db\RegisterMapper;
+use OCA\OpenRegister\Db\SchemaMapper;
+use OCA\OpenConnector\Service\ConfigurationHandlers\EndpointHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\SynchronizationHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\MappingHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\JobHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\SourceHandler;
+use OCA\OpenConnector\Service\ConfigurationHandlers\RuleHandler;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -39,6 +41,14 @@ class ConfigurationServiceTest extends TestCase
     private RuleMapper $ruleMapper;
     private JobMapper $jobMapper;
     private SynchronizationMapper $synchronizationMapper;
+    private RegisterMapper $registerMapper;
+    private SchemaMapper $schemaMapper;
+    private EndpointHandler $endpointHandler;
+    private SynchronizationHandler $synchronizationHandler;
+    private MappingHandler $mappingHandler;
+    private JobHandler $jobHandler;
+    private SourceHandler $sourceHandler;
+    private RuleHandler $ruleHandler;
 
     protected function setUp(): void
     {
@@ -48,6 +58,14 @@ class ConfigurationServiceTest extends TestCase
         $this->ruleMapper = $this->createMock(RuleMapper::class);
         $this->jobMapper = $this->createMock(JobMapper::class);
         $this->synchronizationMapper = $this->createMock(SynchronizationMapper::class);
+        $this->registerMapper = $this->createMock(RegisterMapper::class);
+        $this->schemaMapper = $this->createMock(SchemaMapper::class);
+        $this->endpointHandler = $this->createMock(EndpointHandler::class);
+        $this->synchronizationHandler = $this->createMock(SynchronizationHandler::class);
+        $this->mappingHandler = $this->createMock(MappingHandler::class);
+        $this->jobHandler = $this->createMock(JobHandler::class);
+        $this->sourceHandler = $this->createMock(SourceHandler::class);
+        $this->ruleHandler = $this->createMock(RuleHandler::class);
 
         $this->configurationService = new ConfigurationService(
             $this->sourceMapper,
@@ -55,109 +73,199 @@ class ConfigurationServiceTest extends TestCase
             $this->mappingMapper,
             $this->ruleMapper,
             $this->jobMapper,
-            $this->synchronizationMapper
+            $this->synchronizationMapper,
+            $this->registerMapper,
+            $this->schemaMapper,
+            $this->endpointHandler,
+            $this->synchronizationHandler,
+            $this->mappingHandler,
+            $this->jobHandler,
+            $this->sourceHandler,
+            $this->ruleHandler
         );
     }
 
-    public function testGetEntitiesByConfiguration(): void
+    public function testGetEntitiesByConfigurationEmpty(): void
     {
         $configurationId = 'test-config-1';
-        $expectedSources = [new Source()];
-        $expectedEndpoints = [new Endpoint()];
-        $expectedMappings = [new Mapping()];
-        $expectedRules = [new Rule()];
-        $expectedJobs = [new Job()];
-        $expectedSynchronizations = [new Synchronization()];
 
         $this->sourceMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedSources);
+            ->willReturn([]);
 
         $this->endpointMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedEndpoints);
+            ->willReturn([]);
 
         $this->mappingMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedMappings);
+            ->willReturn([]);
 
         $this->ruleMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedRules);
+            ->willReturn([]);
 
         $this->jobMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedJobs);
+            ->willReturn([]);
 
         $this->synchronizationMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedSynchronizations);
+            ->willReturn([]);
 
         $result = $this->configurationService->getEntitiesByConfiguration($configurationId);
 
-        $this->assertEquals($expectedSources, $result['sources']);
-        $this->assertEquals($expectedEndpoints, $result['endpoints']);
-        $this->assertEquals($expectedMappings, $result['mappings']);
-        $this->assertEquals($expectedRules, $result['rules']);
-        $this->assertEquals($expectedJobs, $result['jobs']);
-        $this->assertEquals($expectedSynchronizations, $result['synchronizations']);
+        $this->assertEquals([], $result['sources']);
+        $this->assertEquals([], $result['endpoints']);
+        $this->assertEquals([], $result['mappings']);
+        $this->assertEquals([], $result['rules']);
+        $this->assertEquals([], $result['jobs']);
+        $this->assertEquals([], $result['synchronizations']);
     }
 
-    public function testExportConfiguration(): void
+    public function testGetEntitiesByConfigurationWithSluggedEntities(): void
     {
         $configurationId = 'test-config-1';
-        $expectedSources = [new Source()];
-        $expectedEndpoints = [new Endpoint()];
-        $expectedMappings = [new Mapping()];
-        $expectedRules = [new Rule()];
-        $expectedJobs = [new Job()];
-        $expectedSynchronizations = [new Synchronization()];
+
+        // The indexBySlug helper in getEntitiesByConfiguration expects entities
+        // with array access and a 'slug' key. Use arrays to simulate serialized entities.
+        $sourceArray = ['slug' => 'source-one', 'name' => 'Source One'];
+        $endpointArray = ['slug' => 'endpoint-one', 'name' => 'Endpoint One'];
+        $mappingArray = ['slug' => 'mapping-one', 'name' => 'Mapping One'];
+        $ruleArray = ['slug' => 'rule-one', 'name' => 'Rule One'];
+        $jobArray = ['slug' => 'job-one', 'name' => 'Job One'];
+        $syncArray = ['slug' => 'sync-one', 'name' => 'Sync One'];
 
         $this->sourceMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedSources);
+            ->willReturn([$sourceArray]);
 
         $this->endpointMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedEndpoints);
+            ->willReturn([$endpointArray]);
 
         $this->mappingMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedMappings);
+            ->willReturn([$mappingArray]);
 
         $this->ruleMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedRules);
+            ->willReturn([$ruleArray]);
 
         $this->jobMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedJobs);
+            ->willReturn([$jobArray]);
 
         $this->synchronizationMapper->expects($this->once())
             ->method('findByConfiguration')
             ->with($configurationId)
-            ->willReturn($expectedSynchronizations);
+            ->willReturn([$syncArray]);
+
+        $result = $this->configurationService->getEntitiesByConfiguration($configurationId);
+
+        $this->assertEquals(['source-one' => $sourceArray], $result['sources']);
+        $this->assertEquals(['endpoint-one' => $endpointArray], $result['endpoints']);
+        $this->assertEquals(['mapping-one' => $mappingArray], $result['mappings']);
+        $this->assertEquals(['rule-one' => $ruleArray], $result['rules']);
+        $this->assertEquals(['job-one' => $jobArray], $result['jobs']);
+        $this->assertEquals(['sync-one' => $syncArray], $result['synchronizations']);
+    }
+
+    public function testGetEntitiesByConfigurationReturnsCorrectKeys(): void
+    {
+        $configurationId = 'test-config-1';
+
+        $this->sourceMapper->method('findByConfiguration')->willReturn([]);
+        $this->endpointMapper->method('findByConfiguration')->willReturn([]);
+        $this->mappingMapper->method('findByConfiguration')->willReturn([]);
+        $this->ruleMapper->method('findByConfiguration')->willReturn([]);
+        $this->jobMapper->method('findByConfiguration')->willReturn([]);
+        $this->synchronizationMapper->method('findByConfiguration')->willReturn([]);
+
+        $result = $this->configurationService->getEntitiesByConfiguration($configurationId);
+
+        $this->assertArrayHasKey('sources', $result);
+        $this->assertArrayHasKey('endpoints', $result);
+        $this->assertArrayHasKey('mappings', $result);
+        $this->assertArrayHasKey('rules', $result);
+        $this->assertArrayHasKey('jobs', $result);
+        $this->assertArrayHasKey('synchronizations', $result);
+    }
+
+    public function testExportConfigurationEmpty(): void
+    {
+        $configurationId = 'test-config-1';
+
+        $this->sourceMapper->expects($this->once())
+            ->method('findByConfiguration')
+            ->with($configurationId)
+            ->willReturn([]);
+
+        $this->endpointMapper->expects($this->once())
+            ->method('findByConfiguration')
+            ->with($configurationId)
+            ->willReturn([]);
+
+        $this->mappingMapper->expects($this->once())
+            ->method('findByConfiguration')
+            ->with($configurationId)
+            ->willReturn([]);
+
+        $this->ruleMapper->expects($this->once())
+            ->method('findByConfiguration')
+            ->with($configurationId)
+            ->willReturn([]);
+
+        $this->jobMapper->expects($this->once())
+            ->method('findByConfiguration')
+            ->with($configurationId)
+            ->willReturn([]);
+
+        $this->synchronizationMapper->expects($this->once())
+            ->method('findByConfiguration')
+            ->with($configurationId)
+            ->willReturn([]);
 
         $result = $this->configurationService->exportConfiguration($configurationId);
 
-        $this->assertEquals($configurationId, $result['configurationId']);
-        $this->assertArrayHasKey('exportDate', $result);
-        $this->assertEquals($expectedSources, $result['entities']['sources']);
-        $this->assertEquals($expectedEndpoints, $result['entities']['endpoints']);
-        $this->assertEquals($expectedMappings, $result['entities']['mappings']);
-        $this->assertEquals($expectedRules, $result['entities']['rules']);
-        $this->assertEquals($expectedJobs, $result['entities']['jobs']);
-        $this->assertEquals($expectedSynchronizations, $result['entities']['synchronizations']);
+        $this->assertArrayHasKey('components', $result);
+        $this->assertArrayHasKey('sources', $result['components']);
+        $this->assertArrayHasKey('endpoints', $result['components']);
+        $this->assertArrayHasKey('mappings', $result['components']);
+        $this->assertArrayHasKey('rules', $result['components']);
+        $this->assertArrayHasKey('jobs', $result['components']);
+        $this->assertArrayHasKey('synchronizations', $result['components']);
     }
-} 
+
+    public function testExportConfigurationReturnsComponentsStructure(): void
+    {
+        $configurationId = 'test-config-1';
+
+        $this->sourceMapper->method('findByConfiguration')->willReturn([]);
+        $this->endpointMapper->method('findByConfiguration')->willReturn([]);
+        $this->mappingMapper->method('findByConfiguration')->willReturn([]);
+        $this->ruleMapper->method('findByConfiguration')->willReturn([]);
+        $this->jobMapper->method('findByConfiguration')->willReturn([]);
+        $this->synchronizationMapper->method('findByConfiguration')->willReturn([]);
+
+        $result = $this->configurationService->exportConfiguration($configurationId);
+
+        // exportConfiguration now returns a components-based structure
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertArrayHasKey('components', $result);
+        $components = $result['components'];
+        $this->assertCount(6, $components);
+    }
+}

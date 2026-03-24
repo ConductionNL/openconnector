@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * UserControllerTest
- * 
+ *
  * Unit tests for the UserController
  *
  * @category   Test
@@ -20,13 +20,19 @@ namespace OCA\OpenConnector\Tests\Unit\Controller;
 
 use OCA\OpenConnector\Controller\UserController;
 use OCA\OpenConnector\Service\AuthorizationService;
+use OCA\OpenConnector\Service\UserService;
+use OCA\OpenConnector\Service\OrganisationBridgeService;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\ICache;
+use OCP\ICacheFactory;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\IUser;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for the UserController
@@ -75,6 +81,41 @@ class UserControllerTest extends TestCase
     private MockObject $authorizationService;
 
     /**
+     * Mock cache factory
+     *
+     * @var MockObject|ICacheFactory
+     */
+    private MockObject $cacheFactory;
+
+    /**
+     * Mock logger
+     *
+     * @var MockObject|LoggerInterface
+     */
+    private MockObject $logger;
+
+    /**
+     * Mock user service
+     *
+     * @var MockObject|UserService
+     */
+    private MockObject $userService;
+
+    /**
+     * Mock organisation bridge service
+     *
+     * @var MockObject|OrganisationBridgeService
+     */
+    private MockObject $organisationBridgeService;
+
+    /**
+     * Mock localization service
+     *
+     * @var MockObject|IL10N
+     */
+    private MockObject $l;
+
+    /**
      * Mock user object
      *
      * @var MockObject|IUser
@@ -88,7 +129,7 @@ class UserControllerTest extends TestCase
      * for testing purposes.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
@@ -101,7 +142,22 @@ class UserControllerTest extends TestCase
         $this->userManager = $this->createMock(IUserManager::class);
         $this->userSession = $this->createMock(IUserSession::class);
         $this->authorizationService = $this->createMock(AuthorizationService::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->userService = $this->createMock(UserService::class);
+        $this->organisationBridgeService = $this->createMock(OrganisationBridgeService::class);
+        $this->l = $this->createMock(IL10N::class);
         $this->user = $this->createMock(IUser::class);
+
+        // Configure IL10N mock to return the input string as-is (pass-through translation)
+        $this->l->method('t')->willReturnArgument(0);
+
+        // Configure cache factory to return a proper ICache mock
+        $this->cacheFactory = $this->createMock(ICacheFactory::class);
+        $cacheMock = $this->createMock(ICache::class);
+        $this->cacheFactory->method('createDistributed')->willReturn($cacheMock);
+
+        // Configure request to return a remote address for SecurityService
+        $this->request->method('getRemoteAddress')->willReturn('127.0.0.1');
 
         // Initialize the controller with mocked dependencies
         $this->controller = new UserController(
@@ -109,7 +165,12 @@ class UserControllerTest extends TestCase
             $this->request,
             $this->userManager,
             $this->userSession,
-            $this->authorizationService
+            $this->authorizationService,
+            $this->cacheFactory,
+            $this->logger,
+            $this->userService,
+            $this->organisationBridgeService,
+            $this->l
         );
     }
 
@@ -120,7 +181,7 @@ class UserControllerTest extends TestCase
      * when a user is authenticated.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
@@ -129,10 +190,22 @@ class UserControllerTest extends TestCase
         // Setup mock user data
         $this->setupMockUserData();
 
-        // Mock user session to return the authenticated user
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to return the authenticated user
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willReturn($this->user);
+
+        // Mock user service to return built user data array
+        $expectedUserData = [
+            'uid' => 'testuser',
+            'displayName' => 'Test User',
+            'email' => 'test@example.com',
+            'enabled' => true,
+        ];
+        $this->userService->expects($this->once())
+            ->method('buildUserDataArray')
+            ->with($this->user)
+            ->willReturn($expectedUserData);
 
         // Execute the method
         $response = $this->controller->me();
@@ -156,15 +229,15 @@ class UserControllerTest extends TestCase
      * when no user is logged in.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
     public function testMeUnauthenticated(): void
     {
-        // Mock user session to return null (no authenticated user)
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to return null (no authenticated user)
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willReturn(null);
 
         // Execute the method
@@ -183,7 +256,7 @@ class UserControllerTest extends TestCase
      * user information when valid data is provided.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
@@ -192,9 +265,9 @@ class UserControllerTest extends TestCase
         // Setup mock user data
         $this->setupMockUserData();
 
-        // Mock user session to return the authenticated user
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to return the authenticated user
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willReturn($this->user);
 
         // Mock request parameters with update data
@@ -207,24 +280,25 @@ class UserControllerTest extends TestCase
             ->method('getParams')
             ->willReturn($updateData);
 
-        // Mock user update methods
-        $this->user->expects($this->once())
-            ->method('canChangeDisplayName')
-            ->willReturn(true);
-        $this->user->expects($this->once())
-            ->method('setDisplayName')
-            ->with('Updated User Name');
+        // Mock user service updateUserProperties
+        $this->userService->expects($this->once())
+            ->method('updateUserProperties')
+            ->with($this->user, $updateData)
+            ->willReturn([
+                'success' => true,
+                'message' => 'User properties updated successfully',
+                'organisation_updated' => false
+            ]);
 
-        $this->user->expects($this->once())
-            ->method('canChangeMailAddress')
-            ->willReturn(true);
-        $this->user->expects($this->once())
-            ->method('setEMailAddress')
-            ->with('updated@example.com');
-
-        $this->user->expects($this->once())
-            ->method('setLanguage')
-            ->with('en');
+        // Mock user service buildUserDataArray
+        $this->userService->expects($this->once())
+            ->method('buildUserDataArray')
+            ->with($this->user)
+            ->willReturn([
+                'uid' => 'testuser',
+                'displayName' => 'Updated User Name',
+                'email' => 'updated@example.com',
+            ]);
 
         // Execute the method
         $response = $this->controller->updateMe();
@@ -241,15 +315,15 @@ class UserControllerTest extends TestCase
      * when no user is logged in.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
     public function testUpdateMeUnauthenticated(): void
     {
-        // Mock user session to return null (no authenticated user)
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to return null (no authenticated user)
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willReturn(null);
 
         // Execute the method
@@ -268,7 +342,7 @@ class UserControllerTest extends TestCase
      * a user with valid credentials.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
@@ -297,6 +371,17 @@ class UserControllerTest extends TestCase
             ->method('setUser')
             ->with($this->user);
 
+        // Mock user service to return built user data array
+        $expectedUserData = [
+            'uid' => 'testuser',
+            'displayName' => 'Test User',
+            'email' => 'test@example.com',
+        ];
+        $this->userService->expects($this->once())
+            ->method('buildUserDataArray')
+            ->with($this->user)
+            ->willReturn($expectedUserData);
+
         // Execute the method
         $response = $this->controller->login();
 
@@ -318,7 +403,7 @@ class UserControllerTest extends TestCase
      * when invalid credentials are provided.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
@@ -355,7 +440,7 @@ class UserControllerTest extends TestCase
      * when required credentials are missing.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
@@ -386,7 +471,7 @@ class UserControllerTest extends TestCase
      * when credentials are empty strings.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
@@ -417,15 +502,15 @@ class UserControllerTest extends TestCase
      * and returns appropriate error responses.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
     public function testMeException(): void
     {
-        // Mock user session to throw exception
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to throw exception
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willThrowException(new \Exception('Test exception'));
 
         // Execute the method
@@ -434,7 +519,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Failed to retrieve user information', $response->getData()['error']);
+        $this->assertStringContainsString('Failed to retrieve user information', $response->getData()['error']);
     }
 
     /**
@@ -444,15 +529,15 @@ class UserControllerTest extends TestCase
      * and returns appropriate error responses.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
     public function testUpdateMeException(): void
     {
-        // Mock user session to throw exception
-        $this->userSession->expects($this->once())
-            ->method('getUser')
+        // Mock user service to throw exception
+        $this->userService->expects($this->once())
+            ->method('getCurrentUser')
             ->willThrowException(new \Exception('Test exception'));
 
         // Execute the method
@@ -461,7 +546,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Failed to update user information', $response->getData()['error']);
+        $this->assertStringContainsString('Failed to update user information', $response->getData()['error']);
     }
 
     /**
@@ -471,7 +556,7 @@ class UserControllerTest extends TestCase
      * and returns appropriate error responses.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
@@ -497,7 +582,7 @@ class UserControllerTest extends TestCase
         // Assert response shows error
         $this->assertInstanceOf(JSONResponse::class, $response);
         $this->assertEquals(500, $response->getStatus());
-        $this->assertStringContains('Login failed', $response->getData()['error']);
+        $this->assertStringContainsString('Login failed', $response->getData()['error']);
     }
 
     /**
@@ -507,29 +592,24 @@ class UserControllerTest extends TestCase
      * test data for use in various test scenarios.
      *
      * @return void
-     * 
+     *
      * @psalm-return void
      * @phpstan-return void
      */
     private function setupMockUserData(): void
     {
-        // Configure mock user with test data
+        // Configure mock user with test data (only methods from IUser interface)
         $this->user->method('getUID')->willReturn('testuser');
         $this->user->method('getDisplayName')->willReturn('Test User');
         $this->user->method('getEMailAddress')->willReturn('test@example.com');
         $this->user->method('isEnabled')->willReturn(true);
         $this->user->method('getQuota')->willReturn('1 GB');
-        $this->user->method('getUsedSpace')->willReturn(524288000); // 500 MB in bytes
-        $this->user->method('getAvatarScope')->willReturn('contacts');
-        $this->user->method('getLastLogin')->willReturn(1640995200); // Unix timestamp
+        $this->user->method('getLastLogin')->willReturn(1640995200);
         $this->user->method('getBackendClassName')->willReturn('Database');
-        $this->user->method('getLanguage')->willReturn('en');
-        $this->user->method('getLocale')->willReturn('en_US');
-        
-        // Configure capability methods
+
+        // Configure capability methods (only those on the IUser interface)
         $this->user->method('canChangeDisplayName')->willReturn(true);
-        $this->user->method('canChangeMailAddress')->willReturn(true);
         $this->user->method('canChangePassword')->willReturn(true);
         $this->user->method('canChangeAvatar')->willReturn(true);
     }
-} 
+}

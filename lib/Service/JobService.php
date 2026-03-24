@@ -47,9 +47,8 @@ use OCP\BackgroundJob\IJob;
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
  * @SuppressWarnings(PHPMD.MissingImport)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — DateTime::createFromFormat is standard PHP date pattern
  * @SuppressWarnings(PHPMD.CamelCaseVariableName)
  */
 class JobService
@@ -265,6 +264,8 @@ class JobService
      * @psalm-return JobLog
      * @phpstan-param Job $job
      * @phpstan-return JobLog
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $forceRun is a simple execution-mode toggle
      */
     public function executeJob(Job $job, bool $forceRun = false): ?JobLog
     {

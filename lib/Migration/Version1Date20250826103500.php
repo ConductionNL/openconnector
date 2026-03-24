@@ -41,7 +41,7 @@ use OCP\Migration\SimpleMigrationStep;
  * @link https://github.com/OpenConnector/openconnector
  *
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — migration steps require static Doctrine DBAL patterns
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  */
