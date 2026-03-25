@@ -3,8 +3,10 @@ schema: conduction
 context: |
   Project: OpenConnector
   Repo: ConductionNL/openconnector
-  Type: Nextcloud App (PHP backend + Vue 2 frontend)
-  Description: API integration and data synchronization platform for Nextcloud
+  Type: Nextcloud App (PHP)
+  Description: Integration platform for connecting Nextcloud to external systems (APIs, sources, endpoints)
+  Key components: Sources, Endpoints, Jobs, Mappings, Synchronizations, Webhooks
+  Database: PostgreSQL (own tables via Nextcloud ORM)
   Mount path: /var/www/html/custom_apps/openconnector
 
   Shared specs: See ../openspec/specs/ for cross-project conventions
@@ -13,16 +15,15 @@ context: |
 rules:
   proposal:
     - Reference shared nextcloud-app spec for app structure requirements
-    - "ADR-011: Check OpenRegister core for existing functionality before proposing new features"
+    - Consider impact on dependent apps that use OpenConnector for integrations
+    - "ADR-011: Before implementing ANY utility (validation, formatting, parsing), search OpenRegister lib/Formats/, lib/Service/, and lib/Handler/ for existing implementations. Common duplications: BSN validation (BsnFormat.php), date formatting, slug generation, UUID handling. If found, reuse via DI or document why duplication is necessary."
   specs:
-    - "ADR-009: Include test scenarios for all MUST/SHALL requirements"
+    - Include API specs for source/endpoint configuration
+    - Document mapping transformation rules where applicable
   design:
-    - "ADR-001: All data MUST be stored via OpenRegister — no custom database tables"
-    - "ADR-012: MUST use @conduction/nextcloud-vue components (CnIndexPage, CnDashboardPage, CnFormDialog, CnDataTable) — do NOT create custom equivalents"
-    - "ADR-008: Follow Controller → Service → Mapper layering pattern"
-    - "ADR-003: MUST use NL Design System tokens via Nextcloud CSS variables — no hardcoded colors"
+    - OpenConnector operates independently of OpenRegister (no hard dependency)
+    - If duplicating OpenRegister utilities, add @see reference to canonical source
+    - "ADR-008: Follow Controller -> Service -> Mapper layering pattern"
   tasks:
-    - "ADR-010: MUST include documentation task with browser screenshots using Playwright MCP"
-    - "ADR-009: MUST include unit test tasks — minimum 75% coverage for new code"
-    - "ADR-005: MUST include i18n tasks — Dutch and English translations required"
-    - "ADR-010: Every user-facing feature MUST have docs in docs/features/ with screenshots"
+    - Test with external API endpoints to verify connectivity
+    - Verify mapping transformations produce expected output

@@ -19,6 +19,9 @@ return [
 		['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
 		['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 
+		// DSO / Omgevingsloket STAM koppelvlak
+		['name' => 'dso#receiveVerzoek', 'url' => '/api/dso/stam/verzoeken', 'verb' => 'POST'],
+
 		['name' => 'dashboard#index', 'url' => '/api/dashboard', 'verb' => 'GET'],
 		['name' => 'dashboard#getCallStats', 'url' => '/api/dashboard/callstats', 'verb' => 'GET'],
 		['name' => 'dashboard#getJobStats', 'url' => '/api/dashboard/jobstats', 'verb' => 'GET'],
