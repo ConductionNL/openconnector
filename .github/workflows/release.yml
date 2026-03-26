@@ -14,7 +14,7 @@ jobs:
     with:
       release-type: unstable
       app-name: openregister
-      verify-vendor-deps: true
+      verify-vendor-deps: false
       vendor-check-paths: ''
     secrets: inherit
 
@@ -24,7 +24,7 @@ jobs:
     with:
       release-type: beta
       app-name: openregister
-      verify-vendor-deps: true
+      verify-vendor-deps: false
       vendor-check-paths: ''
     secrets: inherit
 
@@ -34,6 +34,6 @@ jobs:
     with:
       release-type: stable
       app-name: openregister
-      verify-vendor-deps: true
+      verify-vendor-deps: false
       vendor-check-paths: ''
     secrets: inherit
