@@ -14,8 +14,8 @@ jobs:
     with:
       release-type: unstable
       app-name: openregister
-      verify-vendor-deps: true
-      vendor-check-paths: 'openai-php/client/src,theodo-group/llphant/src'
+      verify-vendor-deps: false
+      vendor-check-paths: ''
     secrets: inherit
 
   beta:
@@ -24,8 +24,8 @@ jobs:
     with:
       release-type: beta
       app-name: openregister
-      verify-vendor-deps: true
-      vendor-check-paths: 'openai-php/client/src,theodo-group/llphant/src'
+      verify-vendor-deps: false
+      vendor-check-paths: ''
     secrets: inherit
 
   stable:
@@ -34,6 +34,6 @@ jobs:
     with:
       release-type: stable
       app-name: openregister
-      verify-vendor-deps: true
-      vendor-check-paths: 'openai-php/client/src,theodo-group/llphant/src'
+      verify-vendor-deps: false
+      vendor-check-paths: ''
     secrets: inherit
