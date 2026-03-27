@@ -13,7 +13,7 @@ jobs:
     uses: ConductionNL/.github/.github/workflows/release.yml@main
     with:
       release-type: unstable
-      app-name: openregister
+      app-name: openconnector
       verify-vendor-deps: false
       vendor-check-paths: ''
     secrets: inherit
@@ -23,7 +23,7 @@ jobs:
     uses: ConductionNL/.github/.github/workflows/release.yml@main
     with:
       release-type: beta
-      app-name: openregister
+      app-name: openconnector
       verify-vendor-deps: false
       vendor-check-paths: ''
     secrets: inherit
@@ -33,7 +33,7 @@ jobs:
     uses: ConductionNL/.github/.github/workflows/release.yml@main
     with:
       release-type: stable
-      app-name: openregister
+      app-name: openconnector
       verify-vendor-deps: false
       vendor-check-paths: ''
     secrets: inherit
