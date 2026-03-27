@@ -1,0 +1,58 @@
+{
+  "version.label": {
+    "message": "Volgende",
+    "description": "The label for version current"
+  },
+  "sidebar.tutorialSidebar.category.administrators": {
+    "message": "beheerders",
+    "description": "The label for category administrators in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.sources": {
+    "message": "bronnen",
+    "description": "The label for category sources in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Administrators": {
+    "message": "Beheerders",
+    "description": "The label for category Administrators in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.mapping": {
+    "message": "mapping",
+    "description": "The label for category mapping in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.synchronysation": {
+    "message": "synchronisatie",
+    "description": "The label for category synchronysation in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.vault": {
+    "message": "kluis",
+    "description": "The label for category vault in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.blog": {
+    "message": "blog",
+    "description": "The label for category blog in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Developers": {
+    "message": "Ontwikkelaars",
+    "description": "The label for category Developers in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.examples": {
+    "message": "voorbeelden",
+    "description": "The label for category examples in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.src": {
+    "message": "src",
+    "description": "The label for category src in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.pages": {
+    "message": "pagina's",
+    "description": "The label for category pages in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.tutorial": {
+    "message": "handleiding",
+    "description": "The label for category tutorial in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.tutorials": {
+    "message": "handleidingen",
+    "description": "The label for category tutorials in sidebar tutorialSidebar"
+  }
+}
