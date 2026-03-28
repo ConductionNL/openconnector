@@ -16,3 +16,6 @@
 
 /coverage/
 /coverage-frontend/
+
+.phpunit.cache/
+phpmetrics/
