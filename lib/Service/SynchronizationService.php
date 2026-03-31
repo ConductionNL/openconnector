@@ -67,6 +67,7 @@ class SynchronizationService
     const EXTRA_DATA_CONFIGS_LOCATION           = 'extraDataConfigs';
     const EXTRA_DATA_DYNAMIC_ENDPOINT_LOCATION  = 'dynamicEndpointLocation';
     const EXTRA_DATA_STATIC_ENDPOINT_LOCATION   = 'staticEndpoint';
+    const EXTRA_DATA_ENDPOINT_TEMPLATE_LOCATION = 'endpointTemplate';
     const KEY_FOR_EXTRA_DATA_LOCATION           = 'keyToSetExtraData';
     const MERGE_EXTRA_DATA_OBJECT_LOCATION      = 'mergeExtraData';
     const UNSET_CONFIG_KEY_LOCATION             = 'unsetConfigKey';
@@ -1001,6 +1002,21 @@ class SynchronizationService
 					$endpoint = str_replace(search: '{{subObjectId}}', replace: $subObjectId, subject: $endpoint);
 				}
 			}
+		}
+
+		if (isset($extraDataConfig[$this::EXTRA_DATA_ENDPOINT_TEMPLATE_LOCATION]) === true
+			&& is_string($extraDataConfig[$this::EXTRA_DATA_ENDPOINT_TEMPLATE_LOCATION]) === true
+			&& $extraDataConfig[$this::EXTRA_DATA_ENDPOINT_TEMPLATE_LOCATION] !== ''
+		) {
+			$endpoint = $this->mappingService->renderTemplateString(
+				template: $extraDataConfig[$this::EXTRA_DATA_ENDPOINT_TEMPLATE_LOCATION],
+				context: [
+					'endpoint' => $endpoint ?? null,
+					'object' => $object,
+					'originId' => $originId,
+					'extraDataConfig' => $extraDataConfig,
+				]
+			);
 		}
 
 		if (!$endpoint) {
