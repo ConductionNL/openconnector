@@ -10,6 +10,8 @@
 
 /node_modules/
 /js/
+/docs/node_modules/
+/docs/.docusaurus/
 /custom_apps/
 /custom-apps/
 /config/
