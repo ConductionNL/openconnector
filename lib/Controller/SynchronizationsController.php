@@ -27,7 +27,6 @@ use Psr\Container\NotFoundExceptionInterface;
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
  * @SuppressWarnings(PHPMD.MissingImport)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
@@ -341,6 +340,8 @@ class SynchronizationsController extends Controller
 	 *     "isValid": true,
 	 *     "validationErrors": []
 	 * }
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $force is a simple toggle to bypass change detection
 	 */
     public function test(int $id, ?bool $force = false): JSONResponse
     {

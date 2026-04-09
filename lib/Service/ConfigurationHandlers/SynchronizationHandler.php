@@ -27,7 +27,7 @@ use Symfony\Component\Uid\Uuid;
  * @SuppressWarnings(PHPMD.ShortVariable)
  * @SuppressWarnings(PHPMD.LongVariable)
  * @SuppressWarnings(PHPMD.MissingImport)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — Uuid::isValid is standard Symfony UID pattern
  */
 class SynchronizationHandler implements ConfigurationHandlerInterface
 {

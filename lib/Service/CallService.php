@@ -43,10 +43,9 @@ use Twig\Loader\ArrayLoader;
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
  * @SuppressWarnings(PHPMD.LongVariable)
  * @SuppressWarnings(PHPMD.MissingImport)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — Uuid::v4 is standard Symfony UID pattern
  * @SuppressWarnings(PHPMD.CamelCaseVariableName)
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  * @SuppressWarnings(PHPMD.UnusedLocalVariable)
@@ -176,6 +175,8 @@ class CallService
      * @param bool   $read For GET as default: decides if we are in a list or read (singular) endpoint.
      *
      * @return string
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $read is a simple endpoint-type toggle
      */
 	private function decideMethod(string $default, array $configuration, bool $read = false): string
 	{
@@ -319,6 +320,8 @@ class CallService
 	 * @throws LoaderError
 	 * @throws SyntaxError
 	 * @throws \OCP\DB\Exception
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) Multiple flags control HTTP call behavior
 	 */
 	public function call(
 		Source $source,

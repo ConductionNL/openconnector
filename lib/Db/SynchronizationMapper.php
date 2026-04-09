@@ -12,9 +12,8 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * @SuppressWarnings(PHPMD.ShortVariable)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — Uuid::v4 is standard Symfony UID pattern
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class SynchronizationMapper extends QBMapper
@@ -404,6 +403,7 @@ class SynchronizationMapper extends QBMapper
      *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $searchSource/$searchTarget are simple query-scope toggles
      */
     public function getByTarget(?string $registerId = null, ?string $schemaId = null, bool $searchSource = true, bool $searchTarget = true): array
     {

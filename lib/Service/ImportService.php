@@ -30,7 +30,7 @@ use Symfony\Component\Yaml\Yaml;
  * @SuppressWarnings(PHPMD.ShortVariable)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.EmptyCatchBlock)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — Yaml::parse is standard Symfony Yaml pattern
  */
 class ImportService
 {

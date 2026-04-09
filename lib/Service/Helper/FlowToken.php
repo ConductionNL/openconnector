@@ -5,9 +5,6 @@ namespace OCA\OpenConnector\Service\Helper;
 use OC\AppFramework\Http\Request;
 use OCP\AppFramework\Http\Response;
 
-/**
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
- */
 class FlowToken
 {
     private array $requestOriginal;
@@ -40,6 +37,9 @@ class FlowToken
         $this->setSyncOutputAmended($this->getSyncOutputOriginal());
     }
 
+    /**
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $proxyHeaders is a simple header-filter toggle
+     */
     private function getHeaders(array $server, bool $proxyHeaders = false): array
     {
         $headers = array_filter(
