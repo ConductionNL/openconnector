@@ -153,7 +153,7 @@ export default {
 	},
 }
 </script>
-<style>
+<style scoped>
 .testJobDetailGrid {
 	display: grid;
 	grid-template-columns: 1fr;

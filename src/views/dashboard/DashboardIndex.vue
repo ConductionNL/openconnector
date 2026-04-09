@@ -886,7 +886,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .apexcharts-svg {
     background-color: transparent !important;
 }

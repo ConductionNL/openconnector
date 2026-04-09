@@ -284,7 +284,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .detailHeader {
 	display: flex;
 	justify-content: space-between;
