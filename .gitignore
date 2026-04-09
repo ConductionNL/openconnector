@@ -16,3 +16,7 @@
 
 /coverage/
 /coverage-frontend/
+
+# Test/build artifacts
+.docusaurus
+.phpunit.result.cache
