@@ -1873,15 +1873,20 @@ class SynchronizationService
 	 */
 	public function getAllObjectsFromApi(Synchronization $synchronization, ?bool $isTest = false, ?array $data = null): array
 	{
-		//@todo this is an nuessesery db call, we should refactor this
-		$source = $this->sourceMapper->find($synchronization->getSourceId());
-
-		// Check rate limit before proceeding
-		$this->checkRateLimit($source);
-
 		// Extract source configuration
 		$sourceConfig = $this->callService->applyConfigDot($synchronization->getSourceConfig()); // TODO; This is the second time this function is called in the synchonysation flow, needs further refactoring investigation
 		$endpoint = $sourceConfig['endpoint'] ?? '';
+		if (is_string($endpoint) === true
+			&& str_contains($endpoint, '{{') === true
+			&& str_contains($endpoint, '}}') === true
+		) {
+			$endpoint = $this->mappingService->renderTemplateString(
+				template: $endpoint,
+				context: [
+					'data' => $data ?? [],
+				]
+			);
+		}
 		$headers = $sourceConfig['headers'] ?? [];
 		$query = $sourceConfig['query'] ?? [];
         $usesPagination = true;
@@ -1892,6 +1897,12 @@ class SynchronizationService
         if ($sourceConfig['resultsPosition'] === '_object') {
             $usesPagination = false;
         }
+
+		//@todo this is an nuessesery db call, we should refactor this
+		$source = $this->sourceMapper->find($synchronization->getSourceId());
+
+		// Check rate limit before proceeding
+		$this->checkRateLimit($source);
 
 		$config = [];
 		if (empty($headers) === false) {
@@ -1953,6 +1964,7 @@ class SynchronizationService
 
 		return $objects;
 	}
+
 
 	/**
 	 * Recursively fetches all pages of data from the API.
