@@ -628,10 +628,12 @@ class SynchronizationService
             $stageStartTime = microtime(true);
             $result['objects']['found'] = count($objectList);
 
-            if ($sourceConfig['resultsPosition'] === '_object') {
-                $objectList = [$objectList];
-                $result['objects']['found'] = count($objectList);
-            }
+	            if ($sourceConfig['resultsPosition'] === '_object') {
+	                if (array_is_list($objectList) === false) {
+	                    $objectList = [$objectList];
+	                }
+	                $result['objects']['found'] = count($objectList);
+	            }
 
             $result['timing']['stages']['object_preparation'] = [
                 'duration_ms' => round((microtime(true) - $stageStartTime) * 1000, 2),
@@ -1942,9 +1944,9 @@ class SynchronizationService
             usesPagination: $usesPagination
 		);
 
-		if (array_is_list($objects) === false) {
-			$objects = [$objects];
-		}
+			if ($sourceConfig['resultsPosition'] !== '_object' && array_is_list($objects) === false) {
+				$objects = [$objects];
+			}
 
 		// Merge additional data into each object if $data is provided
 		if ($data !== null
