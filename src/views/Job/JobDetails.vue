@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { jobStore, navigationStore, logStore } from '../../store/store.js'
 </script>
 
@@ -11,7 +12,7 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 						{{ jobStore.jobItem.name }}
 					</h1>
 
-					<NcActions :primary="true" menu-name="Actions">
+					<NcActions :primary="true" :menu-name="t('openconnector', 'Actions')">
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
@@ -19,43 +20,43 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="addJobArgument()">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Add Argument
+							{{ t('openconnector', 'Add argument') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('testJob')">
 							<template #icon>
 								<Update :size="20" />
 							</template>
-							Test
+							{{ t('openconnector', 'Test') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('runJob')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
-							Run
+							{{ t('openconnector', 'Run') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="refreshJobLogs()">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
-							Refresh Logs
+							{{ t('openconnector', 'Refresh Logs') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="jobStore.exportJob(jobStore.jobItem.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
-							Export job
+							{{ t('openconnector', 'Export job') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteJob')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</NcActions>
 				</div>
@@ -63,53 +64,53 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
-						<b>id:</b>
+						<b>{{ t('openconnector', 'ID') }}:</b>
 						<p>{{ jobStore.jobItem?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Status:</b>
+						<b>{{ t('openconnector', 'Status') }}:</b>
 						<p>{{ jobStore.jobItem?.status || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Version:</b>
+						<b>{{ t('openconnector', 'Version') }}:</b>
 						<p>{{ jobStore.jobItem?.version || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ jobStore.jobItem?.isEnabled ? 'Enabled' : 'Disabled' }}</b>
+						<b>{{ jobStore.jobItem?.isEnabled ? t('openconnector', 'Enabled') : t('openconnector', 'Disabled') }}</b>
 						<NcUserStatusIcon :class="!jobStore.jobItem?.isEnabled && 'jobStatusDisabled'" :status="'online'" />
 					</div>
 					<div class="gridContent">
-						<b>Job Class:</b>
+						<b>{{ t('openconnector', 'Job class') }}:</b>
 						<p>{{ jobStore.jobItem?.jobClass || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Interval:</b>
+						<b>{{ t('openconnector', 'Interval') }}:</b>
 						<p>{{ jobStore.jobItem?.interval || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Execution Time:</b>
+						<b>{{ t('openconnector', 'Execution time') }}:</b>
 						<p>{{ jobStore.jobItem?.executionTime || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Time Sensitive:</b>
+						<b>{{ t('openconnector', 'Time sensitive') }}:</b>
 						<p>{{ jobStore.jobItem?.timeSensitive || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Allow Parallel Runs:</b>
+						<b>{{ t('openconnector', 'Allow parallel runs') }}:</b>
 						<p>{{ jobStore.jobItem?.allowParallelRuns || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Single Run:</b>
+						<b>{{ t('openconnector', 'Single run') }}:</b>
 						<p>{{ jobStore.jobItem?.singleRun || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Next Run:</b>
+						<b>{{ t('openconnector', 'Next run') }}:</b>
 						<p>
 							{{ getValidISOstring(jobStore.jobItem.nextRun) ? new Date(jobStore.jobItem.nextRun).toLocaleString() : 'N/A' }}
 						</p>
 					</div>
 					<div class="gridContent">
-						<b>Last Run:</b>
+						<b>{{ t('openconnector', 'Last run') }}:</b>
 						<p>
 							{{ getValidISOstring(jobStore.jobItem.lastRun) ? new Date(jobStore.jobItem.lastRun).toLocaleString() : 'N/A' }}
 						</p>
@@ -118,16 +119,16 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 
 				<div class="tabContainer">
 					<BTabs content-class="mt-3" justified>
-						<BTab title="Job Arguments">
+						<BTab :title="t('openconnector', 'Job Arguments')">
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									aria-label="Add Argument"
+									:aria-label="t('openconnector', 'Add argument')"
 									@click="addJobArgument">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									Add Argument
+									{{ t('openconnector', 'Add argument') }}
 								</NcButton>
 							</div>
 							<div v-if="jobStore.jobItem?.arguments !== null && Object.keys(jobStore.jobItem?.arguments).length > 0">
@@ -152,22 +153,22 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
-											Edit
+											{{ t('openconnector', 'Edit') }}
 										</NcActionButton>
 										<NcActionButton close-after-click @click="deleteJobArgument(key)">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Delete
+											{{ t('openconnector', 'Delete') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-if="jobStore.jobItem?.arguments === null || !Object.keys(jobStore.jobItem?.arguments).length" class="tabPanel">
-								No arguments found
+								{{ t('openconnector', 'No arguments found for this job') }}
 							</div>
 						</BTab>
-						<BTab title="Logs">
+						<BTab :title="t('openconnector', 'Logs')">
 							<div v-if="jobStore.jobLogs?.length">
 								<NcListItem v-for="(log, i) in jobStore.jobLogs"
 									:key="log.id + i"
@@ -191,13 +192,13 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>
-											View
+											{{ t('openconnector', 'View') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-if="!jobStore.jobLogs?.length" class="tabPanel">
-								No logs found
+								{{ t('openconnector', 'No logs found') }}
 							</div>
 						</BTab>
 					</BTabs>

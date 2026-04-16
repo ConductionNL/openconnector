@@ -4,7 +4,7 @@
 		label-id="viewJob"
 		@close="navigationStore.setModal(false)">
 		<div class="modal-content">
-			<h2>{{ jobStore.jobItem?.name || t('openconnector', 'Job Details') }}</h2>
+			<h2>{{ jobStore.jobItem?.name || t('openconnector', 'Job details') }}</h2>
 			<p v-if="jobStore.jobItem?.description" class="source-description">
 				{{ jobStore.jobItem.description }}
 			</p>

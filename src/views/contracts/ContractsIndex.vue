@@ -9,7 +9,7 @@ import { contractStore, synchronizationStore } from '../../store/store.js'
 			<!-- Header -->
 			<div class="viewHeader">
 				<h1 class="viewHeaderTitleIndented">
-					{{ t('openconnector', 'Synchronization Contracts') }}
+					{{ t('openconnector', 'Synchronization contracts') }}
 				</h1>
 				<p>{{ t('openconnector', 'Manage and monitor synchronization contracts') }}</p>
 			</div>
@@ -95,13 +95,13 @@ import { contractStore, synchronizationStore } from '../../store/store.js'
 								{{ t('openconnector', 'Synchronization') }}
 							</th>
 							<th class="statusColumn">
-								{{ t('openconnector', 'Sync Status') }}
+								{{ t('openconnector', 'Sync status') }}
 							</th>
 							<th class="timestampColumn">
-								{{ t('openconnector', 'Last Synced') }}
+								{{ t('openconnector', 'Last synced') }}
 							</th>
 							<th class="actionColumn">
-								{{ t('openconnector', 'Last Action') }}
+								{{ t('openconnector', 'Last action') }}
 							</th>
 							<th class="tableColumnActions">
 								{{ t('openconnector', 'Actions') }}
@@ -159,13 +159,13 @@ import { contractStore, synchronizationStore } from '../../store/store.js'
 										<template #icon>
 											<PlayCircle :size="20" />
 										</template>
-										{{ t('openconnector', 'Enforce Contract') }}
+										{{ t('openconnector', 'Enforce contract') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="viewLogs(item)">
 										<template #icon>
 											<TextBoxOutline :size="20" />
 										</template>
-										{{ t('openconnector', 'View Logs') }}
+										{{ t('openconnector', 'View logs') }}
 									</NcActionButton>
 									<NcActionButton close-after-click class="deleteAction" @click="deleteContract(item)">
 										<template #icon>
@@ -336,7 +336,7 @@ export default {
 			return contract.getDisplayName ? contract.getDisplayName() : `Contract ${contract.id}`
 		},
 		getSynchronizationName(synchronizationId) {
-			if (!synchronizationId) return t('openconnector', 'Unknown Synchronization')
+			if (!synchronizationId) return t('openconnector', 'Unknown synchronization')
 
 			const synchronization = synchronizationStore.synchronizationList.find(s => s.id === parseInt(synchronizationId))
 			return synchronization?.name || `Synchronization ${synchronizationId}`
@@ -425,7 +425,7 @@ export default {
 		async bulkDelete() {
 			if (this.selectedItems.length === 0) return
 
-			if (!confirm(this.t('openconnector', 'Are you sure you want to delete the selected contracts? This action cannot be undone.'))) {
+			if (!confirm(this.t('openconnector', 'Are you sure you want to delete the selected contracts? this action cannot be undone.'))) {
 				return
 			}
 

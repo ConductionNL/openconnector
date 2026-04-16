@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 </script>
 
@@ -9,7 +10,7 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 				<NcTextField
 					:value.sync="searchStore.search"
 					:show-trailing-button="searchStore.search !== ''"
-					label="Search"
+					:label="t('openconnector', 'Search')"
 					class="searchField"
 					trailing-button-icon="close"
 					@trailing-button-click="searchStore.clearSearch()">
@@ -20,19 +21,19 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Refresh
+						{{ t('openconnector', 'Refresh') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="ruleStore.setRuleItem(null); navigationStore.setModal('editRule')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Add rule
+						{{ t('openconnector', 'Add rule') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
-						Import
+						{{ t('openconnector', 'Import') }}
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -56,19 +57,19 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="ruleStore.exportRule(rule.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
-							Export rule
+							{{ t('openconnector', 'Export rule') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="ruleStore.setRuleItem(rule); navigationStore.setDialog('deleteRule')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -79,10 +80,10 @@ import { ruleStore, navigationStore, searchStore } from '../../store/store.js'
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Loading rules" />
+			:name="t('openconnector', 'Loading...')" />
 
 		<div v-if="!ruleStore.ruleList.length" class="emptyListHeader">
-			No rules defined
+			{{ t('openconnector', 'No rules') }}
 		</div>
 	</NcAppContentList>
 </template>

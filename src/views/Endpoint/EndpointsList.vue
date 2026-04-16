@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { endpointStore, navigationStore, searchStore } from '../../store/store.js'
 </script>
 
@@ -9,7 +10,7 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 				<NcTextField
 					:value.sync="searchStore.search"
 					:show-trailing-button="searchStore.search !== ''"
-					label="Search"
+					:label="t('openconnector', 'Search')"
 					class="searchField"
 					trailing-button-icon="close"
 					@trailing-button-click="searchStore.clearSearch()">
@@ -20,19 +21,19 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Refresh
+						{{ t('openconnector', 'Refresh') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="endpointStore.setEndpointItem(null); navigationStore.setModal('editEndpoint')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Add endpoint
+						{{ t('openconnector', 'Add endpoint') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
-						Import
+						{{ t('openconnector', 'Import') }}
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -57,25 +58,25 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 							<template #icon>
 								<Pencil />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="endpointStore.exportEndpoint(endpoint.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
-							Export endpoint
+							{{ t('openconnector', 'Export endpoint') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="endpointStore.setEndpointItem(endpoint); navigationStore.setDialog('deleteEndpoint')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="endpointStore.setEndpointItem(endpoint); navigationStore.setModal('addEndpointRule')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Add Rule
+							{{ t('openconnector', 'Add rule') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -86,10 +87,10 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Loading endpoints" />
+			:name="t('openconnector', 'Loading...')" />
 
 		<div v-if="!endpointStore.endpointList.length" class="emptyListHeader">
-			No endpoints defined
+			{{ t('openconnector', 'No sources are available.') }}
 		</div>
 	</NcAppContentList>
 </template>

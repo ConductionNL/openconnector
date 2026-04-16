@@ -8,7 +8,7 @@ import { translate as t } from '@nextcloud/l10n'
 		<div class="viewContainer">
 			<div class="viewHeader">
 				<h1 class="viewHeaderTitleIndented">
-					{{ t('openconnector', 'Endpoint Logs') }}
+					{{ t('openconnector', 'Endpoint logs') }}
 				</h1>
 				<p>{{ t('openconnector', 'Monitor and analyze endpoint logs and their performance') }}</p>
 			</div>
@@ -125,14 +125,14 @@ import { translate as t } from '@nextcloud/l10n'
 										<template #icon>
 											<Eye :size="20" />
 										</template>
-										{{ t('openconnector', 'View Details') }}
+										{{ t('openconnector', 'View details') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="copyLogData(log)">
 										<template #icon>
 											<Check v-if="copyStates[log.id]" :size="20" class="copySuccessIcon" />
 											<ContentCopy v-else :size="20" />
 										</template>
-										{{ copyStates[log.id] ? t('openconnector', 'Copied!') : t('openconnector', 'Copy Data') }}
+										{{ copyStates[log.id] ? t('openconnector', 'Copied!') : t('openconnector', 'Copy data') }}
 									</NcActionButton>
 									<NcActionButton close-after-click class="deleteAction" @click="deleteLog(log)">
 										<template #icon>

@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 </script>
 
@@ -9,7 +10,7 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 				<NcTextField
 					:value.sync="searchStore.search"
 					:show-trailing-button="searchStore.search !== ''"
-					label="Search"
+					:label="t('openconnector', 'Search')"
 					class="searchField"
 					trailing-button-icon="close"
 					@trailing-button-click="searchStore.clearSearch()">
@@ -20,19 +21,19 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Refresh
+						{{ t('openconnector', 'Refresh') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="jobStore.setJobItem(null); navigationStore.setModal('editJob')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Add job
+						{{ t('openconnector', 'Add job') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
-						Import
+						{{ t('openconnector', 'Import') }}
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -56,7 +57,7 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click
 							@click="() => {
@@ -67,37 +68,37 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Add argument
+							{{ t('openconnector', 'Add argument') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="jobStore.setJobItem(job); navigationStore.setModal('testJob')">
 							<template #icon>
 								<Update :size="20" />
 							</template>
-							Test
+							{{ t('openconnector', 'Test') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="jobStore.setJobItem(job); navigationStore.setModal('runJob')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
-							Run
+							{{ t('openconnector', 'Run') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="jobStore.setJobItem(job); jobStore.refreshJobLogs(job.id)">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
-							Refresh logs
+							{{ t('openconnector', 'Refresh Logs') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="jobStore.exportJob(job.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
-							Export job
+							{{ t('openconnector', 'Export job') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="jobStore.setJobItem(job); navigationStore.setDialog('deleteJob')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -108,10 +109,10 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Loading jobs" />
+			:name="t('openconnector', 'Loading jobs...')" />
 
 		<div v-if="!jobStore.jobList.length" class="emptyListHeader">
-			No jobs defined
+			{{ t('openconnector', 'No jobs are available.') }}
 		</div>
 	</NcAppContentList>
 </template>

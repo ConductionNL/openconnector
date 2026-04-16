@@ -4,7 +4,7 @@
 		<NcAppContent v-if="storesReady && !hasOpenRegisters" class="open-register-missing">
 			<NcEmptyContent
 				:name="t('openconnector', 'OpenRegister is required')"
-				:description="t('openconnector', 'OpenConnector needs the OpenRegister app to store and manage data. Please install OpenRegister from the app store to get started.')">
+				:description="t('openconnector', 'OpenConnector needs the OpenRegister app to store and manage data. please install OpenRegister from the app store to get started.')">
 				<template #icon>
 					<img :src="appIcon" class="open-register-icon">
 				</template>

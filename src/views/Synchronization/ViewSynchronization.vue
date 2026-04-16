@@ -4,7 +4,7 @@
 		label-id="viewSynchronization"
 		@close="navigationStore.setModal(false)">
 		<div class="modal-content">
-			<h2>{{ synchronizationStore.synchronizationItem?.name || t('openconnector', 'Synchronization Details') }}</h2>
+			<h2>{{ synchronizationStore.synchronizationItem?.name || t('openconnector', 'Synchronization details') }}</h2>
 			<p v-if="synchronizationStore.synchronizationItem?.description" class="source-description">
 				{{ synchronizationStore.synchronizationItem.description }}
 			</p>

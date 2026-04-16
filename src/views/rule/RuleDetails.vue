@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { ruleStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -11,7 +12,7 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 						{{ item?.name || '-' }}
 					</h1>
 
-					<NcActions :primary="true" menu-name="Actions">
+					<NcActions :primary="true" :menu-name="t('openconnector', 'Actions')">
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
@@ -19,19 +20,19 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="ruleStore.exportRule(item?.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
-							Export rule
+							{{ t('openconnector', 'Export rule') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteRule')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</NcActions>
 				</div>
@@ -39,15 +40,15 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
-						<b>id:</b>
+						<b>{{ t('openconnector', 'ID') }}:</b>
 						<p>{{ item?.id || '-' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>uuid:</b>
+						<b>{{ t('openconnector', 'UUID') }}:</b>
 						<p>{{ item?.uuid || '-' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Created:</b>
+						<b>{{ t('openconnector', 'Created') }}:</b>
 						<p>
 							{{ item?.created
 								? new Date(item?.created).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -56,7 +57,7 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 						</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Updated:</b>
+						<b>{{ t('openconnector', 'Updated') }}:</b>
 						<p>
 							{{ item?.updated
 								? new Date(item?.updated).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -66,26 +67,26 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 					</div>
 
 					<div class="gridContent gridDoubleWidth">
-						<h4>Rule Details</h4>
+						<h4>{{ t('openconnector', 'Rule Details') }}</h4>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Type:</b>
+						<b>{{ t('openconnector', 'Type') }}:</b>
 						<p>{{ item?.type || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Action:</b>
+						<b>{{ t('openconnector', 'Action') }}:</b>
 						<p>{{ item?.action || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Order:</b>
+						<b>{{ t('openconnector', 'Order') }}:</b>
 						<p>{{ item?.order || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Conditions:</b>
+						<b>{{ t('openconnector', 'Conditions') }}:</b>
 						<p>{{ item?.conditions ? JSON.stringify(item?.conditions, null, 2) : 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Action Config:</b>
+						<b>{{ t('openconnector', 'Action Config') }}:</b>
 						<p>{{ item?.actionConfig ? JSON.stringify(item?.actionConfig, null, 2) : 'N/A' }}</p>
 					</div>
 				</div>

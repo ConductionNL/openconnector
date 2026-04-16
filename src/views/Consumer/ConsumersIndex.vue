@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { consumerStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -10,39 +11,39 @@ import { consumerStore, navigationStore } from '../../store/store.js'
 		<template #default>
 			<NcEmptyContent v-if="!$route.params.id"
 				class="detailContainer"
-				name="Geen consumer"
-				description="Nog geen consumer geselecteerd">
+				:name="t('openconnector', 'No consumer')"
+				:description="t('openconnector', 'No consumer selected')">
 				<template #icon>
 					<Webhook />
 				</template>
 				<template #action>
 					<NcButton type="primary" @click="consumerStore.setConsumerItem(null); navigationStore.setModal('editConsumer')">
-						Consumer toevoegen
+						{{ t('openconnector', 'Add consumer') }}
 					</NcButton>
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loading"
 				class="detailContainer"
-				name="Loading..."
-				description="Fetching rule details">
+				:name="t('openconnector', 'Loading...')"
+				:description="t('openconnector', 'Fetching consumer details')">
 				<template #icon>
 					<NcLoadingIcon />
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
-				name="Error"
-				description="Failed to load consumer.">
+				:name="t('openconnector', 'Error')"
+				:description="t('openconnector', 'Failed to load consumer.')">
 				<template #icon>
 					<Webhook />
 				</template>
 				<template #action>
 					<div style="display: flex; gap: 0.5rem;">
 						<NcButton type="secondary" @click="consumerStore.setConsumerItem(null); loadError = false; $router.push('/consumers')">
-							Terug
+							{{ t('openconnector', 'Back') }}
 						</NcButton>
 						<NcButton type="primary" @click="consumerStore.setConsumerItem(null); loadError = false; $router.push('/consumers'); navigationStore.setModal('editConsumer')">
-							Consumer toevoegen
+							{{ t('openconnector', 'Add consumer') }}
 						</NcButton>
 					</div>
 				</template>

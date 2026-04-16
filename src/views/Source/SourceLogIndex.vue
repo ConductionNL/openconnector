@@ -9,7 +9,7 @@ import { logStore, navigationStore, sourceStore } from '../../store/store.js'
 			<!-- Header -->
 			<div class="viewHeader">
 				<h1 class="viewHeaderTitleIndented">
-					{{ t('openconnector', 'Call Logs') }}
+					{{ t('openconnector', 'Call logs') }}
 				</h1>
 				<p>{{ t('openconnector', 'Monitor and analyze API call logs and their performance') }}</p>
 			</div>
@@ -102,7 +102,7 @@ import { logStore, navigationStore, sourceStore } from '../../store/store.js'
 								{{ t('openconnector', 'Endpoint') }}
 							</th>
 							<th class="responseTimeColumn">
-								{{ t('openconnector', 'Response Time') }}
+								{{ t('openconnector', 'Response time') }}
 							</th>
 							<th class="timestampColumn">
 								{{ t('openconnector', 'Created') }}
@@ -178,14 +178,14 @@ import { logStore, navigationStore, sourceStore } from '../../store/store.js'
 										<template #icon>
 											<Eye :size="20" />
 										</template>
-										{{ t('openconnector', 'View Details') }}
+										{{ t('openconnector', 'View details') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="copyLogData(log)">
 										<template #icon>
 											<Check v-if="copyStates[log.id]" :size="20" class="copySuccessIcon" />
 											<ContentCopy v-else :size="20" />
 										</template>
-										{{ copyStates[log.id] ? t('openconnector', 'Copied!') : t('openconnector', 'Copy Data') }}
+										{{ copyStates[log.id] ? t('openconnector', 'Copied!') : t('openconnector', 'Copy data') }}
 									</NcActionButton>
 									<NcActionButton close-after-click class="deleteAction" @click="deleteLog(log)">
 										<template #icon>
@@ -350,7 +350,7 @@ export default {
 			this.pagination.limit = pageSize
 		},
 		getSourceName(sourceId) {
-			if (!sourceId) return t('openconnector', 'Unknown Source')
+			if (!sourceId) return t('openconnector', 'Unknown source')
 			const source = sourceStore.sourceList?.find(s => s.id === sourceId)
 			return source?.name || `Source ${sourceId}`
 		},
@@ -395,7 +395,7 @@ export default {
 		async bulkDeleteLogs() {
 			if (this.selectedLogs.length === 0) return
 
-			if (!confirm(this.t('openconnector', 'Are you sure you want to delete the selected logs? This action cannot be undone.'))) {
+			if (!confirm(this.t('openconnector', 'Are you sure you want to delete the selected logs? this action cannot be undone.'))) {
 				return
 			}
 

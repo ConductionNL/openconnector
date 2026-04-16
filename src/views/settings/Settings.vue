@@ -2,7 +2,7 @@
 	<div>
 		<NcSettingsSection
 			name="Open Connector"
-			description="A central place for managing your Open Connector"
+			:description="t('openconnector', 'A central place for managing your Open Connector')"
 			doc-url="https://docs.openconnector.nl" />
 
 		<!-- Version Information -->
@@ -17,13 +17,13 @@
 			]">
 			<template #footer>
 				<div class="cn-support-info">
-					<h4>Support</h4>
+					<h4>{{ t('openconnector', 'Support') }}</h4>
 					<p>
-						For support, contact us at
+						{{ t('openconnector', 'For support, contact us at') }}
 						<a href="mailto:support@conduction.nl">support@conduction.nl</a>
 					</p>
 					<p>
-						For a Service Level Agreement (SLA), contact
+						{{ t('openconnector', 'For a Service Level Agreement (SLA), contact') }}
 						<a href="mailto:sales@conduction.nl">sales@conduction.nl</a>
 					</p>
 				</div>
@@ -31,7 +31,7 @@
 		</CnVersionInfoCard>
 
 		<NcSettingsSection name="System Statistics"
-			description="Overview of your Open Connector data and potential issues">
+			:description="t('openconnector', 'Overview of your Open Connector data and potential issues')">
 			<div v-if="!loadingStats" class="stats-section">
 				<!-- Refresh Button -->
 				<div class="section-header-inline">
@@ -45,7 +45,7 @@
 								<NcLoadingIcon v-if="loadingStats" :size="20" />
 								<Refresh v-else :size="20" />
 							</template>
-							Refresh
+							{{ t('openconnector', 'Refresh') }}
 						</NcButton>
 					</div>
 				</div>
@@ -54,26 +54,26 @@
 					<div class="stats-grid">
 						<!-- Warning Stats -->
 						<div class="stats-card warning-stats">
-							<h4>⚠️ Items Requiring Attention</h4>
+							<h4>⚠️ {{ t('openconnector', 'Items Requiring Attention') }}</h4>
 							<div class="stats-table-container">
 								<table class="stats-table">
 									<thead>
 										<tr>
 											<th class="stats-table-header">
-												Issue
+												{{ t('openconnector', 'Issue') }}
 											</th>
 											<th class="stats-table-header">
-												Count
+												{{ t('openconnector', 'Count') }}
 											</th>
 											<th class="stats-table-header">
-												Size
+												{{ t('openconnector', 'Size') }}
 											</th>
 										</tr>
 									</thead>
 									<tbody>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Call logs without expiry
+												{{ t('openconnector', 'Call logs without expiry') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.callLogsWithoutExpiry || 0) > 0 }">
 												{{ stats.warnings.callLogsWithoutExpiry || 0 }}
@@ -84,7 +84,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Event messages without expiry
+												{{ t('openconnector', 'Event messages without expiry') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.eventMessagesWithoutExpiry || 0) > 0 }">
 												{{ stats.warnings.eventMessagesWithoutExpiry || 0 }}
@@ -95,7 +95,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Job logs without expiry
+												{{ t('openconnector', 'Job logs without expiry') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.jobLogsWithoutExpiry || 0) > 0 }">
 												{{ stats.warnings.jobLogsWithoutExpiry || 0 }}
@@ -106,7 +106,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Sync contract logs without expiry
+												{{ t('openconnector', 'Sync contract logs without expiry') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.syncContractLogsWithoutExpiry || 0) > 0 }">
 												{{ stats.warnings.syncContractLogsWithoutExpiry || 0 }}
@@ -117,7 +117,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Sync logs without expiry
+												{{ t('openconnector', 'Sync logs without expiry') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.syncLogsWithoutExpiry || 0) > 0 }">
 												{{ stats.warnings.syncLogsWithoutExpiry || 0 }}
@@ -128,7 +128,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Expired call logs
+												{{ t('openconnector', 'Expired call logs') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.expiredCallLogs || 0) > 0 }">
 												{{ stats.warnings.expiredCallLogs || 0 }}
@@ -139,7 +139,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Expired event messages
+												{{ t('openconnector', 'Expired event messages') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.expiredEventMessages || 0) > 0 }">
 												{{ stats.warnings.expiredEventMessages || 0 }}
@@ -150,7 +150,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Expired job logs
+												{{ t('openconnector', 'Expired job logs') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.expiredJobLogs || 0) > 0 }">
 												{{ stats.warnings.expiredJobLogs || 0 }}
@@ -161,7 +161,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Expired sync contract logs
+												{{ t('openconnector', 'Expired sync contract logs') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.expiredSyncContractLogs || 0) > 0 }">
 												{{ stats.warnings.expiredSyncContractLogs || 0 }}
@@ -172,7 +172,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Expired sync logs
+												{{ t('openconnector', 'Expired sync logs') }}
 											</td>
 											<td class="stats-table-value" :class="{ 'danger': (stats.warnings.expiredSyncLogs || 0) > 0 }">
 												{{ stats.warnings.expiredSyncLogs || 0 }}
@@ -188,26 +188,26 @@
 
 						<!-- Total Stats -->
 						<div class="stats-card total-stats">
-							<h4>📊 System Totals</h4>
+							<h4>📊 {{ t('openconnector', 'System Totals') }}</h4>
 							<div class="stats-table-container">
 								<table class="stats-table">
 									<thead>
 										<tr>
 											<th class="stats-table-header">
-												Category
+												{{ t('openconnector', 'Category') }}
 											</th>
 											<th class="stats-table-header">
-												Total
+												{{ t('openconnector', 'Total') }}
 											</th>
 											<th class="stats-table-header">
-												Size
+												{{ t('openconnector', 'Size') }}
 											</th>
 										</tr>
 									</thead>
 									<tbody>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Call Logs
+												{{ t('openconnector', 'Call logs') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalCallLogs.toLocaleString() }}
@@ -218,7 +218,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Event Messages
+												{{ t('openconnector', 'Event Messages') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalEventMessages.toLocaleString() }}
@@ -229,7 +229,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Job Logs
+												{{ t('openconnector', 'Job logs') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalJobLogs.toLocaleString() }}
@@ -240,7 +240,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Sync Contract Logs
+												{{ t('openconnector', 'Sync Contract Logs') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalSynchronizationContractLogs.toLocaleString() }}
@@ -251,7 +251,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Sync Logs
+												{{ t('openconnector', 'Sync Logs') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalSynchronizationLogs.toLocaleString() }}
@@ -262,7 +262,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Consumers
+												{{ t('openconnector', 'Consumers') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalConsumers.toLocaleString() }}
@@ -273,7 +273,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Endpoints
+												{{ t('openconnector', 'Endpoints') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalEndpoints.toLocaleString() }}
@@ -284,7 +284,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Event Subscriptions
+												{{ t('openconnector', 'Event Subscriptions') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalEventSubscriptions.toLocaleString() }}
@@ -295,7 +295,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Events
+												{{ t('openconnector', 'Events') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalEvents.toLocaleString() }}
@@ -306,7 +306,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Jobs
+												{{ t('openconnector', 'Jobs') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalJobs.toLocaleString() }}
@@ -317,7 +317,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Mappings
+												{{ t('openconnector', 'Mappings') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalMappings.toLocaleString() }}
@@ -328,7 +328,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Rules
+												{{ t('openconnector', 'Rules') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalRules.toLocaleString() }}
@@ -339,7 +339,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Sources
+												{{ t('openconnector', 'Sources') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalSources.toLocaleString() }}
@@ -350,7 +350,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Sync Contracts
+												{{ t('openconnector', 'Sync Contracts') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalSynchronizationContracts.toLocaleString() }}
@@ -361,7 +361,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												Synchronizations
+												{{ t('openconnector', 'Synchronizations') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalSynchronizations.toLocaleString() }}
@@ -378,7 +378,7 @@
 
 					<div class="stats-footer">
 						<p class="stats-updated">
-							Last updated: {{ formatDate(stats.lastUpdated) }}
+							{{ t('openconnector', 'Last updated:') }} {{ formatDate(stats.lastUpdated) }}
 						</p>
 					</div>
 				</div>
@@ -393,7 +393,7 @@
 
 		<NcSettingsSection name="Log Retention">
 			<template #description>
-				Configure data and log retention policies
+				{{ t('openconnector', 'Configure data and log retention policies') }}
 			</template>
 
 			<div v-if="!loading" class="retention-options">
@@ -409,7 +409,7 @@
 								<NcLoadingIcon v-if="rebasing" :size="20" />
 								<Refresh v-else :size="20" />
 							</template>
-							Rebase
+							{{ t('openconnector', 'Rebase') }}
 						</NcButton>
 						<NcButton
 							type="primary"
@@ -419,7 +419,7 @@
 								<NcLoadingIcon v-if="saving" :size="20" />
 								<Save v-else :size="20" />
 							</template>
-							Save
+							{{ t('openconnector', 'Save') }}
 						</NcButton>
 					</div>
 				</div>
@@ -427,28 +427,27 @@
 				<!-- Section Description -->
 				<div class="section-description-full">
 					<p class="main-description">
-						Configure retention policies for OpenConnector logs. Log retention manages how long different types of logs are kept for compliance and debugging.
-						<strong>Note:</strong> Setting retention to 0 means data is kept forever (not advisable for production).
+						{{ t('openconnector', 'Configure retention policies for OpenConnector logs. Log retention manages how long different types of logs are kept for compliance and debugging.') }}
+						<strong>{{ t('openconnector', 'Note:') }}</strong> {{ t('openconnector', 'Setting retention to 0 means data is kept forever (not advisable for production).') }}
 					</p>
 					<p class="impact-description warning-box">
-						<strong>⚠️ Important:</strong> Changes to retention policies only apply to logs that are created or modified after the retention policy was changed.
-						Existing logs will retain their previous retention schedules until the rebase operation is performed.
+						<strong>⚠️ {{ t('openconnector', 'Important:') }}</strong> {{ t('openconnector', 'Changes to retention policies only apply to logs that are created or modified after the retention policy was changed. Existing logs will retain their previous retention schedules until the rebase operation is performed.') }}
 					</p>
 				</div>
 
 				<!-- Log Retention Settings -->
 				<div class="option-section">
-					<h4>Log Retention Policies</h4>
+					<h4>{{ t('openconnector', 'Log Retention Policies') }}</h4>
 					<p class="option-description">
-						Configure retention periods for different types of logs (in milliseconds). These settings control how long logs are stored before automatic cleanup.
+						{{ t('openconnector', 'Configure retention periods for different types of logs (in milliseconds). These settings control how long logs are stored before automatic cleanup.') }}
 					</p>
 
 					<div class="retention-table">
 						<div class="retention-row">
 							<div class="retention-label">
-								<strong>Call Log Retention</strong>
+								<strong>{{ t('openconnector', 'Success Log Retention') }}</strong>
 								<p class="retention-description">
-									Retention period for logs with success status and request/response data
+									{{ t('openconnector', 'Retention period for logs with success status and request/response data') }}
 								</p>
 							</div>
 							<div class="retention-input">
@@ -468,9 +467,9 @@
 						</div>
 						<div class="retention-row">
 							<div class="retention-label">
-								<strong>Call Log Retention</strong>
+								<strong>{{ t('openconnector', 'Call Log Retention') }}</strong>
 								<p class="retention-description">
-									Retention period for API call logs and request/response data
+									{{ t('openconnector', 'Retention period for API call logs and request/response data') }}
 								</p>
 							</div>
 							<div class="retention-input">
@@ -491,9 +490,9 @@
 
 						<div class="retention-row">
 							<div class="retention-label">
-								<strong>Event Message Retention</strong>
+								<strong>{{ t('openconnector', 'Event Message Retention') }}</strong>
 								<p class="retention-description">
-									Retention period for event messages and webhook deliveries
+									{{ t('openconnector', 'Retention period for event messages and webhook deliveries') }}
 								</p>
 							</div>
 							<div class="retention-input">
@@ -514,9 +513,9 @@
 
 						<div class="retention-row">
 							<div class="retention-label">
-								<strong>Job Log Retention</strong>
+								<strong>{{ t('openconnector', 'Job Log Retention') }}</strong>
 								<p class="retention-description">
-									Retention period for job execution logs and results
+									{{ t('openconnector', 'Retention period for job execution logs and results') }}
 								</p>
 							</div>
 							<div class="retention-input">
@@ -537,9 +536,9 @@
 
 						<div class="retention-row">
 							<div class="retention-label">
-								<strong>Sync Contract Log Retention</strong>
+								<strong>{{ t('openconnector', 'Sync Contract Log Retention') }}</strong>
 								<p class="retention-description">
-									Retention period for synchronization contract logs
+									{{ t('openconnector', 'Retention period for synchronization contract logs') }}
 								</p>
 							</div>
 							<div class="retention-input">
@@ -560,9 +559,9 @@
 
 						<div class="retention-row">
 							<div class="retention-label">
-								<strong>Sync Log Retention</strong>
+								<strong>{{ t('openconnector', 'Sync Log Retention') }}</strong>
 								<p class="retention-description">
-									Retention period for synchronization execution logs
+									{{ t('openconnector', 'Retention period for synchronization execution logs') }}
 								</p>
 							</div>
 							<div class="retention-input">
@@ -594,29 +593,28 @@
 		<!-- Rebase Confirmation Dialog -->
 		<NcDialog
 			v-if="showRebaseConfirmation"
-			name="Confirm Rebase"
+			:name="t('openconnector', 'Confirm Rebase')"
 			:can-close="!rebasing"
 			@closing="hideRebaseDialog">
 			<div class="rebase-dialog">
 				<div class="rebase-warning">
-					<h3>⚠️ Rebase All Logs</h3>
+					<h3>⚠️ {{ t('openconnector', 'Rebase All Logs') }}</h3>
 					<p class="warning-text">
-						This action will recalculate expiry times for all logs based on your current retention settings.
-						This operation uses database-optimized queries for maximum performance.
+						{{ t('openconnector', 'This action will recalculate expiry times for all logs based on your current retention settings. This operation uses database-optimized queries for maximum performance.') }}
 					</p>
 					<p class="impact-text">
-						<strong>This operation:</strong><br>
-						• Will update expiry timestamps for all existing logs<br>
-						• Cannot be undone once started<br>
-						• May take some time to complete depending on data volume<br>
-						• Uses database operations for optimal performance
+						<strong>{{ t('openconnector', 'This operation:') }}</strong><br>
+						• {{ t('openconnector', 'Will update expiry timestamps for all existing logs') }}<br>
+						• {{ t('openconnector', 'Cannot be undone once started') }}<br>
+						• {{ t('openconnector', 'May take some time to complete depending on data volume') }}<br>
+						• {{ t('openconnector', 'Uses database operations for optimal performance') }}
 					</p>
 				</div>
 				<div class="dialog-actions">
 					<NcButton
 						:disabled="rebasing"
 						@click="hideRebaseDialog">
-						Cancel
+						{{ t('openconnector', 'Cancel') }}
 					</NcButton>
 					<NcButton
 						type="error"
@@ -626,7 +624,7 @@
 							<NcLoadingIcon v-if="rebasing" :size="20" />
 							<Refresh v-else :size="20" />
 						</template>
-						{{ rebasing ? 'Rebasing...' : 'Confirm Rebase' }}
+						{{ rebasing ? t('openconnector', 'Rebasing...') : t('openconnector', 'Confirm Rebase') }}
 					</NcButton>
 				</div>
 			</div>
@@ -636,6 +634,7 @@
 
 <script>
 import { defineComponent } from 'vue'
+import { translate as t } from '@nextcloud/l10n'
 import { CnVersionInfoCard } from '@conduction/nextcloud-vue'
 import {
 	NcSettingsSection,

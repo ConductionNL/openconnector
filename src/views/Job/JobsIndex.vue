@@ -184,7 +184,7 @@ import { jobStore, navigationStore } from '../../store/store.js'
 											</td>
 										</tr>
 										<tr v-if="job.jobClass">
-											<td>{{ t('openconnector', 'Job Class') }}</td>
+											<td>{{ t('openconnector', 'Job class') }}</td>
 											<td class="truncatedText">
 												{{ job.jobClass }}
 											</td>
@@ -194,7 +194,7 @@ import { jobStore, navigationStore } from '../../store/store.js'
 											<td>{{ job.interval }}</td>
 										</tr>
 										<tr v-if="job.executionTime">
-											<td>{{ t('openconnector', 'Execution Time') }}</td>
+											<td>{{ t('openconnector', 'Execution time') }}</td>
 											<td>{{ job.executionTime }}</td>
 										</tr>
 										<tr>
@@ -202,11 +202,11 @@ import { jobStore, navigationStore } from '../../store/store.js'
 											<td>{{ getArgumentCount(job) }}</td>
 										</tr>
 										<tr v-if="job.nextRun">
-											<td>{{ t('openconnector', 'Next Run') }}</td>
+											<td>{{ t('openconnector', 'Next run') }}</td>
 											<td>{{ new Date(job.nextRun).toLocaleDateString() + ', ' + new Date(job.nextRun).toLocaleTimeString() }}</td>
 										</tr>
 										<tr v-if="job.lastRun">
-											<td>{{ t('openconnector', 'Last Run') }}</td>
+											<td>{{ t('openconnector', 'Last run') }}</td>
 											<td>{{ new Date(job.lastRun).toLocaleDateString() + ', ' + new Date(job.lastRun).toLocaleTimeString() }}</td>
 										</tr>
 										<tr>
@@ -232,11 +232,11 @@ import { jobStore, navigationStore } from '../../store/store.js'
 									</th>
 									<th>{{ t('openconnector', 'Name') }}</th>
 									<th>{{ t('openconnector', 'Status') }}</th>
-									<th>{{ t('openconnector', 'Job Class') }}</th>
+									<th>{{ t('openconnector', 'Job class') }}</th>
 									<th>{{ t('openconnector', 'Interval') }}</th>
 									<th>{{ t('openconnector', 'Arguments') }}</th>
-									<th>{{ t('openconnector', 'Next Run') }}</th>
-									<th>{{ t('openconnector', 'Last Run') }}</th>
+									<th>{{ t('openconnector', 'Next run') }}</th>
+									<th>{{ t('openconnector', 'Last run') }}</th>
 									<th class="tableColumnActions">
 										{{ t('openconnector', 'Actions') }}
 									</th>

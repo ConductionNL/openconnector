@@ -8,7 +8,7 @@ import { translate as t } from '@nextcloud/l10n'
 		<div class="viewContainer">
 			<div class="viewHeader">
 				<h1 class="viewHeaderTitleIndented">
-					{{ t('openconnector', 'Synchronization Logs') }}
+					{{ t('openconnector', 'Synchronization logs') }}
 				</h1>
 				<p>{{ t('openconnector', 'Monitor and analyze synchronization logs and their performance') }}</p>
 			</div>
@@ -74,7 +74,7 @@ import { translate as t } from '@nextcloud/l10n'
 							<th>{{ t('openconnector', 'Status') }}</th>
 							<th>{{ t('openconnector', 'Synchronization') }}</th>
 							<th>{{ t('openconnector', 'Details') }}</th>
-							<th>{{ t('openconnector', 'Execution Time') }}</th>
+							<th>{{ t('openconnector', 'Execution time') }}</th>
 							<th>{{ t('openconnector', 'Created') }}</th>
 							<th class="tableColumnActions">
 								{{ t('openconnector', 'Actions') }}
@@ -119,13 +119,13 @@ import { translate as t } from '@nextcloud/l10n'
 										<template #icon>
 											<Eye :size="20" />
 										</template>
-										{{ t('openconnector', 'View Details') }}
+										{{ t('openconnector', 'View details') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="copyLogData(log)">
 										<template #icon>
 											<ContentCopy :size="20" />
 										</template>
-										{{ t('openconnector', 'Copy Data') }}
+										{{ t('openconnector', 'Copy data') }}
 									</NcActionButton>
 									<NcActionButton :disabled="deletingLogs" close-after-click @click="deleteLog(log)">
 										<template #icon>

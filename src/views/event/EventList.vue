@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { eventStore, navigationStore, searchStore } from '../../store/store.js'
 </script>
 
@@ -9,7 +10,7 @@ import { eventStore, navigationStore, searchStore } from '../../store/store.js'
 				<NcTextField
 					:value.sync="searchStore.search"
 					:show-trailing-button="searchStore.search !== ''"
-					label="Search"
+					:label="t('openconnector', 'Search')"
 					class="searchField"
 					trailing-button-icon="close"
 					@trailing-button-click="searchStore.clearSearch()">
@@ -20,13 +21,13 @@ import { eventStore, navigationStore, searchStore } from '../../store/store.js'
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Refresh
+						{{ t('openconnector', 'Refresh') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="eventStore.setEventItem(null); navigationStore.setModal('editEvent')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Add event
+						{{ t('openconnector', 'Add event') }}
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -50,13 +51,13 @@ import { eventStore, navigationStore, searchStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="eventStore.setEventItem(event); navigationStore.setDialog('deleteEvent')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -67,10 +68,10 @@ import { eventStore, navigationStore, searchStore } from '../../store/store.js'
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Loading events" />
+			:name="t('openconnector', 'Loading...')" />
 
 		<div v-if="!eventStore.eventList.length" class="emptyListHeader">
-			No events defined
+			{{ t('openconnector', 'No sources are available.') }}
 		</div>
 	</NcAppContentList>
 </template>

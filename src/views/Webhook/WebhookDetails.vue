@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { webhookStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -11,7 +12,7 @@ import { webhookStore, navigationStore } from '../../store/store.js'
 						{{ webhookStore.webhookItem.name }}
 					</h1>
 
-					<NcActions :primary="true" menu-name="Acties">
+					<NcActions :primary="true" :menu-name="t('openconnector', 'Actions')">
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
@@ -19,13 +20,13 @@ import { webhookStore, navigationStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Bewerken
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteWebhook')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
-							Verwijderen
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</NcActions>
 				</div>
@@ -33,11 +34,11 @@ import { webhookStore, navigationStore } from '../../store/store.js'
 
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
-						<b>id:</b>
+						<b>{{ t('openconnector', 'ID') }}:</b>
 						<p>{{ webhookStore.webhookItem.uuid }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>URL:</b>
+						<b>{{ t('openconnector', 'URL') }}:</b>
 						<p>{{ webhookStore.webhookItem.url }}</p>
 					</div>
 				</div>

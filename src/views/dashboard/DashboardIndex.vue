@@ -1,7 +1,7 @@
 <template>
 	<NcAppContent>
 		<h2 class="pageHeader">
-			Dashboard
+			{{ t('openconnector', 'Dashboard') }}
 		</h2>
 
 		<div class="dashboard-content">
@@ -23,31 +23,31 @@
 
 			<div class="date-range-selector">
 				<div class="date-picker">
-					<label for="fromDate">From:</label>
+					<label for="fromDate">{{ t('openconnector', 'From:') }}</label>
 					<NcDateTimePicker
 						v-model="dateRange.from"
 						:max-date="dateRange.to"
 						:show-time="true"
-						:placeholder="'Select start date'"
+						:placeholder="t('openconnector', 'Select start date')"
 						@change="handleDateChange" />
 				</div>
 				<div class="date-picker">
-					<label for="toDate">To:</label>
+					<label for="toDate">{{ t('openconnector', 'To:') }}</label>
 					<NcDateTimePicker
 						v-model="dateRange.to"
 						:min-date="dateRange.from"
 						:max-date="new Date()"
 						:show-time="true"
-						:placeholder="'Select end date'"
+						:placeholder="t('openconnector', 'Select end date')"
 						@change="handleDateChange" />
 				</div>
 			</div>
 
 			<div class="graph-section">
-				<h3>Calls</h3>
+				<h3>{{ t('openconnector', 'Calls') }}</h3>
 				<div class="graphs">
 					<div>
-						<h5>Outgoing Calls (Last 7 Days)</h5>
+						<h5>{{ t('openconnector', 'Outgoing Calls (Last 7 Days)') }}</h5>
 						<div class="content">
 							<apexchart
 								width="500"
@@ -56,7 +56,7 @@
 						</div>
 					</div>
 					<div>
-						<h5>Outgoing Calls by Hour</h5>
+						<h5>{{ t('openconnector', 'Outgoing Calls by Hour') }}</h5>
 						<div class="content">
 							<apexchart
 								width="500"
@@ -68,10 +68,10 @@
 			</div>
 
 			<div class="graph-section">
-				<h3>Jobs</h3>
+				<h3>{{ t('openconnector', 'Jobs') }}</h3>
 				<div class="graphs">
 					<div>
-						<h5>Job Executions (Last 7 Days)</h5>
+						<h5>{{ t('openconnector', 'Job Executions (Last 7 Days)') }}</h5>
 						<div class="content">
 							<apexchart
 								width="500"
@@ -80,7 +80,7 @@
 						</div>
 					</div>
 					<div>
-						<h5>Job Executions by Hour</h5>
+						<h5>{{ t('openconnector', 'Job Executions by Hour') }}</h5>
 						<div class="content">
 							<apexchart
 								width="500"
@@ -92,10 +92,10 @@
 			</div>
 
 			<div class="graph-section">
-				<h3>Synchronizations</h3>
+				<h3>{{ t('openconnector', 'Synchronizations') }}</h3>
 				<div class="graphs">
 					<div>
-						<h5>Synchronization Executions (Last 7 Days)</h5>
+						<h5>{{ t('openconnector', 'Synchronization Executions (Last 7 Days)') }}</h5>
 						<div class="content">
 							<apexchart
 								width="500"
@@ -104,7 +104,7 @@
 						</div>
 					</div>
 					<div>
-						<h5>Synchronization Executions by Hour</h5>
+						<h5>{{ t('openconnector', 'Synchronization Executions by Hour') }}</h5>
 						<div class="content">
 							<apexchart
 								width="500"
@@ -121,6 +121,7 @@
 <script>
 
 import { NcAppContent, NcLoadingIcon, NcDateTimePicker } from '@nextcloud/vue'
+import { translate as t } from '@nextcloud/l10n'
 import VueApexCharts from 'vue-apexcharts'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
@@ -132,6 +133,9 @@ import { getTheme } from '../../services/getTheme.js'
  */
 export default {
 	name: 'DashboardIndex',
+	setup() {
+		return { t }
+	},
 	components: {
 		NcAppContent,
 		NcLoadingIcon,
@@ -159,12 +163,12 @@ export default {
 				endpoints: 0,
 			},
 			statsConfig: {
-				sources: { label: 'Sources' },
-				mappings: { label: 'Mappings' },
-				synchronizations: { label: 'Synchronizations' },
-				synchronizationContracts: { label: 'Contracts' },
-				jobs: { label: 'Jobs' },
-				endpoints: { label: 'Endpoints' },
+				sources: { label: t('openconnector', 'Sources') },
+				mappings: { label: t('openconnector', 'Mappings') },
+				synchronizations: { label: t('openconnector', 'Synchronizations') },
+				synchronizationContracts: { label: t('openconnector', 'Contracts') },
+				jobs: { label: t('openconnector', 'Jobs') },
+				endpoints: { label: t('openconnector', 'Endpoints') },
 			},
 			dateRange: {
 				from,

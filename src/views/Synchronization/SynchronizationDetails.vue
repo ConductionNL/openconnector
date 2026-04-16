@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { synchronizationStore, navigationStore, logStore, ruleStore } from '../../store/store.js'
 </script>
 
@@ -11,7 +12,7 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 						{{ synchronizationStore.synchronizationItem.name }}
 					</h1>
 
-					<NcActions :primary="true" menu-name="Actions">
+					<NcActions :primary="true" :menu-name="t('openconnector', 'Actions')">
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
@@ -19,43 +20,43 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationSourceConfigKey(null); navigationStore.setModal('editSynchronizationSourceConfig')">
 							<template #icon>
 								<DatabaseSettingsOutline :size="20" />
 							</template>
-							Add Source Config
+							{{ t('openconnector', 'Add source config') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationTargetConfigKey(null); navigationStore.setModal('editSynchronizationTargetConfig')">
 							<template #icon>
 								<CardBulletedSettingsOutline :size="20" />
 							</template>
-							Add Target Config
+							{{ t('openconnector', 'Add target config') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('testSynchronization')">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
-							Test
+							{{ t('openconnector', 'Test') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('runSynchronization')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
-							Run
+							{{ t('openconnector', 'Run') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="synchronizationStore.exportSynchronization(synchronizationStore.synchronizationItem.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
-							Export synchronization
+							{{ t('openconnector', 'Export synchronization') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteSynchronization')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</NcActions>
 				</div>
@@ -63,19 +64,19 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
-						<b>id:</b>
+						<b>{{ t('openconnector', 'ID') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.id }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>uuid:</b>
+						<b>{{ t('openconnector', 'UUID') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.uuid }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Version:</b>
+						<b>{{ t('openconnector', 'Version') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.version }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Created:</b>
+						<b>{{ t('openconnector', 'Created') }}:</b>
 						<p>
 							{{ synchronizationStore.synchronizationItem.created
 								? new Date(synchronizationStore.synchronizationItem.created).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -84,7 +85,7 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 						</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Updated:</b>
+						<b>{{ t('openconnector', 'Updated') }}:</b>
 						<p>
 							{{ synchronizationStore.synchronizationItem.updated
 								? new Date(synchronizationStore.synchronizationItem.updated).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -94,66 +95,66 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 					</div>
 
 					<div class="gridContent gridDoubleWidth">
-						<h4>Source</h4>
+						<h4>{{ t('openconnector', 'Source') }}</h4>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>SourceId:</b>
+						<b>{{ t('openconnector', 'Source ID') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.sourceId || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Source Type:</b>
+						<b>{{ t('openconnector', 'Source type') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.sourceType || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Source Hash:</b>
+						<b>{{ t('openconnector', 'Source Hash') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.sourceHash || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Source Hash mapping id:</b>
+						<b>{{ t('openconnector', 'Source Hash Mapping ID') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.sourceHashMapping || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Source Last Changed:</b>
+						<b>{{ t('openconnector', 'Source Last Changed') }}:</b>
 						<p>{{ getValidISOstring(synchronizationStore.synchronizationItem.sourceLastChanged) ? new Date(synchronizationStore.synchronizationItem.sourceLastChanged).toLocaleString() : 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Source Last Checked:</b>
+						<b>{{ t('openconnector', 'Source Last Checked') }}:</b>
 						<p>{{ getValidISOstring(synchronizationStore.synchronizationItem.sourceLastChecked) ? new Date(synchronizationStore.synchronizationItem.sourceLastChecked).toLocaleString() : 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Source Last Synced:</b>
+						<b>{{ t('openconnector', 'Source Last Synced') }}:</b>
 						<p>{{ getValidISOstring(synchronizationStore.synchronizationItem.sourceLastSynced) ? new Date(synchronizationStore.synchronizationItem.sourceLastSynced).toLocaleString() : 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Source Target Mapping:</b>
+						<b>{{ t('openconnector', 'Source Target Mapping') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.sourceTargetMapping || 'N/A' }}</p>
 					</div>
 
 					<div class="gridContent gridDoubleWidth">
-						<h4>Target</h4>
+						<h4>{{ t('openconnector', 'Target') }}</h4>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Target Id:</b>
+						<b>{{ t('openconnector', 'Target ID') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.targetId || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Target Type:</b>
+						<b>{{ t('openconnector', 'Target type') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.targetType || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Target Last Changed:</b>
+						<b>{{ t('openconnector', 'Target Last Changed') }}:</b>
 						<p>{{ getValidISOstring(synchronizationStore.synchronizationItem.targetLastChanged) ? new Date(synchronizationStore.synchronizationItem.targetLastChanged).toLocaleString() : 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Target Last Checked:</b>
+						<b>{{ t('openconnector', 'Target Last Checked') }}:</b>
 						<p>{{ getValidISOstring(synchronizationStore.synchronizationItem.targetLastChecked) ? new Date(synchronizationStore.synchronizationItem.targetLastChecked).toLocaleString() : 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Target Last Synced:</b>
+						<b>{{ t('openconnector', 'Target Last Synced') }}:</b>
 						<p>{{ getValidISOstring(synchronizationStore.synchronizationItem.targetLastSynced) ? new Date(synchronizationStore.synchronizationItem.targetLastSynced).toLocaleString() : 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>Target Source Mapping:</b>
+						<b>{{ t('openconnector', 'Target Source Mapping') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.targetSourceMapping || 'N/A' }}</p>
 					</div>
 				</div>
@@ -161,7 +162,7 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 
 				<div class="tabContainer">
 					<BTabs content-class="mt-3" justified>
-						<BTab title="Contracts">
+						<BTab :title="t('openconnector', 'Contracts')">
 							<div v-if="synchronizationStore.synchronizationContracts?.length">
 								<NcListItem v-for="(contract, i) in synchronizationStore.synchronizationContracts"
 									:key="`${contract.id}${i}`"
@@ -182,25 +183,25 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>
-											View
+											{{ t('openconnector', 'View') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-if="!synchronizationStore.synchronizationContracts.length" class="tabPanel">
-								No contracts found
+								{{ t('openconnector', 'No contracts found') }}
 							</div>
 						</BTab>
-						<BTab title="Source config">
+						<BTab :title="t('openconnector', 'Source config')">
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									aria-label="Add Source Config"
+									:aria-label="t('openconnector', 'Add source config')"
 									@click="synchronizationStore.setSynchronizationSourceConfigKey(null); navigationStore.setModal('editSynchronizationSourceConfig')">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									Add Source Config
+									{{ t('openconnector', 'Add source config') }}
 								</NcButton>
 							</div>
 							<div v-if="Object.keys(synchronizationStore.synchronizationItem.sourceConfig).length">
@@ -223,31 +224,31 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
-											Edit
+											{{ t('openconnector', 'Edit') }}
 										</NcActionButton>
 										<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationSourceConfigKey(key); navigationStore.setModal('deleteSynchronizationSourceConfig')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Delete
+											{{ t('openconnector', 'Delete') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-if="!Object.keys(synchronizationStore.synchronizationItem.sourceConfig).length" class="tabPanel">
-								No source configs found
+								{{ t('openconnector', 'No source configurations found') }}
 							</div>
 						</BTab>
-						<BTab title="Target config">
+						<BTab :title="t('openconnector', 'Target config')">
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									aria-label="Add Target Config"
+									:aria-label="t('openconnector', 'Add target config')"
 									@click="synchronizationStore.setSynchronizationTargetConfigKey(null); navigationStore.setModal('editSynchronizationTargetConfig')">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									Add Target Config
+									{{ t('openconnector', 'Add target config') }}
 								</NcButton>
 							</div>
 							<div v-if="Object.keys(synchronizationStore.synchronizationItem.targetConfig).length">
@@ -270,22 +271,22 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
-											Edit
+											{{ t('openconnector', 'Edit') }}
 										</NcActionButton>
 										<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationTargetConfigKey(key); navigationStore.setModal('deleteSynchronizationTargetConfig')">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Delete
+											{{ t('openconnector', 'Delete') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-if="!Object.keys(synchronizationStore.synchronizationItem.targetConfig).length" class="tabPanel">
-								No target configs found
+								{{ t('openconnector', 'No target configurations found') }}
 							</div>
 						</BTab>
-						<BTab title="Rules">
+						<BTab :title="t('openconnector', 'Rules')">
 							<div v-if="filteredRuleList.length">
 								<NcListItem v-for="(rule, i) in filteredRuleList"
 									:key="`${rule.id}${i}`"
@@ -307,22 +308,22 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>
-											View
+											{{ t('openconnector', 'View') }}
 										</NcActionButton>
 										<NcActionButton close-after-click @click="ruleStore.setRuleItem(rule); navigationStore.setModal('editRule')">
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
-											Edit
+											{{ t('openconnector', 'Edit') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-if="!filteredRuleList.length" class="tabPanel">
-								No rules found
+								{{ t('openconnector', 'No rules found for this synchronization') }}
 							</div>
 						</BTab>
-						<BTab title="Logs">
+						<BTab :title="t('openconnector', 'Logs')">
 							<div v-if="synchronizationStore.synchronizationLogs?.length">
 								<NcListItem v-for="(log, i) in [...synchronizationStore.synchronizationLogs].reverse()"
 									:key="log.id + i"
@@ -341,13 +342,13 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>
-											View
+											{{ t('openconnector', 'View') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-if="!synchronizationStore.synchronizationLogs?.length" class="tabPanel">
-								No logs found
+								{{ t('openconnector', 'No logs found') }}
 							</div>
 						</BTab>
 					</BTabs>

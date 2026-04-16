@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 </script>
 
@@ -11,7 +12,7 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 						{{ endpoint?.name }}
 					</h1>
 
-					<NcActions :primary="true" menu-name="Acties">
+					<NcActions :primary="true" :menu-name="t('openconnector', 'Actions')">
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
@@ -19,84 +20,84 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Bewerken
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="endpointStore.exportEndpoint(endpointStore.endpointItem.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
-							Export endpoint
+							{{ t('openconnector', 'Export endpoint') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteEndpoint')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
-							Verwijderen
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('addEndpointRule')">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Add Rule
+							{{ t('openconnector', 'Add rule') }}
 						</NcActionButton>
 					</NcActions>
 				</div>
 
 				<div class="detailGrid">
 					<div class="gridContent">
-						<b>Id:</b>
+						<b>{{ t('openconnector', 'ID') }}:</b>
 						<p>{{ endpoint?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Uuid:</b>
+						<b>{{ t('openconnector', 'UUID') }}:</b>
 						<p>{{ endpoint?.uuid || '-' }}</p>
 					</div>
 					<div class="gridContent" />
 
 					<div class="gridContent">
-						<b>Name:</b>
+						<b>{{ t('openconnector', 'Name') }}:</b>
 						<p>{{ endpoint?.name || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Description:</b>
+						<b>{{ t('openconnector', 'Description') }}:</b>
 						<p>{{ endpoint?.description || '-' }}</p>
 					</div>
 
 					<div class="gridContent">
-						<b>Version:</b>
+						<b>{{ t('openconnector', 'Version') }}:</b>
 						<p>{{ endpoint?.version || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Endpoint:</b>
+						<b>{{ t('openconnector', 'Endpoint') }}:</b>
 						<p>{{ endpoint?.endpoint || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Endpoint Array:</b>
+						<b>{{ t('openconnector', 'Endpoint array') }}:</b>
 						<p>{{ endpoint?.endpointArray?.join(', ') || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Endpoint Regex:</b>
+						<b>{{ t('openconnector', 'Endpoint regex') }}:</b>
 						<p>{{ endpoint?.endpointRegex || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Method:</b>
+						<b>{{ t('openconnector', 'Method') }}:</b>
 						<p>{{ endpoint?.method || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Target Type:</b>
+						<b>{{ t('openconnector', 'Target type') }}:</b>
 						<p>{{ endpoint?.targetType || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Target Id:</b>
+						<b>{{ t('openconnector', 'Target ID') }}:</b>
 						<p>{{ endpoint?.targetId || '-' }}</p>
 					</div>
 
 					<div class="gridContent">
-						<b>Created:</b>
+						<b>{{ t('openconnector', 'Created') }}:</b>
 						<p>{{ endpoint?.created ? new Date(endpoint.created).toLocaleDateString() : '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Updated:</b>
+						<b>{{ t('openconnector', 'Updated') }}:</b>
 						<p>{{ endpoint?.updated ? new Date(endpoint.updated).toLocaleDateString() : '-' }}</p>
 					</div>
 				</div>
@@ -104,16 +105,16 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 				<div class="tabContainer">
 					<BTabs content-class="mt-3" justified>
 						<!-- Rules Tab -->
-						<BTab title="Rules">
+						<BTab :title="t('openconnector', 'Rules')">
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									aria-label="Add Rule"
+									:aria-label="t('openconnector', 'Add rule')"
 									@click="navigationStore.setModal('addEndpointRule')">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									Add Rule
+									{{ t('openconnector', 'Add rule') }}
 								</NcButton>
 							</div>
 							<div v-if="endpoint?.rules?.length">
@@ -130,33 +131,33 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 									</template>
 									<template #subname>
 										<span v-if="rulesLoaded">{{ getRuleType(ruleId) }}</span>
-										<span v-else>Loading...</span>
+										<span v-else>{{ t('openconnector', 'Loading...') }}</span>
 									</template>
 									<template #actions>
 										<NcActionButton close-after-click @click.stop="viewRule(ruleId)">
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>
-											View
+											{{ t('openconnector', 'View') }}
 										</NcActionButton>
 										<NcActionButton close-after-click @click.stop="removeRule(ruleId)">
 											<template #icon>
 												<LinkOff :size="20" />
 											</template>
-											Remove
+											{{ t('openconnector', 'Remove') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-else class="tabPanel">
-								No rules found
+								{{ t('openconnector', 'No rules found for this endpoint') }}
 							</div>
 						</BTab>
 
 						<!-- Logs Tab -->
-						<BTab title="Logs">
+						<BTab :title="t('openconnector', 'Logs')">
 							<div class="tabPanel">
-								No logs found
+								{{ t('openconnector', 'No logs found') }}
 							</div>
 						</BTab>
 					</BTabs>
