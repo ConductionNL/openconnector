@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { mappingStore, navigationStore, searchStore } from '../../store/store.js'
 </script>
 
@@ -9,7 +10,7 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 				<NcTextField
 					:value.sync="searchStore.search"
 					:show-trailing-button="searchStore.search !== ''"
-					label="Search"
+					:label="t('openconnector', 'Search')"
 					class="searchField"
 					trailing-button-icon="close"
 					@trailing-button-click="searchStore.clearSearch()">
@@ -20,19 +21,19 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Refresh
+						{{ t('openconnector', 'Refresh') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="mappingStore.setMappingItem({}); navigationStore.setModal('editMapping')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Add mapping
+						{{ t('openconnector', 'Add mapping') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
-						Import
+						{{ t('openconnector', 'Import') }}
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -56,25 +57,25 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 							<template #icon>
 								<Pencil />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="mappingStore.setMappingItem(mapping); navigationStore.setModal('testMapping')">
 							<template #icon>
 								<TestTube :size="20" />
 							</template>
-							Test
+							{{ t('openconnector', 'Test') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="mappingStore.exportMapping(mapping.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
-							Export mapping
+							{{ t('openconnector', 'Export mapping') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="mappingStore.setMappingItem(mapping); navigationStore.setDialog('deleteMapping')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -85,10 +86,10 @@ import { mappingStore, navigationStore, searchStore } from '../../store/store.js
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Loading mappings" />
+			:name="t('openconnector', 'Loading...')" />
 
 		<div v-if="!mappingStore.mappingList.length" class="emptyListHeader">
-			No mappings defined
+			{{ t('openconnector', 'No sources are available.') }}
 		</div>
 	</NcAppContentList>
 </template>

@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { mappingStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -10,39 +11,39 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 		<template #default>
 			<NcEmptyContent v-if="!$route.params.id"
 				class="detailContainer"
-				name="No mapping"
-				description="No mapping selected">
+				:name="t('openconnector', 'No mapping')"
+				:description="t('openconnector', 'No mapping selected')">
 				<template #icon>
 					<SitemapOutline />
 				</template>
 				<template #action>
 					<NcButton type="primary" @click="mappingStore.setMappingItem(null); navigationStore.setModal('editMapping')">
-						Add mapping
+						{{ t('openconnector', 'Add mapping') }}
 					</NcButton>
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loading"
 				class="detailContainer"
-				name="Loading..."
-				description="Fetching rule details">
+				:name="t('openconnector', 'Loading...')"
+				:description="t('openconnector', 'Fetching mapping details')">
 				<template #icon>
 					<NcLoadingIcon />
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
-				name="Error"
-				description="Failed to load mapping.">
+				:name="t('openconnector', 'Error')"
+				:description="t('openconnector', 'Failed to load mapping.')">
 				<template #icon>
 					<SitemapOutline />
 				</template>
 				<template #action>
 					<div style="display: flex; gap: 0.5rem;">
 						<NcButton type="secondary" @click="mappingStore.setMappingItem(null); loadError = false; $router.push('/mappings')">
-							Back
+							{{ t('openconnector', 'Back') }}
 						</NcButton>
 						<NcButton type="primary" @click="mappingStore.setMappingItem(null); loadError = false; $router.push('/mappings'); navigationStore.setModal('editMapping')">
-							Add mapping
+							{{ t('openconnector', 'Add mapping') }}
 						</NcButton>
 					</div>
 				</template>

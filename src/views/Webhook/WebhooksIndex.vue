@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { webhookStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -10,14 +11,14 @@ import { webhookStore, navigationStore } from '../../store/store.js'
 		<template #default>
 			<NcEmptyContent v-if="!webhookStore.webhookItem || $route.path != '/webhooks'"
 				class="detailContainer"
-				name="Geen webhook"
-				description="Nog geen webhook geselecteerd">
+				:name="t('openconnector', 'No webhook')"
+				:description="t('openconnector', 'No webhook selected')">
 				<template #icon>
 					<Webhook />
 				</template>
 				<template #action>
 					<NcButton type="primary" @click="webhookStore.setWebhookItem({}); navigationStore.setModal('editWebhook')">
-						Webhook toevoegen
+						{{ t('openconnector', 'Add webhook') }}
 					</NcButton>
 				</template>
 			</NcEmptyContent>

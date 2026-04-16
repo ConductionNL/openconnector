@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { consumerStore, navigationStore, searchStore } from '../../store/store.js'
 </script>
 
@@ -9,7 +10,7 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 				<NcTextField
 					:value.sync="searchStore.search"
 					:show-trailing-button="searchStore.search !== ''"
-					label="Search"
+					:label="t('openconnector', 'Search')"
 					class="searchField"
 					trailing-button-icon="close"
 					@trailing-button-click="searchStore.clearSearch()">
@@ -20,13 +21,13 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Refresh
+						{{ t('openconnector', 'Refresh') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="consumerStore.setConsumerItem(null); navigationStore.setModal('editConsumer')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Add consumer
+						{{ t('openconnector', 'Add consumer') }}
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -50,13 +51,13 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 							<template #icon>
 								<Pencil />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="consumerStore.setConsumerItem(consumer); navigationStore.setDialog('deleteConsumer')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -67,10 +68,10 @@ import { consumerStore, navigationStore, searchStore } from '../../store/store.j
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Loading consumers" />
+			:name="t('openconnector', 'Loading...')" />
 
 		<div v-if="!consumerStore.consumerList.length" class="emptyListHeader">
-			No consumers defined
+			{{ t('openconnector', 'No sources are available.') }}
 		</div>
 	</NcAppContentList>
 </template>

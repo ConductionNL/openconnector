@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { eventStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -10,39 +11,39 @@ import { eventStore, navigationStore } from '../../store/store.js'
 		<template #default>
 			<NcEmptyContent v-if="!$route.params.id"
 				class="detailContainer"
-				name="No event"
-				description="No event selected">
+				:name="t('openconnector', 'No event')"
+				:description="t('openconnector', 'No event selected')">
 				<template #icon>
 					<Update />
 				</template>
 				<template #action>
 					<NcButton type="primary" @click="eventStore.setEventItem(null); navigationStore.setModal('editEvent')">
-						Add event
+						{{ t('openconnector', 'Add event') }}
 					</NcButton>
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loading"
 				class="detailContainer"
-				name="Loading..."
-				description="Fetching rule details">
+				:name="t('openconnector', 'Loading...')"
+				:description="t('openconnector', 'Fetching event details')">
 				<template #icon>
 					<NcLoadingIcon />
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
-				name="Error"
-				description="Failed to load event.">
+				:name="t('openconnector', 'Error')"
+				:description="t('openconnector', 'Failed to load event.')">
 				<template #icon>
 					<Update />
 				</template>
 				<template #action>
 					<div style="display: flex; gap: 0.5rem;">
 						<NcButton type="secondary" @click="eventStore.setEventItem(null); loadError = false; $router.push('/cloud-events/events')">
-							Back
+							{{ t('openconnector', 'Back') }}
 						</NcButton>
 						<NcButton type="primary" @click="eventStore.setEventItem(null); loadError = false; $router.push('/cloud-events/events'); navigationStore.setModal('editEvent')">
-							Add event
+							{{ t('openconnector', 'Add event') }}
 						</NcButton>
 					</div>
 				</template>

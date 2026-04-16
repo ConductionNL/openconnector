@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { ruleStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -10,39 +11,39 @@ import { ruleStore, navigationStore } from '../../store/store.js'
 		<template #default>
 			<NcEmptyContent v-if="!$route.params.id"
 				class="detailContainer"
-				name="No rule"
-				description="No rule selected">
+				:name="t('openconnector', 'No rule')"
+				:description="t('openconnector', 'No rule selected')">
 				<template #icon>
 					<Update />
 				</template>
 				<template #action>
 					<NcButton type="primary" @click="ruleStore.setRuleItem(null); navigationStore.setModal('editRule')">
-						Add rule
+						{{ t('openconnector', 'Add rule') }}
 					</NcButton>
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loading"
 				class="detailContainer"
-				name="Loading..."
-				description="Fetching rule details">
+				:name="t('openconnector', 'Loading...')"
+				:description="t('openconnector', 'Fetching rule details')">
 				<template #icon>
 					<NcLoadingIcon />
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
-				name="Error"
-				description="Failed to load rule.">
+				:name="t('openconnector', 'Error')"
+				:description="t('openconnector', 'Failed to load rule.')">
 				<template #icon>
 					<Update />
 				</template>
 				<template #action>
 					<div style="display: flex; gap: 0.5rem;">
 						<NcButton type="secondary" @click="ruleStore.setRuleItem(null); loadError = false; $router.push('/rules')">
-							Back
+							{{ t('openconnector', 'Back') }}
 						</NcButton>
 						<NcButton type="primary" @click="ruleStore.setRuleItem(null); loadError = false; $router.push('/rules'); navigationStore.setModal('editRule')">
-							Add rule
+							{{ t('openconnector', 'Add rule') }}
 						</NcButton>
 					</div>
 				</template>

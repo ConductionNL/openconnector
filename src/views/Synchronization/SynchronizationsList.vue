@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { synchronizationStore, navigationStore, searchStore } from '../../store/store.js'
 </script>
 
@@ -9,7 +10,7 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 				<NcTextField
 					:value.sync="searchStore.search"
 					:show-trailing-button="searchStore.search !== ''"
-					label="Search"
+					:label="t('openconnector', 'Search')"
 					class="searchField"
 					trailing-button-icon="close"
 					@trailing-button-click="searchStore.clearSearch()">
@@ -20,19 +21,19 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 						<template #icon>
 							<Refresh :size="20" />
 						</template>
-						Refresh
+						{{ t('openconnector', 'Refresh') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(null); navigationStore.setModal('editSynchronization')">
 						<template #icon>
 							<Plus :size="20" />
 						</template>
-						Add synchronization
+						{{ t('openconnector', 'Add synchronization') }}
 					</NcActionButton>
 					<NcActionButton close-after-click @click="navigationStore.setModal('importFile')">
 						<template #icon>
 							<FileImportOutline :size="20" />
 						</template>
-						Import
+						{{ t('openconnector', 'Import') }}
 					</NcActionButton>
 				</NcActions>
 			</div>
@@ -56,7 +57,7 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 							<template #icon>
 								<Pencil />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click
 							@click="() => {
@@ -67,7 +68,7 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 							<template #icon>
 								<DatabaseSettingsOutline :size="20" />
 							</template>
-							Add source config
+							{{ t('openconnector', 'Add Source Config') }}
 						</NcActionButton>
 						<NcActionButton close-after-click
 							@click="() => {
@@ -78,31 +79,31 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 							<template #icon>
 								<CardBulletedSettingsOutline :size="20" />
 							</template>
-							Add target config
+							{{ t('openconnector', 'Add Target Config') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('testSynchronization')">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
-							Test
+							{{ t('openconnector', 'Test') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('runSynchronization')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
-							Run
+							{{ t('openconnector', 'Run') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="synchronizationStore.exportSynchronization(synchronization.id)">
 							<template #icon>
 								<FileExportOutline :size="20" />
 							</template>
-							Export synchronization
+							{{ t('openconnector', 'Export synchronization') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setDialog('deleteSynchronization')">
 							<template #icon>
 								<TrashCanOutline />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
@@ -113,10 +114,10 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 			class="loadingIcon"
 			:size="64"
 			appearance="dark"
-			name="Loading syncronizations" />
+			:name="t('openconnector', 'Loading synchronizations...')" />
 
 		<div v-if="!synchronizationStore.synchronizationList.length" class="emptyListHeader">
-			No synchronizations defined
+			{{ t('openconnector', 'No synchronizations are available.') }}
 		</div>
 	</NcAppContentList>
 </template>

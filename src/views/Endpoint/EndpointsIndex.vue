@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { endpointStore, navigationStore } from '../../store/store.js'
 </script>
 
@@ -10,39 +11,39 @@ import { endpointStore, navigationStore } from '../../store/store.js'
 		<template #default>
 			<NcEmptyContent v-if="!$route.params.id"
 				class="detailContainer"
-				name="Geen endpoint"
-				description="Nog geen endpoint geselecteerd">
+				:name="t('openconnector', 'No endpoint')"
+				:description="t('openconnector', 'No endpoint selected')">
 				<template #icon>
 					<Api />
 				</template>
 				<template #action>
 					<NcButton type="primary" @click="endpointStore.setEndpointItem(null); navigationStore.setModal('editEndpoint')">
-						Endpoint toevoegen
+						{{ t('openconnector', 'Add endpoint') }}
 					</NcButton>
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loading"
 				class="detailContainer"
-				name="Loading..."
-				description="Fetching rule details">
+				:name="t('openconnector', 'Loading...')"
+				:description="t('openconnector', 'Fetching endpoint details')">
 				<template #icon>
 					<NcLoadingIcon />
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadError"
 				class="detailContainer"
-				name="Error"
-				description="Failed to load endpoint.">
+				:name="t('openconnector', 'Error')"
+				:description="t('openconnector', 'Failed to load endpoint.')">
 				<template #icon>
 					<Api />
 				</template>
 				<template #action>
 					<div style="display: flex; gap: 0.5rem;">
 						<NcButton type="secondary" @click="endpointStore.setEndpointItem(null); loadError = false; $router.push('/endpoints')">
-							Terug
+							{{ t('openconnector', 'Back') }}
 						</NcButton>
 						<NcButton type="primary" @click="endpointStore.setEndpointItem(null); loadError = false; $router.push('/endpoints'); navigationStore.setModal('editEndpoint')">
-							Endpoint toevoegen
+							{{ t('openconnector', 'Add endpoint') }}
 						</NcButton>
 					</div>
 				</template>

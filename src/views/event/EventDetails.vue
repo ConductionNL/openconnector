@@ -1,4 +1,5 @@
 <script setup>
+import { translate as t } from '@nextcloud/l10n'
 import { eventStore, navigationStore, logStore } from '../../store/store.js'
 </script>
 
@@ -11,7 +12,7 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 						{{ item?.name || '-' }}
 					</h1>
 
-					<NcActions :primary="true" menu-name="Actions">
+					<NcActions :primary="true" :menu-name="t('openconnector', 'Actions')">
 						<template #icon>
 							<DotsHorizontal :size="20" />
 						</template>
@@ -19,38 +20,38 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
-							Edit
+							{{ t('openconnector', 'Edit') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="addEventArgument()">
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							Add Argument
+							{{ t('openconnector', 'Add Argument') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('testEvent')">
 							<template #icon>
 								<Update :size="20" />
 							</template>
-							Test
+							{{ t('openconnector', 'Test') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('runEvent')">
 							<template #icon>
 								<Play :size="20" />
 							</template>
-							Run
+							{{ t('openconnector', 'Run') }}
 						</NcActionButton>
 
 						<NcActionButton close-after-click @click="refreshEventLogs()">
 							<template #icon>
 								<Sync :size="20" />
 							</template>
-							Refresh Logs
+							{{ t('openconnector', 'Refresh Logs') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setDialog('deleteEvent')">
 							<template #icon>
 								<TrashCanOutline :size="20" />
 							</template>
-							Delete
+							{{ t('openconnector', 'Delete') }}
 						</NcActionButton>
 					</NcActions>
 				</div>
@@ -58,49 +59,49 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 
 				<div class="detailGrid">
 					<div class="gridContent gridFullWidth">
-						<b>id:</b>
+						<b>{{ t('openconnector', 'ID') }}:</b>
 						<p>{{ item?.id || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Status:</b>
+						<b>{{ t('openconnector', 'Status') }}:</b>
 						<p>{{ item?.status || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Enabled:</b>
+						<b>{{ t('openconnector', 'Enabled') }}:</b>
 						<p>{{ item?.isEnabled }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Event Class:</b>
+						<b>{{ t('openconnector', 'Event Class') }}:</b>
 						<p>{{ item?.eventClass }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Interval:</b>
+						<b>{{ t('openconnector', 'Interval') }}:</b>
 						<p>{{ item?.interval }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Execution Time:</b>
+						<b>{{ t('openconnector', 'Execution Time') }}:</b>
 						<p>{{ item?.executionTime }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Time Sensitive:</b>
+						<b>{{ t('openconnector', 'Time Sensitive') }}:</b>
 						<p>{{ item?.timeSensitive }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Allow Parallel Runs:</b>
+						<b>{{ t('openconnector', 'Allow Parallel Runs') }}:</b>
 						<p>{{ item?.allowParallelRuns }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Single Run:</b>
+						<b>{{ t('openconnector', 'Single Run') }}:</b>
 						<p>{{ item?.singleRun }}</p>
 					</div>
 					<div class="gridContent">
-						<b>Next Run:</b>
+						<b>{{ t('openconnector', 'Next Run') }}:</b>
 						<p>
 							{{ getValidISOstring(item?.nextRun) ? new Date(item?.nextRun).toLocaleString() : 'N/A' }}
 						</p>
 					</div>
 					<div class="gridContent">
-						<b>Last Run:</b>
+						<b>{{ t('openconnector', 'Last Run') }}:</b>
 						<p>
 							{{ getValidISOstring(item?.lastRun) ? new Date(item?.lastRun).toLocaleString() : 'N/A' }}
 						</p>
@@ -109,7 +110,7 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 
 				<div class="tabContainer">
 					<BTabs content-class="mt-3" justified>
-						<BTab title="Event Arguments">
+						<BTab :title="t('openconnector', 'Event Arguments')">
 							<div v-if="item?.arguments !== null && Object.keys(item?.arguments || {}).length > 0">
 								<NcListItem v-for="(value, key, i) in item?.arguments"
 									:key="`${key}${i}`"
@@ -132,22 +133,22 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 											<template #icon>
 												<Pencil :size="20" />
 											</template>
-											Edit
+											{{ t('openconnector', 'Edit') }}
 										</NcActionButton>
 										<NcActionButton close-after-click @click="deleteEventArgument(key)">
 											<template #icon>
 												<Delete :size="20" />
 											</template>
-											Delete
+											{{ t('openconnector', 'Delete') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-if="item?.arguments === null || !Object.keys(item?.arguments || {}).length" class="tabPanel">
-								No arguments found
+								{{ t('openconnector', 'No arguments found for this job') }}
 							</div>
 						</BTab>
-						<BTab title="Logs">
+						<BTab :title="t('openconnector', 'Logs')">
 							<div v-if="eventStore.eventLogs?.length">
 								<NcListItem v-for="(log, i) in eventStore.eventLogs"
 									:key="log.id + i"
@@ -171,13 +172,13 @@ import { eventStore, navigationStore, logStore } from '../../store/store.js'
 											<template #icon>
 												<EyeOutline :size="20" />
 											</template>
-											View
+											{{ t('openconnector', 'View') }}
 										</NcActionButton>
 									</template>
 								</NcListItem>
 							</div>
 							<div v-if="!eventStore.eventLogs?.length" class="tabPanel">
-								No logs found
+								{{ t('openconnector', 'No logs found') }}
 							</div>
 						</BTab>
 					</BTabs>
