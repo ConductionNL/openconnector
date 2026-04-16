@@ -15,7 +15,7 @@ use Symfony\Component\Uid\Uuid;
  * Handles database operations for events including CRUD operations
  *
  * @SuppressWarnings(PHPMD.ShortVariable)
- * @SuppressWarnings(PHPMD.StaticAccess)
+ * @SuppressWarnings(PHPMD.StaticAccess) — Uuid::v4 is standard Symfony UID pattern
  */
 class EventMapper extends QBMapper
 {

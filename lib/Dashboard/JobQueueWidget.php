@@ -8,9 +8,6 @@ use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\Util;
 
-/**
- * @SuppressWarnings(PHPMD.StaticAccess)
- */
 class JobQueueWidget implements IWidget
 {
 
@@ -75,6 +72,8 @@ class JobQueueWidget implements IWidget
 
     /**
      * @inheritDoc
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess) — Nextcloud Util API is static by design
      */
     public function load(): void
     {

@@ -23,7 +23,6 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.ShortVariable)
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
  * @SuppressWarnings(PHPMD.MissingImport)
  * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  * @SuppressWarnings(PHPMD.UnusedPrivateMethod)
@@ -69,6 +68,8 @@ class EndpointCacheService
      * @param bool $isRetry Internal flag to prevent infinite recursion
      * @return Endpoint|null Returns the best matching endpoint or null if none found
      * @throws \Exception When multiple endpoints match (ambiguous routing)
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $isRetry prevents infinite recursion on cache miss
      */
     public function findByPathRegex(string $path, string $method, bool $isRetry = false): ?Endpoint
     {

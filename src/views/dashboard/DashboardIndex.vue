@@ -1036,15 +1036,6 @@ body[data-theme-dark] .dashboard-content > .stats > div {
     display: none;
 }
 
-/* Add these new styles for the loading state */
-.dashboard-content > .stats > div > .content {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: calc(100% - 40px);
-	font-size: 3.5rem;
-}
-
 /* Adjust the loading icon size and color to match the theme */
 .dashboard-content > .stats .icon-loading {
 	width: 44px;

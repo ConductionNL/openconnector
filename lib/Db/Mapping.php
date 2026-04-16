@@ -106,7 +106,7 @@ class Mapping extends Entity implements JsonSerializable
 	 * @psalm-return non-empty-string
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.StaticAccess)
+	 * @SuppressWarnings(PHPMD.StaticAccess) — Transliterator::create is standard ICU pattern
 	 * @SuppressWarnings(PHPMD.ErrorControlOperator)
 	 */
 	public function getSlug(): string

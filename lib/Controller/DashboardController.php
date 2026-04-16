@@ -27,7 +27,6 @@ use OCA\OpenConnector\Db\SynchronizationContractLogMapper;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveParameterList)
  * @SuppressWarnings(PHPMD.MissingImport)
- * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 class DashboardController extends Controller
 {

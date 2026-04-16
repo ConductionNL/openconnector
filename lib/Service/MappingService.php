@@ -31,7 +31,6 @@ use Exception;
  * @SuppressWarnings(PHPMD.CyclomaticComplexity)
  * @SuppressWarnings(PHPMD.NPathComplexity)
  * @SuppressWarnings(PHPMD.ExcessiveMethodLength)    Mapping execution requires comprehensive handling
- * @SuppressWarnings(PHPMD.BooleanArgumentFlag)      $list parameter clearly indicates list processing mode
  */
 class MappingService
 {
@@ -127,6 +126,7 @@ class MappingService
      * @return array The result (output) of the mapping process
      *@throws LoaderError|SyntaxError Twig Exceptions
      *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $list is a simple processing-mode toggle
      */
     public function executeMapping(Mapping $mapping, array $input, bool $list = false): array
     {
@@ -163,6 +163,7 @@ class MappingService
      * @throws Exception When mapping fails
      *
      * @SuppressWarnings(PHPMD.ElseExpression)
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $list is a simple processing-mode toggle
      */
     private function executeMappingLocal(Mapping $mapping, array $input, bool $list = false): array
     {
