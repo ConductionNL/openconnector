@@ -3,7 +3,7 @@
 		<div class="viewContainer">
 			<div class="viewHeader">
 				<h1 class="viewHeaderTitleIndented">
-					{{ t('openconnector', 'Job Logs') }}
+					{{ t('openconnector', 'Job logs') }}
 				</h1>
 				<p>{{ t('openconnector', 'Monitor and analyze job execution logs and their performance') }}</p>
 			</div>
@@ -77,7 +77,7 @@
 								{{ t('openconnector', 'Message') }}
 							</th>
 							<th class="executionTimeColumn">
-								{{ t('openconnector', 'Execution Time') }}
+								{{ t('openconnector', 'Execution time') }}
 							</th>
 							<th class="timestampColumn">
 								{{ t('openconnector', 'Created') }}
@@ -147,14 +147,14 @@
 										<template #icon>
 											<Eye :size="20" />
 										</template>
-										{{ t('openconnector', 'View Details') }}
+										{{ t('openconnector', 'View details') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="copyLogData(log)">
 										<template #icon>
 											<Check v-if="copyStates[log.id]" :size="20" class="copySuccessIcon" />
 											<ContentCopy v-else :size="20" />
 										</template>
-										{{ copyStates[log.id] ? t('openconnector', 'Copied!') : t('openconnector', 'Copy Data') }}
+										{{ copyStates[log.id] ? t('openconnector', 'Copied!') : t('openconnector', 'Copy data') }}
 									</NcActionButton>
 									<NcActionButton close-after-click class="deleteAction" @click="deleteLog(log)">
 										<template #icon>
@@ -332,7 +332,7 @@ export default {
 			this.selectedLogs = []
 		},
 		getJobName(jobId) {
-			if (!jobId) return t('openconnector', 'Unknown Job')
+			if (!jobId) return t('openconnector', 'Unknown job')
 			const job = jobStore.jobList?.find(j => j.id === jobId)
 			return job?.name || `Job ${jobId}`
 		},
@@ -377,7 +377,7 @@ export default {
 		async bulkDeleteLogs() {
 			if (this.selectedLogs.length === 0) return
 
-			if (!confirm(this.t('openconnector', 'Are you sure you want to delete the selected logs? This action cannot be undone.'))) {
+			if (!confirm(this.t('openconnector', 'Are you sure you want to delete the selected logs? this action cannot be undone.'))) {
 				return
 			}
 

@@ -83,7 +83,7 @@ import { synchronizationStore, navigationStore } from '../../store/store.js'
 							<td>{{ responseBody?.message }} (ms)</td>
 						</tr>
 						<tr>
-							<td><b>{{ t('openconnector', 'Execution Time') }}:</b></td>
+							<td><b>{{ t('openconnector', 'Execution time') }}:</b></td>
 							<td>{{ responseBody?.executionTime }}</td>
 						</tr>
 						<tr>

@@ -68,7 +68,7 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 							<template #icon>
 								<DatabaseSettingsOutline :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Source Config') }}
+							{{ t('openconnector', 'Add source config') }}
 						</NcActionButton>
 						<NcActionButton close-after-click
 							@click="() => {
@@ -79,7 +79,7 @@ import { synchronizationStore, navigationStore, searchStore } from '../../store/
 							<template #icon>
 								<CardBulletedSettingsOutline :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Target Config') }}
+							{{ t('openconnector', 'Add target config') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationItem(synchronization); navigationStore.setModal('testSynchronization')">
 							<template #icon>

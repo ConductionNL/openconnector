@@ -38,7 +38,7 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Rule') }}
+							{{ t('openconnector', 'Add rule') }}
 						</NcActionButton>
 					</NcActions>
 				</div>
@@ -72,11 +72,11 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 						<p>{{ endpoint?.endpoint || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Endpoint Array') }}:</b>
+						<b>{{ t('openconnector', 'Endpoint array') }}:</b>
 						<p>{{ endpoint?.endpointArray?.join(', ') || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Endpoint Regex') }}:</b>
+						<b>{{ t('openconnector', 'Endpoint regex') }}:</b>
 						<p>{{ endpoint?.endpointRegex || '-' }}</p>
 					</div>
 					<div class="gridContent">
@@ -84,7 +84,7 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 						<p>{{ endpoint?.method || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Target Type') }}:</b>
+						<b>{{ t('openconnector', 'Target type') }}:</b>
 						<p>{{ endpoint?.targetType || '-' }}</p>
 					</div>
 					<div class="gridContent">
@@ -109,12 +109,12 @@ import { endpointStore, navigationStore, ruleStore } from '../../store/store.js'
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									:aria-label="t('openconnector', 'Add Rule')"
+									:aria-label="t('openconnector', 'Add rule')"
 									@click="navigationStore.setModal('addEndpointRule')">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									{{ t('openconnector', 'Add Rule') }}
+									{{ t('openconnector', 'Add rule') }}
 								</NcButton>
 							</div>
 							<div v-if="endpoint?.rules?.length">

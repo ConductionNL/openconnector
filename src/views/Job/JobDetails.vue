@@ -26,7 +26,7 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Argument') }}
+							{{ t('openconnector', 'Add argument') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('testJob')">
 							<template #icon>
@@ -80,7 +80,7 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 						<NcUserStatusIcon :class="!jobStore.jobItem?.isEnabled && 'jobStatusDisabled'" :status="'online'" />
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Job Class') }}:</b>
+						<b>{{ t('openconnector', 'Job class') }}:</b>
 						<p>{{ jobStore.jobItem?.jobClass || '-' }}</p>
 					</div>
 					<div class="gridContent">
@@ -88,29 +88,29 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 						<p>{{ jobStore.jobItem?.interval || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Execution Time') }}:</b>
+						<b>{{ t('openconnector', 'Execution time') }}:</b>
 						<p>{{ jobStore.jobItem?.executionTime || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Time Sensitive') }}:</b>
+						<b>{{ t('openconnector', 'Time sensitive') }}:</b>
 						<p>{{ jobStore.jobItem?.timeSensitive || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Allow Parallel Runs') }}:</b>
+						<b>{{ t('openconnector', 'Allow parallel runs') }}:</b>
 						<p>{{ jobStore.jobItem?.allowParallelRuns || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Single Run') }}:</b>
+						<b>{{ t('openconnector', 'Single run') }}:</b>
 						<p>{{ jobStore.jobItem?.singleRun || '-' }}</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Next Run') }}:</b>
+						<b>{{ t('openconnector', 'Next run') }}:</b>
 						<p>
 							{{ getValidISOstring(jobStore.jobItem.nextRun) ? new Date(jobStore.jobItem.nextRun).toLocaleString() : 'N/A' }}
 						</p>
 					</div>
 					<div class="gridContent">
-						<b>{{ t('openconnector', 'Last Run') }}:</b>
+						<b>{{ t('openconnector', 'Last run') }}:</b>
 						<p>
 							{{ getValidISOstring(jobStore.jobItem.lastRun) ? new Date(jobStore.jobItem.lastRun).toLocaleString() : 'N/A' }}
 						</p>
@@ -123,12 +123,12 @@ import { jobStore, navigationStore, logStore } from '../../store/store.js'
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									:aria-label="t('openconnector', 'Add Argument')"
+									:aria-label="t('openconnector', 'Add argument')"
 									@click="addJobArgument">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									{{ t('openconnector', 'Add Argument') }}
+									{{ t('openconnector', 'Add argument') }}
 								</NcButton>
 							</div>
 							<div v-if="jobStore.jobItem?.arguments !== null && Object.keys(jobStore.jobItem?.arguments).length > 0">

@@ -10,7 +10,7 @@ import { translate as t } from '@nextcloud/l10n'
 		size="large"
 		:can-close="true"
 		:width="1200"
-		:name="synchronizationItem.id ? t('openconnector', 'Edit Synchronization') : t('openconnector', 'Create New Synchronization')"
+		:name="synchronizationItem.id ? t('openconnector', 'Edit synchronization') : t('openconnector', 'Create new synchronization')"
 		@close="closeModal">
 		<div class="modalContent">
 			<!-- ====================== -->
@@ -19,11 +19,11 @@ import { translate as t } from '@nextcloud/l10n'
 			<div v-if="!openRegisterInstalled && !openRegisterCloseAlert" class="openregister-notecard">
 				<NcNoteCard
 					:type="openRegisterIsAvailable ? 'info' : 'error'"
-					:heading="openRegisterIsAvailable ? t('openconnector', 'Open Register is not installed') : t('openconnector', 'Failed to install Open Register')">
+					:heading="openRegisterIsAvailable ? t('openconnector', 'Open register is not installed') : t('openconnector', 'Failed to install open register')">
 					<p>
 						{{ openRegisterIsAvailable
-							? t('openconnector', 'Some features require Open Register to be installed')
-							: t('openconnector', 'This either means that Open Register is not available on this server or you need to confirm your password') }}
+							? t('openconnector', 'Some features require open register to be installed')
+							: t('openconnector', 'This either means that open register is not available on this server or you need to confirm your password') }}
 					</p>
 
 					<div class="install-buttons">
@@ -39,14 +39,14 @@ import { translate as t } from '@nextcloud/l10n'
 							{{ t('openconnector', 'Install OpenRegister') }}
 						</NcButton>
 						<NcButton
-							:aria-label="t('openconnector', 'Install OpenRegister Manually')"
+							:aria-label="t('openconnector', 'Install OpenRegister manually')"
 							size="small"
 							type="secondary"
 							@click="openLink('/index.php/settings/apps/organization/openregister', '_blank')">
 							<template #icon>
 								<OpenInNew :size="20" />
 							</template>
-							{{ t('openconnector', 'Install OpenRegister Manually') }}
+							{{ t('openconnector', 'Install OpenRegister manually') }}
 						</NcButton>
 					</div>
 					<div class="close-button">
@@ -98,7 +98,7 @@ import { translate as t } from '@nextcloud/l10n'
 								:selectable="(option) => {
 									return option.id === 'register/schema' ? openRegisterInstalled : true
 								}"
-								:input-label="t('openconnector', 'Source Type')" />
+								:input-label="t('openconnector', 'Source type')" />
 						</div>
 
 						<!-- Source ID -->
@@ -125,14 +125,14 @@ import { translate as t } from '@nextcloud/l10n'
 
 						<!-- Source Configuration -->
 						<div class="subsection">
-							<h4>{{ t('openconnector', 'Source Configuration') }}</h4>
+							<h4>{{ t('openconnector', 'Source configuration') }}</h4>
 							<div class="form-group">
 								<NcTextField :value.sync="synchronizationItem.sourceConfig.idPosition"
-									:label="t('openconnector', 'ID Position')"
+									:label="t('openconnector', 'ID position')"
 									:placeholder="t('openconnector', 'Position of id in source object')" />
 
 								<NcTextField :value.sync="synchronizationItem.sourceConfig.resultsPosition"
-									:label="t('openconnector', 'Results Position')"
+									:label="t('openconnector', 'Results position')"
 									:placeholder="t('openconnector', 'Position of results in source object')" />
 
 								<NcTextField :value.sync="synchronizationItem.sourceConfig.endpoint"
@@ -140,7 +140,7 @@ import { translate as t } from '@nextcloud/l10n'
 									:placeholder="t('openconnector', 'Endpoint on which to fetch data')" />
 
 								<NcTextField :value.sync="synchronizationItem.sourceHashPosition"
-									:label="t('openconnector', 'Source Hash Position')"
+									:label="t('openconnector', 'Source hash position')"
 									:placeholder="t('openconnector', 'Position of hash in source object')" />
 							</div>
 						</div>
@@ -202,7 +202,7 @@ import { translate as t } from '@nextcloud/l10n'
 								<NcTextArea
 									resize="vertical"
 									:value.sync="synchronizationItem.conditions"
-									:label="t('openconnector', 'Conditions (JSON Logic)')"
+									:label="t('openconnector', 'Conditions (JSON logic)')"
 									:placeholder="t('openconnector', 'Enter JSON logic conditions')" />
 
 								<NcSelect v-bind="ruleOptions"
@@ -219,17 +219,17 @@ import { translate as t } from '@nextcloud/l10n'
 									<NcSelect v-bind="sourceTargetMappingOptions"
 										v-model="sourceTargetMappingOptions.sourceValue"
 										:loading="sourceTargetMappingLoading"
-										:input-label="t('openconnector', 'Source → Target Mapping')" />
+										:input-label="t('openconnector', 'Source → target mapping')" />
 
 									<NcSelect v-bind="sourceTargetMappingOptions"
 										v-model="sourceTargetMappingOptions.targetValue"
 										:loading="sourceTargetMappingLoading"
-										:input-label="t('openconnector', 'Target → Source Mapping')" />
+										:input-label="t('openconnector', 'Target → source mapping')" />
 
 									<NcSelect v-bind="sourceTargetMappingOptions"
 										v-model="sourceTargetMappingOptions.hashValue"
 										:loading="sourceTargetMappingLoading"
-										:input-label="t('openconnector', 'Source → Hash Mapping')" />
+										:input-label="t('openconnector', 'Source → hash mapping')" />
 								</div>
 							</div>
 						</div>
@@ -256,7 +256,7 @@ import { translate as t } from '@nextcloud/l10n'
 								:selectable="(option) => {
 									return option.id === 'register/schema' ? openRegisterInstalled : true
 								}"
-								:input-label="t('openconnector', 'Target Type')" />
+								:input-label="t('openconnector', 'Target type')" />
 						</div>
 
 						<!-- Target ID -->

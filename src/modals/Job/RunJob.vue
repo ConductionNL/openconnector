@@ -61,7 +61,7 @@ import { jobStore, navigationStore } from '../../store/store.js'
 						<td>{{ jobStore.jobRun.jobListId }}</td>
 					</tr>
 					<tr>
-						<th>{{ t('openconnector', 'Job Class') }}</th>
+						<th>{{ t('openconnector', 'Job class') }}</th>
 						<td>{{ jobStore.jobRun.jobClass || t('openconnector', 'N/A') }}</td>
 					</tr>
 					<tr>
@@ -75,7 +75,7 @@ import { jobStore, navigationStore } from '../../store/store.js'
 						</td>
 					</tr>
 					<tr>
-						<th>{{ t('openconnector', 'Execution Time') }}</th>
+						<th>{{ t('openconnector', 'Execution time') }}</th>
 						<td>{{ jobStore.jobRun.executionTime }} ms</td>
 					</tr>
 					<tr>

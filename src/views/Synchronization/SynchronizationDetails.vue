@@ -26,13 +26,13 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 							<template #icon>
 								<DatabaseSettingsOutline :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Source Config') }}
+							{{ t('openconnector', 'Add source config') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="synchronizationStore.setSynchronizationTargetConfigKey(null); navigationStore.setModal('editSynchronizationTargetConfig')">
 							<template #icon>
 								<CardBulletedSettingsOutline :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Target Config') }}
+							{{ t('openconnector', 'Add target config') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('testSynchronization')">
 							<template #icon>
@@ -102,7 +102,7 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 						<p>{{ synchronizationStore.synchronizationItem.sourceId || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>{{ t('openconnector', 'Source Type') }}:</b>
+						<b>{{ t('openconnector', 'Source type') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.sourceType || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
@@ -138,7 +138,7 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 						<p>{{ synchronizationStore.synchronizationItem.targetId || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
-						<b>{{ t('openconnector', 'Target Type') }}:</b>
+						<b>{{ t('openconnector', 'Target type') }}:</b>
 						<p>{{ synchronizationStore.synchronizationItem.targetType || 'N/A' }}</p>
 					</div>
 					<div class="gridContent gridFullWidth">
@@ -196,12 +196,12 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									:aria-label="t('openconnector', 'Add Source Config')"
+									:aria-label="t('openconnector', 'Add source config')"
 									@click="synchronizationStore.setSynchronizationSourceConfigKey(null); navigationStore.setModal('editSynchronizationSourceConfig')">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									{{ t('openconnector', 'Add Source Config') }}
+									{{ t('openconnector', 'Add source config') }}
 								</NcButton>
 							</div>
 							<div v-if="Object.keys(synchronizationStore.synchronizationItem.sourceConfig).length">
@@ -243,12 +243,12 @@ import { synchronizationStore, navigationStore, logStore, ruleStore } from '../.
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									:aria-label="t('openconnector', 'Add Target Config')"
+									:aria-label="t('openconnector', 'Add target config')"
 									@click="synchronizationStore.setSynchronizationTargetConfigKey(null); navigationStore.setModal('editSynchronizationTargetConfig')">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									{{ t('openconnector', 'Add Target Config') }}
+									{{ t('openconnector', 'Add target config') }}
 								</NcButton>
 							</div>
 							<div v-if="Object.keys(synchronizationStore.synchronizationItem.targetConfig).length">

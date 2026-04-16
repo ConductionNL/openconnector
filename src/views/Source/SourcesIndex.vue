@@ -207,11 +207,11 @@
 												</td>
 											</tr>
 											<tr v-if="source.lastCall">
-												<td>{{ t('openconnector', 'Last Call') }}</td>
+												<td>{{ t('openconnector', 'Last call') }}</td>
 												<td>{{ new Date(source.lastCall).toLocaleDateString() + ', ' + new Date(source.lastCall).toLocaleTimeString() }}</td>
 											</tr>
 											<tr v-if="source.lastSync">
-												<td>{{ t('openconnector', 'Last Sync') }}</td>
+												<td>{{ t('openconnector', 'Last sync') }}</td>
 												<td>{{ new Date(source.lastSync).toLocaleDateString() + ', ' + new Date(source.lastSync).toLocaleTimeString() }}</td>
 											</tr>
 											<tr>
@@ -299,7 +299,7 @@
 											</thead>
 											<tbody>
 												<tr v-if="source.auth">
-													<td>{{ t('openconnector', 'Auth Type') }}</td>
+													<td>{{ t('openconnector', 'Auth type') }}</td>
 													<td>{{ source.auth }}</td>
 													<td>
 														<NcActions :primary="false">
@@ -345,7 +345,7 @@
 													</td>
 												</tr>
 												<tr v-if="source.apikey">
-													<td>{{ t('openconnector', 'API Key') }}</td>
+													<td>{{ t('openconnector', 'API key') }}</td>
 													<td class="truncatedText">
 														{{ source.apikey }}
 													</td>
@@ -420,7 +420,7 @@
 													</td>
 												</tr>
 												<tr v-if="source.authorizationHeader">
-													<td>{{ t('openconnector', 'Authorization Header') }}</td>
+													<td>{{ t('openconnector', 'Authorization header') }}</td>
 													<td class="truncatedText">
 														{{ source.authorizationHeader }}
 													</td>

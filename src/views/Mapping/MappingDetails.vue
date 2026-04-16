@@ -26,19 +26,19 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 							<template #icon>
 								<MapPlus :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Mapping') }}
+							{{ t('openconnector', 'Add mapping') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="addMappingCast()">
 							<template #icon>
 								<SwapHorizontal :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Cast') }}
+							{{ t('openconnector', 'Add cast') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(null); navigationStore.setDialog('editMappingItem')">
 							<template #icon>
 								<Eraser :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Unset') }}
+							{{ t('openconnector', 'Add unset') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="navigationStore.setModal('testMapping')">
 							<template #icon>
@@ -86,12 +86,12 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									:aria-label="t('openconnector', 'Add Mapping')"
+									:aria-label="t('openconnector', 'Add mapping')"
 									@click="addMappingMapping">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									{{ t('openconnector', 'Add Mapping') }}
+									{{ t('openconnector', 'Add mapping') }}
 								</NcButton>
 							</div>
 							<div v-if="item?.mapping !== null && Object.keys(item?.mapping || {}).length">
@@ -135,12 +135,12 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									:aria-label="t('openconnector', 'Add Cast')"
+									:aria-label="t('openconnector', 'Add cast')"
 									@click="addMappingCast">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									{{ t('openconnector', 'Add Cast') }}
+									{{ t('openconnector', 'Add cast') }}
 								</NcButton>
 							</div>
 							<div v-if="item?.cast !== null && Object.keys(item?.cast || {}).length">
@@ -184,12 +184,12 @@ import { mappingStore, navigationStore } from '../../store/store.js'
 							<div class="tabButtonsContainer">
 								<NcButton type="primary"
 									class="fullWidthButton"
-									:aria-label="t('openconnector', 'Add Unset')"
+									:aria-label="t('openconnector', 'Add unset')"
 									@click="mappingStore.setEditingMode('unset'); mappingStore.setEditingMappingId(mappingStore.mappingItem?.id); mappingStore.setMappingUnsetKey(null); navigationStore.setDialog('editMappingItem')">
 									<template #icon>
 										<Plus :size="20" />
 									</template>
-									{{ t('openconnector', 'Add Unset') }}
+									{{ t('openconnector', 'Add unset') }}
 								</NcButton>
 							</div>
 							<div v-if="item?.unset?.length">

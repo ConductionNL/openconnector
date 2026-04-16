@@ -8,11 +8,11 @@ import { translate as t } from '@nextcloud/l10n'
 		<div v-if="!openRegister.isInstalled && !closeAlert" class="openregister-notecard">
 			<NcNoteCard
 				:type="openRegister.isAvailable ? 'info' : 'error'"
-				:heading="openRegister.isAvailable ? t('openconnector', 'Open Register is not installed') : t('openconnector', 'Failed to install Open Register')">
+				:heading="openRegister.isAvailable ? t('openconnector', 'Open register is not installed') : t('openconnector', 'Failed to install open register')">
 				<p>
 					{{ openRegister.isAvailable
-						? t('openconnector', 'Some features require Open Register to be installed')
-						: t('openconnector', 'This either means that Open Register is not available on this server or you need to confirm your password') }}
+						? t('openconnector', 'Some features require open register to be installed')
+						: t('openconnector', 'This either means that open register is not available on this server or you need to confirm your password') }}
 				</p>
 
 				<div class="install-buttons">
@@ -27,14 +27,14 @@ import { translate as t } from '@nextcloud/l10n'
 						{{ t('openconnector', 'Install OpenRegister') }}
 					</NcButton>
 					<NcButton
-						:aria-label="t('openconnector', 'Install OpenRegister Manually')"
+						:aria-label="t('openconnector', 'Install OpenRegister manually')"
 						size="small"
 						type="secondary"
 						@click="openLink('/index.php/settings/apps/organization/openregister', '_blank')">
 						<template #icon>
 							<OpenInNew :size="20" />
 						</template>
-						{{ t('openconnector', 'Install OpenRegister Manually') }}
+						{{ t('openconnector', 'Install OpenRegister manually') }}
 					</NcButton>
 				</div>
 				<div class="close-button">

@@ -4,7 +4,7 @@
 		label-id="viewEndpoint"
 		@close="navigationStore.setModal(false)">
 		<div class="modal-content">
-			<h2>{{ endpointStore.endpointItem?.name || t('openconnector', 'Endpoint Details') }}</h2>
+			<h2>{{ endpointStore.endpointItem?.name || t('openconnector', 'Endpoint details') }}</h2>
 			<p v-if="endpointStore.endpointItem?.description" class="source-description">
 				{{ endpointStore.endpointItem.description }}
 			</p>

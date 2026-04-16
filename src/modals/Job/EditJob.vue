@@ -34,7 +34,7 @@ import { Job } from '../../entities/index.js'
 					<NcSelect v-bind="classOptions"
 						v-model="classOptions.value"
 						class="jobClassSelect"
-						:input-label="t('openconnector', 'Job Class')"
+						:input-label="t('openconnector', 'Job class')"
 						:multiple="false"
 						:clearable="false" />
 
@@ -45,20 +45,20 @@ import { Job } from '../../entities/index.js'
 
 					<NcInputField
 						type="number"
-						:label="t('openconnector', 'Execution Time')"
+						:label="t('openconnector', 'Execution time')"
 						:value.sync="jobItem.executionTime" />
 
 					<div class="jobCheckboxContainerGrid">
 						<NcCheckboxRadioSwitch
 							:disabled="loading"
 							:checked.sync="jobItem.timeSensitive">
-							{{ t('openconnector', 'Time Sensitive') }}
+							{{ t('openconnector', 'Time sensitive') }}
 						</NcCheckboxRadioSwitch>
 
 						<NcCheckboxRadioSwitch
 							:disabled="loading"
 							:checked.sync="jobItem.allowParallelRuns">
-							{{ t('openconnector', 'Allow Parallel Runs') }}
+							{{ t('openconnector', 'Allow parallel runs') }}
 						</NcCheckboxRadioSwitch>
 
 						<NcCheckboxRadioSwitch
@@ -70,7 +70,7 @@ import { Job } from '../../entities/index.js'
 						<NcCheckboxRadioSwitch
 							:disabled="loading"
 							:checked.sync="jobItem.singleRun">
-							{{ t('openconnector', 'Single Run') }}
+							{{ t('openconnector', 'Single run') }}
 						</NcCheckboxRadioSwitch>
 					</div>
 					<div>

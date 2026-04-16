@@ -221,12 +221,12 @@
 												</td>
 											</tr>
 											<tr>
-												<td>{{ t('openconnector', 'Last Synced') }}</td>
+												<td>{{ t('openconnector', 'Last synced') }}</td>
 												<td>{{ synchronization.sourceLastSynced ? new Date(synchronization.sourceLastSynced).toLocaleDateString() + ', ' + new Date(synchronization.sourceLastSynced).toLocaleTimeString() : '-' }}</td>
 												<td>{{ synchronization.targetLastSynced ? new Date(synchronization.targetLastSynced).toLocaleDateString() + ', ' + new Date(synchronization.targetLastSynced).toLocaleTimeString() : '-' }}</td>
 											</tr>
 											<tr>
-												<td>{{ t('openconnector', 'Last Checked') }}</td>
+												<td>{{ t('openconnector', 'Last checked') }}</td>
 												<td>{{ synchronization.sourceLastChecked ? new Date(synchronization.sourceLastChecked).toLocaleDateString() + ', ' + new Date(synchronization.sourceLastChecked).toLocaleTimeString() : '-' }}</td>
 												<td>{{ synchronization.targetLastChecked ? new Date(synchronization.targetLastChecked).toLocaleDateString() + ', ' + new Date(synchronization.targetLastChecked).toLocaleTimeString() : '-' }}</td>
 											</tr>
@@ -387,11 +387,11 @@
 											@update:checked="toggleSelectAll" />
 									</th>
 									<th>{{ t('openconnector', 'Name') }}</th>
-									<th>{{ t('openconnector', 'Source Type') }}</th>
-									<th>{{ t('openconnector', 'Target Type') }}</th>
+									<th>{{ t('openconnector', 'Source type') }}</th>
+									<th>{{ t('openconnector', 'Target type') }}</th>
 									<th>{{ t('openconnector', 'Version') }}</th>
 									<th>{{ t('openconnector', 'Configs') }}</th>
-									<th>{{ t('openconnector', 'Last Synced') }}</th>
+									<th>{{ t('openconnector', 'Last synced') }}</th>
 									<th>{{ t('openconnector', 'Updated') }}</th>
 									<th class="tableColumnActions">
 										{{ t('openconnector', 'Actions') }}

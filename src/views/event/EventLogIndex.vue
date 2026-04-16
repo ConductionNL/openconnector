@@ -9,7 +9,7 @@ import { translate as t } from '@nextcloud/l10n'
 			<!-- Header -->
 			<div class="viewHeader">
 				<h1 class="viewHeaderTitleIndented">
-					{{ t('openconnector', 'Event Logs') }}
+					{{ t('openconnector', 'Event logs') }}
 				</h1>
 				<p>{{ t('openconnector', 'Monitor and analyze event execution logs and their performance') }}</p>
 			</div>
@@ -99,7 +99,7 @@ import { translate as t } from '@nextcloud/l10n'
 								{{ t('openconnector', 'Message') }}
 							</th>
 							<th class="executionTimeColumn">
-								{{ t('openconnector', 'Execution Time') }}
+								{{ t('openconnector', 'Execution time') }}
 							</th>
 							<th class="timestampColumn">
 								{{ t('openconnector', 'Created') }}
@@ -169,14 +169,14 @@ import { translate as t } from '@nextcloud/l10n'
 										<template #icon>
 											<Eye :size="20" />
 										</template>
-										{{ t('openconnector', 'View Details') }}
+										{{ t('openconnector', 'View details') }}
 									</NcActionButton>
 									<NcActionButton close-after-click @click="copyLogData(log)">
 										<template #icon>
 											<Check v-if="copyStates[log.id]" :size="20" class="copySuccessIcon" />
 											<ContentCopy v-else :size="20" />
 										</template>
-										{{ copyStates[log.id] ? t('openconnector', 'Copied!') : t('openconnector', 'Copy Data') }}
+										{{ copyStates[log.id] ? t('openconnector', 'Copied!') : t('openconnector', 'Copy data') }}
 									</NcActionButton>
 									<NcActionButton close-after-click class="deleteAction" @click="deleteLog(log)">
 										<template #icon>
@@ -335,7 +335,7 @@ export default {
 			this.pagination.limit = pageSize
 		},
 		getEventName(eventId) {
-			if (!eventId) return t('openconnector', 'Unknown Event')
+			if (!eventId) return t('openconnector', 'Unknown event')
 			const event = eventStore.eventList?.find(e => e.id === eventId)
 			return event?.name || `Event ${eventId}`
 		},
@@ -380,7 +380,7 @@ export default {
 		async bulkDeleteLogs() {
 			if (this.selectedLogs.length === 0) return
 
-			if (!confirm(this.t('openconnector', 'Are you sure you want to delete the selected logs? This action cannot be undone.'))) {
+			if (!confirm(this.t('openconnector', 'Are you sure you want to delete the selected logs? this action cannot be undone.'))) {
 				return
 			}
 

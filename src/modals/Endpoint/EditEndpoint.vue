@@ -10,7 +10,7 @@ import { translate as t } from '@nextcloud/l10n'
 		label-id="editEndpoint"
 		@close="closeModal">
 		<div class="modalContent">
-			<h2>{{ endpointItem.id ? t('openconnector', 'Edit Endpoint') : t('openconnector', 'Add Endpoint') }}</h2>
+			<h2>{{ endpointItem.id ? t('openconnector', 'Edit endpoint') : t('openconnector', 'Add endpoint') }}</h2>
 
 			<div v-if="success !== null">
 				<NcNoteCard v-if="success" type="success">
@@ -38,11 +38,11 @@ import { translate as t } from '@nextcloud/l10n'
 
 					<NcTextArea
 						resize="vertical"
-						:label="t('openconnector', 'Endpoint Array (split on ,)')"
+						:label="t('openconnector', 'Endpoint array (split on ,)')"
 						:value.sync="endpointItem.endpointArray" />
 
 					<NcTextField
-						:label="t('openconnector', 'Endpoint Regex')"
+						:label="t('openconnector', 'Endpoint regex')"
 						:value.sync="endpointItem.endpointRegex" />
 
 					<NcTextField

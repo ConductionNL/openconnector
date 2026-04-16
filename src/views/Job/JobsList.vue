@@ -68,7 +68,7 @@ import { jobStore, navigationStore, searchStore } from '../../store/store.js'
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Argument') }}
+							{{ t('openconnector', 'Add argument') }}
 						</NcActionButton>
 						<NcActionButton close-after-click @click="jobStore.setJobItem(job); navigationStore.setModal('testJob')">
 							<template #icon>

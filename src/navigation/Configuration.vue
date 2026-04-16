@@ -32,10 +32,10 @@
 					{{ t('openconnector', 'Here you can set the details for various connections.') }}
 				</p>
 				<NcCheckboxRadioSwitch :checked.sync="configuration.mongoStorage" type="switch">
-					{{ t('openconnector', 'Use external storage (e.g. MongoDB) instead of the internal Nextcloud storage.') }}
+					{{ t('openconnector', 'Use external storage (e.g. mongodb) instead of the internal Nextcloud storage.') }}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch :checked.sync="configuration.cloudStorage" type="switch">
-					{{ t('openconnector', 'Use VNG APIs instead of MongoDB.') }}
+					{{ t('openconnector', 'Use VNG apis instead of mongodb.') }}
 				</NcCheckboxRadioSwitch>
 				<p>
 					<table>
@@ -153,7 +153,7 @@
 					</NcNoteCard>
 				</div>
 			</NcAppSettingsSection>
-			<NcAppSettingsSection id="organisation" :name="t('openconnector', 'Roles and Permissions')" doc-url="zaakafhandel.app">
+			<NcAppSettingsSection id="organisation" :name="t('openconnector', 'Roles and permissions')" doc-url="zaakafhandel.app">
 				<template #icon>
 					<AccountLockOpenOutline :size="20" />
 				</template>

@@ -207,7 +207,7 @@
 									<tbody>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												{{ t('openconnector', 'Call Logs') }}
+												{{ t('openconnector', 'Call logs') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalCallLogs.toLocaleString() }}
@@ -229,7 +229,7 @@
 										</tr>
 										<tr class="stats-table-row">
 											<td class="stats-table-label">
-												{{ t('openconnector', 'Job Logs') }}
+												{{ t('openconnector', 'Job logs') }}
 											</td>
 											<td class="stats-table-value total">
 												{{ stats.totals.totalJobLogs.toLocaleString() }}

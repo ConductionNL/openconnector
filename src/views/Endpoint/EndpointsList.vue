@@ -76,7 +76,7 @@ import { endpointStore, navigationStore, searchStore } from '../../store/store.j
 							<template #icon>
 								<Plus :size="20" />
 							</template>
-							{{ t('openconnector', 'Add Rule') }}
+							{{ t('openconnector', 'Add rule') }}
 						</NcActionButton>
 					</template>
 				</NcListItem>
