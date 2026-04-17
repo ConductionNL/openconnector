@@ -1,7 +1,7 @@
 <template>
 	<NcAppContent>
 		<CnDashboardPage
-			title="Dashboard"
+			:title="t('openconnector', 'Dashboard')"
 			:widgets="widgetDefs"
 			:layout="dashboardLayout"
 			:loading="isLoading && !hasData"
@@ -70,22 +70,22 @@
 			<template #widget-date-range>
 				<div class="date-range-selector">
 					<div class="date-picker">
-						<label>From:</label>
+						<label>{{ t('openconnector', 'From:') }}</label>
 						<NcDateTimePicker
 							v-model="dateRange.from"
 							:max-date="dateRange.to"
 							:show-time="true"
-							placeholder="Select start date"
+							:placeholder="t('openconnector', 'Select start date')"
 							@change="handleDateChange" />
 					</div>
 					<div class="date-picker">
-						<label>To:</label>
+						<label>{{ t('openconnector', 'To:') }}</label>
 						<NcDateTimePicker
 							v-model="dateRange.to"
 							:min-date="dateRange.from"
 							:max-date="now"
 							:show-time="true"
-							placeholder="Select end date"
+							:placeholder="t('openconnector', 'Select end date')"
 							@change="handleDateChange" />
 					</div>
 				</div>
@@ -158,22 +158,6 @@ import ConnectionIcon from 'vue-material-design-icons/Connection.vue'
 
 const HOUR_CATEGORIES = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0') + ':00')
 
-const WIDGET_DEFS = [
-	{ id: 'stat-sources', title: 'Sources', type: 'custom' },
-	{ id: 'stat-mappings', title: 'Mappings', type: 'custom' },
-	{ id: 'stat-synchronizations', title: 'Synchronizations', type: 'custom' },
-	{ id: 'stat-contracts', title: 'Contracts', type: 'custom' },
-	{ id: 'stat-jobs', title: 'Jobs', type: 'custom' },
-	{ id: 'stat-endpoints', title: 'Endpoints', type: 'custom' },
-	{ id: 'date-range', title: 'Date range', type: 'custom' },
-	{ id: 'calls-daily', title: 'Outgoing calls (daily)', type: 'custom' },
-	{ id: 'calls-hourly', title: 'Outgoing calls (hourly)', type: 'custom' },
-	{ id: 'jobs-daily', title: 'Job executions (daily)', type: 'custom' },
-	{ id: 'jobs-hourly', title: 'Job executions (hourly)', type: 'custom' },
-	{ id: 'syncs-daily', title: 'Synchronization executions (daily)', type: 'custom' },
-	{ id: 'syncs-hourly', title: 'Synchronization executions (hourly)', type: 'custom' },
-]
-
 const DEFAULT_LAYOUT = [
 	{ id: 1, widgetId: 'stat-sources', gridX: 0, gridY: 0, gridWidth: 2, gridHeight: 2, showTitle: false },
 	{ id: 2, widgetId: 'stat-mappings', gridX: 2, gridY: 0, gridWidth: 2, gridHeight: 2, showTitle: false },
@@ -212,7 +196,6 @@ export default {
 			isMounted: false,
 			activeRequests: [],
 
-			widgetDefs: WIDGET_DEFS,
 			dashboardLayout: [...DEFAULT_LAYOUT],
 
 			stats: {
@@ -257,6 +240,23 @@ export default {
 		}
 	},
 	computed: {
+		widgetDefs() {
+			return [
+				{ id: 'stat-sources', title: 'Sources', type: 'custom' },
+				{ id: 'stat-mappings', title: 'Mappings', type: 'custom' },
+				{ id: 'stat-synchronizations', title: 'Synchronizations', type: 'custom' },
+				{ id: 'stat-contracts', title: 'Contracts', type: 'custom' },
+				{ id: 'stat-jobs', title: 'Jobs', type: 'custom' },
+				{ id: 'stat-endpoints', title: 'Endpoints', type: 'custom' },
+				{ id: 'date-range', title: this.t('openconnector', 'Date range'), type: 'custom' },
+				{ id: 'calls-daily', title: this.t('openconnector', 'Outgoing calls (daily)'), type: 'custom' },
+				{ id: 'calls-hourly', title: this.t('openconnector', 'Outgoing calls (hourly)'), type: 'custom' },
+				{ id: 'jobs-daily', title: this.t('openconnector', 'Job executions (daily)'), type: 'custom' },
+				{ id: 'jobs-hourly', title: this.t('openconnector', 'Job executions (hourly)'), type: 'custom' },
+				{ id: 'syncs-daily', title: this.t('openconnector', 'Synchronization executions (daily)'), type: 'custom' },
+				{ id: 'syncs-hourly', title: this.t('openconnector', 'Synchronization executions (hourly)'), type: 'custom' },
+			]
+		},
 		hasData() {
 			return (this.stats.sources || 0) > 0
 				|| (this.stats.mappings || 0) > 0
