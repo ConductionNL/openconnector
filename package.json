@@ -21,16 +21,16 @@
   ],
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
-    "@conduction/nextcloud-vue": "^0.1.0-beta.3",
+    "@conduction/nextcloud-vue": "^0.1.0-beta.10",
     "@fortawesome/fontawesome-svg-core": "^6.5.2",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@mdi/js": "^7.4.47",
     "@nextcloud/axios": "^2.5.0",
-    "@nextcloud/dialogs": "^3.2.0",
+    "@nextcloud/dialogs": "^6.1.1",
     "@nextcloud/initial-state": "^2.2.0",
-    "@nextcloud/l10n": "^2.0.1",
-    "@nextcloud/router": "^2.0.1",
-    "@nextcloud/vue": "^8.12.0",
+    "@nextcloud/l10n": "^3.2.0",
+    "@nextcloud/router": "^3.0.0",
+    "@nextcloud/vue": "^8.16.0",
     "@vueuse/core": "^10.11.0",
     "apexcharts": "^3.50.0",
     "axios": "^1.7.3",
@@ -43,8 +43,9 @@
     "remark-preset-lint-consistent": "^6.0.0",
     "remark-preset-lint-recommended": "^7.0.0",
     "style-loader": "~4.0.0",
-    "vue": "^2.7.14",
+    "vue": "^2.7.16",
     "vue-apexcharts": "~1.6.2",
+    "vue-frag": "^1.4.3",
     "vue-codemirror6": "^1.3.8",
     "vue-draggable-plus": "^0.6.0",
     "vue-loader": "^15.11.1 <16.0.0",
@@ -84,5 +85,15 @@
     "typescript": "^5.5.4",
     "vue-eslint-parser": "^10.2.0",
     "vue-jest": "^3.0.7"
+  },
+  "overrides": {
+    "vue": "^2.7.16",
+    "@nextcloud/vue": "^8.16.0",
+    "vue-template-compiler": "^2.7.16",
+    "vue-demi": "^0.14.6"
+  },
+  "resolutions": {
+    "vue-template-compiler": "^2.7.16",
+    "vue-demi": "^0.14.6"
   }
 }

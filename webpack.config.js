@@ -1,5 +1,6 @@
 const path = require('path')
 const fs = require('fs')
+const { VueLoaderPlugin } = require('vue-loader')
 const webpackConfig = require('@nextcloud/webpack-vue-config')
 
 const buildMode = process.env.NODE_ENV
@@ -36,6 +37,22 @@ webpackConfig.resolve.alias = {
 	'pinia$': path.resolve(__dirname, 'node_modules/pinia'),
 	'@nextcloud/vue$': path.resolve(__dirname, 'node_modules/@nextcloud/vue'),
 	'@nextcloud/dialogs': path.resolve(__dirname, 'node_modules/@nextcloud/dialogs'),
+	'@floating-ui/dom$': path.resolve(__dirname, 'src/shims/floating-ui-dom.js'),
+	'@floating-ui/dom-actual': path.resolve(__dirname, 'node_modules/@floating-ui/dom'),
 }
+
+webpackConfig.resolve.extensionAlias = {
+	'.js': ['.cjs', '.js'],
+	...webpackConfig.resolve.extensionAlias,
+}
+
+webpackConfig.resolve.modules = [
+	path.resolve(__dirname, 'node_modules'),
+	...(webpackConfig.resolve.modules || ['node_modules']),
+]
+
+// Replace VueLoaderPlugin (don't push — duplicates break templates when using local package)
+const otherPlugins = (webpackConfig.plugins || []).filter((p) => p.constructor.name !== 'VueLoaderPlugin')
+webpackConfig.plugins = [new VueLoaderPlugin(), ...otherPlugins]
 
 module.exports = webpackConfig
