@@ -9,20 +9,20 @@
  * harness is node-env and mounts no .vue (see vitest.config.js), mirroring
  * tests/vitest/tablesBridge.spec.js.
  *
- * @spec openspec/changes/nextcloud-forms-connector/specs/sync-editor-ui/spec.md#requirement-form-picker-for-the-nextcloud-form-source-kind-req-syncui-008
- * @spec openspec/changes/nextcloud-forms-connector/specs/sync-editor-ui/spec.md#requirement-field-mapping-helper-prefilled-from-form-questions-req-syncui-009
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/specs/sync-editor-ui/spec.md#requirement-form-picker-for-the-nextcloud-form-source-kind-req-syncui-008
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/specs/sync-editor-ui/spec.md#requirement-field-mapping-helper-prefilled-from-form-questions-req-syncui-009
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-	NEXTCLOUD_FORM_KIND,
-	MULTI_VALUE_QUESTION_TYPES,
-	extractResults,
-	mapFormOptions,
-	normaliseQuestion,
-	mapQuestionDescriptors,
-	isArrayValuedQuestion,
 	ambiguousQuestionTexts,
+	extractResults,
+	isArrayValuedQuestion,
+	mapFormOptions,
+	mapQuestionDescriptors,
+	MULTI_VALUE_QUESTION_TYPES,
+	NEXTCLOUD_FORM_KIND,
+	normaliseQuestion,
 } from '../../src/views/Synchronization/formsBridge.js'
 
 describe('kind discriminator', () => {

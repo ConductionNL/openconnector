@@ -85,7 +85,7 @@ export default {
 	components: { NcSelect, NcTextField },
 	props: { ...valueProp },
 	computed: {
-		/** @spec openspec/changes/retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3 */
+		/** @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3 */
 		typeOptions() {
 			return AUTH_TYPES.map((row) => ({
 				id: row.id,
@@ -93,12 +93,12 @@ export default {
 			}))
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3 */
+		/** @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3 */
 		selectedTypeOption() {
 			return this.typeOptions.find((opt) => opt.id === this.value.type) || null
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3 */
+		/** @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3 */
 		usesAllowLists() {
 			return ALLOW_LIST_TYPES.includes(this.value.type)
 		},
@@ -112,7 +112,7 @@ export default {
 		 *
 		 * @param {{id: string, label: string}|null} option The selected entry
 		 *   from `typeOptions` (apikey / jwt / jwt-zgw / basic / oauth / nc-session).
-		 * @spec openspec/changes/retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3
+		 * @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3
 		 */
 		onTypePick(option) {
 			this.patch('type', option?.id || '')
@@ -125,7 +125,7 @@ export default {
 		 * @param {Array<string>|string|undefined} value The stored field, either
 		 *   an array of entries or an already-flat string.
 		 * @return {string} Comma-separated entries, or '' when unset.
-		 * @spec openspec/changes/retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3
+		 * @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3
 		 */
 		csv(value) {
 			return Array.isArray(value) ? value.join(',') : value || ''
@@ -137,7 +137,7 @@ export default {
 		 *
 		 * @param {string} text Raw comma-separated text typed into the field.
 		 * @return {Array<string>} The cleaned list of entries.
-		 * @spec openspec/changes/retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3
+		 * @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-25-rule-editor-ui/tasks.md#task-3
 		 */
 		toArray(text) {
 			return (text || '')

@@ -10,7 +10,7 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2
  *
- * @spec openspec/changes/nextcloud-forms-connector/tasks.md#task-9-unit-tests--forms-services
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/tasks.md#task-9-unit-tests--forms-services
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use Psr\Log\LoggerInterface;
  * stubbed FormsClientInterface (no real Forms app required — proposal.md
  * Risk 1).
  *
- * @spec openspec/changes/nextcloud-forms-connector/specs/nextcloud-forms-connector/spec.md
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/specs/nextcloud-forms-connector/spec.md
  */
 class FormsSyncAdapterTest extends TestCase {
 

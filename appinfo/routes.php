@@ -17,6 +17,7 @@ return [
 		// First-time setup wizard (ADR-042) - the standard CnSetupWizard contract.
 		['name' => 'setup#status',    'url' => '/api/setup/status',            'verb' => 'GET'],
 		['name' => 'setup#runAction', 'url' => '/api/setup/action/{actionId}', 'verb' => 'POST', 'requirements' => ['actionId' => '[a-z0-9\\-]+']],
+		['name' => 'setup#saveConfig', 'url' => '/api/setup/config',           'verb' => 'POST'],
 		['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
 		['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
 
@@ -210,7 +211,7 @@ return [
 		// transaction sync is cron-driven (CardfeedSyncJob), not a route.
 		['name' => 'cardfeed#enroll', 'url' => '/api/cardfeed/sources/{sourceSlug}/enroll', 'verb' => 'POST'],
 
-		// ZGW Notificaties API subscriber/publisher (openspec/changes/notificaties-api-subscriber).
+		// ZGW Notificaties API subscriber/publisher (openspec/changes/archive/2026-07-15-notificaties-api-subscriber).
 		// Abonnement CRUD is authenticated NC-session (action RBAC), dedicated
 		// controller — NOT the generic OR object CRUD a CnIndexPage would drive,
 		// because create/update/delete must also register/update/delete the
@@ -370,7 +371,7 @@ return [
 		['name' => 'pdok#freeAction', 'url' => '/api/pdok/free', 'verb' => 'GET'],
 		['name' => 'pdok#reverseAction', 'url' => '/api/pdok/reverse', 'verb' => 'GET'],
 
-		// HITL approval workflow (openspec/changes/hitl-approval-rule-action).
+		// HITL approval workflow (openspec/changes/archive/2026-07-15-hitl-approval-rule-action).
 		// Auth: #[NoAdminRequired] with in-body two-layer authorization
 		// (ADR-023 action matrix + per-request approverGroup membership,
 		// see ApprovalsController). Standard NC CSRF protection applies to
@@ -380,11 +381,11 @@ return [
 		['name' => 'approvals#approve', 'url' => '/api/approvals/{id}/approve', 'verb' => 'POST'],
 		['name' => 'approvals#reject', 'url' => '/api/approvals/{id}/reject', 'verb' => 'POST'],
 
-		// Flow orchestration (openspec/changes/visual-flow-orchestration). Standard
+		// Flow orchestration (openspec/changes/archive/2026-07-15-visual-flow-orchestration). Standard
 		// `flow` CRUD goes through OR's generic /api/objects/integriq/flow/*
 		// routes (ADR-022) — this is the one bespoke, non-CRUD action.
 		['name' => 'flows#run', 'url' => '/api/flows/{id}/run', 'verb' => 'POST'],
-		// API Products gateway (openspec/changes/api-product-gateway). api_product/
+		// API Products gateway (openspec/changes/archive/2026-07-15-api-product-gateway). api_product/
 		// api_product_subscription CRUD goes through OR's generic object API
 		// (design.md API Design); these are the bespoke, non-CRUD actions.
 		// Auth: subscribe/analytics are admin-only (default Controller posture, no
@@ -399,14 +400,14 @@ return [
 		// Catalog endpoints (connector-catalog-ui). Listing/search/filter goes
 		// through OR's generic /api/objects/integriq/catalog_item (ADR-022);
 		// these two are the bespoke, non-CRUD actions.
-		// See openspec/changes/connector-catalog-ui/contract.md
+		// See openspec/changes/archive/2026-07-14-connector-catalog-ui/contract.md
 		['name' => 'catalog#status', 'url' => '/api/catalog/items/{id}/status', 'verb' => 'GET'],
 		['name' => 'catalog#instantiate', 'url' => '/api/catalog/items/{id}/instantiate', 'verb' => 'POST'],
 
 		// Configuration import/export UI endpoints (connector-catalog-ui) — a
 		// thin, routed wrapper over the existing, already-tested
 		// ConfigurationService::exportConfiguration()/importConfiguration().
-		// See openspec/changes/connector-catalog-ui/contract.md
+		// See openspec/changes/archive/2026-07-14-connector-catalog-ui/contract.md
 		['name' => 'configuration#export', 'url' => '/api/configurations/{id}/export', 'verb' => 'POST'],
 		// Register connector export — routed trigger for ConfigurationService::exportRegister().
 		['name' => 'configuration#exportRegister', 'url' => '/api/registers/{id}/export', 'verb' => 'GET'],

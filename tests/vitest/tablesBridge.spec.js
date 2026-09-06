@@ -8,21 +8,21 @@
  * helper (TablesColumnMapping.vue) without a DOM mount — the repo's vitest
  * harness is node-env and mounts no .vue (see vitest.config.js).
  *
- * @spec openspec/changes/tables-bridge/specs/sync-editor-ui/spec.md#requirement-table-picker-for-the-nextcloud-table-sourcetarget-kind-req-syncui-006
- * @spec openspec/changes/tables-bridge/specs/sync-editor-ui/spec.md#requirement-column-mapping-helper-prefilled-from-table-schema-req-syncui-007
+ * @spec openspec/changes/archive/2026-07-15-tables-bridge/specs/sync-editor-ui/spec.md#requirement-table-picker-for-the-nextcloud-table-sourcetarget-kind-req-syncui-006
+ * @spec openspec/changes/archive/2026-07-15-tables-bridge/specs/sync-editor-ui/spec.md#requirement-column-mapping-helper-prefilled-from-table-schema-req-syncui-007
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-	NEXTCLOUD_TABLE_KIND,
-	extractResults,
-	mapTableOptions,
-	normaliseColumn,
-	mapColumnDescriptors,
 	columnTypeHint,
+	extractResults,
+	mapColumnDescriptors,
+	mappedValueFor,
+	mapTableOptions,
+	NEXTCLOUD_TABLE_KIND,
+	normaliseColumn,
 	readColumnMapping,
 	upsertColumnMapping,
-	mappedValueFor,
 } from '../../src/views/Synchronization/tablesBridge.js'
 
 describe('kind discriminator', () => {

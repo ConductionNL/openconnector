@@ -10,7 +10,7 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2
  *
- * @spec openspec/changes/nextcloud-forms-connector/tasks.md#task-9-unit-tests--forms-services
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/tasks.md#task-9-unit-tests--forms-services
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
  * Tests for answer-by-question resolution, type-aware coercion, and the
  * ambiguity guard (nextcloud-forms-connector REQ-003).
  *
- * @spec openspec/changes/nextcloud-forms-connector/specs/nextcloud-forms-connector/spec.md#requirement-answer-by-question-resolution-and-type-coercion-req-003
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/specs/nextcloud-forms-connector/spec.md#requirement-answer-by-question-resolution-and-type-coercion-req-003
  */
 class FormsAnswerResolverTest extends TestCase {
 

@@ -6,7 +6,7 @@
  * Raised when an `approval_request` cannot be acted on in its current state:
  * not found, not `pending`, or already past its `expiresAt`. Carries the HTTP
  * status the controller should map the failure to (404/409), per
- * openspec/changes/hitl-approval-rule-action/design.md API Design tables.
+ * openspec/changes/archive/2026-07-15-hitl-approval-rule-action/design.md API Design tables.
  *
  * @category Exception
  * @package  OCA\Integriq\Exception

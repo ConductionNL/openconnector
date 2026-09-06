@@ -32,7 +32,7 @@ wrapper's own definition). Its single wired configuration,
 `src/` — the entire data path from component to store method is unreachable at
 runtime.
 
-The retrofit change `openspec/changes/retrofit-2026-05-25-app-shell-and-logs-ui/`
+The retrofit change `openspec/changes/archive/2026-05-31-retrofit-2026-05-25-app-shell-and-logs-ui/`
 documents this component's behavior as REQ-SHELLUI-003 ("Log index viewer") as
 if it is live, shipped behavior — it is not reachable from any route today.
 The retrofit is a closed, retroactive-annotation change (all tasks checked;

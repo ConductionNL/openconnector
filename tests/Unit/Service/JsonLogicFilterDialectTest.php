@@ -13,7 +13,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-cloudevent-fan-out-to-matching-subscriptions-req-001
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-cloudevent-fan-out-to-matching-subscriptions-req-001
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
  * exercised indirectly through the public `processEvent()` entry point,
  * matching how this app already tests filter behaviour elsewhere.
  *
- * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-cloudevent-fan-out-to-matching-subscriptions-req-001
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-cloudevent-fan-out-to-matching-subscriptions-req-001
  */
 class JsonLogicFilterDialectTest extends TestCase {
 
@@ -83,7 +83,7 @@ class JsonLogicFilterDialectTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-cloudevent-fan-out-to-matching-subscriptions-req-001
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-cloudevent-fan-out-to-matching-subscriptions-req-001
 	 */
 	public function testJsonLogicFilterMatchesWhenConditionTrue(): void {
 		$subscription = ObjectServiceMockBuilder::objectEntity(
@@ -125,7 +125,7 @@ class JsonLogicFilterDialectTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-cloudevent-fan-out-to-matching-subscriptions-req-001
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-cloudevent-fan-out-to-matching-subscriptions-req-001
 	 */
 	public function testJsonLogicFilterRejectsWhenConditionFalse(): void {
 		$subscription = ObjectServiceMockBuilder::objectEntity(
@@ -160,7 +160,7 @@ class JsonLogicFilterDialectTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-24-events-cloudevents/tasks.md#task-1
+	 * @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-24-events-cloudevents/tasks.md#task-1
 	 */
 	public function testPreExistingDialectsStillMatch(): void {
 		$subscription = ObjectServiceMockBuilder::objectEntity(
@@ -196,7 +196,7 @@ class JsonLogicFilterDialectTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-24-events-cloudevents/tasks.md#task-1
+	 * @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-24-events-cloudevents/tasks.md#task-1
 	 */
 	public function testPreExistingDialectStillRejects(): void {
 		$subscription = ObjectServiceMockBuilder::objectEntity(
