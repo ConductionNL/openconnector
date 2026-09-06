@@ -350,6 +350,13 @@
           "order": 10
         },
         {
+          "id": "FlowRuns",
+          "label": "Flow runs",
+          "icon": "PlayCircleOutline",
+          "route": "FlowRuns",
+          "order": 15
+        },
+        {
           "id": "DeadLetters",
           "label": "Dead letters",
           "icon": "EmailAlertOutline",
@@ -2692,7 +2699,8 @@
         "categories": {
           "health": "How it went",
           "traffic": "What moved",
-          "components": "Per component"
+          "components": "Per component",
+          "protocols": "Protocol messages"
         },
         "cards": [
           {
@@ -2742,6 +2750,70 @@
             "icon": "CloudSyncOutline",
             "category": "components",
             "route": "SynchronizationLogs"
+          },
+          {
+            "id": "StufMessages",
+            "label": "StUF messages",
+            "description": "What each StUF exchange carried, and which ones failed.",
+            "icon": "SwapHorizontal",
+            "category": "protocols",
+            "route": "StufMessages"
+          },
+          {
+            "id": "PeppolTransmissions",
+            "label": "Peppol transmissions",
+            "description": "Documents sent over Peppol, and how far each one got.",
+            "icon": "FileSendOutline",
+            "category": "protocols",
+            "route": "PeppolTransmissions"
+          },
+          {
+            "id": "IwmoMessages",
+            "label": "iWmo and iJw messages",
+            "description": "Care messages in and out, with the answer each one received.",
+            "icon": "MedicalBag",
+            "category": "protocols",
+            "route": "IwmoMessages"
+          },
+          {
+            "id": "SmsMessages",
+            "label": "SMS messages",
+            "description": "Texts handed to a provider, and whether they arrived.",
+            "icon": "MessageTextOutline",
+            "category": "protocols",
+            "route": "SmsMessages"
+          },
+          {
+            "id": "FscCalls",
+            "label": "FSC calls",
+            "description": "Calls made through the federated service connectivity layer.",
+            "icon": "LanConnect",
+            "category": "protocols",
+            "route": "FscCalls"
+          },
+          {
+            "id": "ZgwTranslations",
+            "label": "ZGW version translations",
+            "description": "Payloads translated between ZGW versions, and what refused.",
+            "icon": "Translate",
+            "category": "protocols",
+            "route": "ZgwTranslations"
+          },
+          {
+            "id": "RisSyncRecords",
+            "label": "RIS sync records",
+            "description": "What moved between the council information system and here.",
+            "icon": "BankOutline",
+            "category": "protocols",
+            "route": "RisSyncRecords"
+          },
+          {
+            "id": "FormSubmissions",
+            "label": "Form submissions",
+            "description": "Submissions received from Open Formulieren, and where they landed.",
+            "icon": "FormSelect",
+            "category": "protocols",
+            "route": "FormSubmissions"
           },
           {
             "id": "CloudEventLogs",
@@ -3042,6 +3114,697 @@
       "config": {
         "register": "integriq",
         "schema": "execution_trace"
+      }
+    },
+    {
+      "id": "FlowRuns",
+      "route": "/flow-runs",
+      "type": "logs",
+      "title": "Flow runs",
+      "_note": "A flow you could draw and never watch. flow_run carries a six-state lifecycle including dead_letter and suspended, and nothing in src/ read it, so a run that failed overnight left no trace a user could reach. This is the flow counterpart of Sync runs and sits beside it in Operations.",
+      "config": {
+        "register": "integriq",
+        "schema": "flow_run",
+        "sortKey": "startedAt",
+        "sortOrder": "desc",
+        "pagination": {
+          "limit": 50
+        },
+        "rowDetail": true,
+        "fixedLayout": true,
+        "columns": [
+          {
+            "key": "startedAt",
+            "label": "Started",
+            "sortable": true,
+            "width": "16%",
+            "formatter": "datetime"
+          },
+          {
+            "key": "flowId",
+            "label": "Flow",
+            "sortable": true,
+            "width": "22%"
+          },
+          {
+            "key": "triggerSource",
+            "label": "Started by",
+            "sortable": true,
+            "width": "16%"
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "sortable": true,
+            "width": "12%",
+            "widget": "badge",
+            "widgetProps": {
+              "variant": "default",
+              "colorMap": {
+                "failed": "error",
+                "rejected": "error",
+                "abandoned": "error",
+                "conflict": "error",
+                "sent": "info",
+                "queued": "info",
+                "pending": "info",
+                "running": "info",
+                "received": "info",
+                "mapped": "info",
+                "passthrough": "info",
+                "skipped": "info",
+                "delivered": "success",
+                "processed": "success",
+                "accepted": "success",
+                "success": "success",
+                "synced": "success",
+                "completed": "success",
+                "handed_off": "success"
+              }
+            }
+          },
+          {
+            "key": "finishedAt",
+            "label": "Finished",
+            "sortable": true,
+            "width": "16%",
+            "formatter": "datetime"
+          }
+        ]
+      }
+    },
+    {
+      "id": "StufMessages",
+      "route": "/messages/stuf",
+      "type": "logs",
+      "title": "StUF messages",
+      "_note": "Evidence for an adapter that had none. The backend writes this schema and nothing in src/ ever read it, so a failed message was invisible in the product. Columns are declared schema properties; the status colours map the schema's own enum members, so a value the schema cannot hold gets no colour rather than a wrong one.",
+      "config": {
+        "register": "integriq",
+        "schema": "stuf_message",
+        "sortKey": "syncedAt",
+        "sortOrder": "desc",
+        "pagination": {
+          "limit": 50
+        },
+        "rowDetail": true,
+        "fixedLayout": true,
+        "columns": [
+          {
+            "key": "syncedAt",
+            "label": "Time",
+            "sortable": true,
+            "width": "16%",
+            "formatter": "datetime"
+          },
+          {
+            "key": "direction",
+            "label": "Direction",
+            "sortable": true,
+            "width": "12%"
+          },
+          {
+            "key": "berichttype",
+            "label": "Message type",
+            "sortable": true,
+            "width": "20%"
+          },
+          {
+            "key": "entiteittype",
+            "label": "Entity",
+            "sortable": true,
+            "width": "16%"
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "sortable": true,
+            "width": "12%",
+            "widget": "badge",
+            "widgetProps": {
+              "variant": "default",
+              "colorMap": {
+                "failed": "error",
+                "rejected": "error",
+                "abandoned": "error",
+                "conflict": "error",
+                "sent": "info",
+                "queued": "info",
+                "pending": "info",
+                "running": "info",
+                "received": "info",
+                "mapped": "info",
+                "passthrough": "info",
+                "skipped": "info",
+                "delivered": "success",
+                "processed": "success",
+                "accepted": "success",
+                "success": "success",
+                "synced": "success",
+                "completed": "success",
+                "handed_off": "success"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "PeppolTransmissions",
+      "route": "/messages/peppol",
+      "type": "logs",
+      "title": "Peppol transmissions",
+      "_note": "Evidence for an adapter that had none. The backend writes this schema and nothing in src/ ever read it, so a failed message was invisible in the product. Columns are declared schema properties; the status colours map the schema's own enum members, so a value the schema cannot hold gets no colour rather than a wrong one.",
+      "config": {
+        "register": "integriq",
+        "schema": "peppol_transmission",
+        "sortKey": "created",
+        "sortOrder": "desc",
+        "pagination": {
+          "limit": 50
+        },
+        "rowDetail": true,
+        "fixedLayout": true,
+        "columns": [
+          {
+            "key": "created",
+            "label": "Time",
+            "sortable": true,
+            "width": "15%",
+            "formatter": "datetime"
+          },
+          {
+            "key": "recipientPeppolId",
+            "label": "Recipient",
+            "sortable": true,
+            "width": "22%"
+          },
+          {
+            "key": "documentType",
+            "label": "Document type",
+            "sortable": true,
+            "width": "20%"
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "sortable": true,
+            "width": "12%",
+            "widget": "badge",
+            "widgetProps": {
+              "variant": "default",
+              "colorMap": {
+                "failed": "error",
+                "rejected": "error",
+                "abandoned": "error",
+                "conflict": "error",
+                "sent": "info",
+                "queued": "info",
+                "pending": "info",
+                "running": "info",
+                "received": "info",
+                "mapped": "info",
+                "passthrough": "info",
+                "skipped": "info",
+                "delivered": "success",
+                "processed": "success",
+                "accepted": "success",
+                "success": "success",
+                "synced": "success",
+                "completed": "success",
+                "handed_off": "success"
+              }
+            }
+          },
+          {
+            "key": "attempts",
+            "label": "Attempts",
+            "sortable": true,
+            "width": "9%"
+          }
+        ]
+      }
+    },
+    {
+      "id": "IwmoMessages",
+      "route": "/messages/iwmo",
+      "type": "logs",
+      "title": "iWmo and iJw messages",
+      "_note": "Evidence for an adapter that had none. The backend writes this schema and nothing in src/ ever read it, so a failed message was invisible in the product. Columns are declared schema properties; the status colours map the schema's own enum members, so a value the schema cannot hold gets no colour rather than a wrong one.",
+      "config": {
+        "register": "integriq",
+        "schema": "iwmo_ijw_message",
+        "sortKey": "syncedAt",
+        "sortOrder": "desc",
+        "pagination": {
+          "limit": 50
+        },
+        "rowDetail": true,
+        "fixedLayout": true,
+        "columns": [
+          {
+            "key": "syncedAt",
+            "label": "Time",
+            "sortable": true,
+            "width": "16%",
+            "formatter": "datetime"
+          },
+          {
+            "key": "direction",
+            "label": "Direction",
+            "sortable": true,
+            "width": "11%"
+          },
+          {
+            "key": "berichttype",
+            "label": "Message type",
+            "sortable": true,
+            "width": "20%"
+          },
+          {
+            "key": "domain",
+            "label": "Domain",
+            "sortable": true,
+            "width": "11%"
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "sortable": true,
+            "width": "12%",
+            "widget": "badge",
+            "widgetProps": {
+              "variant": "default",
+              "colorMap": {
+                "failed": "error",
+                "rejected": "error",
+                "abandoned": "error",
+                "conflict": "error",
+                "sent": "info",
+                "queued": "info",
+                "pending": "info",
+                "running": "info",
+                "received": "info",
+                "mapped": "info",
+                "passthrough": "info",
+                "skipped": "info",
+                "delivered": "success",
+                "processed": "success",
+                "accepted": "success",
+                "success": "success",
+                "synced": "success",
+                "completed": "success",
+                "handed_off": "success"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "SmsMessages",
+      "route": "/messages/sms",
+      "type": "logs",
+      "title": "SMS messages",
+      "_note": "Evidence for an adapter that had none. The backend writes this schema and nothing in src/ ever read it, so a failed message was invisible in the product. Columns are declared schema properties; the status colours map the schema's own enum members, so a value the schema cannot hold gets no colour rather than a wrong one.",
+      "config": {
+        "register": "integriq",
+        "schema": "sms_message",
+        "sortKey": "created",
+        "sortOrder": "desc",
+        "pagination": {
+          "limit": 50
+        },
+        "rowDetail": true,
+        "fixedLayout": true,
+        "columns": [
+          {
+            "key": "created",
+            "label": "Time",
+            "sortable": true,
+            "width": "15%",
+            "formatter": "datetime"
+          },
+          {
+            "key": "recipientMsisdn",
+            "label": "Recipient",
+            "sortable": true,
+            "width": "18%"
+          },
+          {
+            "key": "provider",
+            "label": "Provider",
+            "sortable": true,
+            "width": "13%"
+          },
+          {
+            "key": "templateId",
+            "label": "Template",
+            "sortable": true,
+            "width": "18%"
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "sortable": true,
+            "width": "12%",
+            "widget": "badge",
+            "widgetProps": {
+              "variant": "default",
+              "colorMap": {
+                "failed": "error",
+                "rejected": "error",
+                "abandoned": "error",
+                "conflict": "error",
+                "sent": "info",
+                "queued": "info",
+                "pending": "info",
+                "running": "info",
+                "received": "info",
+                "mapped": "info",
+                "passthrough": "info",
+                "skipped": "info",
+                "delivered": "success",
+                "processed": "success",
+                "accepted": "success",
+                "success": "success",
+                "synced": "success",
+                "completed": "success",
+                "handed_off": "success"
+              }
+            }
+          },
+          {
+            "key": "attempts",
+            "label": "Attempts",
+            "sortable": true,
+            "width": "9%"
+          }
+        ]
+      }
+    },
+    {
+      "id": "FscCalls",
+      "route": "/messages/fsc",
+      "type": "logs",
+      "title": "FSC calls",
+      "_note": "Evidence for an adapter that had none. The backend writes this schema and nothing in src/ ever read it, so a failed message was invisible in the product. Columns are declared schema properties; the status colours map the schema's own enum members, so a value the schema cannot hold gets no colour rather than a wrong one.",
+      "config": {
+        "register": "integriq",
+        "schema": "fsc_call",
+        "sortKey": "syncedAt",
+        "sortOrder": "desc",
+        "pagination": {
+          "limit": 50
+        },
+        "rowDetail": true,
+        "fixedLayout": true,
+        "columns": [
+          {
+            "key": "syncedAt",
+            "label": "Time",
+            "sortable": true,
+            "width": "16%",
+            "formatter": "datetime"
+          },
+          {
+            "key": "organisation",
+            "label": "Organisation",
+            "sortable": true,
+            "width": "20%"
+          },
+          {
+            "key": "service",
+            "label": "Service",
+            "sortable": true,
+            "width": "20%"
+          },
+          {
+            "key": "method",
+            "label": "Method",
+            "sortable": true,
+            "width": "12%"
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "sortable": true,
+            "width": "12%",
+            "widget": "badge",
+            "widgetProps": {
+              "variant": "default",
+              "colorMap": {
+                "failed": "error",
+                "rejected": "error",
+                "abandoned": "error",
+                "conflict": "error",
+                "sent": "info",
+                "queued": "info",
+                "pending": "info",
+                "running": "info",
+                "received": "info",
+                "mapped": "info",
+                "passthrough": "info",
+                "skipped": "info",
+                "delivered": "success",
+                "processed": "success",
+                "accepted": "success",
+                "success": "success",
+                "synced": "success",
+                "completed": "success",
+                "handed_off": "success"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "ZgwTranslations",
+      "route": "/messages/zgw-translations",
+      "type": "logs",
+      "title": "ZGW version translations",
+      "_note": "Evidence for an adapter that had none. The backend writes this schema and nothing in src/ ever read it, so a failed message was invisible in the product. Columns are declared schema properties; the status colours map the schema's own enum members, so a value the schema cannot hold gets no colour rather than a wrong one.",
+      "config": {
+        "register": "integriq",
+        "schema": "zgw_version_translation_log",
+        "sortKey": "translatedAt",
+        "sortOrder": "desc",
+        "pagination": {
+          "limit": 50
+        },
+        "rowDetail": true,
+        "fixedLayout": true,
+        "columns": [
+          {
+            "key": "translatedAt",
+            "label": "Time",
+            "sortable": true,
+            "width": "16%",
+            "formatter": "datetime"
+          },
+          {
+            "key": "resource",
+            "label": "Resource type",
+            "sortable": true,
+            "width": "24%"
+          },
+          {
+            "key": "fromVersion",
+            "label": "From",
+            "sortable": true,
+            "width": "12%"
+          },
+          {
+            "key": "toVersion",
+            "label": "To",
+            "sortable": true,
+            "width": "12%"
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "sortable": true,
+            "width": "12%",
+            "widget": "badge",
+            "widgetProps": {
+              "variant": "default",
+              "colorMap": {
+                "failed": "error",
+                "rejected": "error",
+                "abandoned": "error",
+                "conflict": "error",
+                "sent": "info",
+                "queued": "info",
+                "pending": "info",
+                "running": "info",
+                "received": "info",
+                "mapped": "info",
+                "passthrough": "info",
+                "skipped": "info",
+                "delivered": "success",
+                "processed": "success",
+                "accepted": "success",
+                "success": "success",
+                "synced": "success",
+                "completed": "success",
+                "handed_off": "success"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "RisSyncRecords",
+      "route": "/messages/ris",
+      "type": "logs",
+      "title": "RIS sync records",
+      "_note": "Evidence for an adapter that had none. The backend writes this schema and nothing in src/ ever read it, so a failed message was invisible in the product. Columns are declared schema properties; the status colours map the schema's own enum members, so a value the schema cannot hold gets no colour rather than a wrong one.",
+      "config": {
+        "register": "integriq",
+        "schema": "ris_sync_record",
+        "sortKey": "syncedAt",
+        "sortOrder": "desc",
+        "pagination": {
+          "limit": 50
+        },
+        "rowDetail": true,
+        "fixedLayout": true,
+        "columns": [
+          {
+            "key": "syncedAt",
+            "label": "Time",
+            "sortable": true,
+            "width": "16%",
+            "formatter": "datetime"
+          },
+          {
+            "key": "risType",
+            "label": "Type",
+            "sortable": true,
+            "width": "16%"
+          },
+          {
+            "key": "direction",
+            "label": "Direction",
+            "sortable": true,
+            "width": "12%"
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "sortable": true,
+            "width": "12%",
+            "widget": "badge",
+            "widgetProps": {
+              "variant": "default",
+              "colorMap": {
+                "failed": "error",
+                "rejected": "error",
+                "abandoned": "error",
+                "conflict": "error",
+                "sent": "info",
+                "queued": "info",
+                "pending": "info",
+                "running": "info",
+                "received": "info",
+                "mapped": "info",
+                "passthrough": "info",
+                "skipped": "info",
+                "delivered": "success",
+                "processed": "success",
+                "accepted": "success",
+                "success": "success",
+                "synced": "success",
+                "completed": "success",
+                "handed_off": "success"
+              }
+            }
+          },
+          {
+            "key": "retryCount",
+            "label": "Retries",
+            "sortable": true,
+            "width": "9%"
+          }
+        ]
+      }
+    },
+    {
+      "id": "FormSubmissions",
+      "route": "/messages/form-submissions",
+      "type": "logs",
+      "title": "Form submissions",
+      "_note": "Evidence for an adapter that had none. The backend writes this schema and nothing in src/ ever read it, so a failed message was invisible in the product. Columns are declared schema properties; the status colours map the schema's own enum members, so a value the schema cannot hold gets no colour rather than a wrong one.",
+      "config": {
+        "register": "integriq",
+        "schema": "openformulieren_submission",
+        "sortKey": "submittedAt",
+        "sortOrder": "desc",
+        "pagination": {
+          "limit": 50
+        },
+        "rowDetail": true,
+        "fixedLayout": true,
+        "columns": [
+          {
+            "key": "submittedAt",
+            "label": "Time",
+            "sortable": true,
+            "width": "16%",
+            "formatter": "datetime"
+          },
+          {
+            "key": "formSlug",
+            "label": "Form",
+            "sortable": true,
+            "width": "20%"
+          },
+          {
+            "key": "mappedTitle",
+            "label": "Title",
+            "sortable": true,
+            "width": "24%"
+          },
+          {
+            "key": "mappedChannel",
+            "label": "Channel",
+            "sortable": true,
+            "width": "12%"
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "sortable": true,
+            "width": "12%",
+            "widget": "badge",
+            "widgetProps": {
+              "variant": "default",
+              "colorMap": {
+                "failed": "error",
+                "rejected": "error",
+                "abandoned": "error",
+                "conflict": "error",
+                "sent": "info",
+                "queued": "info",
+                "pending": "info",
+                "running": "info",
+                "received": "info",
+                "mapped": "info",
+                "passthrough": "info",
+                "skipped": "info",
+                "delivered": "success",
+                "processed": "success",
+                "accepted": "success",
+                "success": "success",
+                "synced": "success",
+                "completed": "success",
+                "handed_off": "success"
+              }
+            }
+          }
+        ]
       }
     },
     {

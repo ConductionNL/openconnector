@@ -225,9 +225,9 @@ test.describe('app chrome (ADR-114)', () => {
 			'Dead letters by phase',
 			'Busiest entry points',
 		]) {
-			await expect(page.getByText(title, { exact: false }).first()).toBeVisible(
-				{ timeout: 15_000 },
-			)
+			await expect(
+				page.getByText(title, { exact: false }).first(),
+			).toBeVisible({ timeout: 15_000 })
 		}
 	})
 
@@ -246,9 +246,50 @@ test.describe('app chrome (ADR-114)', () => {
 			'Undelivered events',
 			'Open circuit breakers',
 		]) {
-			await expect(page.getByText(title, { exact: false }).first()).toBeVisible(
-				{ timeout: 30_000 },
-			)
+			await expect(
+				page.getByText(title, { exact: false }).first(),
+			).toBeVisible({ timeout: 30_000 })
+		}
+	})
+
+	test('Flow runs sits beside Sync runs, so a flow can be watched as well as drawn', async ({
+		page,
+	}) => {
+		// `flow_run` carries a six-state lifecycle including dead_letter and
+		// suspended, and nothing in src/ read it: a run that failed overnight
+		// left no trace a user could reach. It belongs next to Sync runs, which
+		// is the same idea for the other half of the engine.
+		const nav = page.locator('[data-testid="cn-nav"]')
+		await expect(
+			nav.locator(
+				'[data-testid="cn-nav-entry-OperationsGroup"] [data-testid="cn-nav-entry-FlowRuns"]',
+			),
+		).toBeAttached({ timeout: 15_000 })
+	})
+
+	test('Reports cards the protocol evidence that no screen used to show', async ({
+		page,
+	}) => {
+		// Thirteen protocol subsystems ship 47 routes, and 32 of 55 schemas were
+		// written by lib/ and never named anywhere in src/. These eight are the
+		// ones carrying a real status enum with a `failed` member, so there was
+		// always something to show and nowhere to show it.
+		await page.goto(`${APP_BASE}/reports`, { waitUntil: 'domcontentloaded' })
+		await dismissSetupWizard(page)
+
+		for (const label of [
+			'StUF messages',
+			'Peppol transmissions',
+			'iWmo and iJw messages',
+			'SMS messages',
+			'FSC calls',
+			'ZGW version translations',
+			'RIS sync records',
+			'Form submissions',
+		]) {
+			await expect(
+				page.getByText(label, { exact: false }).first(),
+			).toBeVisible({ timeout: 15_000 })
 		}
 	})
 
