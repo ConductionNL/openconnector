@@ -357,13 +357,39 @@ const DYNAMIC_KEYS = []
  * Every key reached dynamically: DYNAMIC_KEYS plus the src/manifest.json fields
  * that MainMenu.translate(key) passes straight to t().
  *
- * Only the fields CnAppNav actually resolves through its `translate` prop count:
- * `menu[].label` (recursively through `children`) and the two nav label
- * overrides. Anything else in the manifest is data, not UI copy — notably
- * `observability.metrics[].name` (Prometheus metric identifiers) and
- * `pages[].title`, which CnPageRenderer forwards to the page component as a raw
- * prop without translating it. Harvesting those made metric names look like
- * catalogue keys and would have put them in front of translators.
+ * Only fields that are actually resolved through a `translate` prop count.
+ * Anything else in the manifest is data, not UI copy — notably
+ * `observability.metrics[].name` (Prometheus metric identifiers), which made
+ * metric names look like catalogue keys and would have put them in front of
+ * translators.
+ *
+ * WHAT COUNTS, AND HOW IT WAS ESTABLISHED
+ * ---------------------------------------
+ * Measured 2026-09-06 against a Nextcloud 34 instance with the user's language
+ * set to `nl` and the app's `l10n/` deployed, reading the rendered DOM:
+ *
+ *   - `menu[].label`, recursively through `children` — Sources rendered
+ *     "Bronnen", Sync runs rendered "Synchronisatieruns".
+ *   - `pages[].title` — /messages/stuf rendered its heading as
+ *     "StUF-berichten", not "StUF messages".
+ *   - report `cards[].label` and `cards[].description` — the Reports hub
+ *     rendered "StUF-berichten" and "Wat elke StUF-uitwisseling bevatte".
+ *     CnReportsPage builds `resolvedCards` with `this.tr(card.label)`.
+ *
+ * The last two were previously excluded here, on the stated grounds that
+ * CnPageRenderer "forwards [title] to the page component as a raw prop without
+ * translating it". That is no longer true, and the cost of the stale exclusion
+ * is not cosmetic: four live keys were reported UNUSED, and `clean:l10n`
+ * proposes deleting exactly what this function fails to claim. Deleting a
+ * translated page title removes the Dutch string and leaves the English source
+ * rendering correctly, so nothing would have failed.
+ *
+ * Verify the same way before adding a field: set a user to `nl`, deploy `l10n/`
+ * (the built bundle does NOT carry it), and read the DOM. A field asserted from
+ * source alone is a guess.
+ *
+ * NOTE: `scripts/lib/l10n.js` is vendored from openregister. This function now
+ * diverges beyond DYNAMIC_KEYS; openregister needs the same correction.
  *
  * @param {string} repoRoot Absolute path to the app root.
  * @return {Set<string>} Keys that must count as used.
@@ -374,17 +400,28 @@ function collectDynamicKeys(repoRoot) {
 	if (!fs.existsSync(manifestPath)) return out
 	let manifest
 	try { manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) } catch { return out }
+	const add = (v) => { if (typeof v === 'string' && v.trim() !== '') out.add(v) }
 	;(function collectMenu(items) {
 		if (!Array.isArray(items)) return
 		for (const item of items) {
 			if (!item || typeof item !== 'object') continue
-			if (typeof item.label === 'string') out.add(item.label)
+			add(item.label)
 			collectMenu(item.children)
 		}
 	})(manifest.menu)
 	for (const field of ['roadmapLabel', 'documentationLabel']) {
-		const v = manifest.nav?.[field]
-		if (typeof v === 'string') out.add(v)
+		add(manifest.nav?.[field])
+	}
+	if (Array.isArray(manifest.pages)) {
+		for (const page of manifest.pages) {
+			if (!page || typeof page !== 'object') continue
+			add(page.title)
+			for (const card of page.config?.cards ?? []) {
+				if (!card || typeof card !== 'object') continue
+				add(card.label)
+				add(card.description)
+			}
+		}
 	}
 	return out
 }
