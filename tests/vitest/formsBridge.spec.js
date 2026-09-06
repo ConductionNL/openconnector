@@ -9,8 +9,8 @@
  * harness is node-env and mounts no .vue (see vitest.config.js), mirroring
  * tests/vitest/tablesBridge.spec.js.
  *
- * @spec openspec/changes/nextcloud-forms-connector/specs/sync-editor-ui/spec.md#requirement-form-picker-for-the-nextcloud-form-source-kind-req-syncui-008
- * @spec openspec/changes/nextcloud-forms-connector/specs/sync-editor-ui/spec.md#requirement-field-mapping-helper-prefilled-from-form-questions-req-syncui-009
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/specs/sync-editor-ui/spec.md#requirement-form-picker-for-the-nextcloud-form-source-kind-req-syncui-008
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/specs/sync-editor-ui/spec.md#requirement-field-mapping-helper-prefilled-from-form-questions-req-syncui-009
  */
 
 import { describe, expect, it } from 'vitest'

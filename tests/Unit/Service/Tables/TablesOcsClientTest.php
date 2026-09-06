@@ -10,7 +10,7 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2
  *
- * @spec openspec/changes/tables-bridge/tasks.md#task-11-unit-tests--coercion-contract-mapping-adapter-stubbed-client
+ * @spec openspec/changes/archive/2026-07-15-tables-bridge/tasks.md#task-11-unit-tests--coercion-contract-mapping-adapter-stubbed-client
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -33,7 +33,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for the v1-REST Tables API client.
  *
- * @spec openspec/changes/tables-bridge/specs/tables-bridge/spec.md
+ * @spec openspec/changes/archive/2026-07-15-tables-bridge/specs/tables-bridge/spec.md
  */
 class TablesOcsClientTest extends TestCase {
 

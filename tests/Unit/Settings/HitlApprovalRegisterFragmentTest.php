@@ -14,7 +14,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/hitl-approval-rule-action/design.md#database-changes
+ * @spec openspec/changes/archive/2026-07-15-hitl-approval-rule-action/design.md#database-changes
  */
 
 declare(strict_types=1);
@@ -31,7 +31,7 @@ use ReflectionMethod;
  * (Task 15), and the `approval.approve`/`approval.reject` ADR-023
  * action-matrix seed entries (Task 2).
  *
- * @spec openspec/changes/hitl-approval-rule-action/design.md#database-changes
+ * @spec openspec/changes/archive/2026-07-15-hitl-approval-rule-action/design.md#database-changes
  */
 class HitlApprovalRegisterFragmentTest extends TestCase {
 

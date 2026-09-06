@@ -43,7 +43,7 @@ verifiable and being hopeful.
 3. Playwright specs for the Pending Approvals list + detail pages (approve
    with comment, reject with comment) and the rule editor's `approval` action
    form, traced to the scenarios in
-   `openspec/changes/hitl-approval-rule-action/specs/approval-workflow/spec.md`
+   `openspec/changes/archive/2026-07-15-hitl-approval-rule-action/specs/approval-workflow/spec.md`
    per `hydra-gate-e2e-coverage`.
 4. Feature documentation in `docs/`: the `approval` rule action type, the
    Synchronization `requiresApproval` gate, the Pending Approvals UI; one

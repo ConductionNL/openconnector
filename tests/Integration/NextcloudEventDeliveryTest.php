@@ -25,8 +25,8 @@
  * the REAL EventService/WebhookSignatureService/listener classes together
  * end-to-end rather than mocking EventService itself, unlike the Unit suite.
  *
- * @spec openspec/changes/nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
- * @spec openspec/changes/nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-audited-replay-returning-the-message-to-the-delivery-machine-req-dlr-003
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-audited-replay-returning-the-message-to-the-delivery-machine-req-dlr-003
  */
 
 declare(strict_types=1);
@@ -51,7 +51,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * @spec openspec/changes/nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
  */
 class NextcloudEventDeliveryTest extends TestCase {
 
@@ -183,7 +183,7 @@ class NextcloudEventDeliveryTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
 	 */
 	public function testFileCreatedEventDeliversWithVerifiableSignature(): void {
 		$node = $this->createMock(Node::class);
@@ -230,7 +230,7 @@ class NextcloudEventDeliveryTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-audited-replay-returning-the-message-to-the-delivery-machine-req-dlr-003
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-audited-replay-returning-the-message-to-the-delivery-machine-req-dlr-003
 	 */
 	public function testFullFailureDeadLetterReplayLoop(): void {
 		$node = $this->createMock(Node::class);
