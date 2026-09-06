@@ -561,7 +561,7 @@ class ApprovalService {
 	 *
 	 * @throws ApprovalStateException (404) When no such request exists.
 	 *
-	 * @spec openspec/changes/hitl-approval-rule-action/design.md#api-design
+	 * @spec openspec/changes/archive/2026-07-15-hitl-approval-rule-action/design.md#api-design
 	 */
 	public function find(string $id): ObjectEntity {
 		try {

@@ -81,7 +81,7 @@ class RegisterDescriptorTest extends TestCase {
 	 * openspec/changes/dso-connector-adapter, bringing the count to 34.
 	 *
 	 * Was 34 — `notificaties_abonnement` added by
-	 * openspec/changes/notificaties-api-subscriber, bringing the count to 35.
+	 * openspec/changes/archive/2026-07-15-notificaties-api-subscriber, bringing the count to 35.
 	 *
 	 * Was 35 — `stuf_message` added by openspec/changes/stuf-zkn-bridge,
 	 * bringing the count to 36.

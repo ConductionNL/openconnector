@@ -15,8 +15,8 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
- * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-retrybackoff-policy-must-be-independently-configurable-req-009
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-retrybackoff-policy-must-be-independently-configurable-req-009
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * @spec openspec/changes/nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
  */
 class EventServiceNextcloudEventTest extends TestCase {
 
@@ -98,7 +98,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-file-events-must-be-normalized-to-cloudevents-req-001
 	 */
 	public function testHandleNextcloudEventPersistsAndProcesses(): void {
 		$captured = null;
@@ -143,7 +143,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
 	 */
 	public function testDefaultActionDispatchesWebhook(): void {
 		$subscription = ObjectServiceMockBuilder::objectEntity(
@@ -177,7 +177,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
 	 */
 	public function testActionKindSynchronizationRunsSynchronization(): void {
 		$synchronization = ObjectServiceMockBuilder::objectEntity($this, ['name' => 'sync-1'], 'sync-uuid');
@@ -272,7 +272,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
 	 */
 	public function testActionKindSynchronizationFailureEntersRetryMachine(): void {
 		$synchronization = ObjectServiceMockBuilder::objectEntity($this, ['name' => 'sync-1'], 'sync-uuid');
@@ -320,7 +320,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
 	 */
 	public function testActionKindJobRunsJob(): void {
 		$job = ObjectServiceMockBuilder::objectEntity($this, ['name' => 'job-1'], 'job-uuid');
@@ -372,7 +372,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-action-dispatch-must-support-webhook-synchronization-or-job-kinds-req-008
 	 */
 	public function testUnrecognisedActionKindFailsOnceWithoutRetryIncrement(): void {
 		$subscription = ObjectServiceMockBuilder::objectEntity(
@@ -410,7 +410,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-push-delivery-with-status-tracking-and-retry-sweep-req-002
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-push-delivery-with-status-tracking-and-retry-sweep-req-002
 	 */
 	public function testCustomRetryPolicyOverridesBackoffAndAbandonThreshold(): void {
 		$subscription = ObjectServiceMockBuilder::objectEntity(
@@ -464,7 +464,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-retrybackoff-policy-must-be-independently-configurable-req-009
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-retrybackoff-policy-must-be-independently-configurable-req-009
 	 */
 	public function testPartialRetryPolicyOnlyOverridesSetKeys(): void {
 		$subscription = ObjectServiceMockBuilder::objectEntity(
@@ -517,7 +517,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-retrybackoff-policy-must-be-independently-configurable-req-009
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/events-cloudevents/spec.md#requirement-a-subscriptions-retrybackoff-policy-must-be-independently-configurable-req-009
 	 */
 	public function testNoRetryPolicyIsByteForByteUnchanged(): void {
 		$subscription = ObjectServiceMockBuilder::objectEntity(
@@ -559,7 +559,7 @@ class EventServiceNextcloudEventTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-audited-replay-returning-the-message-to-the-delivery-machine-req-dlr-003
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-audited-replay-returning-the-message-to-the-delivery-machine-req-dlr-003
 	 */
 	public function testReplayActionAwareRerunsSynchronization(): void {
 		$synchronization = ObjectServiceMockBuilder::objectEntity($this, ['name' => 'sync-1'], 'sync-uuid');

@@ -14,7 +14,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/hitl-approval-rule-action/specs/approval-workflow/spec.md
+ * @spec openspec/changes/archive/2026-07-15-hitl-approval-rule-action/specs/approval-workflow/spec.md
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for the approval_request state machine and authorization model.
  *
- * @spec openspec/changes/hitl-approval-rule-action/specs/approval-workflow/spec.md
+ * @spec openspec/changes/archive/2026-07-15-hitl-approval-rule-action/specs/approval-workflow/spec.md
  */
 class ApprovalServiceTest extends TestCase {
 

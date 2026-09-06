@@ -1,5 +1,5 @@
 {
-  "$comment": "ADR-037 register fragment (execution-trace-observability). Declares the execution_trace schema backing the per-execution step timeline joined by traceId (rule -> mapping -> synchronization -> outbound call). See openspec/changes/execution-trace-observability/design.md Decision 2 and specs/execution-trace/spec.md REQ-004/REQ-009. Follows the hitl-approval-rule-action.json fragment shape exactly.",
+  "$comment": "ADR-037 register fragment (execution-trace-observability). Declares the execution_trace schema backing the per-execution step timeline joined by traceId (rule -> mapping -> synchronization -> outbound call). See openspec/changes/archive/2026-07-16-execution-trace-observability/design.md Decision 2 and specs/execution-trace/spec.md REQ-004/REQ-009. Follows the hitl-approval-rule-action.json fragment shape exactly.",
   "components": {
     "registers": {
       "integriq": {

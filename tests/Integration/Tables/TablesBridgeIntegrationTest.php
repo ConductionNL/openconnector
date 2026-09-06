@@ -32,7 +32,7 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2
  *
- * @spec openspec/changes/tables-bridge/tasks.md#task-12-integration-coverage-against-a-real-tables-app-with-ci-image-fallback
+ * @spec openspec/changes/archive/2026-07-15-tables-bridge/tasks.md#task-12-integration-coverage-against-a-real-tables-app-with-ci-image-fallback
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
  * Tables app AND a live-instance fixture are available; skips (never fails)
  * otherwise.
  *
- * @spec openspec/changes/tables-bridge/proposal.md#risk-3-ci-image-may-not-have-the-tables-app-installed
+ * @spec openspec/changes/archive/2026-07-15-tables-bridge/proposal.md#risk-3-ci-image-may-not-have-the-tables-app-installed
  */
 class TablesBridgeIntegrationTest extends TestCase {
 

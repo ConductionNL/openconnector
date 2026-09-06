@@ -204,7 +204,7 @@ class EventsControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-non-admin-subscription-requests-for-nc-native-types-must-be-gated-via-the-existing-adr-023-action-matrix-req-005
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-non-admin-subscription-requests-for-nc-native-types-must-be-gated-via-the-existing-adr-023-action-matrix-req-005
 	 */
 	public function testSubscribeRejectsWhenFamilyActionNotGranted(): void {
 		$this->request->method('getParams')->willReturn(['types' => ['com.nextcloud.files.node.created']]);
@@ -228,7 +228,7 @@ class EventsControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-non-admin-subscription-requests-for-nc-native-types-must-be-gated-via-the-existing-adr-023-action-matrix-req-005
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-non-admin-subscription-requests-for-nc-native-types-must-be-gated-via-the-existing-adr-023-action-matrix-req-005
 	 */
 	public function testSubscribeSucceedsWhenFamilyActionGranted(): void {
 		$this->request->method('getParams')->willReturn(['types' => ['com.nextcloud.files.node.created']]);
@@ -252,7 +252,7 @@ class EventsControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-non-admin-subscription-requests-for-nc-native-types-must-be-gated-via-the-existing-adr-023-action-matrix-req-005
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-non-admin-subscription-requests-for-nc-native-types-must-be-gated-via-the-existing-adr-023-action-matrix-req-005
 	 */
 	public function testSubscribeToOrObjectTypeSkipsFamilyCheck(): void {
 		$this->request->method('getParams')->willReturn(['types' => ['com.nextcloud.openregister.object.created']]);
@@ -280,7 +280,7 @@ class EventsControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-non-admin-subscription-requests-for-nc-native-types-must-be-gated-via-the-existing-adr-023-action-matrix-req-005
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/nextcloud-event-triggers/spec.md#requirement-non-admin-subscription-requests-for-nc-native-types-must-be-gated-via-the-existing-adr-023-action-matrix-req-005
 	 */
 	public function testUpdateSubscriptionRejectsWhenFamilyActionNotGranted(): void {
 		$this->request->method('getParams')->willReturn(['types' => ['com.nextcloud.calendar.object.created']]);
@@ -304,7 +304,7 @@ class EventsControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-dead-letter-listing-and-detail-must-surface-action-kind-and-nextcloud-event-provenance-req-dlr-007
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-dead-letter-listing-and-detail-must-surface-action-kind-and-nextcloud-event-provenance-req-dlr-007
 	 */
 	public function testDeadLetterIndexSurfacesActionKindPerRow(): void {
 		$rows = [
@@ -348,7 +348,7 @@ class EventsControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-dead-letter-listing-and-detail-must-surface-action-kind-and-nextcloud-event-provenance-req-dlr-007
+	 * @spec openspec/changes/archive/2026-07-15-nextcloud-event-hub/specs/dead-letter-replay/spec.md#requirement-dead-letter-listing-and-detail-must-surface-action-kind-and-nextcloud-event-provenance-req-dlr-007
 	 */
 	public function testDeadLetterIndexProvenanceUsesSourceNotType(): void {
 		$rows = [

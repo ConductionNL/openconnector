@@ -429,7 +429,7 @@ class Application extends App implements IBootstrap {
 
 		// HITL approval workflow: the actionable approver notification is
 		// dispatched imperatively (ApprovalService::notifyApprovers(), see
-		// openspec/changes/hitl-approval-rule-action/design.md Decision 4) —
+		// openspec/changes/archive/2026-07-15-hitl-approval-rule-action/design.md Decision 4) —
 		// without a notifier registered under this app id, the notification
 		// manager silently drops it when preparing it for display.
 		$context->registerNotifierService(\OCA\Integriq\Notification\ApprovalNotifier::class);

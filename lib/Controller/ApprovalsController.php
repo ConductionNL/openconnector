@@ -12,7 +12,7 @@
  * keeps the service graph acyclic: `EndpointService` and
  * `SynchronizationService` both depend on `ApprovalService` (to suspend),
  * so `ApprovalService` cannot depend back on either without a cycle — see
- * openspec/changes/hitl-approval-rule-action/design.md and this controller's
+ * openspec/changes/archive/2026-07-15-hitl-approval-rule-action/design.md and this controller's
  * class docblock for the full rationale.
  *
  * @category Controller
@@ -27,7 +27,7 @@
  *
  * @link https://www.Integriq.nl
  *
- * @spec openspec/changes/hitl-approval-rule-action/design.md#api-design
+ * @spec openspec/changes/archive/2026-07-15-hitl-approval-rule-action/design.md#api-design
  */
 
 declare(strict_types=1);
@@ -133,7 +133,7 @@ class ApprovalsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/hitl-approval-rule-action/design.md#api-design
+	 * @spec openspec/changes/archive/2026-07-15-hitl-approval-rule-action/design.md#api-design
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
