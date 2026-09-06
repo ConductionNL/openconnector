@@ -108,7 +108,7 @@ export default {
 		 *
 		 * @return {string} The integration list endpoint.
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-26-integration-synced-from/tasks.md#task-1
+		 * @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-26-integration-synced-from/tasks.md#task-1
 		 */
 		endpoint() {
 			const base = this.apiBase || generateUrl('/apps/openregister/api')
@@ -137,7 +137,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-26-integration-synced-from/tasks.md#task-2
+		 * @spec openspec/changes/archive/2026-05-31-retrofit-2026-05-26-integration-synced-from/tasks.md#task-2
 		 */
 		async fetchRows() {
 			this.loading = true

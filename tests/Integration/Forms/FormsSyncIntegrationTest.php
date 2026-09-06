@@ -18,7 +18,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/nextcloud-forms-connector/tasks.md#task-10-integration-tests--mocked-formsclientinterface-end-to-end-dispatch
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/tasks.md#task-10-integration-tests--mocked-formsclientinterface-end-to-end-dispatch
  */
 
 declare(strict_types=1);
@@ -43,7 +43,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * @spec openspec/changes/nextcloud-forms-connector/specs/nextcloud-forms-connector/spec.md#requirement-nextcloud-form-as-a-synchronization-source-req-002
+ * @spec openspec/changes/archive/2026-07-15-nextcloud-forms-connector/specs/nextcloud-forms-connector/spec.md#requirement-nextcloud-form-as-a-synchronization-source-req-002
  */
 class FormsSyncIntegrationTest extends TestCase {
 

@@ -43,8 +43,9 @@
  * - src/manifest.json
  */
 
-import { test, expect, type Page, type ConsoleMessage } from '@playwright/test'
+import type { ConsoleMessage, Page } from '@playwright/test'
 
+import { expect, test } from '@playwright/test'
 /*
  * SCENARIOS THIS FILE PROVES.
  *
@@ -103,7 +104,6 @@ import { test, expect, type Page, type ConsoleMessage } from '@playwright/test'
  *     — the manifest type and the mount are proven; that widget counts resolve
  *     via dataSource blocks against OR's aggregate endpoint is not.
  */
-
 // In Nextcloud installs with `htaccess.RewriteBase => '/'` (the
 // default for the apache-served dev container) `generateUrl` returns
 // `/apps/integriq` and the Vue Router's `base` is set to that —
@@ -124,9 +124,9 @@ import { test, expect, type Page, type ConsoleMessage } from '@playwright/test'
 // Resolution now comes from `OC.generateUrl` — the function src/main.js itself
 // calls to build the router base — and each test asserts the router MATCHED
 // before looking at anything.
-import { resolveAppRoot, expectRouteMatched } from '../support/appRoot'
+import { expectRouteMatched, resolveAppRoot } from '../support/appRoot.ts'
 
-async function rootUrl(page: import('@playwright/test').Page): Promise<string> {
+async function rootUrl(page: Page): Promise<string> {
 	return await resolveAppRoot(page)
 }
 
@@ -143,7 +143,7 @@ type ManifestPage = {
 }
 
 /**
- * All 35 manifest pages. Kept in manifest order so a diff against
+ * All 37 manifest pages. Kept in manifest order so a diff against
  * `src/manifest.json` reads straight down.
  *
  * Guarded by `manifest page table is complete and current` — do not edit this
@@ -221,6 +221,7 @@ const MANIFEST_PAGES: ManifestPage[] = [
 		type: 'custom',
 		component: 'ApprovalDetail',
 	},
+	{ id: 'Reports', route: '/reports', type: 'reports' },
 	{ id: 'Traces', route: '/traces', type: 'logs' },
 	{
 		id: 'TraceDetail',
@@ -228,6 +229,24 @@ const MANIFEST_PAGES: ManifestPage[] = [
 		type: 'custom',
 		component: 'TraceDetailPage',
 	},
+	// The one report that aggregates, rather than carding an existing log page.
+	{
+		id: 'OperationalHealth',
+		route: '/reports/operational-health',
+		type: 'dashboard',
+	},
+	// Evidence surfaces for the adapters, plus the flow counterpart of Sync
+	// runs. Every one of these schemas was written by lib/ and read by nothing
+	// in src/, so a failed message was invisible in the product.
+	{ id: 'FlowRuns', route: '/flow-runs', type: 'logs' },
+	{ id: 'StufMessages', route: '/messages/stuf', type: 'logs' },
+	{ id: 'PeppolTransmissions', route: '/messages/peppol', type: 'logs' },
+	{ id: 'IwmoMessages', route: '/messages/iwmo', type: 'logs' },
+	{ id: 'SmsMessages', route: '/messages/sms', type: 'logs' },
+	{ id: 'FscCalls', route: '/messages/fsc', type: 'logs' },
+	{ id: 'ZgwTranslations', route: '/messages/zgw-translations', type: 'logs' },
+	{ id: 'RisSyncRecords', route: '/messages/ris', type: 'logs' },
+	{ id: 'FormSubmissions', route: '/messages/form-submissions', type: 'logs' },
 	{ id: 'Store', route: '/store', type: 'index' },
 	{
 		id: 'DeadLetters',
@@ -280,6 +299,13 @@ const IGNORED_CONSOLE_PATTERNS: RegExp[] = [
 	// because the object does not exist in OR — that is expected for the
 	// smoke route and must not fail the console-gate.
 	/Error fetching .+\/__nonexistent__/i,
+	// OpenRegister's AnalyticsLinksController answers 501 with
+	// `{code: 'APP_NOT_AVAILABLE'}` when the optional NC Analytics app is not
+	// installed, which it is not on a plain instance. MappingDetail asks for
+	// analytics links per rendered object, so a clean install logs one 501 per
+	// call. An optional integration being absent is a designed answer, not a
+	// page-mount regression, and the page renders correctly without it.
+	/the server responded with a status of 501/i,
 ]
 
 function attachConsoleSpy(page: Page): { errors: string[]; warnings: string[] } {
@@ -364,11 +390,45 @@ test.describe('manifest pages — schema-driven render', () => {
 })
 
 test.describe('manifest schema validation', () => {
+	// This suite compiles as CommonJS, so `import.meta` is a syntax error and
+	// `require` is how it reaches the filesystem. The directives below say so
+	// at each site; the reason is here.
+	/**
+	 * Every page `type` the manifest schema accepts.
+	 *
+	 * Read from the vendored schema rather than restated here, because a
+	 * restatement is what went stale. Throws rather than falling back to a
+	 * default set: a test that cannot find the schema must say so, not quietly
+	 * accept every type it is shown.
+	 *
+	 * @return The page-type enum.
+	 */
+	function readPageTypes(): string[] {
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const schemaPath = require('path').resolve(
+			__dirname,
+			'../../../node_modules/@conduction/nextcloud-vue/src/schemas/app-manifest-v2.schema.json',
+		)
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
+		const schema = JSON.parse(require('fs').readFileSync(schemaPath, 'utf-8'))
+		const types = schema?.$defs?.page?.properties?.type?.enum
+
+		if (!Array.isArray(types) || types.length === 0) {
+			throw new Error(
+				`no page-type enum at $defs.page.properties.type.enum in ${schemaPath}`,
+			)
+		}
+
+		return types as string[]
+	}
+
 	function readManifest(): Record<string, any> {
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		const manifestPath = require('path').resolve(
 			__dirname,
 			'../../../src/manifest.json',
 		)
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		return JSON.parse(require('fs').readFileSync(manifestPath, 'utf-8'))
 	}
 
@@ -378,19 +438,23 @@ test.describe('manifest schema validation', () => {
 		// fails it as an error with no statement of intent — and a reader
 		// checking whether "the manifest exists and parses" is covered cannot
 		// see an assertion that isn't written down.
+		// eslint-disable-next-line @typescript-eslint/no-require-imports
 		const manifestPath = require('path').resolve(
 			__dirname,
 			'../../../src/manifest.json',
 		)
 		expect(
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
 			require('fs').existsSync(manifestPath),
 			`manifest.json must exist at ${manifestPath}`,
 		).toBe(true)
 		expect(
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
 			require('fs').statSync(manifestPath).isFile(),
 			'manifest.json must be a regular file',
 		).toBe(true)
 		expect(
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
 			() => JSON.parse(require('fs').readFileSync(manifestPath, 'utf-8')),
 			'manifest.json must parse as valid JSON with no syntax errors',
 		).not.toThrow()
@@ -479,26 +543,13 @@ test.describe('manifest schema validation', () => {
 
 	test('every page uses a standard type or has a _note justifying custom', async () => {
 		const m = readManifest()
-		// Standard nc-vue page types (ADR-030). `roadmap` is a recognised
-		// extension type used by FeaturesRoadmap.
-		const STANDARD = new Set([
-			'index',
-			'detail',
-			'dashboard',
-			'logs',
-			'settings',
-			'chat',
-			'files',
-			'form',
-			'wiki',
-			'map',
-			'roadmap',
-			// The flow EDITOR. A flow lives in OpenRegister's native flow table
-			// rather than a register/schema pair, so one flow is not expressible
-			// as `detail` — but the LIST is an ordinary `index` over a named
-			// source, which is why there is no matching `flows` type here.
-			'flow',
-		])
+
+		// 🔴 THE SCHEMA IS THE LIST, NOT A COPY OF IT. This was twelve
+		// hand-written strings, and it fell behind: `reports` is a page type the
+		// manifest schema has accepted for a while, the manifest started using
+		// it, and this test called it unknown. A copy of an enum drifts from the
+		// enum; reading the enum cannot.
+		const STANDARD = new Set<string>(readPageTypes())
 		for (const p of m.pages) {
 			if (p.type === 'custom') {
 				expect(

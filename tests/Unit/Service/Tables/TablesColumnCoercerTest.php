@@ -10,7 +10,7 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2
  *
- * @spec openspec/changes/tables-bridge/tasks.md#task-2-tablessyncadapter--column-cache-titlecolumnid-resolution-coercion
+ * @spec openspec/changes/archive/2026-07-15-tables-bridge/tasks.md#task-2-tablessyncadapter--column-cache-titlecolumnid-resolution-coercion
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Directly exercises the column-type coercion rules (tables-bridge REQ-003).
  *
- * @spec openspec/changes/tables-bridge/specs/tables-bridge/spec.md#requirement-column-type-coercion-req-003
+ * @spec openspec/changes/archive/2026-07-15-tables-bridge/specs/tables-bridge/spec.md#requirement-column-type-coercion-req-003
  */
 class TablesColumnCoercerTest extends TestCase {
 
