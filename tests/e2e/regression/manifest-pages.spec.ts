@@ -235,6 +235,18 @@ const MANIFEST_PAGES: ManifestPage[] = [
 		route: '/reports/operational-health',
 		type: 'dashboard',
 	},
+	// Evidence surfaces for the adapters, plus the flow counterpart of Sync
+	// runs. Every one of these schemas was written by lib/ and read by nothing
+	// in src/, so a failed message was invisible in the product.
+	{ id: 'FlowRuns', route: '/flow-runs', type: 'logs' },
+	{ id: 'StufMessages', route: '/messages/stuf', type: 'logs' },
+	{ id: 'PeppolTransmissions', route: '/messages/peppol', type: 'logs' },
+	{ id: 'IwmoMessages', route: '/messages/iwmo', type: 'logs' },
+	{ id: 'SmsMessages', route: '/messages/sms', type: 'logs' },
+	{ id: 'FscCalls', route: '/messages/fsc', type: 'logs' },
+	{ id: 'ZgwTranslations', route: '/messages/zgw-translations', type: 'logs' },
+	{ id: 'RisSyncRecords', route: '/messages/ris', type: 'logs' },
+	{ id: 'FormSubmissions', route: '/messages/form-submissions', type: 'logs' },
 	{ id: 'Store', route: '/store', type: 'index' },
 	{
 		id: 'DeadLetters',

@@ -21,6 +21,7 @@ import AccountVoice from 'vue-material-design-icons/AccountVoice.vue'
 import Api from 'vue-material-design-icons/Api.vue'
 import ApplicationOutline from 'vue-material-design-icons/ApplicationOutline.vue'
 import Bank from 'vue-material-design-icons/Bank.vue'
+import BankOutline from 'vue-material-design-icons/BankOutline.vue'
 import Bell from 'vue-material-design-icons/Bell.vue'
 import BellOutline from 'vue-material-design-icons/BellOutline.vue'
 import BellRing from 'vue-material-design-icons/BellRing.vue'
@@ -53,6 +54,7 @@ import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import FileCogOutline from 'vue-material-design-icons/FileCogOutline.vue'
 import FileDocumentMultipleOutline from 'vue-material-design-icons/FileDocumentMultipleOutline.vue'
 import FileDocumentOutline from 'vue-material-design-icons/FileDocumentOutline.vue'
+import FileSendOutline from 'vue-material-design-icons/FileSendOutline.vue'
 import FileXmlBox from 'vue-material-design-icons/FileXmlBox.vue'
 import Filter from 'vue-material-design-icons/Filter.vue'
 import FormatListCheckbox from 'vue-material-design-icons/FormatListCheckbox.vue'
@@ -65,6 +67,7 @@ import HospitalBoxOutline from 'vue-material-design-icons/HospitalBoxOutline.vue
 import LanConnect from 'vue-material-design-icons/LanConnect.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import MapMarkerPath from 'vue-material-design-icons/MapMarkerPath.vue'
+import MedicalBag from 'vue-material-design-icons/MedicalBag.vue'
 import MessageTextOutline from 'vue-material-design-icons/MessageTextOutline.vue'
 import Package from 'vue-material-design-icons/Package.vue'
 import PackageVariantClosed from 'vue-material-design-icons/PackageVariantClosed.vue'
@@ -92,6 +95,7 @@ import SyncCircle from 'vue-material-design-icons/SyncCircle.vue'
 import TextBoxOutline from 'vue-material-design-icons/TextBoxOutline.vue'
 import Timeline from 'vue-material-design-icons/Timeline.vue'
 import TransitConnectionVariant from 'vue-material-design-icons/TransitConnectionVariant.vue'
+import Translate from 'vue-material-design-icons/Translate.vue'
 import Update from 'vue-material-design-icons/Update.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
 import VectorPolylinePlus from 'vue-material-design-icons/VectorPolylinePlus.vue'
@@ -109,6 +113,7 @@ export default {
 	Api,
 	ApplicationOutline,
 	Bank,
+	BankOutline,
 	Bell,
 	BellOutline,
 	BellRing,
@@ -141,6 +146,7 @@ export default {
 	FileCogOutline,
 	FileDocumentMultipleOutline,
 	FileDocumentOutline,
+	FileSendOutline,
 	FileXmlBox,
 	Filter,
 	FormSelect,
@@ -153,6 +159,7 @@ export default {
 	LanConnect,
 	LinkVariant,
 	MapMarkerPath,
+	MedicalBag,
 	MessageTextOutline,
 	Package,
 	PackageVariantClosed,
@@ -180,6 +187,7 @@ export default {
 	TextBoxOutline,
 	Timeline,
 	TransitConnectionVariant,
+	Translate,
 	Update,
 	Upload,
 	VectorPolylinePlus,
