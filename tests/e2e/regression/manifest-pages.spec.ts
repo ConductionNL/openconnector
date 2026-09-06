@@ -229,6 +229,12 @@ const MANIFEST_PAGES: ManifestPage[] = [
 		type: 'custom',
 		component: 'TraceDetailPage',
 	},
+	// The one report that aggregates, rather than carding an existing log page.
+	{
+		id: 'OperationalHealth',
+		route: '/reports/operational-health',
+		type: 'dashboard',
+	},
 	{ id: 'Store', route: '/store', type: 'index' },
 	{
 		id: 'DeadLetters',
@@ -281,6 +287,13 @@ const IGNORED_CONSOLE_PATTERNS: RegExp[] = [
 	// because the object does not exist in OR — that is expected for the
 	// smoke route and must not fail the console-gate.
 	/Error fetching .+\/__nonexistent__/i,
+	// OpenRegister's AnalyticsLinksController answers 501 with
+	// `{code: 'APP_NOT_AVAILABLE'}` when the optional NC Analytics app is not
+	// installed, which it is not on a plain instance. MappingDetail asks for
+	// analytics links per rendered object, so a clean install logs one 501 per
+	// call. An optional integration being absent is a designed answer, not a
+	// page-mount regression, and the page renders correctly without it.
+	/the server responded with a status of 501/i,
 ]
 
 function attachConsoleSpy(page: Page): { errors: string[]; warnings: string[] } {
