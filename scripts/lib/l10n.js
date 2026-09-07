@@ -343,15 +343,104 @@ function localeNameOf(file) {
  * never reported unused, never removed by a cleaner.
  *
  * App-specific — this is the one part deliberately NOT shared with
- * openregister's copy. Empty for integriq: it reaches its dynamic UI copy
- * through `src/manifest.json`, which `collectDynamicKeys` below harvests
- * directly (App.vue passes `translateForApp` to CnAppNav / CnPageRenderer), so
- * there is nothing to enumerate by hand yet.
+ * openregister's copy.
+ *
+ * These are the rule editor's option lists. Nine call sites pass a VARIABLE to
+ * t(), so no static scan can see them:
+ *
+ *   ACTION_TYPES / TIMING_OPTIONS / ACTION_OPTIONS (views/Rule/ruleDraft.js)
+ *     → `t('integriq', entry.label)` in RuleActionConfig.vue,
+ *       RuleDetailPage.vue and modals/v2/RuleEditorModal.vue
+ *   OPERATORS (views/Rule/RuleConditionLeaf.vue)
+ *     → `t('integriq', op.label)` and `t('integriq', op.group)`
+ *   the field rows in views/Rule/actionForms/{Approval,Authentication,
+ *     Locking,WebhookSignature}Form.vue → `t('integriq', row.label)`
+ *
+ * This list used to be empty, on the stated grounds that integriq reaches all
+ * its dynamic UI copy through src/manifest.json. It does not, and the cost was
+ * two-sided: nine of these were in en.js, reported UNUSED, and offered up by
+ * clean:l10n for deletion — deleting a live translation leaves the English
+ * source rendering correctly, so nothing would have failed. The other sixty
+ * were not in en.js at all, which is why the whole rule editor rendered
+ * untranslated in every locale. They were added to en.js alongside this list.
+ *
+ * Regenerate by collecting `label:` and `group:` literals from the six modules
+ * named above; do not hand-edit one entry without re-checking the rest.
  *
  * Add an entry — with the call site — when a variable-keyed t() call is
  * introduced, or the key silently stops being translated.
  */
-const DYNAMIC_KEYS = []
+const DYNAMIC_KEYS = [
+	'API key',
+	'After',
+	'Approval',
+	'Authentication',
+	'Basic (users/groups)',
+	'Before',
+	'Dead-letter for later review',
+	'Delete (Delete)',
+	'Download',
+	'Error',
+	'Extend external input',
+	'Extend input',
+	'Fetch File',
+	'Filepart Upload',
+	'Fileparts Create',
+	'Get (Read)',
+	'GitHub (sha256=)',
+	'JWT',
+	'JWT (ZGW)',
+	'JavaScript',
+	'Lock resource',
+	'Locking',
+	'Mapping',
+	'Nextcloud session (users/groups)',
+	'OAuth (users/groups)',
+	'OpenConnector (t=,v1=)',
+	'Post (Create)',
+	'Put (Update)',
+	'Return an error to the caller',
+	'Save object',
+	'Skip (resolve without writing)',
+	'Stripe (t=,v1=)',
+	'Synchronization',
+	'Unlock resource',
+	'Upload',
+	'Webhook signature',
+	'Write File',
+	'add',
+	'all (collection, predicate)',
+	'arithmetic',
+	'array',
+	'comparison',
+	'concatenate strings',
+	'control',
+	'divide',
+	'does not equal',
+	'equals',
+	'exists / truthy',
+	'filter (collection, predicate)',
+	'greater than',
+	'greater than or equal',
+	'if (condition, then, else)',
+	'in (string contains / array member)',
+	'less than',
+	'less than or equal',
+	'map (collection, predicate)',
+	'merge arrays',
+	'missing (list of required paths)',
+	'missing / falsy',
+	'modulo',
+	'multiply',
+	'negation',
+	'none (collection, predicate)',
+	'reduce (collection, predicate)',
+	'some (collection, predicate)',
+	'string',
+	'substring',
+	'subtract',
+	'var (read value at path)',
+]
 
 /**
  * Every key reached dynamically: DYNAMIC_KEYS plus the src/manifest.json fields
