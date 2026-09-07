@@ -30,7 +30,7 @@
  * whether or not the app is installed, so it is asserted outright.
  */
 
-import type { Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
 import { APP_BASE } from './_helpers.ts'
@@ -50,6 +50,61 @@ async function requestToken(page: Page) {
 	)
 	expect(token, 'the app page must carry a request token').not.toBe('')
 	return token
+}
+
+/**
+ * The first source on the instance, or undefined when there is none.
+ *
+ * @param page The page, already used to harvest a request token.
+ * @param request The Playwright request context.
+ * @return The source object, or undefined.
+ */
+async function firstSource(page: Page, request: APIRequestContext) {
+	await page.goto(`${APP_BASE}/sources`, { waitUntil: 'domcontentloaded' })
+	const requesttoken = await requestToken(page)
+	const resp = await request.get(`${SOURCES_API}?_limit=1`, {
+		headers: { requesttoken },
+		failOnStatusCode: false,
+	})
+	expect(resp.status(), 'an admin must be able to list sources').toBe(200)
+	const body = await resp.json()
+	return (body?.results ?? body ?? [])[0]
+}
+
+/**
+ * The object id of a listed source.
+ *
+ * @param source The listed source.
+ * @return Its id.
+ */
+function sourceIdOf(source: Record<string, unknown>) {
+	const id = String(
+		source.id
+		?? (source['@self'] as Record<string, unknown> | undefined)?.id
+		?? source.uuid
+		?? '',
+	)
+	expect(id, 'the listed source must carry an id').not.toBe('')
+	return id
+}
+
+/**
+ * Open a source's detail page and wait for its main landmark.
+ *
+ * `#app-content` does not exist on this shell — the skip-link target is
+ * `#app-content-vue` and the landmark is `main`. Asserting the wrong id fails
+ * before any leaf assertion runs, which reads as "the leaf did not render"
+ * when the page rendered perfectly.
+ *
+ * @param page The page.
+ * @param sourceId The source's id.
+ * @return Nothing.
+ */
+async function openSource(page: Page, sourceId: string) {
+	await page.goto(`${APP_BASE}/sources/${sourceId}`, {
+		waitUntil: 'domcontentloaded',
+	})
+	await expect(page.locator('main').first()).toBeVisible({ timeout: 20_000 })
 }
 
 // ---------------------------------------------------------------------------
@@ -125,61 +180,74 @@ test.describe('REQ-OCL-001: the declared leaf surface', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('REQ-OCL-002: the leaves on a source detail page', () => {
-	// @e2e integration-leaves::sourcedetail-renders-the-leaf-widgets-and-leaves-the-source-untouched
-	test('the leaf widgets render and expose no credential value', async ({
+	// @e2e integration-leaves::sourcedetail-renders-the-leaf-widgets
+	test('the leaf widgets render on a source detail page', async ({
 		page,
 		request,
 	}) => {
-		await page.goto(`${APP_BASE}/sources`, { waitUntil: 'domcontentloaded' })
-		const requesttoken = await requestToken(page)
-
-		const listResp = await request.get(`${SOURCES_API}?_limit=1`, {
-			headers: { requesttoken },
-			failOnStatusCode: false,
-		})
-		expect(listResp.status(), 'an admin must be able to list sources').toBe(200)
-		const list = await listResp.json()
-		const first = (list?.results ?? list ?? [])[0]
+		const first = await firstSource(page, request)
 		test.skip(
 			!first,
 			'no source exists on this instance; the leaf widgets need a real object id',
 		)
 
-		const sourceId = String(first.id ?? first['@self']?.id ?? first.uuid ?? '')
-		expect(sourceId, 'the listed source must carry an id').not.toBe('')
-
-		const before = JSON.stringify(first)
-
-		await page.goto(`${APP_BASE}/sources/${sourceId}`, {
-			waitUntil: 'domcontentloaded',
-		})
-		// `#app-content` does not exist on this shell — the skip-link target is
-		// `#app-content-vue` and the landmark is `main`. Asserting the wrong id
-		// fails before any leaf assertion runs, which reads as "the leaf did not
-		// render" when the page rendered perfectly.
+		await openSource(page, sourceIdOf(first))
 		const content = page.locator('main').first()
-		await expect(content).toBeVisible({ timeout: 20_000 })
 
-		// Files is unconditional: its provider is OpenRegister's own and needs
-		// no extra app installed.
+		// A leaf widget resolves its renderer through OpenRegister's SHARED
+		// client registry, installed by the `openregister-integration-global`
+		// bundle. OpenRegister gitignores `/js/` and force-tracks three files,
+		// which do not include that bundle, so a checkout that was never built
+		// serves no registry at all and NO integration widget can render — for
+		// any app, not just this one. Probing the registry is what separates
+		// "the leaf is broken" from "this instance cannot render leaves", and
+		// asserting through it unconditionally is how this spec went red on CI
+		// against an app that was fine.
+		const hasFilesProvider = await page.evaluate(() => {
+			const registry = (window as unknown as {
+				OCA?: { OpenRegister?: { integrations?: { has?: (id: string) => boolean } } }
+			}).OCA?.OpenRegister?.integrations
+			return typeof registry?.has === 'function' && registry.has('files')
+		})
+		test.skip(
+			!hasFilesProvider,
+			"OpenRegister's client integration registry is absent on this instance, so no integration widget can render. Its `openregister-integration-global` bundle is gitignored and is not one of the three force-tracked files in `js/`, so an unbuilt checkout — CI's — serves nothing to register the providers with.",
+		)
+
+		// Files is the one leaf that needs no extra Nextcloud app: its provider
+		// is OpenRegister's own.
 		await expect(
 			content.getByText('Supplier documents', { exact: false }).first(),
 			'the files leaf must render on a source detail page',
 		).toBeVisible({ timeout: 20_000 })
 
 		// Deck and Talk render only when their app is installed. Absence is the
-		// documented behaviour, so it is tolerated; presence is asserted.
+		// documented provider behaviour, so it is tolerated; presence is asserted.
 		for (const title of ['Incident follow-ups', 'Incident war-room']) {
 			const widget = content.getByText(title, { exact: false }).first()
 			if (await widget.isVisible({ timeout: 2_000 }).catch(() => false)) {
 				await expect(widget).toBeVisible()
 			}
 		}
+	})
 
-		// No leaf reads a source property, so no credential value can reach a
-		// leaf's DOM. Assert it against the whole page rather than a per-widget
-		// locator: a value leaking into the surrounding chrome would be the
-		// same defect.
+	// @e2e integration-leaves::a-source-detail-page-exposes-no-credential-and-is-unchanged-by-rendering
+	test('no credential reaches the page, and rendering leaves the source unchanged', async ({
+		page,
+		request,
+	}) => {
+		const first = await firstSource(page, request)
+		test.skip(!first, 'no source exists on this instance')
+
+		const sourceId = sourceIdOf(first)
+		await openSource(page, sourceId)
+		const content = page.locator('main').first()
+
+		// No leaf reads a source property, so no credential value can reach the
+		// page. Asserted against the whole main landmark rather than a per-widget
+		// locator: a value leaking into the surrounding chrome is the same defect.
+		// This runs whether or not the widgets rendered, because the property it
+		// checks is about the object read, not about the leaf renderer.
 		const secrets = ['password', 'apikey', 'secret', 'jwt']
 			.map((field) => first[field])
 			.filter(
@@ -190,11 +258,11 @@ test.describe('REQ-OCL-002: the leaves on a source detail page', () => {
 		for (const secret of secrets) {
 			expect(
 				rendered.includes(secret),
-				'a credential value must never render inside the leaf surface',
+				'a credential value must never render on a source detail page',
 			).toBe(false)
 		}
 
-		// The page render must not have mutated the object the leaves hang off.
+		const requesttoken = await requestToken(page)
 		const afterResp = await request.get(`${SOURCES_API}/${sourceId}`, {
 			headers: { requesttoken },
 			failOnStatusCode: false,
@@ -203,7 +271,7 @@ test.describe('REQ-OCL-002: the leaves on a source detail page', () => {
 		const after = await afterResp.json()
 		const afterObject = after?.results?.[0] ?? after
 		expect(
-			JSON.parse(before).name,
+			first.name,
 			'rendering the leaves must not change the source',
 		).toBe(afterObject.name)
 	})

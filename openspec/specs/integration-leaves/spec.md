@@ -40,15 +40,33 @@ The declaration SHALL be written as `configuration.linkedTypes` and SHALL carry 
 
 No leaf on `source` SHALL read or write any register property of the source object — in particular none of the plaintext credential properties (`password`, `apikey`, `secret`, `jwt`, `authenticationConfig`). The files, deck, and talk leaves link external entities (Nextcloud files, Deck cards, Talk conversations) to the object by id; linking, unlinking, or interacting with a linked entity SHALL leave the source object unchanged, and no credential value SHALL be rendered inside any leaf widget. Leaves SHALL render only after the page's normal object read has succeeded, so no user gains sight of a source through a leaf that they could not already open.
 
-#### Scenario: SourceDetail renders the leaf widgets and leaves the source untouched
+Rendering a leaf widget additionally requires OpenRegister's SHARED CLIENT
+REGISTRY, installed by its `openregister-integration-global` bundle. OpenRegister
+gitignores `/js/` and force-tracks three files, which do not include that bundle,
+so an instance running an unbuilt OpenRegister checkout serves no registry and no
+integration widget can render — for any app, not only this one. That is a
+property of the instance and not of the leaf declaration, so the two are asserted
+separately: the declaration unconditionally, the render only where a registry
+exists.
 
-- GIVEN a seeded source
+#### Scenario: SourceDetail renders the leaf widgets
+
+- GIVEN a seeded source, on an instance whose OpenRegister serves the shared
+  integration registry
 - WHEN its detail page is opened
 - THEN the files leaf renders as "Supplier documents"
 - AND the deck and talk leaves render when their Nextcloud app is installed
-- AND no credential value held by the source appears anywhere in the rendered page
+- @e2e integration-leaves::sourcedetail-renders-the-leaf-widgets
+
+#### Scenario: a source detail page exposes no credential and is unchanged by rendering
+
+- GIVEN a seeded source holding credential values
+- WHEN its detail page is opened
+- THEN no credential value appears anywhere in the rendered page
 - AND the source object read back afterwards is unchanged
-- @e2e integration-leaves::sourcedetail-renders-the-leaf-widgets-and-leaves-the-source-untouched
+- AND this holds whether or not the leaf widgets rendered, because it is a
+  property of the object read rather than of the leaf renderer
+- @e2e integration-leaves::a-source-detail-page-exposes-no-credential-and-is-unchanged-by-rendering
 
 #### Scenario: an incident war-room is linked without touching the source
 
