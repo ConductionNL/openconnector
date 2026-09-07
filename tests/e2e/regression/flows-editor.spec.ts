@@ -130,20 +130,22 @@ test.describe('the Flows surface', () => {
 		).toBeVisible({ timeout: 15000 })
 		await expect(page.getByText('No steps yet')).toHaveCount(0)
 
-		// The step picker offers the catalogue; an in-flight catalogue must not
-		// be reported as an unreadable one (the failure text used to show on
+		// The palette offers the catalogue; an in-flight catalogue must not be
+		// reported as an unreadable one (the failure text used to show on
 		// every first paint of this route).
 		//
-		// 🔴 THE PALETTE LEFT THE SIDEBAR in nextcloud-vue 2.40.0. A live
-		// instance serves sixty-five step types, and a one-per-row list that
-		// long in a 300px column is a scroll rather than a chooser, so it
-		// became `CnFlowStepPickerModal`, opened from the toolbar. Only the
-		// `.cn-flow-sidebar__palette*` CSS stayed behind, so the old locator
-		// still matched a rule and timed out looking like a render failure.
-		await page.locator('[data-testid="flow-add-step"]').click()
-		const picker = page.locator('[data-testid="flow-step-picker"]')
+		// ⚠️ THE PALETTE IS STILL IN THE SIDEBAR HERE. It moves to a modal off
+		// the toolbar in nextcloud-vue 2.40.0, and #1889 rewrote this to drive
+		// that modal — but this app's lockfile resolves 2.39.0, where the
+		// sidebar still carries the palette under a Steps tab and the toolbar
+		// has no "Add a step" button at all. The rewrite turned a passing
+		// assertion into a 60-second timeout.
+		//
+		// When this app moves to 2.40.0, this is the line that changes, and
+		// openregister's `tests/e2e/ci/flow-controls.spec.ts` is the worked
+		// example.
 		await expect(
-			picker.locator('[data-testid="flow-step-picker-item"]').first(),
+			page.locator('.cn-flow-sidebar__palette-item').first(),
 		).toBeVisible({ timeout: 15000 })
 		await expect(page.getByText('could not be read')).toHaveCount(0)
 	})
@@ -162,15 +164,17 @@ test.describe('the Flows surface', () => {
 
 		// Name the flow after this run so a failed cleanup is identifiable.
 		//
-		// 🔴 THERE IS NO TAB STRIP ANY MORE. The palette moved to a modal off
-		// the toolbar and took the Steps tab with it, and nextcloud-vue 2.40.0
-		// then dropped the strip outright — "a tab strip with one tab in it is
-		// chrome around nothing". The flow's own fields moved to
-		// `CnFlowSettingsModal`, reached from the sidebar's Actions menu.
+		// 🔴 THERE IS NO FLOW TAB. The sidebar registers exactly two tabs,
+		// Steps and Runs, and the flow's own fields live in
+		// `CnFlowSettingsModal` behind the sidebar's Actions menu. This is
+		// already true in the 2.39.0 this app resolves; it is not a 2.40.0
+		// change.
 		//
-		// This is what the job was actually red on: a 60s timeout waiting for
+		// This is what the job was red on: a 60s timeout waiting for
 		// `getByRole('tab', { name: 'Flow' })`, which reads as a hung editor
-		// rather than as a control that no longer exists.
+		// rather than as a control that does not exist. The page snapshot in
+		// the trace shows the tablist with its two tabs, which is the fastest
+		// way to settle a question like this.
 		const editAction = page.locator('[data-testid="flow-action-edit"]')
 		await openFlowActionsMenu(page, editAction)
 		await editAction.click()
