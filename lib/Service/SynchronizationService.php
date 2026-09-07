@@ -9274,12 +9274,12 @@ class SynchronizationService {
 		// `filename*="UTF-8''x.pdf"`; unquoting is a no-op on a bare token.
 		$value = $this->unquoteHeaderValue(value: $value);
 
-		// RFC 5987 shape: charset ' language ' value-chars
+		// RFC 5987 shape: charset ' language ' value-chars.
 		$parts = explode("'", $value, 3);
 		if (count($parts) !== 3) {
 			$this->logger->info(
 				'Ignoring malformed Content-Disposition filename* (expected charset\'\'value); falling back to plain filename',
-				['valueLength' => strlen($value)]
+				['extValueLength' => strlen($value)]
 			);
 			return null;
 		}
@@ -9298,10 +9298,10 @@ class SynchronizationService {
 		// UTF-8 and `%00` yields a NUL byte. Neither is a usable filename, so
 		// enforce "decodable" here and fall back to the plain `filename`.
 		$decoded = rawurldecode($encoded);
-		if (mb_check_encoding($decoded, 'UTF-8') === false || preg_match('/[\x00-\x1F\x7F]/', $decoded) === 1) {
+		if (mb_check_encoding(value: $decoded, encoding: 'UTF-8') === false || preg_match('/[\x00-\x1F\x7F]/', $decoded) === 1) {
 			$this->logger->info(
 				'Ignoring Content-Disposition filename* that decoded to invalid UTF-8 or control characters; falling back to plain filename',
-				['valueLength' => strlen($encoded)]
+				['encodedLength' => strlen($encoded)]
 			);
 			return null;
 		}
