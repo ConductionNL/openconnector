@@ -501,18 +501,71 @@ function collectDynamicKeys(repoRoot) {
 	for (const field of ['roadmapLabel', 'documentationLabel']) {
 		add(manifest.nav?.[field])
 	}
-	if (Array.isArray(manifest.pages)) {
-		for (const page of manifest.pages) {
-			if (!page || typeof page !== 'object') continue
-			add(page.title)
-			for (const card of page.config?.cards ?? []) {
-				if (!card || typeof card !== 'object') continue
-				add(card.label)
-				add(card.description)
-			}
+	// Every user-visible string anywhere in the manifest, by FIELD NAME.
+	//
+	// Field-scoped rather than "every string": `observability.metrics[].name`
+	// holds Prometheus identifiers, and harvesting those made metric names look
+	// like catalogue keys and put them in front of translators. `name` is not a
+	// visible field, so it stays out.
+	//
+	// This list is deliberately the same one gate-102 (manifest-l10n-coverage)
+	// checks. When the two disagreed, a sweep of "unused" keys deleted eight
+	// manifest strings — walkthrough copy, column labels, a header action — and
+	// gate-102 was the only thing that noticed. Keep them in step.
+	const VISIBLE_FIELDS = new Set([
+		'title',
+		'label',
+		'description',
+		'body',
+		'task',
+		'emptyText',
+		'emptyLabel',
+		'placeholder',
+		'subtitle',
+		'helpText',
+	])
+	;(function harvest(node) {
+		if (Array.isArray(node)) {
+			for (const item of node) harvest(item)
+			return
+		}
+		if (!node || typeof node !== 'object') return
+		for (const [key, value] of Object.entries(node)) {
+			if (VISIBLE_FIELDS.has(key)) add(value)
+			harvest(value)
+		}
+	})(manifest.pages)
+	// Report categories are a map of id -> label, so the label is the VALUE.
+	for (const page of manifest.pages ?? []) {
+		for (const label of Object.values(page?.config?.categories ?? {})) {
+			add(label)
 		}
 	}
+	harvestWalkthrough(manifest, add)
 	return out
+}
+
+/**
+ * Walkthrough tour copy: `walkthrough.tours[].steps[].{title,body,task}` plus
+ * the tour titles. Rendered by CnWalkthrough through the same translate prop.
+ *
+ * @param {object} manifest The parsed manifest.
+ * @param {Function} add Adder that ignores non-strings.
+ * @return {void}
+ */
+function harvestWalkthrough(manifest, add) {
+	for (const tour of manifest.walkthrough?.tours ?? []) {
+		add(tour?.title)
+		for (const step of tour?.steps ?? []) {
+			add(step?.title)
+			add(step?.body)
+			add(step?.task)
+		}
+	}
+	for (const step of manifest.setup?.steps ?? []) {
+		add(step?.title)
+		add(step?.body)
+	}
 }
 
 /**
