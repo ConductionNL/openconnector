@@ -3,6 +3,7 @@
 namespace OCA\Integriq\Tests\Unit\Service;
 
 use OCA\Integriq\Service\SynchronizationService;
+use OCA\OpenRegister\Db\ObjectEntity;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
@@ -21,6 +22,16 @@ use ReflectionClass;
  *   c) both present                 — `filename*` wins per RFC 6266 §4.3.
  *   d) `filename*` Unicode pct-decode — diakriet round-trips correctly.
  *   e) `filename*` unsupported charset — falls back to plain `filename`.
+ *   f) parameter names are case-insensitive (`FILENAME*`, `Filename`).
+ *   g) unquoted `filename` token and whitespace around `=`.
+ *   h) `;` inside a quoted-string stays part of the filename.
+ *   i) RFC 9110 quoted-pairs (`\"`, `\\`) are unescaped and an escaped
+ *      quote does not end the quoted-string (PR #1840 review).
+ *   j) path-traversal payload is returned verbatim — the guard is in
+ *      Nextcloud core (`Filesystem::isValidPath()`), not in this parser.
+ *   k) empty `filename` / empty, duplicated or quoted `filename*` fall
+ *      back instead of yielding `''` or `null` (PR #1840 re-review).
+ *   l) lowercase `content-disposition` header key (HTTP/2) is recognised.
  *
  * @package OCA\Integriq\Tests\Unit\Service
  */
@@ -36,19 +47,27 @@ class SynchronizationServiceContentDispositionTest extends TestCase
      */
     private function invokeParser(string $headerValue): ?string
     {
+        return $this->invokePrivate('parseContentDispositionFilename', [$headerValue]);
+    }
+
+    /**
+     * Invoke any private method on a constructor-less SynchronizationService.
+     */
+    private function invokePrivate(string $method, array $args): mixed
+    {
         $reflection = new ReflectionClass(SynchronizationService::class);
         $service = $reflection->newInstanceWithoutConstructor();
 
-        // Populate the readonly logger property so the unsupported-charset
-        // fallback in decodeRfc5987ExtendedValue() can call ->info(...).
+        // Populate the readonly logger property so the fallback paths in
+        // decodeRfc5987ExtendedValue() can call ->info(...).
         $loggerProperty = $reflection->getProperty('logger');
         $loggerProperty->setAccessible(true);
         $loggerProperty->setValue($service, $this->createMock(LoggerInterface::class));
 
-        $method = $reflection->getMethod('parseContentDispositionFilename');
-        $method->setAccessible(true);
+        $reflectionMethod = $reflection->getMethod($method);
+        $reflectionMethod->setAccessible(true);
 
-        return $method->invoke($service, $headerValue);
+        return $reflectionMethod->invokeArgs($service, $args);
     }
 
     public function testFilenameOnlyAsciiRoundTrips(): void
@@ -151,11 +170,15 @@ class SynchronizationServiceContentDispositionTest extends TestCase
 
     public function testFilenameWithPathTraversalPayloadIsReturnedVerbatim(): void
     {
-        // Contract: the parser extracts the filename as declared upstream;
-        // path-separator / `..` sanitization is the responsibility of the
-        // downstream FileService::saveFile() writer. Locking this contract
-        // guards against a future refactor silently sanitizing here (which
-        // would hide malicious input from the writer's audit surface).
+        // Contract: the parser extracts the filename as declared upstream and
+        // does NOT sanitize path separators / `..` — and neither does
+        // OpenRegister's FileService::saveFile() → CreateFileHandler. The
+        // guard lives in Nextcloud core: Folder::getFullPath() →
+        // Filesystem::isValidPath() rejects `/../` with NotPermittedException,
+        // so such a sync aborts instead of writing outside the folder.
+        // Locking this contract guards against a future refactor silently
+        // sanitizing here (which would hide malicious input from the
+        // writer's audit surface).
         $header = 'attachment; filename="../../etc/passwd"';
         $this->assertSame('../../etc/passwd', $this->invokeParser($header));
     }
@@ -192,5 +215,50 @@ class SynchronizationServiceContentDispositionTest extends TestCase
         // a separate segment, so `filename*` keeps winning (RFC 6266 §4.3).
         $header = 'attachment; filename="a \"b\"; c.pdf"; filename*=UTF-8\'\'r%C3%A9sum%C3%A9.pdf';
         $this->assertSame('résumé.pdf', $this->invokeParser($header));
+    }
+
+    public function testEmptyFilenameStarDoesNotClobberPlainFilename(): void
+    {
+        // An empty `filename*` (`UTF-8''` without value-chars) must not win
+        // over a usable plain `filename` — `''` means "absent", not a name.
+        $header = 'attachment; filename="good.pdf"; filename*=UTF-8\'\'';
+        $this->assertSame('good.pdf', $this->invokeParser($header));
+    }
+
+    public function testEmptyQuotedFilenameReturnsNull(): void
+    {
+        // `filename=""` yields null so the caller's URL/MIME fallback runs
+        // instead of an empty filename reaching the file writer.
+        $this->assertNull($this->invokeParser('attachment; filename=""'));
+    }
+
+    public function testEmptyUnquotedFilenameReturnsNull(): void
+    {
+        $this->assertNull($this->invokeParser('attachment; filename='));
+    }
+
+    public function testUndecodableSecondFilenameStarKeepsDecodedFirst(): void
+    {
+        // Duplicate parameters are non-conformant, but a later undecodable
+        // `filename*` must not overwrite a value that already decoded fine.
+        $header = 'attachment; filename*=UTF-8\'\'good.pdf; filename*=ISO-8859-1\'\'bad.pdf';
+        $this->assertSame('good.pdf', $this->invokeParser($header));
+    }
+
+    public function testQuotedFilenameStarIsUnquotedBeforeDecoding(): void
+    {
+        // RFC 5987 ext-values are never quoted, but sloppy servers emit them
+        // anyway; the quotes must end up neither in the charset nor the name.
+        $header = 'attachment; filename*="UTF-8\'\'x.pdf"';
+        $this->assertSame('x.pdf', $this->invokeParser($header));
+    }
+
+    public function testLowercaseContentDispositionHeaderKeyIsRecognised(): void
+    {
+        // PSR-7 keeps header casing as received and HTTP/2 sends lowercase
+        // field names, so `content-disposition` must reach the parser too.
+        $response = ['headers' => ['content-disposition' => ['attachment; filename="x.pdf"']]];
+        $result = $this->createMock(ObjectEntity::class);
+        $this->assertSame('x.pdf', $this->invokePrivate('getFilenameFromHeaders', [$response, $result]));
     }
 }
