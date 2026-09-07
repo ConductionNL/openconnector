@@ -140,6 +140,27 @@ async function findCardAcrossPages(page, text) {
 }
 
 /**
+ * Walk to a card and read its status badge in one attempt, from page 1.
+ *
+ * Returns '' rather than throwing when the card or its badge is not reachable,
+ * so a caller can poll this and let a mid-walk re-render cost a retry instead of
+ * the test. Separating the walk from the read is what made the PDOK spec flaky.
+ *
+ * @param page The page.
+ * @param text Text the card contains.
+ * @return The badge text, or '' when it could not be read this attempt.
+ */
+async function readBadgeAcrossPages(page, text) {
+	try {
+		await page.goto(`${APP_BASE}/store`, { waitUntil: 'domcontentloaded' })
+		const card = await findCardAcrossPages(page, text)
+		return (await card.getByTestId('catalog-status-badge').innerText()).trim()
+	} catch {
+		return ''
+	}
+}
+
+/**
  * The "Showing N of M" total the index header prints.
  *
  * The CARD COUNT cannot answer "did the filter narrow the grid": it is pinned
@@ -193,25 +214,17 @@ test.describe('Catalog page — browse, filter, badges (REQ-001)', () => {
 	}) => {
 		await page.goto(`${APP_BASE}/store`, { waitUntil: 'domcontentloaded' })
 
-		await findCardAcrossPages(page, 'PDOK')
-
-		// Re-resolve the badge on every poll. The grid re-renders as its page
-		// query settles, so a locator captured once can go stale between the
-		// card being found and the badge being read, which reads as "no badge".
+		// Walk AND read inside the same polled attempt. Walking first and then
+		// polling the badge is what made this flaky: the walk leaves the grid on
+		// PDOK's page, the page query settles a moment later and re-renders the
+		// grid back, and the poll then re-resolves a locator for a card that is
+		// no longer on screen. It reports "no badge" for a card that is dormant
+		// in the data, which is exactly the wrong conclusion. Each attempt here
+		// starts from page 1, so a re-render costs a retry rather than the test.
 		await expect
-			.poll(
-				async () =>
-					(
-						await page
-							.getByTestId('catalog-item-card')
-							.filter({ hasText: 'PDOK' })
-							.first()
-							.getByTestId('catalog-status-badge')
-							.innerText()
-							.catch(() => '')
-					).trim(),
-				{ timeout: 15_000 },
-			)
+			.poll(async () => await readBadgeAcrossPages(page, 'PDOK'), {
+				timeout: 30_000,
+			})
 			.toMatch(/dormant/i)
 	})
 
