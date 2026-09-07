@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V.
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Spec coverage: openspec/changes/leaf-integrations/specs/integration-leaves/spec.md
+ * Spec coverage: openspec/specs/integration-leaves/spec.md
  *
  * Integriq's first OpenRegister integration leaves: `files`, `deck` and `talk`
  * on `source`, `calendar` on `synchronization`.
