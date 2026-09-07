@@ -45,24 +45,36 @@ async function openFlowActionsMenu(page: Page, item: Locator): Promise<void> {
 		return
 	}
 
-	const triggers = [
+	// 🔴 MORE THAN ONE BUTTON IS CALLED "Actions". The canvas has one and
+	// NcAppSidebar renders one in its header. Taking `.first()` of each
+	// selector opened a menu that does not carry the flow actions and then
+	// moved on having tried ONE of them, with an unbounded click that spent the
+	// budget the other candidates needed — so this helper timed the whole test
+	// out instead of raising the error it was written to raise.
+	//
+	// Try every button each selector matches, bound each click, and press
+	// Escape between attempts so a menu that did open cannot cover the next
+	// candidate. Ported from openregister#3517.
+	const groups = [
+		page.locator('.app-sidebar-header__menu button'),
 		page.getByRole('button', { name: 'Flow actions' }),
 		page.getByRole('button', {
 			name: /^(Actions|Open actions menu|More actions)$/i,
 		}),
-		page.locator('.app-sidebar-header__menu button').first(),
 	]
 
-	for (const trigger of triggers) {
-		if ((await trigger.count()) === 0) {
-			continue
-		}
-		await trigger
-			.first()
-			.click()
-			.catch(() => {})
-		if (await item.isVisible().catch(() => false)) {
-			return
+	for (const group of groups) {
+		const count = await group.count().catch(() => 0)
+		for (let i = 0; i < count; i++) {
+			await group
+				.nth(i)
+				.click({ timeout: 5_000 })
+				.catch(() => {})
+			if (await item.isVisible().catch(() => false)) {
+				return
+			}
+
+			await page.keyboard.press('Escape').catch(() => {})
 		}
 	}
 
@@ -177,7 +189,22 @@ test.describe('the Flows surface', () => {
 		// way to settle a question like this.
 		const editAction = page.locator('[data-testid="flow-action-edit"]')
 		await openFlowActionsMenu(page, editAction)
-		await editAction.click()
+
+		// CLICK THE BUTTON, NOT THE LIST ITEM. `data-testid` is a fallthrough
+		// attribute on `NcActionButton`, whose root is the `<li>`; the handler
+		// is on the `<button>` inside. Playwright's `.click()` walks down to a
+		// clickable descendant so this one works either way, but the menuitem
+		// role is what the control actually is — and it is how a screen-reader
+		// user reaches it. See openregister#3521, where a dispatched event at
+		// the `<li>` fired into nothing.
+		const editItem = page
+			.getByRole('menuitem', { name: 'Edit flow', exact: true })
+			.first()
+		if (await editItem.isVisible().catch(() => false)) {
+			await editItem.click()
+		} else {
+			await editAction.locator('button').first().click()
+		}
 
 		const settings = page.locator('[data-testid="flow-settings-modal"]')
 		await expect(settings).toBeVisible({ timeout: 15000 })
