@@ -20,8 +20,58 @@
  *
  * @spec openspec/specs/flow-orchestration/spec.md#REQ-017
  */
+import type { Locator, Page } from '@playwright/test'
+
 import { expect, test } from '@playwright/test'
 import { expectRouteMatched, gotoAppRoute } from '../support/appRoot.ts'
+
+/**
+ * Reveal a flow action, opening the sidebar's Actions menu when it is closed.
+ *
+ * `CnFlowSidebar` hands `flowActions` to NcAppSidebar's `#secondary-actions`
+ * slot, which renders each as an `NcActionButton` inside an `NcActions` MENU.
+ * The items are not in the DOM until the menu is opened, so a direct click on
+ * one waits out its whole budget and reads as a missing control.
+ *
+ * The trigger's accessible name has moved more than once, so several are tried
+ * and the failure names every one attempted rather than reporting the last.
+ *
+ * @param {Page} page The page.
+ * @param {Locator} item The action to reveal.
+ * @return {Promise<void>} Resolves once the item is visible.
+ */
+async function openFlowActionsMenu(page: Page, item: Locator): Promise<void> {
+	if (await item.isVisible().catch(() => false)) {
+		return
+	}
+
+	const triggers = [
+		page.getByRole('button', { name: 'Flow actions' }),
+		page.getByRole('button', {
+			name: /^(Actions|Open actions menu|More actions)$/i,
+		}),
+		page.locator('.app-sidebar-header__menu button').first(),
+	]
+
+	for (const trigger of triggers) {
+		if ((await trigger.count()) === 0) {
+			continue
+		}
+		await trigger
+			.first()
+			.click()
+			.catch(() => {})
+		if (await item.isVisible().catch(() => false)) {
+			return
+		}
+	}
+
+	throw new Error(
+		'could not open the flow Actions menu: tried "Flow actions", '
+			+ '"Actions"/"Open actions menu"/"More actions", and the sidebar '
+			+ 'header menu button, and the item never appeared',
+	)
+}
 
 const RUN_ID = `e2e-ocflow-${Date.now().toString(36)}`
 
@@ -80,11 +130,20 @@ test.describe('the Flows surface', () => {
 		).toBeVisible({ timeout: 15000 })
 		await expect(page.getByText('No steps yet')).toHaveCount(0)
 
-		// The palette offers the catalogue; an in-flight catalogue must not be
-		// reported as an unreadable one (the failure text used to show on
+		// The step picker offers the catalogue; an in-flight catalogue must not
+		// be reported as an unreadable one (the failure text used to show on
 		// every first paint of this route).
+		//
+		// 🔴 THE PALETTE LEFT THE SIDEBAR in nextcloud-vue 2.40.0. A live
+		// instance serves sixty-five step types, and a one-per-row list that
+		// long in a 300px column is a scroll rather than a chooser, so it
+		// became `CnFlowStepPickerModal`, opened from the toolbar. Only the
+		// `.cn-flow-sidebar__palette*` CSS stayed behind, so the old locator
+		// still matched a rule and timed out looking like a render failure.
+		await page.locator('[data-testid="flow-add-step"]').click()
+		const picker = page.locator('[data-testid="flow-step-picker"]')
 		await expect(
-			page.locator('.cn-flow-sidebar__palette-item').first(),
+			picker.locator('[data-testid="flow-step-picker-item"]').first(),
 		).toBeVisible({ timeout: 15000 })
 		await expect(page.getByText('could not be read')).toHaveCount(0)
 	})
@@ -102,8 +161,27 @@ test.describe('the Flows surface', () => {
 		})
 
 		// Name the flow after this run so a failed cleanup is identifiable.
-		await page.getByRole('tab', { name: 'Flow' }).click()
-		await page.getByLabel('Name').first().fill(`${RUN_ID} minted`)
+		//
+		// 🔴 THERE IS NO TAB STRIP ANY MORE. The palette moved to a modal off
+		// the toolbar and took the Steps tab with it, and nextcloud-vue 2.40.0
+		// then dropped the strip outright — "a tab strip with one tab in it is
+		// chrome around nothing". The flow's own fields moved to
+		// `CnFlowSettingsModal`, reached from the sidebar's Actions menu.
+		//
+		// This is what the job was actually red on: a 60s timeout waiting for
+		// `getByRole('tab', { name: 'Flow' })`, which reads as a hung editor
+		// rather than as a control that no longer exists.
+		const editAction = page.locator('[data-testid="flow-action-edit"]')
+		await openFlowActionsMenu(page, editAction)
+		await editAction.click()
+
+		const settings = page.locator('[data-testid="flow-settings-modal"]')
+		await expect(settings).toBeVisible({ timeout: 15000 })
+		// By LABEL, not by the testid's descendant: `data-testid` is a
+		// fallthrough attribute on `NcTextField`, so whether it lands on the
+		// wrapper or on the input itself is that component's business, and
+		// `[data-testid=…] input` finds nothing if it lands on the input.
+		await settings.getByLabel('Name', { exact: true }).fill(`${RUN_ID} minted`)
 
 		await toolbar.getByRole('button', { name: 'Save' }).click()
 
