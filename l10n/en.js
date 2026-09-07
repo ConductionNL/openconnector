@@ -1025,7 +1025,10 @@ OC.L10N.register(
         "UUID": "UUID",
         "User ID": "User ID",
         "Username": "Username",
-        "Version": "Version"
+        "Version": "Version",
+        "Supplier documents": "Supplier documents",
+        "Incident follow-ups": "Incident follow-ups",
+        "Incident war-room": "Incident war-room"
     },
     "nplurals=2; plural=(n != 1);"
 )
