@@ -101,9 +101,16 @@ test.describe('REQ-OCL-001: the declared leaf surface', () => {
 		// The restraint half of the requirement: no other Integriq schema may
 		// quietly acquire a leaf. Schemas from other apps share this instance,
 		// so the assertion is scoped to the slugs this register owns.
-		const integriqOnly = [...linkedBySlug.keys()].filter((slug) =>
-			['endpoint', 'mapping', 'job', 'rule', 'consumer', 'sync_item_dead_letter'].includes(slug)
-			|| slug.endsWith('_log'),
+		const integriqOnly = [...linkedBySlug.keys()].filter(
+			(slug) =>
+				[
+					'endpoint',
+					'mapping',
+					'job',
+					'rule',
+					'consumer',
+					'sync_item_dead_letter',
+				].includes(slug) || slug.endsWith('_log'),
 		)
 		expect(
 			integriqOnly,
@@ -176,7 +183,8 @@ test.describe('REQ-OCL-002: the leaves on a source detail page', () => {
 		const secrets = ['password', 'apikey', 'secret', 'jwt']
 			.map((field) => first[field])
 			.filter(
-				(value): value is string => typeof value === 'string' && value.length >= 8,
+				(value): value is string =>
+					typeof value === 'string' && value.length >= 8,
 			)
 		const rendered = await content.innerText()
 		for (const secret of secrets) {
