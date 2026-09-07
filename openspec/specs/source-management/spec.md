@@ -107,6 +107,7 @@ company lookup, person lookup, and SMS/WhatsApp dispatch out of the box.
 #### Scenario: KvK source returns canned companies in mock mode
 
 - **WHEN** the `kvk` source is flagged `configuration.mock:true` with a
+- @e2e exclude requires mock mode enabled for the BRP, KvK or SMS source. `ci-seed.sh` provisions the register but does not turn mock mode on, so these canned responses never appear on the e2e instance. The mock descriptor exists (`lib/Settings/integriq_mock_register.json`) and nothing drives it
   `{ resultaten: [...] }` `mockResponse`
 - **THEN** the OpenRegister KvK leaf returns the canned Dutch companies without a
   real KvK API call
@@ -114,6 +115,7 @@ company lookup, person lookup, and SMS/WhatsApp dispatch out of the box.
 #### Scenario: BRP source returns a fake test person plus audit meta
 
 - **WHEN** the `brp-haalcentraal` source is flagged mock with a `{ personen: [...] }`
+- @e2e exclude requires mock mode enabled for the BRP, KvK or SMS source. `ci-seed.sh` provisions the register but does not turn mock mode on, so these canned responses never appear on the e2e instance. The mock descriptor exists (`lib/Settings/integriq_mock_register.json`) and nothing drives it
   `mockResponse` (fake BSN `999990019`) and a `mockMeta`
 - **THEN** the BRP leaf returns the canned person plus a synthesized Wet-BRP
   audit `meta` (`status`, `durationMs`, `correlationId`) without a real
@@ -122,6 +124,7 @@ company lookup, person lookup, and SMS/WhatsApp dispatch out of the box.
 #### Scenario: SMS/WhatsApp sources return a canned send-success in mock mode
 
 - **WHEN** a `cmcom-sms` / `messagebird-sms` / `twilio-sms` /
+- @e2e exclude requires mock mode enabled for the SMS source. `ci-seed.sh` provisions the register but does not turn mock mode on, so the canned send-success never appears on the e2e instance
   `whatsapp-cloud-api` / `whatsapp-bsp` source is flagged mock with a
   vendor-shaped success `mockResponse`
 - **THEN** the message-dispatch leaf returns `{ status: 'sent', source, response }`
@@ -131,6 +134,7 @@ company lookup, person lookup, and SMS/WhatsApp dispatch out of the box.
 #### Scenario: removing the mock flag restores the real upstream call
 
 - **WHEN** an operator sets the real credential on a mock-flagged source and
+- @e2e exclude requires mock mode enabled for the BRP, KvK or SMS source. `ci-seed.sh` provisions the register but does not turn mock mode on, so these canned responses never appear on the e2e instance. The mock descriptor exists (`lib/Settings/integriq_mock_register.json`) and nothing drives it
   removes `configuration.mock`
 - **THEN** the leaf performs the real upstream call against the production
   `location` with no other change required
