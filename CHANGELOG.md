@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 ### Added
+- Integration leaves, Integriq's first adoption of OpenRegister's leaf
+  machinery: `files`, `deck` and `talk` on `source`, `calendar` on
+  `synchronization`. A supplier's documentation, the incident follow-up cards
+  and the war-room conversation now hang off the connection they belong to, and
+  a sync's maintenance windows off the sync. Four of the roughly seventeen
+  app-agnostic leaves, on 2 of 39 schemas; every other schema and leaf stays off
+  with a documented reason. Declarative only: two `configuration.linkedTypes`
+  entries in a register fragment plus three widgets on SourceDetail. Deck, Talk
+  and Calendar stay runtime-optional, so an instance without them renders
+  nothing extra. The calendar leaf surfaces through the object sidebar rather
+  than a widget, because `SynchronizationDetail` is a custom page the manifest
+  cannot place widgets on. (leaf-integrations)
 - Read-only MCP tool surface (ADR-063): 8 schemas (endpoint, job, mapping,
   synchronization, synchronization_contract, call_log, job_log,
   synchronization_log) declare an `x-openregister-mcp` dialect exposing only

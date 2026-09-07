@@ -1023,7 +1023,10 @@ OC.L10N.register(
         "Open Flows in the menu": "Open Flows in het menu",
         "To": "Naar",
         "View logs": "Logs bekijken",
-        "Where the automation lives": "Waar de automatisering leeft"
+        "Where the automation lives": "Waar de automatisering leeft",
+        "Supplier documents": "Leveranciersdocumenten",
+        "Incident follow-ups": "Incidentopvolging",
+        "Incident war-room": "Incidentoverleg"
     },
     "nplurals=2; plural=(n != 1);"
 )

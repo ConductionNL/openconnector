@@ -12,7 +12,7 @@ Give Integriq its first OpenRegister integration leaves — deliberately few. Ve
 
 ## Affected Projects
 
-- [x] Project: `integriq` — `lib/Settings/integriq_register.json` (`configuration.linkedTypes` on `source` and `synchronization`), `src/manifest.json` (3 widgets on SourceDetail), one e2e spec-coverage file.
+- [x] Project: `integriq` — `lib/Settings/register.d/leaf-integrations.json` (`configuration.linkedTypes` on `source` and `synchronization`, as an ADR-037 fragment rather than an edit to `integriq_register.json`), `src/manifest.json` + `src/icons.js` (3 widgets on SourceDetail), `l10n/en.json` + `l10n/nl.json`, one e2e spec-coverage file, `docs/features/integration-leaves.md`.
 
 ## Scope
 
@@ -33,7 +33,7 @@ Give Integriq its first OpenRegister integration leaves — deliberately few. Ve
 
 ## Approach
 
-Add the two `configuration.linkedTypes` declarations (validated at import by OpenRegister's `Schema::validateLinkedTypesValue()` against the provider registry — an unknown id fails the import loudly); add the three SourceDetail widgets shaped like the fleet's existing integration widgets; add the e2e file. No PHP, no Vue, no migration.
+Add the two `configuration.linkedTypes` declarations (validated at import by OpenRegister's `Schema::validateLinkedTypesValue()` against the provider registry, where an unknown id fails the import loudly); add the three SourceDetail widgets shaped like the fleet's existing integration widgets, with their layout entries and registered icons; add the e2e file. No PHP, no Vue, no migration. Two things about the declaration fail silently and are recorded in tasks.md: `linkedTypes` must sit under `configuration`, and the schema version must be bumped or the importer skips the schema entirely.
 
 ## New Dependencies
 
@@ -41,7 +41,7 @@ None. Deck/Talk/Calendar are runtime-optional: OpenRegister providers self-disab
 
 ## Impact
 
-- `lib/Settings/integriq_register.json` — additive `configuration` keys on 2 of 39 schemas; no property, authorization, or lockdown overlay (`register.d/99-*`) change.
+- `lib/Settings/register.d/leaf-integrations.json` — additive `configuration` keys on 2 of 39 schemas, plus the schema `version` bump the importer needs to re-apply them at all; no property, authorization, or lockdown overlay (`register.d/99-*`) change. Declaring a leaf adds a JSON column to the schema's magic table (`_deck`, `_talk` on source, `_calendar` on synchronization), so this is a storage change as well as a UI one.
 - `src/manifest.json` — 3 new widgets on SourceDetail; no existing page or widget changes.
 - No REST surface, no ADR-023 action, no secret-handling change: leaves link entities held by other NC apps and never read `source`'s credential properties.
 
