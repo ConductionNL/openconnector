@@ -21,12 +21,14 @@ attempting any HTTP call to a Forms endpoint.
 
 - **GIVEN** the Forms app is not installed on this Nextcloud instance
 - **WHEN** the synchronization editor requests the list of available source
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
   types
 - **THEN** `nextcloud-form` is not present in the returned list
 
 #### Scenario: run against nextcloud-form fails cleanly when Forms is disabled
 
 - **GIVEN** a synchronization configured with `sourceType: nextcloud-form`
+- @e2e exclude covered by `FormsOutboundMappingIntegrationTest::testFormsDisabledIsConfigErrorNotRetried`; neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive
   AND the Forms app has since been disabled
 - **WHEN** the synchronization runs
 - **THEN** it fails with a config-error log entry stating the Forms app is
@@ -36,6 +38,7 @@ attempting any HTTP call to a Forms endpoint.
 #### Scenario: an outbound mapping subscription fails cleanly when Forms is disabled
 
 - **GIVEN** an `event_subscription` with `action.kind: 'mapping'` matching
+- @e2e exclude covered by `FormsOutboundMappingIntegrationTest::testFormsDisabledIsConfigErrorNotRetried`; neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive
   a `com.nextcloud.forms.submission.created` event, and the Forms app
   disabled
 - **WHEN** the matching event is dispatched
@@ -66,6 +69,7 @@ submissions into Forms is out of scope for this capability).
 #### Scenario: submissions are read and mapped as sync input
 
 - **GIVEN** a synchronization with `sourceType: nextcloud-form` pointed at
+- @e2e exclude covered by `tests/Integration/Forms/FormsSyncIntegrationTest::testFormsSourceDispatchFetchesFullSubmissionsWithArrayValuedAnswerIntact`; neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive
   a form with 30 submissions and `sourceConfig.formId` set
 - **WHEN** the synchronization runs
 - **THEN** all 30 submissions are fetched (paginated as needed), each
@@ -76,6 +80,7 @@ submissions into Forms is out of scope for this capability).
 #### Scenario: unchanged submission content produces no downstream write
 
 - **GIVEN** a previously-synced submission whose content is unchanged since
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
   the last run
 - **WHEN** the synchronization runs again
 - **THEN** `hashObject()` on the submission's fetched shape matches the
@@ -87,6 +92,7 @@ submissions into Forms is out of scope for this capability).
 - **GIVEN** the synchronization editor's target-type selector
 - **WHEN** it renders, regardless of whether the Forms app is enabled
 - **THEN** `nextcloud-form` is not offered as a target-type option
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
 
 ### Requirement: Answer-by-question resolution and type coercion (REQ-003)
 
@@ -115,10 +121,12 @@ questions):
 - **GIVEN** a submission with an answer `{questionId: 7, text: "Acme BV"}`
 - **WHEN** the resolver is asked to resolve question reference `7`
 - **THEN** it returns `"Acme BV"`
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
 
 #### Scenario: resolution by unambiguous question text
 
 - **GIVEN** a form whose only question with `text: "Company name"` has
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
   `id: 7`, and a submission with an answer `{questionId: 7, text: "Acme BV"}`
 - **WHEN** the resolver is asked to resolve question reference `"Company name"`
 - **THEN** it returns `"Acme BV"`
@@ -126,6 +134,7 @@ questions):
 #### Scenario: ambiguous question text is a hard config error, never a guess
 
 - **GIVEN** a form with two questions both having `text: "Comments"`
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
   (`id: 12` and `id: 19`)
 - **WHEN** the resolver is asked to resolve question reference `"Comments"`
 - **THEN** the system SHALL fail with a config-error naming the ambiguous
@@ -135,6 +144,7 @@ questions):
 #### Scenario: a multiple-choice question resolves to an array
 
 - **GIVEN** a `multiple`-type question `id: 4` with two selected-option
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
   answer rows: `{questionId: 4, text: "Red"}` and `{questionId: 4, text: "Blue"}`
 - **WHEN** the resolver resolves question reference `4`
 - **THEN** it returns `["Red", "Blue"]`
@@ -142,6 +152,7 @@ questions):
 #### Scenario: an unanswered optional question resolves to null
 
 - **GIVEN** a form question `id: 9` with no matching answer row in the
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
   submission
 - **WHEN** the resolver resolves question reference `9`
 - **THEN** it returns `null`
@@ -170,6 +181,7 @@ made) and MUST NOT apply `webhook-signing`.
 #### Scenario: a Forms submission event drives an external call via answer mapping
 
 - **GIVEN** an `event_subscription` matching
+- @e2e exclude covered by `tests/Integration/Forms/FormsOutboundMappingIntegrationTest::testFormsSubmissionEventDrivesExternalCallViaAnswerMapping`; neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive
   `com.nextcloud.forms.submission.created` with
   `action = {kind: 'mapping', mappingId: '<uuid>', sourceId: '<uuid>',
   endpoint: '/leads'}`, and a `Mapping` that references question text
@@ -185,6 +197,7 @@ made) and MUST NOT apply `webhook-signing`.
 #### Scenario: a resolution or mapping failure follows the standard retry/backoff machine
 
 - **GIVEN** the same subscription, but the referenced `Mapping` names an
+- @e2e exclude covered by `FormsOutboundMappingIntegrationTest::testAmbiguousQuestionTextFollowsStandardRetryBackoff`; neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive
   ambiguous question text (REQ-003)
 - **WHEN** the dispatch runs
 - **THEN** the message is persisted `status='failed'`, `retryCount`
@@ -196,6 +209,7 @@ made) and MUST NOT apply `webhook-signing`.
 #### Scenario: an unresolvable mappingId or sourceId fails without a Forms call
 
 - **GIVEN** a subscription with `action = {kind: 'mapping', mappingId:
+- @e2e exclude covered by `FormsOutboundMappingIntegrationTest::testUnresolvableMappingIdFailsWithoutFormsCall`; neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive
   'does-not-exist', sourceId: '<uuid>', endpoint: '/leads'}`
 - **WHEN** the dispatch runs
 - **THEN** the message is persisted `status='failed'` with an error naming
@@ -214,6 +228,7 @@ Forms directly.
 #### Scenario: form list reflects the configured identity's access
 
 - **GIVEN** a `Source` whose credential can see 3 of the 8 forms that
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
   otherwise exist on the target instance
 - **WHEN** the editor calls the form-list endpoint with that Source's id
 - **THEN** exactly the 3 accessible forms are returned
@@ -221,6 +236,7 @@ Forms directly.
 #### Scenario: question list includes type metadata for the mapping helper
 
 - **GIVEN** a form with a `multiple`-type question and a `short`-type
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. No PHPUnit integration test names this behaviour either, so it is uncovered rather than covered elsewhere
   question
 - **WHEN** the editor calls the question-list endpoint for that form
 - **THEN** each question's `id`/`text`/`name`/`type` is returned, sufficient
