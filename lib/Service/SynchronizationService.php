@@ -2942,7 +2942,7 @@ class SynchronizationService
 
 
 		if (($decodedBody = json_decode(json: $body, associative: true)) !== null
-            && isset($response['headers']['Content-Disposition']) === false) {
+            && $this->getHeaderValue($response['headers'] ?? [], 'Content-Disposition') === null) {
 			$body = $decodedBody;
 		} else if (($decodedBody = base64_decode(string: $body, strict: true)) !== false) {
 			$body = $decodedBody;
@@ -3040,9 +3040,11 @@ class SynchronizationService
     {
         $filename = null;
         // Get a filename from the response. First try to do this using the Content-Disposition header
-        if (isset($response['headers']['Content-Disposition']) === true
-            && str_contains($response['headers']['Content-Disposition'][0], 'filename')) {
-            $filename = $this->parseContentDispositionFilename($response['headers']['Content-Disposition'][0]);
+        // Header names are case-insensitive and HTTP/2 sends them lowercase, so
+        // `Content-Disposition` and `content-disposition` must both reach the parser.
+        $contentDisposition = $this->getHeaderValue($response['headers'] ?? [], 'Content-Disposition');
+        if ($contentDisposition !== null && str_contains($contentDisposition, 'filename')) {
+            $filename = $this->parseContentDispositionFilename($contentDisposition);
         }
 
         if ($filename === null) {
@@ -3111,12 +3113,23 @@ class SynchronizationService
             $value = trim(substr($segment, $eqPos + 1));
 
             if ($name === 'filename*') {
-                $filenameStar = $this->decodeRfc5987ExtendedValue($value);
+                // Only accept a decodable, non-empty value: an empty or undecodable
+                // (duplicate) `filename*` must neither discard a value already found
+                // nor win over a usable plain `filename`.
+                $decoded = $this->decodeRfc5987ExtendedValue($value);
+                if ($decoded !== null && $decoded !== '') {
+                    $filenameStar = $decoded;
+                }
             } elseif ($name === 'filename') {
                 // RFC 6266 allows quoted or unquoted `filename`. For a
                 // quoted-string, strip the surrounding quotes and unescape
                 // RFC 9110 §5.6.4 quoted-pairs (`\"` → `"`, `\\` → `\`).
-                $filenamePlain = $this->unquoteHeaderValue($value);
+                // An empty value (`filename=""`) counts as absent, so the
+                // caller's URL/MIME fallback runs instead of writing ''.
+                $unquoted = $this->unquoteHeaderValue($value);
+                if ($unquoted !== '') {
+                    $filenamePlain = $unquoted;
+                }
             }
         }
 
@@ -3203,6 +3216,34 @@ class SynchronizationService
     }
 
     /**
+     * Case-insensitive lookup of the first value of a response header.
+     *
+     * PSR-7 `getHeaders()` keeps the casing received on the wire and HTTP/2
+     * mandates lowercase field names, so `Content-Disposition` and
+     * `content-disposition` are the same header (RFC 9110 §5.1).
+     *
+     * @param array<string, mixed> $headers Header map as returned by the call service.
+     * @param string               $name    Header name, any casing.
+     * @return string|null The first header value, or null when the header is absent.
+     */
+    private function getHeaderValue(array $headers, string $name): ?string
+    {
+        foreach ($headers as $key => $values) {
+            if (strcasecmp((string) $key, $name) !== 0) {
+                continue;
+            }
+            if (is_array($values) === true) {
+                $values = reset($values);
+            }
+            if ($values === false || $values === null) {
+                return null;
+            }
+            return (string) $values;
+        }
+        return null;
+    }
+
+    /**
      * Decode an RFC 5987 extended parameter value of shape `charset''pct-encoded`.
      *
      * Only UTF-8 is supported — any other charset (bv. ISO-8859-1) triggers
@@ -3215,9 +3256,17 @@ class SynchronizationService
      */
     private function decodeRfc5987ExtendedValue(string $value): ?string
     {
+        // RFC 5987 ext-values are never quoted, but sloppy servers do emit
+        // `filename*="UTF-8''x.pdf"`; unquoting is a no-op on a bare token.
+        $value = $this->unquoteHeaderValue($value);
+
         // RFC 5987 shape: charset ' language ' value-chars
         $parts = explode("'", $value, 3);
         if (count($parts) !== 3) {
+            $this->logger->info(
+                'Ignoring malformed Content-Disposition filename* (expected charset\'\'value); falling back to plain filename',
+                ['value' => $value]
+            );
             return null;
         }
         [$charset, $language, $encoded] = $parts;
