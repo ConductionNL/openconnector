@@ -24,6 +24,7 @@ const {
 	makeLineResolver,
 	collectDynamicKeys,
 	collectBackendKeys,
+	collectSchemaKeys,
 } = require('./lib/l10n.js')
 
 const ROOT = path.resolve(__dirname, '..')
@@ -205,6 +206,7 @@ function main() {
 	const dynamic = new Set([
 		...collectDynamicKeys(ROOT),
 		...collectBackendKeys(ROOT),
+		...collectSchemaKeys(ROOT),
 	])
 	const unused = [...keys].filter(k => !usedKeys.has(k) && !dynamic.has(k)).sort()
 	const unwrapped = findUnwrapped(vueFiles, keys)
