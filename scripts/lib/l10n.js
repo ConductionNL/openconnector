@@ -515,6 +515,47 @@ function collectDynamicKeys(repoRoot) {
 	return out
 }
 
+/**
+ * Every string the BACKEND translates, harvested from PHP `->t()` calls.
+ *
+ * These are invisible to a scan of `src/`, and they must count as used for the
+ * same reason DYNAMIC_KEYS must: `l10n/<locale>.js` is GENERATED from
+ * `l10n/<locale>.json`, and the JSON is the catalogue PHP `IL10N` reads. A
+ * backend-only string therefore appears in `en.js` legitimately, and reporting
+ * it "unused" is a false positive of the frontend scan, not a finding.
+ *
+ * CLAUDE.md used to say there was "no scanner for the backend set" and that
+ * auditing it "would mean walking lib/ for PHP $l->t() calls". This is that
+ * walk. Measured 2026-09-07: 409 distinct strings reach PHP `->t()` in lib/,
+ * and 71 of them were being reported as UNUSED frontend keys and offered up by
+ * clean:l10n. Deleting one removes the backend's translation and leaves the
+ * English source rendering correctly, so nothing fails.
+ *
+ * Deliberately generous about what a `->t(` is: any object's `t()` taking a
+ * literal first argument. A false POSITIVE here only keeps a key alive, which
+ * is the safe direction; a false negative deletes a live translation.
+ *
+ * @param {string} repoRoot Absolute path to the app root.
+ * @return {Set<string>} Keys the backend translates.
+ */
+function collectBackendKeys(repoRoot) {
+	const out = new Set()
+	const libDir = path.join(repoRoot, 'lib')
+	if (!fs.existsSync(libDir)) return out
+	const unescape = (raw, quote) =>
+		raw.replace(new RegExp('\\\\' + quote, 'g'), quote).replace(/\\\\/g, '\\')
+	for (const file of walk(libDir, ['.php'])) {
+		const source = fs.readFileSync(file, 'utf8')
+		for (const match of source.matchAll(/->t\(\s*'((?:[^'\\]|\\.)*)'/g)) {
+			out.add(unescape(match[1], "'"))
+		}
+		for (const match of source.matchAll(/->t\(\s*"((?:[^"\\]|\\.)*)"/g)) {
+			out.add(unescape(match[1], '"'))
+		}
+	}
+	return out
+}
+
 module.exports = {
 	loadJsTranslations,
 	serializeJs,
@@ -528,4 +569,5 @@ module.exports = {
 	localeNameOf,
 	DYNAMIC_KEYS,
 	collectDynamicKeys,
+	collectBackendKeys,
 }
