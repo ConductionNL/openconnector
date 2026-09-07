@@ -609,6 +609,70 @@ function collectBackendKeys(repoRoot) {
 	return out
 }
 
+/**
+ * Every user-visible string a shipped REGISTER descriptor declares: schema
+ * titles, and each property's `title` and `description`.
+ *
+ * These reach the user through OpenRegister's form renderer, not through any
+ * t() call in src/ and not through PHP, so both other collectors miss them.
+ * `scripts/check-schema-l10n.js` audits their coverage from the other side and
+ * holds a baseline; this is what stops the same strings being reported UNUSED
+ * by check:l10n and swept.
+ *
+ * Learned the hard way: a sweep of 595 "unused" keys removed 55 of these, and
+ * check:schema-l10n was the only thing that noticed, on CI rather than locally
+ * because it is not part of check:strict.
+ *
+ * @param {string} repoRoot Absolute path to the app root.
+ * @return {Set<string>} Keys the register descriptors declare.
+ */
+function collectSchemaKeys(repoRoot) {
+	const out = new Set()
+	const settingsDir = path.join(repoRoot, 'lib', 'Settings')
+	if (!fs.existsSync(settingsDir)) return out
+	const add = (value) => {
+		if (typeof value === 'string' && value.trim() !== '') out.add(value)
+	}
+	// Deliberately the SAME walk as scripts/check-schema-l10n.js `collect()`:
+	// recurse everywhere, and at any node carrying `properties` harvest the
+	// schema title, each property's title/description, and x-enum-labels.
+	// A one-level version missed nested shapes
+	// (`event_subscription.properties.action.properties.*`) and every enum
+	// label. The two must not drift: one decides coverage, the other decides
+	// what a sweep may delete.
+	const collect = (node) => {
+		if (Array.isArray(node)) {
+			for (const item of node) collect(item)
+			return
+		}
+		if (node === null || typeof node !== 'object') return
+		const props = node.properties
+		if (props !== null && typeof props === 'object' && !Array.isArray(props)) {
+			add(node.title)
+			for (const prop of Object.values(props)) {
+				if (prop === null || typeof prop !== 'object') continue
+				add(prop.title)
+				add(prop.description)
+				for (const source of [prop, prop.items]) {
+					if (source === null || typeof source !== 'object') continue
+					const labels = source['x-enum-labels']
+					if (labels === null || typeof labels !== 'object') continue
+					for (const label of Object.values(labels)) add(label)
+				}
+			}
+		}
+		for (const value of Object.values(node)) collect(value)
+	}
+	for (const file of walk(settingsDir, ['.json'])) {
+		try {
+			collect(JSON.parse(fs.readFileSync(file, 'utf8')))
+		} catch {
+			continue
+		}
+	}
+	return out
+}
+
 module.exports = {
 	loadJsTranslations,
 	serializeJs,
@@ -623,4 +687,5 @@ module.exports = {
 	DYNAMIC_KEYS,
 	collectDynamicKeys,
 	collectBackendKeys,
+	collectSchemaKeys,
 }

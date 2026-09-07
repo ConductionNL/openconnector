@@ -34,6 +34,7 @@ const {
 	listJsLocaleFiles,
 	collectDynamicKeys,
 	collectBackendKeys,
+	collectSchemaKeys,
 } = require('./lib/l10n.js')
 
 const ROOT = path.resolve(__dirname, '..')
@@ -72,6 +73,7 @@ function main() {
 	const dynamicKeys = new Set([
 		...collectDynamicKeys(ROOT),
 		...collectBackendKeys(ROOT),
+		...collectSchemaKeys(ROOT),
 	])
 	const unused = [...existingKeys]
 		.filter(k => !usedKeys.has(k) && !dynamicKeys.has(k))
