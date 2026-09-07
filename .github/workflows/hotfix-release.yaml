@@ -147,6 +147,10 @@ jobs:
         uses: ncipollo/release-action@v1.12.0
         with:
           tag: ${{ env.RELEASE_TAG }}
+          # Pin the tag to the commit that was built. Without this GitHub
+          # creates the tag on the DEFAULT branch (main): v0.2.24-woo-1/2/3
+          # pointed at main while the tarball came from this branch.
+          commit: ${{ github.sha }}
           name: WOO-552 Hotfix Release ${{ env.NEW_VERSION }}
           draft: false
           prerelease: true
