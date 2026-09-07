@@ -45,6 +45,7 @@ importing integriq PHP.
 
 - **GIVEN** any sibling app's `lib/Service/` tree
 - **WHEN** scanned for direct imports of `MongoDB\Client`,
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `Predis\Client`, `Aws\S3\S3Client`, `Google\Cloud\BigQuery\BigQueryClient`,
   `Snowflake\\*`, `RdKafka\Producer`, `PhpAmqpLib\\*`, or
   any other infrastructure client library
@@ -57,6 +58,7 @@ importing integriq PHP.
 - **GIVEN** a newly added adapter (e.g. `SnowflakeAdapter`)
 - **WHEN** the container is built
 - **THEN** the class MUST be tagged with `IntegrationProvider`
+- @e2e exclude a static or manifest-shape assertion, not a DOM behaviour
   in `lib/AppInfo/Application.php` and its registry record MUST
   include `id`, `category: data-infra`, `subCategory`
   (`rdbms` / `nosql` / `warehouse` / `stream` / `objectstore`),
@@ -94,6 +96,7 @@ field.
 
 - **GIVEN** an adapter `SnowflakeAdapter`
 - **WHEN** `lib/Service/Adapter/DataInfra/SnowflakeAdapter.php` is
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   inspected
 - **THEN** no `const CAPABILITIES = [...]` / `const AUTH_MODES = [...]`
   / `const RATE_LIMITS = [...]` class constant SHALL exist;
@@ -104,6 +107,7 @@ field.
 - **GIVEN** a `connectors[]` entry omitting `authModes`
 - **WHEN** `npm run check:manifest` runs
 - **THEN** it MUST exit non-zero, naming the offending entry's
+- @e2e exclude a static or manifest-shape assertion, not a DOM behaviour
   `id` and the missing field.
 
 ### Requirement: Adapter credentials SHALL live in integriq `Source` records — never on consuming-app records (REQ-DIC-003)
@@ -128,6 +132,7 @@ rotate them without redeploying any sibling app.
 
 - **GIVEN** any sibling app's `lib/` tree
 - **WHEN** scanned for field/property names matching
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `*ApiKey*` / `*Secret*` / `*Token*` / `*ServiceAccountJson*`
   in contexts that reference a data-infra integration
 - **THEN** no such fields SHALL exist; the sibling MUST hold only
@@ -162,6 +167,7 @@ Adapter `schemaDiscovery` MUST be one of:
 - **GIVEN** a `pull`-mode adapter
 - **WHEN** the integriq container starts
 - **THEN** no persistent connection to the upstream system
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   SHALL be opened until a sibling app explicitly invokes
   the adapter; the adapter's idle resource footprint MUST be
   zero.
@@ -169,6 +175,7 @@ Adapter `schemaDiscovery` MUST be one of:
 #### Scenario: A `subscribe-cdc` adapter exposes a webhook surface
 
 - **GIVEN** a Kafka adapter declaring
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   `pollingMode: hybrid`, `capabilities: [read, subscribe-cdc]`
 - **WHEN** a sibling app subscribes via the registry
 - **THEN** integriq MUST register a webhook receiver
@@ -194,6 +201,7 @@ the legacy sync UI).
 
 - **GIVEN** the integriq codebase
 - **WHEN** scanned for classes extending `OCP\BackgroundJob\TimedJob`
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   in `lib/BackgroundJob/` whose name matches
   `*Adapter*` / `*Connector*` / `*Pull*` / `*Sync*Schedul*`
 - **THEN** no such classes SHALL exist; periodic adapter pulls
@@ -218,6 +226,7 @@ adapter_id=<id>}`. No new endpoint, no separate metrics surface
 - **GIVEN** a configured Snowflake adapter
 - **WHEN** a sibling app invokes `read` and the call succeeds
 - **THEN** `/api/metrics` MUST report
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   `integriq_adapter_invocations_total{category="data-infra",
   sub_category="warehouse",adapter_id="snowflake",outcome="success"}`
   incremented by exactly 1.
@@ -241,6 +250,7 @@ adapter slice; the category spec owns the shared contract.
 #### Scenario: A new per-adapter change references this spec
 
 - **GIVEN** a new change folder
+- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
   `openspec/changes/add-openconnector-snowflake-adapter/`
 - **WHEN** its proposal.md is inspected
 - **THEN** the `Depends on` line MUST include
