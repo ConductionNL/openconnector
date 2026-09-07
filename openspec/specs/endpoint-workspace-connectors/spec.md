@@ -41,12 +41,12 @@ MUST NOT be embedded in any sibling app (launchpad, etc.).
 
 - **GIVEN** any sibling app's `lib/Service/` tree
 - **WHEN** scanned for direct imports of
-- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `Citrix\\*`, `VMware\\Horizon\\*`, `Aws\\WorkSpaces\\*`,
   `Microsoft\\Graph\\DeviceManagement\\*`, `Jamf\\*`, or any
   vendor-specific endpoint-management client
 - **THEN** no such imports SHALL exist; the capability MUST be
   consumed from integriq by integration slot slug.
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
 
 ### Requirement: Each EWC adapter manifest entry SHALL declare a fixed capability vocabulary scoped to session-enumeration, user-mapping, and audit-event ingestion (REQ-EWC-002)
 
@@ -120,16 +120,15 @@ the declarative `UserMapping` records.
 
 - **GIVEN** any sibling app's `lib/Service/` tree
 - **WHEN** scanned for classes whose name matches
-- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `*UserMapping*Service*` / `*IdentityResolve*` / `*UpnResolver*`
 - **THEN** no such classes SHALL exist; user mapping MUST go
   through integriq's `MappingService::resolve()` via the
   EWC integration provider.
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
 
 #### Scenario: A configured mapping resolves an NC user to an Intune device record
 
 - **GIVEN** a `UserMapping` record with
-- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   `ncUserAttribute: email`, `remoteUserAttribute: upn`,
   `transformChain: [lowercase]`
 - **WHEN** an `entitlement-resolve` call comes in for NC user
@@ -137,6 +136,7 @@ the declarative `UserMapping` records.
 - **THEN** the adapter MUST resolve to Intune UPN
   `jan.de.vries@municipality.nl` (lowercase transform applied)
   and return that user's device entitlements.
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
 
 ### Requirement: Audit-event ingestion SHALL deposit events as CloudEvents per ADR-022, not as integriq-local event tables (REQ-EWC-004)
 
@@ -196,17 +196,16 @@ device-wipe, force-logout, app-uninstall — MUST be:
 #### Scenario: A `session-disconnect` rejected because not opted in
 
 - **GIVEN** a Citrix source with
-- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   `enabledDestructiveActions: []` (default)
 - **WHEN** any caller invokes `disconnectSession(...)`
 - **THEN** the call MUST throw `DestructiveActionDisabledException`;
   **AND** an audit row MUST land in `CallLog` with outcome
   `destructive-action-rejected-disabled`.
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
 
 #### Scenario: A `device-wipe` rejected because the caller is not in the bound group
 
 - **GIVEN** an Intune source with
-- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   `enabledDestructiveActions: ["device-wipe"]` AND the action
   bound to NC group `intune-emergency-responders`
 - **WHEN** a user not in `intune-emergency-responders` invokes
@@ -215,6 +214,7 @@ device-wipe, force-logout, app-uninstall — MUST be:
   `DestructiveActionUnauthorisedException` per ADR-023;
   **AND** the audit row MUST capture the rejected invocation;
   **AND** no remote-side state SHALL change.
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
 
 ### Requirement: Scheduled audit-event pulls SHALL run as OpenRegister `ScheduledWorkflow` records — no integriq `TimedJob` per adapter (REQ-EWC-006)
 
@@ -230,12 +230,12 @@ events into CloudEvents per REQ-EWC-004.
 
 - **GIVEN** the integriq codebase
 - **WHEN** scanned for classes extending `OCP\BackgroundJob\TimedJob`
-- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   in `lib/BackgroundJob/` whose name matches
   `*Workspace*` / `*Endpoint*` / `*Intune*` / `*Jamf*` /
   `*Citrix*` / `*Horizon*` / `*Audit*Pull*`
 - **THEN** no such classes SHALL exist; audit pulls MUST be
   driven by `ScheduledWorkflow` records.
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
 
 ### Requirement: Individual per-platform adapters are explicitly out of scope for this spec — each adapter MUST ship in its own `add-openconnector-{slug}-adapter` change (REQ-EWC-007)
 
@@ -249,7 +249,6 @@ re-derive the category-level contract.
 #### Scenario: A new Intune adapter change references this spec
 
 - **GIVEN** a new change folder
-- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
   `openspec/changes/add-openconnector-intune-adapter/`
 - **WHEN** its proposal.md is inspected
 - **THEN** the `Depends on` line MUST include
@@ -257,4 +256,5 @@ re-derive the category-level contract.
   MUST cite REQ-EWC-002 (capabilities), REQ-EWC-003 (user
   mapping), REQ-EWC-005 (destructive-action authorisation),
   and REQ-EWC-006 (no per-app TimedJob) by REQ id.
+- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
 

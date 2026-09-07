@@ -23,12 +23,12 @@ migration is a no-op.
 
 #### Scenario: Idempotent re-run
 - GIVEN `oc_openregister_registers` already contains a row with
-- @e2e exclude an `occ upgrade` / console behaviour. A migration, its repair step and the retry command run there and nowhere else, so a browser session never reaches this path
   `slug='openconnector'`
 - WHEN Nextcloud re-runs the migration (e.g. on app upgrade)
 - THEN the migration class executes without error
 - AND no duplicate register or schema rows are created
 - AND schema-metadata updates are applied in-place
+- @e2e exclude an `occ upgrade` / console behaviour. A migration, its repair step and the retry command run there and nowhere else, so a browser session never reaches this path
 
 ### Requirement: Migrator MUST copy all legacy rows preserving uuids
 
@@ -53,26 +53,26 @@ method. For each of the 15 entities, the migrator MUST:
 - GIVEN `oc_openconnector_sources` contains 12 rows
 - WHEN the migrator runs against `entity='source'`
 - THEN 12 rows are inserted into `oc_openregister_objects` with `register` =
-- @e2e exclude an `occ upgrade` / console behaviour. A migration, its repair step and the retry command run there and nowhere else, so a browser session never reaches this path
   the openconnector register PK and `schema` = the source schema PK
 - AND each inserted row's `uuid` matches the source row's `uuid` byte-for-byte
 - AND the migration log records "source: 12 → 12, 0 skipped"
+- @e2e exclude an `occ upgrade` / console behaviour. A migration, its repair step and the retry command run there and nowhere else, so a browser session never reaches this path
 
 #### Scenario: Postgres JSON build
 - GIVEN the runtime database is PostgreSQL
 - WHEN the migrator INSERTs into `oc_openregister_objects`
 - THEN the SQL statement uses `jsonb_build_object(...)` to assemble the
-- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
   `object` column
 - AND the resulting `object` value is JSONB type
+- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
 
 #### Scenario: MySQL JSON build
 - GIVEN the runtime database is MariaDB or MySQL
 - WHEN the migrator INSERTs into `oc_openregister_objects`
 - THEN the SQL statement uses `JSON_OBJECT(...)` to assemble the `object`
-- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
   column
 - AND the resulting `object` value is JSON type
+- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
 
 #### Scenario: UUID preservation
 - GIVEN a `Source` row with `uuid='00000000-0000-0000-0000-000000000123'`
@@ -106,7 +106,6 @@ object's payload, per chain A REQ-A-008.
 
 #### Scenario: Rewrite CallLog.sourceId to source uuid
 - GIVEN a `oc_openconnector_call_logs` row with `source_id=42` migrated as
-- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
   `{"sourceId": 42}` in the OR object
 - AND `oc_openconnector_sources` row with `id=42` has
   `uuid='00000000-0000-0000-0000-000000000042'`
@@ -114,15 +113,16 @@ object's payload, per chain A REQ-A-008.
 - THEN the OR object's `object` JSON is updated to contain
   `"source": "00000000-0000-0000-0000-000000000042"`
 - AND the legacy `"sourceId": 42` field is preserved (chain A REQ-A-008)
+- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
 
 #### Scenario: Missing target row triggers skip + log
 - GIVEN a `oc_openconnector_call_logs` row with `source_id=99` where no
-- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
   `oc_openconnector_sources.id=99` exists (orphaned FK in legacy data)
 - WHEN the FK rewrite pass runs
 - THEN the OR object's `source` field is NOT set
 - AND the migration log records "call_log row {uuid}: sourceId=99 has no
   target — skipped FK rewrite, legacy sourceId preserved"
+- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
 
 ### Requirement: Synchronization.sourceId/targetId branching MUST handle 3 formats
 
@@ -145,11 +145,11 @@ unrecognised: 1 (skipped)").
 #### Scenario: Integer PK gets resolved
 - GIVEN a synchronization row with `source_id='42'`
 - AND `oc_openconnector_sources.id=42` has
-- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
   `uuid='00000000-0000-0000-0000-000000000042'`
 - WHEN the migrator processes this row
 - THEN the resulting OR object's `sourceId` field is
   `"00000000-0000-0000-0000-000000000042"`
+- @e2e exclude a PHPUnit behaviour of the migration service, not a DOM one
 
 #### Scenario: Register/schema slug pair preserved
 - GIVEN a synchronization row with `source_id='zaken/zaak'`
@@ -189,9 +189,9 @@ run).
 - GIVEN entity 7 (job) raises an exception during migration
 - WHEN the migrator's `migrateAll()` returns (or throws)
 - THEN `IAppConfig::getValue('openconnector', 'storage_migrated', null)` is
-- @e2e exclude an `occ upgrade` / console behaviour. A migration, its repair step and the retry command run there and nowhere else, so a browser session never reaches this path
   NOT `'true'` (either unset or `'false'`)
 - AND mappers continue to use the legacy table path
+- @e2e exclude an `occ upgrade` / console behaviour. A migration, its repair step and the retry command run there and nowhere else, so a browser session never reaches this path
 
 ### Requirement: ObjectMapperFacade MUST translate the mapper API to ObjectService
 
@@ -311,12 +311,12 @@ The command MUST:
 
 #### Scenario: Per-entity retry after partial failure
 - GIVEN a previous migration failed during the `job` entity, leaving
-- @e2e exclude an `occ upgrade` / console behaviour. A migration, its repair step and the retry command run there and nowhere else, so a browser session never reaches this path (`lib/Command/MigrateToOpenRegister.php`)
   `storage_migrated` unset
 - WHEN an admin runs `occ integriq:migrate-storage --entity=job`
 - THEN only the `job` entity migrates
 - AND on success, the flag is NOT flipped (because other entities are still
   legacy); a follow-up full run is required
+- @e2e exclude an `occ upgrade` / console behaviour. A migration, its repair step and the retry command run there and nowhere else, so a browser session never reaches this path (`lib/Command/MigrateToOpenRegister.php`)
 
 ### Requirement: Legacy tables MUST stay readable for one release as rollback buffer
 

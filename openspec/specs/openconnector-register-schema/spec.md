@@ -28,7 +28,6 @@ schema defined in `components.schemas`.
   `components`
 
 #### Scenario: Register slug is openconnector
-- @e2e exclude a register-descriptor shape assertion, read from JSON rather than from a rendered page
 
 > ⚠️ **Stale as written.** Verified 2026-09-07: the register slug is `integriq`. The 2026-08 rename moved it, and OpenRegister register slugs are frozen once data is written, so this is the new canonical value. Left visible rather than annotated, because a waiver would record coverage for a claim that is no longer true.
 
@@ -36,6 +35,7 @@ schema defined in `components.schemas`.
 - **WHEN** inspecting `components.registers`
 - **THEN** exactly one register entry MUST exist with slug `openconnector`
 - **AND** its `schemas` array MUST list all 21 schema slugs
+- @e2e exclude a register-descriptor shape assertion, read from JSON rather than from a rendered page
 
 ### Requirement: Log schemas MUST be declared append-only and immutable (REQ-A-003)
 
@@ -159,10 +159,10 @@ Seed objects MUST use safe placeholder values for any secret-bearing column
 - GIVEN seed entries for the `source` schema
 - WHEN inspecting `apikey`, `password`, `secret` fields
 - THEN values MUST be one of `"YOUR_API_KEY_HERE"`, `"<placeholder>"`, or an
-- @e2e exclude a register-descriptor shape assertion, read from JSON rather than from a rendered page
   obviously non-credential string
 - AND values MUST NOT resemble real Bearer tokens, JWT tokens, or hex/base64
   secrets of plausible length
+- @e2e exclude a register-descriptor shape assertion, read from JSON rather than from a rendered page
 
 ### Requirement: Descriptor MUST be backwards-compatible with legacy field names (REQ-A-008)
 
@@ -224,7 +224,6 @@ the matching `lib/Db/<EntityName>.php` entity (excluding internally-derived
 fields like `id` which OR manages automatically).
 
 #### Scenario: All 21 schemas present
-- @e2e exclude a register-descriptor shape assertion, read from JSON rather than from a rendered page
 
 > ⚠️ **Stale as written.** Verified 2026-09-07: the descriptor declares 72 schemas, not 21. Left visible rather than annotated, because a waiver would record coverage for a claim that is no longer true.
 
@@ -234,6 +233,7 @@ fields like `id` which OR manages automatically).
   this requirement
 - **AND** their slugs MUST be the union of the 16 mutable config and 4 log
   slugs
+- @e2e exclude a register-descriptor shape assertion, read from JSON rather than from a rendered page
 
 #### Scenario: Schema field coverage matches entity definition
 
@@ -250,10 +250,10 @@ fields like `id` which OR manages automatically).
 
 - **GIVEN** the descriptor file is parsed
 - **WHEN** inspecting the `lti_platform`, `lti_tool`, and `lti_deployment`
-- @e2e exclude a register-descriptor shape assertion, read from JSON rather than from a rendered page
   schema entries
 - **THEN** none SHALL carry `immutable: true` or an
   `x-openregister-archival` annotation
 - **AND** all three SHALL remain in the mutable config group counted by this
   requirement
+- @e2e exclude a register-descriptor shape assertion, read from JSON rather than from a rendered page
 
