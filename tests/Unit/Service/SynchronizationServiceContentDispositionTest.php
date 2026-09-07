@@ -32,6 +32,9 @@ use ReflectionClass;
  *   k) empty `filename` / empty, duplicated or quoted `filename*` fall
  *      back instead of yielding `''` or `null` (PR #1840 re-review).
  *   l) lowercase `content-disposition` header key (HTTP/2) is recognised.
+ *   m) `filename*` decoding to invalid UTF-8 / control chars, or a whitespace-
+ *      only `filename`, falls back (PR #1840 round 4); header lookup skips
+ *      unusable values and tolerates a non-array `headers` entry.
  *
  * @package OCA\OpenConnector\Tests\Unit\Service
  */
@@ -42,7 +45,7 @@ class SynchronizationServiceContentDispositionTest extends TestCase
      * the full service graph. We only exercise pure string parsing here,
      * so ReflectionClass::newInstanceWithoutConstructor() is sufficient —
      * the parser does not touch any constructor-injected dependency other
-     * than the optional logger, which we inject via reflection for the
+     * than the constructor-injected logger, which we inject via reflection for the
      * charset-fallback path.
      */
     private function invokeParser(string $headerValue): ?string
@@ -260,5 +263,51 @@ class SynchronizationServiceContentDispositionTest extends TestCase
         $response = ['headers' => ['content-disposition' => ['attachment; filename="x.pdf"']]];
         $result = $this->createMock(CallLog::class);
         $this->assertSame('x.pdf', $this->invokePrivate('getFilenameFromHeaders', [$response, $result]));
+    }
+
+    public function testFilenameStarDecodingToInvalidUtf8FallsBackToPlainFilename(): void
+    {
+        // rawurldecode() never fails: a truncated multibyte escape yields a
+        // byte that is not valid UTF-8. That is not a usable filename, so the
+        // valid plain `filename` must win.
+        $header = 'attachment; filename="good.pdf"; filename*=UTF-8\'\'%C3';
+        $this->assertSame('good.pdf', $this->invokeParser($header));
+    }
+
+    public function testFilenameStarWithNulByteFallsBackToPlainFilename(): void
+    {
+        $header = 'attachment; filename="good.pdf"; filename*=UTF-8\'\'a%00.pdf';
+        $this->assertSame('good.pdf', $this->invokeParser($header));
+    }
+
+    public function testWhitespaceOnlyFilenameReturnsNull(): void
+    {
+        $this->assertNull($this->invokeParser('attachment; filename="   "'));
+    }
+
+    public function testHeaderLookupSkipsEmptyValueListAndFindsDuplicateKey(): void
+    {
+        // An empty value list under one casing must not hide a usable value
+        // under another casing of the same header.
+        $response = ['headers' => ['Content-Disposition' => [], 'content-disposition' => ['attachment; filename="x.pdf"']]];
+        $result = $this->createMock(CallLog::class);
+        $this->assertSame('x.pdf', $this->invokePrivate('getFilenameFromHeaders', [$response, $result]));
+    }
+
+    public function testNonArrayHeadersEntryFallsBackToUrlWithoutThrowing(): void
+    {
+        // A persisted call log may carry a scalar under `headers`; that must
+        // behave like "no headers" (URL fallback), not throw a TypeError.
+        $result = $this->createMock(CallLog::class);
+        $result->method('getRequest')->willReturn(['url' => 'https://xxllnc.example/api/v1/file/download']);
+        $this->assertSame('download', $this->invokePrivate('getFilenameFromHeaders', [['headers' => 'none'], $result]));
+    }
+
+    public function testLowercaseContentTypeHeaderDrivesExtensionFallback(): void
+    {
+        $response = ['headers' => ['content-type' => ['application/pdf; charset=binary']]];
+        $result = $this->createMock(CallLog::class);
+        $result->method('getRequest')->willReturn(['url' => 'https://xxllnc.example/api/v1/file/download']);
+        $this->assertSame('download.pdf', $this->invokePrivate('getFilenameFromHeaders', [$response, $result]));
     }
 }

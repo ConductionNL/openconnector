@@ -3053,14 +3053,10 @@ class SynchronizationService
             $path = explode(separator:'/', string: $parsedUrl['path']);
             $filename = end($path);
 
-            if (count(explode(separator: '.', string: $filename)) === 1
-                && (isset($response['headers']['Content-Type']) === true || isset($response['headers']['content-type']) === true)
-            ) {
-                $explodedMimeType = isset($response['headers']['Content-Type']) === true
-                    ? explode(separator: '/', string: explode(separator: ';', string: $response['headers']['Content-Type'][0])[0])
-                    : explode(separator: '/', string: explode(separator: ';', string: $response['headers']['content-type'][0])[0]);
-
-
+            // Same case-insensitive lookup as for Content-Disposition above.
+            $contentType = $this->getHeaderValue($response['headers'] ?? [], 'Content-Type');
+            if (count(explode(separator: '.', string: $filename)) === 1 && $contentType !== null) {
+                $explodedMimeType = explode(separator: '/', string: explode(separator: ';', string: $contentType)[0]);
                 $filename = $filename.'.'.end($explodedMimeType);
             }
         }
@@ -3074,7 +3070,9 @@ class SynchronizationService
      * Supports both the traditional `filename="…"` parameter and the RFC 5987
      * extended `filename*=charset''pct-encoded-value` form. When both are present
      * the extended form wins per RFC 6266 §4.3, with the plain `filename` used
-     * as fallback when `filename*` is absent or carries an unsupported charset.
+     * as fallback when `filename*` is absent, empty, malformed, undecodable or
+     * carries an unsupported charset. An empty or whitespace-only plain
+     * `filename` counts as absent.
      *
      * WOO-552: replaces the naive `explode('=', $header)` that corrupted the
      * filename as soon as xxllnc's Zaken API started emitting both parameters
@@ -3117,17 +3115,17 @@ class SynchronizationService
                 // (duplicate) `filename*` must neither discard a value already found
                 // nor win over a usable plain `filename`.
                 $decoded = $this->decodeRfc5987ExtendedValue($value);
-                if ($decoded !== null && $decoded !== '') {
+                if ($decoded !== null && trim($decoded) !== '') {
                     $filenameStar = $decoded;
                 }
             } elseif ($name === 'filename') {
                 // RFC 6266 allows quoted or unquoted `filename`. For a
                 // quoted-string, strip the surrounding quotes and unescape
                 // RFC 9110 §5.6.4 quoted-pairs (`\"` → `"`, `\\` → `\`).
-                // An empty value (`filename=""`) counts as absent, so the
-                // caller's URL/MIME fallback runs instead of writing ''.
+                // An empty or whitespace-only value (`filename=""`) counts as
+                // absent, so the caller's URL/MIME fallback runs instead.
                 $unquoted = $this->unquoteHeaderValue($value);
-                if ($unquoted !== '') {
+                if (trim($unquoted) !== '') {
                     $filenamePlain = $unquoted;
                 }
             }
@@ -3222,12 +3220,17 @@ class SynchronizationService
      * mandates lowercase field names, so `Content-Disposition` and
      * `content-disposition` are the same header (RFC 9110 §5.1).
      *
-     * @param array<string, mixed> $headers Header map as returned by the call service.
-     * @param string               $name    Header name, any casing.
-     * @return string|null The first header value, or null when the header is absent.
+     * @param mixed  $headers Header map as returned by the call service; anything
+     *                        that is not an array (persisted call logs) yields null.
+     * @param string $name    Header name, any casing.
+     * @return string|null The first header value, or null when the header is absent
+     *                     or carries no usable (scalar, non-false) value.
      */
-    private function getHeaderValue(array $headers, string $name): ?string
+    private function getHeaderValue(mixed $headers, string $name): ?string
     {
+        if (is_array($headers) === false) {
+            return null;
+        }
         foreach ($headers as $key => $values) {
             if (strcasecmp((string) $key, $name) !== 0) {
                 continue;
@@ -3235,8 +3238,10 @@ class SynchronizationService
             if (is_array($values) === true) {
                 $values = reset($values);
             }
-            if ($values === false || $values === null) {
-                return null;
+            if ($values === false || is_scalar($values) === false) {
+                // Empty list, null or nested array: no usable value under this key;
+                // keep scanning for a differently-cased duplicate.
+                continue;
             }
             return (string) $values;
         }
@@ -3265,7 +3270,7 @@ class SynchronizationService
         if (count($parts) !== 3) {
             $this->logger->info(
                 'Ignoring malformed Content-Disposition filename* (expected charset\'\'value); falling back to plain filename',
-                ['value' => $value]
+                ['valueLength' => strlen($value)]
             );
             return null;
         }
@@ -3279,9 +3284,20 @@ class SynchronizationService
             );
             return null;
         }
+        // rawurldecode() implements the RFC 3986 §2.1 pct-decode but never fails:
+        // an invalid pct-escape or truncated multibyte sequence yields invalid
+        // UTF-8 and `%00` yields a NUL byte. Neither is a usable filename, so
+        // enforce "decodable" here and fall back to the plain `filename`.
+        $decoded = rawurldecode($encoded);
+        if (mb_check_encoding($decoded, 'UTF-8') === false || preg_match('/[\x00-\x1F\x7F]/', $decoded) === 1) {
+            $this->logger->info(
+                'Ignoring Content-Disposition filename* that decoded to invalid UTF-8 or control characters; falling back to plain filename',
+                ['valueLength' => strlen($encoded)]
+            );
+            return null;
+        }
 
-        // rawurldecode() implements the RFC 3986 §2.1 pct-decode.
-        return rawurldecode($encoded);
+        return $decoded;
     }
 
 	/**
