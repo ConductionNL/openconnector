@@ -9128,9 +9128,10 @@ class SynchronizationService {
 			if ($name === 'filename*') {
 				$filenameStar = $this->decodeRfc5987ExtendedValue(value: $value);
 			} elseif ($name === 'filename') {
-				// RFC 6266 allows quoted or unquoted `filename`; strip
-				// matching surrounding double quotes when present.
-				$filenamePlain = trim($value, '"');
+				// RFC 6266 allows quoted or unquoted `filename`. For a
+				// quoted-string, strip the surrounding quotes and unescape
+				// RFC 9110 §5.6.4 quoted-pairs (`\"` → `"`, `\\` → `\`).
+				$filenamePlain = $this->unquoteHeaderValue(value: $value);
 			}
 		}
 
@@ -9146,6 +9147,8 @@ class SynchronizationService {
 	 * so a `;` between quotes is part of the value, not a parameter
 	 * separator. A naive `explode(';', $header)` corrupts values like
 	 * `filename="foo;bar.pdf"` to just `foo`.
+	 * Inside quotes, RFC 9110 §5.6.4 quoted-pairs (`\"`, `\\`) are
+	 * skipped as a unit so an escaped quote never toggles the state.
 	 *
 	 * @param string $headerValue The raw Content-Disposition header value.
 	 * @return array<int, string> Trimmed parameter segments, starting with
@@ -9158,6 +9161,14 @@ class SynchronizationService {
 		$length = strlen($headerValue);
 		for ($i = 0; $i < $length; $i++) {
 			$char = $headerValue[$i];
+			if ($inQuotes === true && $char === '\\' && ($i + 1) < $length) {
+				// RFC 9110 §5.6.4 quoted-pair: a backslash escapes the next
+				// character, so an escaped `\"` is literal and must not
+				// toggle the quote state. Keep both bytes, skip the escaped one.
+				$current .= $char . $headerValue[$i + 1];
+				$i++;
+				continue;
+			}
 			if ($char === '"') {
 				$inQuotes = ($inQuotes === false);
 				$current .= $char;
@@ -9175,6 +9186,32 @@ class SynchronizationService {
 		}
 		return $segments;
 	}//end splitHeaderParameters()
+
+	/**
+	 * Unquote a Content-Disposition parameter value.
+	 *
+	 * A quoted-string (RFC 9110 §5.6.4) loses its surrounding double
+	 * quotes and has its quoted-pairs unescaped: `\"` becomes `"` and
+	 * `\\` becomes `\`. So `"rapport \"final\"; versie 2.pdf"` yields
+	 * `rapport "final"; versie 2.pdf`. An unquoted token is returned
+	 * unchanged. A value with an opening but no closing quote is
+	 * handled leniently (opening quote dropped, rest unescaped) so a
+	 * sloppy upstream header still produces a usable filename.
+	 *
+	 * @param string $value The raw (already trimmed) parameter value.
+	 * @return string The unquoted, unescaped value.
+	 */
+	private function unquoteHeaderValue(string $value): string {
+		if ($value === '' || $value[0] !== '"') {
+			return $value;
+		}
+		$inner = substr($value, 1);
+		if ($inner !== '' && substr($inner, -1) === '"') {
+			$inner = substr($inner, 0, -1);
+		}
+		// Quoted-pair: backslash + any char collapses to that char.
+		return preg_replace('/\\\\(.)/s', '$1', $inner) ?? $inner;
+	}//end unquoteHeaderValue()
 
 	/**
 	 * Decode an RFC 5987 extended parameter value of shape
