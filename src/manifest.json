@@ -1091,7 +1091,7 @@
             "integrationId": "files",
             "icon": "FolderOutline",
             "title": "Supplier documents",
-            "_note": "First of Integriq's four OpenRegister integration leaves (openspec/changes/leaf-integrations). A supplier's API documentation, OAS export and onboarding paperwork belong next to the connection they describe, not in someone's mail. `files` is the one leaf that needs no extra column: `_files` is already a metadata column on every magic table, so declaring it costs nothing at the storage layer. The leaf links Nextcloud files by object id and never reads a `source` property, so it adds no read path to the plaintext credential fields 99-source-lockdown.json closed off."
+            "_note": "First of Integriq's four OpenRegister integration leaves (openspec/specs/integration-leaves). A supplier's API documentation, OAS export and onboarding paperwork belong next to the connection they describe, not in someone's mail. `files` is the one leaf that needs no extra column: `_files` is already a metadata column on every magic table, so declaring it costs nothing at the storage layer. The leaf links Nextcloud files by object id and never reads a `source` property, so it adds no read path to the plaintext credential fields 99-source-lockdown.json closed off."
           },
           {
             "id": "src-deck",
