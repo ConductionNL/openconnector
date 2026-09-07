@@ -45,13 +45,13 @@ HTTP client to the SaaS vendor.
 
 - **GIVEN** any sibling app's `lib/Service/` tree
 - **WHEN** scanned for direct imports of
-- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `Microsoft\\Graph\\*`, `Google\\Service\\*`,
   `JoliCode\\Slack\\*`, `Salesforce\\*`, `ServiceNow\\*`,
   `Atlassian\\*`, `Notion\\*`, `Twinfield\\*`, `Exact\\*`,
   `Afas\\*`
 - **THEN** no such imports SHALL exist; SaaS access MUST route
   through integriq by integration slot slug.
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
 
 ### Requirement: Each SPC adapter manifest entry SHALL declare a fixed capability vocabulary across record-crud, event-subscribe, search-lookup, and bulk operations (REQ-SPC-002)
 
@@ -127,12 +127,12 @@ they MUST NOT cache the token themselves.
 
 - **GIVEN** any sibling app's repository
 - **WHEN** scanned for substrings `client_secret`,
-- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `client-secret`, `oauth_client`, or for environment-variable
   references like `*_OAUTH_CLIENT_SECRET` in `.env` examples
   or appinfo/info.xml descriptions
 - **THEN** no such references SHALL exist; OAuth client
   credentials live only in integriq source records.
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
 
 #### Scenario: A SaaS source supports OAuth as the default auth mode
 
@@ -164,7 +164,6 @@ optional `entityType` distinguishes the kind.
 #### Scenario: A federated search returns mixed DCC + SPC hits
 
 - **GIVEN** operator-configured SharePoint (DCC) and Jira (SPC)
-- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   sources
 - **WHEN** a sibling app issues a federated search for
   `"customer onboarding"`
@@ -172,6 +171,7 @@ optional `entityType` distinguishes the kind.
   hits MUST omit `entityType` / `recordKey`; Jira hits MUST
   include `entityType: jira-issue` and `recordKey: <PROJ-NNN>`;
   the caller MUST be able to merge-sort by `score`.
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
 
 ### Requirement: Event subscriptions SHALL normalise to CloudEvents and route through the standard event dispatcher per ADR-022 (REQ-SPC-005)
 
@@ -228,12 +228,12 @@ be:
 #### Scenario: A `bulk-import` rejected because not opted in
 
 - **GIVEN** a Salesforce source with
-- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   `enabledMutativeBulkActions: []` (default)
 - **WHEN** any caller invokes `bulkImport(...)`
 - **THEN** the call MUST throw
   `MutativeBulkActionDisabledException`; **AND** an audit row
   MUST land in `CallLog`.
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
 
 ### Requirement: Attachment bytes MUST stream through the adapter without local persistence; long-term storage SHALL go through docudesk per ADR-022 (REQ-SPC-007)
 
@@ -250,13 +250,13 @@ any integriq-owned table.
 #### Scenario: A workflow stores a Jira attachment as a docudesk file
 
 - **GIVEN** a workflow that fetches a Jira issue's attachment
-- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   via the adapter
 - **WHEN** the workflow persists the file
 - **THEN** the file bytes MUST be POSTed to docudesk; the OR
   object that references the attachment MUST carry a docudesk
   URI; no file bytes SHALL be written under integriq's
   app data or any integriq-owned table.
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
 
 ### Requirement: Individual per-vendor adapters are explicitly out of scope for this spec — each adapter MUST ship in its own `add-openconnector-{slug}-adapter` change (REQ-SPC-008)
 
@@ -272,7 +272,6 @@ contract.
 #### Scenario: A new Microsoft 365 adapter change references this spec
 
 - **GIVEN** a new change folder
-- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
   `openspec/changes/add-openconnector-microsoft365-adapter/`
 - **WHEN** its proposal.md is inspected
 - **THEN** the `Depends on` line MUST include
@@ -281,4 +280,5 @@ contract.
   default), REQ-SPC-005 (CloudEvent normalisation),
   REQ-SPC-006 (bulk-action authorisation), and REQ-SPC-007
   (attachments via docudesk) by REQ id.
+- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
 

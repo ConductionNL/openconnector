@@ -27,10 +27,10 @@ supported Nextcloud version this app targets (NC 28–34; `NodeCreatedEvent` has
 - **GIVEN** an active `event_subscription` with `types = ["com.nextcloud.files.node.created"]`
 - **WHEN** a user uploads a new file and NC dispatches `NodeCreatedEvent`
 - **THEN** a new `event` record SHALL be persisted with `type = 'com.nextcloud.files.node.created'`,
-- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
   `source = '/nextcloud/files'`, and `data.fileid`/`data.path` populated
 - **AND** `EventService::processEvent` SHALL be invoked with that event, producing a matching
   `event_message`
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
 
 #### Scenario: a file tag change produces a distinctly-typed event
 
@@ -67,9 +67,9 @@ DAV event signature change degrades this one listener rather than breaking event
 - **GIVEN** an NC version where `CachedCalendarObjectCreatedEvent` lacks an expected accessor
 - **WHEN** the event fires
 - **THEN** `NextcloudCalendarEventListener::handle()` SHALL log a warning and return without persisting an
-- @e2e exclude requires emitting a malformed DAV event, which nothing in the product surface can produce
   `event` or throwing
 - **AND** no other registered listener SHALL be affected
+- @e2e exclude requires emitting a malformed DAV event, which nothing in the product surface can produce
 
 ### Requirement: Tables row events MUST be normalized to CloudEvents when the Tables app is installed (REQ-003)
 
@@ -93,11 +93,11 @@ feature-detection gate are normative regardless of the exact upstream class name
 #### Scenario: a row update produces a matching event when Tables is installed
 
 - **GIVEN** the `tables` app is installed and enabled, and an active subscription with `types =
-- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
   ["com.nextcloud.tables.row.updated"]`
 - **WHEN** a user edits a row and Tables dispatches its row-updated event
 - **THEN** a new `event` record SHALL be persisted with `type = 'com.nextcloud.tables.row.updated'` and
   `data.tableId`/`data.rowId` populated
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
 
 ### Requirement: Forms submission events MUST be normalized to CloudEvents when the Forms app is installed (REQ-004)
 
@@ -118,11 +118,11 @@ normative.
 #### Scenario: a form submission produces a matching event when Forms is installed
 
 - **GIVEN** the `forms` app is installed and enabled, and an active subscription with `types =
-- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
   ["com.nextcloud.forms.submission.created"]`
 - **WHEN** a user submits a form
 - **THEN** a new `event` record SHALL be persisted with `type = 'com.nextcloud.forms.submission.created'`
   and `data.formId` populated
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
 
 ### Requirement: Non-admin subscription requests for NC-native types MUST be gated via the existing ADR-023 action matrix (REQ-005)
 
@@ -147,28 +147,28 @@ per-family check — the pre-existing coarse-action-only posture for those reque
 #### Scenario: a non-admin is rejected for a family not granted to their groups
 
 - **GIVEN** the action matrix maps `event.subscribe-nextcloud-files` to `["admin"]` (the seeded default)
-- @e2e exclude requires a SECOND user and a group grant. The e2e suite runs as admin throughout, and its globalSetup settles overlays for that one user only
   AND the non-admin caller's groups hold the coarse `event.subscribe` grant
 - **WHEN** the non-admin calls `subscribe()` with `types = ["com.nextcloud.files.node.created"]`
 - **THEN** `requireAction($user, 'event.subscribe-nextcloud-files')` SHALL throw
 - **AND** the response SHALL be HTTP 403
+- @e2e exclude requires a SECOND user and a group grant. The e2e suite runs as admin throughout, and its globalSetup settles overlays for that one user only
 
 #### Scenario: a non-admin succeeds once their group is granted the family action
 
 - **GIVEN** the action matrix maps both `event.subscribe` and `event.subscribe-nextcloud-files` to
-- @e2e exclude requires a SECOND user and a group grant. The e2e suite runs as admin throughout, and its globalSetup settles overlays for that one user only
   `["openconnector-power-users"]`
 - **WHEN** a non-admin member of `openconnector-power-users` calls `subscribe()` with
   `types = ["com.nextcloud.files.node.created"]`
 - **THEN** the subscription SHALL be created and the response SHALL be HTTP 200
+- @e2e exclude requires a SECOND user and a group grant. The e2e suite runs as admin throughout, and its globalSetup settles overlays for that one user only
 
 #### Scenario: the coarse grant alone is insufficient for NC-native self-service
 
 - **GIVEN** the matrix grants a non-admin's group `event.subscribe` but NOT
-- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
   `event.subscribe-nextcloud-calendar`
 - **WHEN** they call `subscribe()` with `types = ["com.nextcloud.calendar.object.created"]`
 - **THEN** the response SHALL be HTTP 403 (both layers MUST pass)
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
 
 #### Scenario: an admin is never gated
 
@@ -181,10 +181,10 @@ per-family check — the pre-existing coarse-action-only posture for those reque
 
 - **GIVEN** a non-admin user whose groups hold the coarse `event.subscribe` grant
 - **WHEN** they call `subscribe()` with `types = ["com.nextcloud.openregister.object.created"]`
-- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
   (an OpenRegister object event, excluded from the domain mapping)
 - **THEN** no `event.subscribe-nextcloud-*` action SHALL be checked
 - **AND** the pre-existing `subscribe()` behaviour (coarse action only) applies unchanged
+- @e2e exclude neither the Tables nor the Forms app is installed on the e2e instance, so this surface does not exist for a browser to drive. These triggers fire from Nextcloud's own Files, Calendar, Tables and Forms apps rather than from integriq's surface
 
 ### Requirement: The four per-family actions MUST be seeded into the existing action matrix (REQ-006)
 
@@ -215,11 +215,11 @@ group via the existing `PUT /api/admin/action-matrix` flow, unchanged.
 
 - **GIVEN** the matrix with `event.subscribe-nextcloud-tables = ["admin"]`
 - **WHEN** an admin PUTs an updated matrix mapping that action to `["admin", "openconnector-power-users"]`
-- @e2e exclude requires a second user and a group grant to observe the effect of
   via `PUT /api/admin/action-matrix`
 - **THEN** the mapping SHALL persist and a subsequent `GET /api/admin/action-matrix` SHALL return it
 - **AND** members of `openconnector-power-users` (also holding `event.subscribe`) SHALL then pass REQ-005's
   gate for `com.nextcloud.tables.*` types
+- @e2e exclude requires a second user and a group grant to observe the effect of
 
 #### Scenario: a non-admin cannot read or write the action matrix
 

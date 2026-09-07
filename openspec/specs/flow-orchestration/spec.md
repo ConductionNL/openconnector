@@ -407,20 +407,20 @@ replaced by a uniformity rule:
 
 - **GIVEN** an admin on the Flow detail page for an existing flow
 - **WHEN** they click "Add step", select `type: mapping` from the step
-- @e2e exclude the flow EDITOR interactions. `spec-coverage/flow-orchestration.spec.ts` covers the index listing, the canvas render, a failed trace timeline and the Replay confirmation, and stops short of the editor's own save-validation, step picker and reordering. Uncovered rather than covered elsewhere
   type `NcSelect`, and then open the config-ref picker
 - **THEN** the config-ref picker's options are scoped to existing
   Mapping entities only (not Sources, Synchronizations, or Endpoints)
+- @e2e exclude the flow EDITOR interactions. `spec-coverage/flow-orchestration.spec.ts` covers the index listing, the canvas render, a failed trace timeline and the Replay confirmation, and stops short of the editor's own save-validation, step picker and reordering. Uncovered rather than covered elsewhere
 
 #### Scenario: reordering is possible without a pointer drag
 
 - **GIVEN** a flow with three steps
 - **WHEN** the admin clicks "Move up" on the second step
 - **THEN** the second step's `order` value is swapped with the first
-- @e2e exclude the flow EDITOR interactions. `spec-coverage/flow-orchestration.spec.ts` covers the index listing, the canvas render, a failed trace timeline and the Replay confirmation, and stops short of the editor's own save-validation, step picker and reordering. Uncovered rather than covered elsewhere
   step's `order` value
 - **AND** the reorder is achievable by keyboard alone, with no
   drag-and-drop interaction required
+- @e2e exclude the flow EDITOR interactions. `spec-coverage/flow-orchestration.spec.ts` covers the index listing, the canvas render, a failed trace timeline and the Replay confirmation, and stops short of the editor's own save-validation, step picker and reordering. Uncovered rather than covered elsewhere
 
 #### Scenario: graph editing, if offered, reuses the shared canvas
 

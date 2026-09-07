@@ -84,12 +84,12 @@ REQ-002/REQ-009).
 #### Scenario: replaying an abandoned synchronization-action message re-runs the synchronization, not an HTTP call
 
 - **GIVEN** an `abandoned` message whose subscription has `action = {kind: 'synchronization',
-- @e2e exclude replay EXECUTION, which needs a genuinely dead-lettered item and a mapping fix to replay it against. `regression/dead-letter-replay.spec.ts` and `spec-coverage/dead-letters-ui.spec.ts` cover the surface, its filters, badges and detail modal, but neither performs a replay and asserts its outcome. Uncovered rather than covered elsewhere
   synchronizationId: '<uuid>'}`
 - **WHEN** an admin replays it
 - **THEN** `SynchronizationService::synchronize` SHALL be invoked with the resolved synchronization
 - **AND** no HTTP request SHALL be made to any `sink`
 - **AND** on success the message SHALL be persisted `status='delivered'` with `replayedBy` set
+- @e2e exclude replay EXECUTION, which needs a genuinely dead-lettered item and a mapping fix to replay it against. `regression/dead-letter-replay.spec.ts` and `spec-coverage/dead-letters-ui.spec.ts` cover the surface, its filters, badges and detail modal, but neither performs a replay and asserts its outcome. Uncovered rather than covered elsewhere
 
 ### Requirement: Audited discard as a distinct terminal state (REQ-DLR-004)
 
@@ -252,13 +252,13 @@ a scheduled backoff state, per `synchronization-engine` REQ-008.
 #### Scenario: replaying a failed item after a mapping fix succeeds
 
 - **GIVEN** a `failed` entry whose original mapping bug has since been
-- @e2e exclude replay EXECUTION, which needs a genuinely dead-lettered item and a mapping fix to replay it against. `regression/dead-letter-replay.spec.ts` and `spec-coverage/dead-letters-ui.spec.ts` cover the surface, its filters, badges and detail modal, but neither performs a replay and asserts its outcome. Uncovered rather than covered elsewhere
   corrected
 - **WHEN** an admin replays it
 - **THEN** the entry SHALL be persisted with `status='replayed'` and
   `replayedBy` = the admin's uid
 - **AND** the corresponding `synchronization_contract` SHALL be
   created/updated as if the item had succeeded on first processing
+- @e2e exclude replay EXECUTION, which needs a genuinely dead-lettered item and a mapping fix to replay it against. `regression/dead-letter-replay.spec.ts` and `spec-coverage/dead-letters-ui.spec.ts` cover the surface, its filters, badges and detail modal, but neither performs a replay and asserts its outcome. Uncovered rather than covered elsewhere
 
 #### Scenario: replaying an already-replayed entry is rejected
 

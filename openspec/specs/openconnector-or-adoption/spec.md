@@ -77,9 +77,9 @@ on-wire status value SHALL remain identical to the current value.
 - **GIVEN** the dso-message schema declares lifecycle states including `ontvangen`
 - **WHEN** `DSOController::receiveMessage()` would have written `'status' => 'ontvangen'`
 - **THEN** the controller SHALL invoke
-- @e2e exclude a schema-shape assertion over the register descriptor
   `lifecycleService->transitionTo($msg, 'ontvangen')` instead
 - **AND** the response payload SHALL still contain `"status": "ontvangen"`.
+- @e2e exclude a schema-shape assertion over the register descriptor
 
 #### Scenario: Event pending state via lifecycle
 
@@ -116,11 +116,11 @@ They SHALL NOT be migrated to a lifecycle annotation.
 #### Scenario: Log levels stay as enum, not lifecycle
 
 - **GIVEN** the log schema declares
-- @e2e exclude a schema-shape assertion over the register descriptor
   `level: { enum: [success, warning, info, debug] }`
 - **WHEN** an auditor inspects the log schema
 - **THEN** there SHALL be no `x-openregister-lifecycle` annotation referencing log levels
 - **AND** the filter whitelist SHALL match the enum.
+- @e2e exclude a schema-shape assertion over the register descriptor
 
 ### Requirement: Notification annotation backs sync alerts
 
@@ -131,11 +131,11 @@ Synchronization-failed, contract-broken, and job-failed notifications SHALL be d
 #### Scenario: Sync failure notification is annotation-driven
 
 - **GIVEN** the synchronization schema declares
-- @e2e exclude an ADR-031 declaration in the register descriptor, asserted by gate-18 notification-dialect rather than by a browser
   `x-openregister-notifications` keyed on `running → error`
 - **WHEN** `SynchronizationService` transitions a run to `error`
 - **THEN** the notification SHALL fire automatically
 - **AND** no direct `notificationManager->notify()` call SHALL exist for this event.
+- @e2e exclude an ADR-031 declaration in the register descriptor, asserted by gate-18 notification-dialect rather than by a browser
 
 ### Requirement: Tenant-tunable values move to admin-config
 

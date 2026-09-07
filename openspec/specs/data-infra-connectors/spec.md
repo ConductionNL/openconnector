@@ -45,13 +45,13 @@ importing integriq PHP.
 
 - **GIVEN** any sibling app's `lib/Service/` tree
 - **WHEN** scanned for direct imports of `MongoDB\Client`,
-- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `Predis\Client`, `Aws\S3\S3Client`, `Google\Cloud\BigQuery\BigQueryClient`,
   `Snowflake\\*`, `RdKafka\Producer`, `PhpAmqpLib\\*`, or
   any other infrastructure client library
 - **THEN** no such imports SHALL exist in sibling apps; the
   capability MUST be consumed from integriq by integration
   slot slug.
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
 
 #### Scenario: Adapter registers via DI tag, not via runtime hack
 
@@ -96,11 +96,11 @@ field.
 
 - **GIVEN** an adapter `SnowflakeAdapter`
 - **WHEN** `lib/Service/Adapter/DataInfra/SnowflakeAdapter.php` is
-- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   inspected
 - **THEN** no `const CAPABILITIES = [...]` / `const AUTH_MODES = [...]`
   / `const RATE_LIMITS = [...]` class constant SHALL exist;
   every such value MUST come from the manifest entry at runtime.
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
 
 #### Scenario: `npm run check:manifest` rejects an entry missing required fields
 
@@ -132,11 +132,11 @@ rotate them without redeploying any sibling app.
 
 - **GIVEN** any sibling app's `lib/` tree
 - **WHEN** scanned for field/property names matching
-- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `*ApiKey*` / `*Secret*` / `*Token*` / `*ServiceAccountJson*`
   in contexts that reference a data-infra integration
 - **THEN** no such fields SHALL exist; the sibling MUST hold only
   the integriq source slug.
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
 
 ### Requirement: Each adapter SHALL declare its polling-vs-push posture and its schema-discovery contract (REQ-DIC-004)
 
@@ -175,13 +175,13 @@ Adapter `schemaDiscovery` MUST be one of:
 #### Scenario: A `subscribe-cdc` adapter exposes a webhook surface
 
 - **GIVEN** a Kafka adapter declaring
-- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   `pollingMode: hybrid`, `capabilities: [read, subscribe-cdc]`
 - **WHEN** a sibling app subscribes via the registry
 - **THEN** integriq MUST register a webhook receiver
   endpoint, normalise inbound payloads to CloudEvents per
   ADR-022, and dispatch to the sibling via the standard
   CloudEvent dispatcher — no per-app Kafka consumer.
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
 
 ### Requirement: Scheduled pulls SHALL run as OpenRegister `ScheduledWorkflow` records, not as integriq `TimedJob` classes (REQ-DIC-005)
 
@@ -201,11 +201,11 @@ the legacy sync UI).
 
 - **GIVEN** the integriq codebase
 - **WHEN** scanned for classes extending `OCP\BackgroundJob\TimedJob`
-- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   in `lib/BackgroundJob/` whose name matches
   `*Adapter*` / `*Connector*` / `*Pull*` / `*Sync*Schedul*`
 - **THEN** no such classes SHALL exist; periodic adapter pulls
   MUST be driven by `ScheduledWorkflow` records.
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
 
 ### Requirement: Adapter operational health SHALL surface through the existing prometheus-metrics endpoint (REQ-DIC-006)
 
@@ -250,7 +250,6 @@ adapter slice; the category spec owns the shared contract.
 #### Scenario: A new per-adapter change references this spec
 
 - **GIVEN** a new change folder
-- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
   `openspec/changes/add-openconnector-snowflake-adapter/`
 - **WHEN** its proposal.md is inspected
 - **THEN** the `Depends on` line MUST include
@@ -258,4 +257,5 @@ adapter slice; the category spec owns the shared contract.
   cite REQ-DIC-001 (registration) and REQ-DIC-002 (manifest
   entry) by REQ id; the proposal MUST NOT redefine the
   category-level shape.
+- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
 
