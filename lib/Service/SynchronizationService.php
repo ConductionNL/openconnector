@@ -9293,7 +9293,7 @@ class SynchronizationService {
 			);
 			return null;
 		}
-		// rawurldecode() implements the RFC 3986 §2.1 pct-decode but never fails:
+		// PHP's rawurldecode() implements the RFC 3986 §2.1 pct-decode but never fails:
 		// an invalid pct-escape or truncated multibyte sequence yields invalid
 		// UTF-8 and `%00` yields a NUL byte. Neither is a usable filename, so
 		// enforce "decodable" here and fall back to the plain `filename`.
