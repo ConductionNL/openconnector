@@ -49,6 +49,7 @@ DCC adapter is the transport, docudesk is the home.
 #### Scenario: Reviewer confirms no Conduction-side document store in integriq
 
 - **GIVEN** the integriq codebase under
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `lib/Service/Adapter/DocumentCms/`
 - **WHEN** scanned for persistence calls into
   `OCP\Files\IRootFolder`, `OCA\OpenRegister\Db\FileMapper`,
@@ -61,6 +62,7 @@ DCC adapter is the transport, docudesk is the home.
 
 - **GIVEN** any sibling app's `lib/Service/` tree
 - **WHEN** scanned for `Microsoft\Graph\\*`, `Google\Service\Drive`,
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `Box\\*`, `Alfresco\\*`, or any SharePoint REST client
 - **THEN** no such imports SHALL exist; DMS access MUST route
   through integriq by integration slot slug.
@@ -90,12 +92,14 @@ manifest validator MUST reject any unknown capability literal.
 - **GIVEN** the SharePoint adapter manifest entry
 - **WHEN** inspected
 - **THEN** `capabilities[]` SHALL include `file-crud`,
+- @e2e exclude a static or manifest-shape assertion, not a DOM behaviour
   `file-versioning`, `metadata-sync`, `search-federation`,
   `acl-bridging`, `event-subscribe`, `checkin-checkout`.
 
 #### Scenario: An NLX-brokered adapter omits capabilities it cannot fulfil
 
 - **GIVEN** the NLX adapter manifest entry, which fronts a
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   read-only brokered service
 - **WHEN** inspected
 - **THEN** `capabilities[]` SHALL include `file-crud` (read
@@ -125,6 +129,7 @@ through integriq's existing CallLog.
 #### Scenario: Default source rejects ACL write-back
 
 - **GIVEN** a freshly configured SharePoint source with no
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   `aclWriteBack` override
 - **WHEN** a sibling app invokes `setRemoteAcl(...)` via the
   adapter
@@ -137,6 +142,7 @@ through integriq's existing CallLog.
 - **GIVEN** an operator sets `aclWriteBack: true` on the source
 - **WHEN** the same `setRemoteAcl(...)` call runs
 - **THEN** the remote DMS MUST receive the ACL change; **AND**
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   the audit trail on the source MUST record the operator who
   enabled write-back and the date of enablement.
 
@@ -170,6 +176,7 @@ reach into DMS-native response shapes.
 #### Scenario: Federated query across two DMS returns one merged envelope shape
 
 - **GIVEN** an operator has configured both a SharePoint and an
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   Alfresco source
 - **WHEN** a sibling app issues a federated search for
   `"contract addendum"` across both
@@ -199,6 +206,7 @@ which is itself derivable from the manifest's `capabilities[]`.
 #### Scenario: A read-only NLX source rejects write attempts
 
 - **GIVEN** an NLX source configured with `readOnly: true`
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   (the default for NLX adapters)
 - **WHEN** any caller invokes `createFile(...)` via the adapter
 - **THEN** the call MUST throw `ReadOnlySourceException`; **AND**
@@ -222,6 +230,7 @@ bytes anywhere itself beyond the request-scoped transfer buffer.
 #### Scenario: A workflow stores a SharePoint contract as a docudesk attachment
 
 - **GIVEN** a workflow that fetches a contract PDF from
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   SharePoint via the adapter
 - **WHEN** the workflow persists the file
 - **THEN** the file bytes MUST be POSTed to docudesk's file
@@ -243,6 +252,7 @@ the category-level contract.
 #### Scenario: A new SharePoint adapter change references this spec
 
 - **GIVEN** a new change folder
+- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
   `openspec/changes/add-openconnector-sharepoint-adapter/`
 - **WHEN** its proposal.md is inspected
 - **THEN** the `Depends on` line MUST include

@@ -45,6 +45,7 @@ HTTP client to the SaaS vendor.
 
 - **GIVEN** any sibling app's `lib/Service/` tree
 - **WHEN** scanned for direct imports of
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `Microsoft\\Graph\\*`, `Google\\Service\\*`,
   `JoliCode\\Slack\\*`, `Salesforce\\*`, `ServiceNow\\*`,
   `Atlassian\\*`, `Notion\\*`, `Twinfield\\*`, `Exact\\*`,
@@ -82,6 +83,7 @@ manifest validator MUST reject any unknown capability literal.
 - **GIVEN** the Jira adapter manifest entry
 - **WHEN** inspected
 - **THEN** `capabilities[]` SHALL include `record-crud`,
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   `record-versioning`, `event-subscribe`, `search-lookup`,
   `bulk-export`, `attachment-fetch`; MAY include
   `oauth-userlevel`; MUST NOT include `presence`.
@@ -91,6 +93,7 @@ manifest validator MUST reject any unknown capability literal.
 - **GIVEN** the Exact Online adapter manifest entry
 - **WHEN** inspected
 - **THEN** `subCategory` SHALL equal `accounting`;
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   `capabilities[]` SHALL include `record-crud` for bookings /
   invoices / contacts, `bulk-export`, `bulk-import` (opt-in
   per REQ-SPC-006), `attachment-fetch`.
@@ -124,6 +127,7 @@ they MUST NOT cache the token themselves.
 
 - **GIVEN** any sibling app's repository
 - **WHEN** scanned for substrings `client_secret`,
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `client-secret`, `oauth_client`, or for environment-variable
   references like `*_OAUTH_CLIENT_SECRET` in `.env` examples
   or appinfo/info.xml descriptions
@@ -135,6 +139,7 @@ they MUST NOT cache the token themselves.
 - **GIVEN** a newly added Slack adapter
 - **WHEN** the manifest entry is inspected
 - **THEN** `authModes[0]` SHALL equal `oauth2`; the entry MAY
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   also list `apiKey` for legacy bot-token compatibility.
 
 ### Requirement: Search/lookup federation SHALL share the document-cms hit envelope, extended with `entityType`, `recordKey`, and `actorLabel` for record-shaped hits (REQ-SPC-004)
@@ -159,6 +164,7 @@ optional `entityType` distinguishes the kind.
 #### Scenario: A federated search returns mixed DCC + SPC hits
 
 - **GIVEN** operator-configured SharePoint (DCC) and Jira (SPC)
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   sources
 - **WHEN** a sibling app issues a federated search for
   `"customer onboarding"`
@@ -192,6 +198,7 @@ audit-trail-immutable per ADR-022.
 - **GIVEN** a Jira source declaring `event-subscribe`
 - **WHEN** Jira POSTs an issue-updated webhook
 - **THEN** integriq MUST normalise to a CloudEvent of type
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   `com.conduction.saas.work-management.issue-status-changed`;
   any subscribed sibling app MUST receive it; no SPC-specific
   event table SHALL be created in integriq.
@@ -221,6 +228,7 @@ be:
 #### Scenario: A `bulk-import` rejected because not opted in
 
 - **GIVEN** a Salesforce source with
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   `enabledMutativeBulkActions: []` (default)
 - **WHEN** any caller invokes `bulkImport(...)`
 - **THEN** the call MUST throw
@@ -242,6 +250,7 @@ any integriq-owned table.
 #### Scenario: A workflow stores a Jira attachment as a docudesk file
 
 - **GIVEN** a workflow that fetches a Jira issue's attachment
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   via the adapter
 - **WHEN** the workflow persists the file
 - **THEN** the file bytes MUST be POSTed to docudesk; the OR
@@ -263,6 +272,7 @@ contract.
 #### Scenario: A new Microsoft 365 adapter change references this spec
 
 - **GIVEN** a new change folder
+- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
   `openspec/changes/add-openconnector-microsoft365-adapter/`
 - **WHEN** its proposal.md is inspected
 - **THEN** the `Depends on` line MUST include

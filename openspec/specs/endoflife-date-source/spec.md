@@ -23,6 +23,7 @@ OpenRegister's `ImportHandler`.
 
 - GIVEN OpenRegister is installed and enabled
 - WHEN `occ app:enable integriq` (or an upgrade) runs
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   `InitializeRegister`
 - THEN a `source` object with `@self.slug = "endoflife-date"` exists in
   register `openconnector`, schema `source`, with `location =
@@ -34,6 +35,7 @@ OpenRegister's `ImportHandler`.
 - GIVEN the `endoflife-date` source already exists from a prior install
 - WHEN `InitializeRegister` runs again
 - THEN no duplicate `endoflife-date` source is created (matched by
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   `@self.slug`)
 - @e2e exclude Backend idempotency — verified by PHPUnit, not a browser flow.
 
@@ -66,6 +68,7 @@ shape as `eol`/`support`).
 
 - GIVEN OpenRegister is installed and enabled
 - WHEN `occ app:enable integriq` (or an upgrade) runs
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   `InitializeRegister`
 - THEN `components.schemas.eolProduct` and `components.schemas.eolCycle`
   exist in the merged register descriptor, both listed under register
@@ -78,6 +81,7 @@ shape as `eol`/`support`).
 - GIVEN the `eolCycle` schema in the merged register descriptor
 - WHEN inspecting `properties`
 - THEN `product`, `cycle`, `releaseDate`, `eol`, `support`, `latest`, and
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   `lts` are all present, matching the field list a consuming app needs to
   match a catalog module's version against its EOL window
 - @e2e exclude Schema-shape assertion — verified by PHPUnit/JSON fixture, not a browser flow.
@@ -99,6 +103,7 @@ see this change's design.md discovery notes for the underlying finding).
 
 - GIVEN OpenRegister is installed and enabled
 - WHEN `occ app:enable integriq` (or an upgrade) runs
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   `InitializeRegister`
 - THEN `eolProduct` objects with `@self.slug` of `php`, `nodejs`, `python`,
   `postgresql`, `mysql`, `nextcloud`, `wordpress`, and `laravel` all exist
@@ -108,6 +113,7 @@ see this change's design.md discovery notes for the underlying finding).
 #### Scenario: extending the tracked set requires no code change
 
 - GIVEN an operator wants to track a ninth product listed at
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   `https://endoflife.date/api/all.json` (e.g. `django`)
 - WHEN they follow the documented recipe (docs page) — duplicating one
   curated product's `eolProduct` seed object plus its `mapping` /
@@ -159,6 +165,7 @@ different products' same-labelled cycles onto the same target object.
 - GIVEN the seeded `endoflife-date-python-cycles` job is due
 - WHEN the cron sweep (`job-scheduling` REQ-003/REQ-004) executes it
 - THEN `SynchronizationAction::run()` resolves the
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   `endoflife-date-python-cycles` synchronization and calls
   `SynchronizationService::synchronize()`
 - AND a single GET request is made to
@@ -170,6 +177,7 @@ different products' same-labelled cycles onto the same target object.
 #### Scenario: two curated products never collide on cycle identity
 
 - GIVEN the `python` and `nodejs` products both happen to report a cycle
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   labelled `"20"` (or any other coincidentally-shared label)
 - WHEN both products' scheduled syncs run
 - THEN two distinct `eolCycle` objects exist — one with `product =
@@ -199,6 +207,7 @@ default 10% guard and block correct cleanup.
 #### Scenario: re-running the same sync produces no duplicate objects
 
 - GIVEN a product's synchronization has already run once, producing N
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   `eolCycle` objects
 - WHEN the same synchronization runs again with unchanged source data
 - THEN the same N `eolCycle` objects exist afterward (no duplicates, no
@@ -208,6 +217,7 @@ default 10% guard and block correct cleanup.
 #### Scenario: a retired cycle is garbage-collected within the raised deletion-ratio guard
 
 - GIVEN a product's synchronization has 4 existing `eolCycle` contracts
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   and the source's next complete fetch no longer reports 1 of them (25%
   of the existing contracts)
 - WHEN the synchronization runs
@@ -218,6 +228,7 @@ default 10% guard and block correct cleanup.
 #### Scenario: an incomplete fetch never triggers deletion
 
 - GIVEN a product's synchronization run's fetch is marked incomplete
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   (`synchronization-engine` REQ-009 — e.g. a non-2xx page response)
 - WHEN `deleteInvalidObjects()` would otherwise run
 - THEN no `eolCycle` object is deleted for that run, unchanged
@@ -239,6 +250,7 @@ wiring, controller, or frontend code.
 - GIVEN the `endoflife-date` source seed fragment is installed
 - WHEN an operator opens the Catalog page
 - THEN a card for "endoflife.date" is rendered among the source-template
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   entries, with a status badge reading "available" (the source ships
   `isEnabled: true`, no mock/dormant gating applies)
 - @e2e exclude Existing Catalog rendering mechanism — covered by connector-catalog's own e2e/PHPUnit coverage; this change adds no new render path to test.
@@ -264,6 +276,7 @@ network-isolated CI run.
 - GIVEN a test environment with outbound internet access
 - WHEN `vendor/bin/phpunit -c phpunit-unit.xml --testsuite "Integration Tests" --filter EndoflifeDateLiveSyncTest` runs
 - THEN a real HTTP call is made to `https://endoflife.date/api/{product}.json`
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   for at least one curated product
 - AND at least one `eolCycle` object is created with a non-empty `cycle`
   value
@@ -273,6 +286,7 @@ network-isolated CI run.
 #### Scenario: the live smoke test self-skips without network access
 
 - GIVEN a network-isolated test environment (or
+- @e2e exclude covered by `tests/Integration/EndoflifeDateLiveSyncTest.php`, which reaches the real endoflife.date API and self-skips without network. A browser session neither runs the scheduled job nor reaches that API
   `INTEGRIQ_SKIP_NETWORK_TESTS=1`)
 - WHEN the same test runs
 - THEN the test reports as skipped, not failed, and the overall test suite

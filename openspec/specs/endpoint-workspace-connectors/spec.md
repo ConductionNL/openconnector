@@ -41,6 +41,7 @@ MUST NOT be embedded in any sibling app (launchpad, etc.).
 
 - **GIVEN** any sibling app's `lib/Service/` tree
 - **WHEN** scanned for direct imports of
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `Citrix\\*`, `VMware\\Horizon\\*`, `Aws\\WorkSpaces\\*`,
   `Microsoft\\Graph\\DeviceManagement\\*`, `Jamf\\*`, or any
   vendor-specific endpoint-management client
@@ -77,6 +78,7 @@ The manifest validator MUST reject any unknown literal.
 - **GIVEN** the Liquit/Recast adapter manifest entry
 - **WHEN** inspected
 - **THEN** `capabilities[]` SHALL include
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   `entitlement-resolve`, `user-mapping`, `launch-deeplink`;
   MAY include `audit-event-pull`; MUST NOT include
   `session-disconnect` unless the underlying API supports it.
@@ -86,6 +88,7 @@ The manifest validator MUST reject any unknown literal.
 - **GIVEN** the Intune adapter manifest entry
 - **WHEN** inspected
 - **THEN** `capabilities[]` SHALL include `device-inventory`,
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   `device-compliance`, `user-mapping`, `audit-event-pull`;
   MUST NOT include `session-enumerate` or `launch-deeplink`
   (Intune does not host sessions).
@@ -117,6 +120,7 @@ the declarative `UserMapping` records.
 
 - **GIVEN** any sibling app's `lib/Service/` tree
 - **WHEN** scanned for classes whose name matches
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   `*UserMapping*Service*` / `*IdentityResolve*` / `*UpnResolver*`
 - **THEN** no such classes SHALL exist; user mapping MUST go
   through integriq's `MappingService::resolve()` via the
@@ -125,6 +129,7 @@ the declarative `UserMapping` records.
 #### Scenario: A configured mapping resolves an NC user to an Intune device record
 
 - **GIVEN** a `UserMapping` record with
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   `ncUserAttribute: email`, `remoteUserAttribute: upn`,
   `transformChain: [lowercase]`
 - **WHEN** an `entitlement-resolve` call comes in for NC user
@@ -158,6 +163,7 @@ or docudesk per ADR-022.
 - **GIVEN** a Citrix source declaring `audit-event-stream`
 - **WHEN** Citrix POSTs a session-started webhook
 - **THEN** integriq MUST normalise it to a CloudEvent of
+- @e2e exclude the adapter this names does not exist. Verified 2026-09-07: each connector family ships exactly ONE reference adapter (Saas: Microsoft365Adapter, DocumentCms: SharePointOnlineAdapter, EndpointWorkspace: AzureVirtualDesktopAdapter, DataInfra: S3Adapter), and no file under lib/ carries the adapter named here. The scenario is forward-looking rather than unmet
   type `com.conduction.endpoint-workspace.virtual-desktop.session-started`,
   enrich with the resolved NC user via REQ-EWC-003, and dispatch;
   launchpad (subscribed by event type) MUST receive it and render
@@ -190,6 +196,7 @@ device-wipe, force-logout, app-uninstall — MUST be:
 #### Scenario: A `session-disconnect` rejected because not opted in
 
 - **GIVEN** a Citrix source with
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   `enabledDestructiveActions: []` (default)
 - **WHEN** any caller invokes `disconnectSession(...)`
 - **THEN** the call MUST throw `DestructiveActionDisabledException`;
@@ -199,6 +206,7 @@ device-wipe, force-logout, app-uninstall — MUST be:
 #### Scenario: A `device-wipe` rejected because the caller is not in the bound group
 
 - **GIVEN** an Intune source with
+- @e2e exclude driving this needs the external SaaS tenant the adapter talks to. The e2e instance has no such credentials and no such account, so the call cannot be made from a browser session
   `enabledDestructiveActions: ["device-wipe"]` AND the action
   bound to NC group `intune-emergency-responders`
 - **WHEN** a user not in `intune-emergency-responders` invokes
@@ -222,6 +230,7 @@ events into CloudEvents per REQ-EWC-004.
 
 - **GIVEN** the integriq codebase
 - **WHEN** scanned for classes extending `OCP\BackgroundJob\TimedJob`
+- @e2e exclude a review checklist, not a behaviour. It asks a REVIEWER to confirm something about SIBLING APPS' source, which is neither a DOM behaviour nor even a fact about this repository
   in `lib/BackgroundJob/` whose name matches
   `*Workspace*` / `*Endpoint*` / `*Intune*` / `*Jamf*` /
   `*Citrix*` / `*Horizon*` / `*Audit*Pull*`
@@ -240,6 +249,7 @@ re-derive the category-level contract.
 #### Scenario: A new Intune adapter change references this spec
 
 - **GIVEN** a new change folder
+- @e2e exclude a process rule for FUTURE changes: it asks that a not-yet-written change reference this spec. There is nothing to drive until that change exists
   `openspec/changes/add-openconnector-intune-adapter/`
 - **WHEN** its proposal.md is inspected
 - **THEN** the `Depends on` line MUST include
