@@ -84,6 +84,7 @@ REQ-002/REQ-009).
 #### Scenario: replaying an abandoned synchronization-action message re-runs the synchronization, not an HTTP call
 
 - **GIVEN** an `abandoned` message whose subscription has `action = {kind: 'synchronization',
+- @e2e exclude replay EXECUTION, which needs a genuinely dead-lettered item and a mapping fix to replay it against. `regression/dead-letter-replay.spec.ts` and `spec-coverage/dead-letters-ui.spec.ts` cover the surface, its filters, badges and detail modal, but neither performs a replay and asserts its outcome. Uncovered rather than covered elsewhere
   synchronizationId: '<uuid>'}`
 - **WHEN** an admin replays it
 - **THEN** `SynchronizationService::synchronize` SHALL be invoked with the resolved synchronization
@@ -251,6 +252,7 @@ a scheduled backoff state, per `synchronization-engine` REQ-008.
 #### Scenario: replaying a failed item after a mapping fix succeeds
 
 - **GIVEN** a `failed` entry whose original mapping bug has since been
+- @e2e exclude replay EXECUTION, which needs a genuinely dead-lettered item and a mapping fix to replay it against. `regression/dead-letter-replay.spec.ts` and `spec-coverage/dead-letters-ui.spec.ts` cover the surface, its filters, badges and detail modal, but neither performs a replay and asserts its outcome. Uncovered rather than covered elsewhere
   corrected
 - **WHEN** an admin replays it
 - **THEN** the entry SHALL be persisted with `status='replayed'` and
@@ -263,6 +265,7 @@ a scheduled backoff state, per `synchronization-engine` REQ-008.
 - **GIVEN** an entry with `status='replayed'`
 - **WHEN** an admin calls replay on it again
 - **THEN** the response SHALL be HTTP 409 and the entry SHALL be unchanged
+- @e2e exclude replay EXECUTION, which needs a genuinely dead-lettered item and a mapping fix to replay it against. `regression/dead-letter-replay.spec.ts` and `spec-coverage/dead-letters-ui.spec.ts` cover the surface, its filters, badges and detail modal, but neither performs a replay and asserts its outcome. Uncovered rather than covered elsewhere
 
 #### Scenario: a repeat failure on replay is recorded without abandoning
 
@@ -270,6 +273,7 @@ a scheduled backoff state, per `synchronization-engine` REQ-008.
 - **WHEN** an admin replays it
 - **THEN** `status` SHALL remain `failed`
 - **AND** `retryCount` SHALL increment and a new `attempts[]` entry SHALL be
+- @e2e exclude replay EXECUTION, which needs a genuinely dead-lettered item and a mapping fix to replay it against. `regression/dead-letter-replay.spec.ts` and `spec-coverage/dead-letters-ui.spec.ts` cover the surface, its filters, badges and detail modal, but neither performs a replay and asserts its outcome. Uncovered rather than covered elsewhere
   appended
 
 ### Requirement: Audited discard of a dead-lettered sync item (REQ-DLR-010)
