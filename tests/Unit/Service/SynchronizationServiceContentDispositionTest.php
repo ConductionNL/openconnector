@@ -168,4 +168,29 @@ class SynchronizationServiceContentDispositionTest extends TestCase
         $header = 'attachment; filename = "bestand.pdf"';
         $this->assertSame('bestand.pdf', $this->invokeParser($header));
     }
+
+    public function testFilenameWithEscapedQuotesInsideQuotedValueIsUnescaped(): void
+    {
+        // Review case from PR #1840: an RFC 9110 §5.6.4 quoted-pair. The
+        // escaped `\"` must not toggle the tokenizer's quote state (or the
+        // `;` inside would split the value) and must come back as a
+        // literal `"` in the filename.
+        $header = 'attachment; filename="rapport \"final\"; versie 2.pdf"';
+        $this->assertSame('rapport "final"; versie 2.pdf', $this->invokeParser($header));
+    }
+
+    public function testFilenameWithEscapedBackslashInsideQuotedValueIsUnescaped(): void
+    {
+        // `\\` is the quoted-pair for a single backslash.
+        $header = 'attachment; filename="map\\\\bestand.pdf"';
+        $this->assertSame('map\\bestand.pdf', $this->invokeParser($header));
+    }
+
+    public function testEscapedQuoteDoesNotLeakIntoFollowingParameter(): void
+    {
+        // The parameter after an escaped-quote value must still be seen as
+        // a separate segment, so `filename*` keeps winning (RFC 6266 §4.3).
+        $header = 'attachment; filename="a \"b\"; c.pdf"; filename*=UTF-8\'\'r%C3%A9sum%C3%A9.pdf';
+        $this->assertSame('résumé.pdf', $this->invokeParser($header));
+    }
 }
