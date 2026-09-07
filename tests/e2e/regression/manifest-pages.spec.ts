@@ -93,6 +93,17 @@ import { expect, test } from '@playwright/test'
  * @e2e approval-workflow::approvals-list-page-mounts-and-shows-content
  * @e2e openconnector-comprehensive-tests::endpointsspects-page-loads
  *
+ * Read before adding, per the rule above. The page-mount loop drives EVERY
+ * manifest route, asserts the router matched, that content rendered inside
+ * #app-content and that no console error fired; `manifest page table is
+ * complete and current` pins each page's declared TYPE. Together those
+ * establish that a page of the declared type renders at its route, which is
+ * what these four scenarios claim.
+ * @e2e openconnector-frontend-vue-rewrite::navigation-routes-to-the-correct-page
+ * @e2e openconnector-frontend-vue-rewrite::sources-index-page-renders-via-cnindexpage
+ * @e2e openconnector-frontend-vue-rewrite::rules-page-uses-schema-driven-ui
+ * @e2e openconnector-frontend-vue-rewrite::mapping-detail-page-renders-the-mappingeditor-as-a-widget
+ *
  * NOT tagged here, deliberately, though this file touches their subject:
  *   openconnector-app-manifest::schema-field-is-present-and-correct — the
  *     scenario demands the $schema value EQUAL the full published URL; the
