@@ -47,20 +47,30 @@ async function openFlowActionsMenu(page: Page, item: Locator): Promise<void> {
 
 	const triggers = [
 		page.getByRole('button', { name: 'Flow actions' }),
+		// The sidebar's own Actions button, scoped. CnFlowSidebar puts the
+		// 'Flow actions' aria-label on the NcActions WRAPPER, and NcAppSidebar
+		// wraps that slot in an NcActions of its own, so the button a user
+		// clicks is named plainly 'Actions'.
+		page.locator('.app-sidebar-header__menu button'),
 		page.getByRole('button', {
 			name: /^(Actions|Open actions menu|More actions)$/i,
 		}),
-		page.locator('.app-sidebar-header__menu button').first(),
 	]
 
 	for (const trigger of triggers) {
-		if ((await trigger.count()) === 0) {
+		// Visible only, and a bounded click. The flow canvas renders three more
+		// buttons named 'Actions' that are never painted, so the unscoped
+		// name match finds four and `.first()` picks a hidden one. Clicking a
+		// hidden element waits for actionability, and with no timeout that wait
+		// is the whole 60s test budget: the run then reports 'Target page,
+		// context or browser has been closed' from the NEXT call, which reads
+		// as a hung editor rather than as the wrong button.
+		const candidate = trigger.filter({ visible: true }).first()
+		if ((await candidate.count()) === 0) {
 			continue
 		}
-		await trigger
-			.first()
-			.click()
-			.catch(() => {})
+
+		await candidate.click({ timeout: 5000 }).catch(() => {})
 		if (await item.isVisible().catch(() => false)) {
 			return
 		}
