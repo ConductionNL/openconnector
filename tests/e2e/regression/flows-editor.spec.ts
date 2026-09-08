@@ -197,6 +197,17 @@ test.describe('the Flows surface', () => {
 		// `[data-testid=…] input` finds nothing if it lands on the input.
 		await settings.getByLabel('Name', { exact: true }).fill(`${RUN_ID} minted`)
 
+		// Dismiss the dialog before touching the toolbar. CnFlowSettingsModal is
+		// an NcDialog and stays open until something closes it, and NcDialog's
+		// `.modal-wrapper` covers the page: Playwright reported the toolbar Save
+		// as "visible, enabled and stable" and then retried the click 96 times
+		// against `<div class="modal-wrapper"> from <div role="dialog"
+		// aria-modal="true">` until the 60s budget ran out. An overlay eating a
+		// click reads as a hung editor, which is how this spec was misdiagnosed
+		// before.
+		await page.keyboard.press('Escape')
+		await expect(settings).toBeHidden({ timeout: 10000 })
+
 		await toolbar.getByRole('button', { name: 'Save' }).click()
 
 		// `replace`, not `push`: Back must still mean "the page before the
