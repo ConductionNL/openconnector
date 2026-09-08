@@ -197,16 +197,30 @@ class ConsolidatedMigrationTest extends TestCase {
 	 * run must leave every legacy table in place, because the rows in them have
 	 * not reached OpenRegister and dropping would destroy them.
 	 *
-	 * OpenRegister is absent from a unit-test process, so the drain takes its
-	 * "openregister not loaded" branch and reports failure, which is exactly
-	 * the state this guards.
+	 * The container is made to throw, which drives the drain's "failed to
+	 * resolve services" branch. Do NOT simplify this to a plain mock and rely
+	 * on OpenRegister being absent: it is absent from a bare clone but PRESENT
+	 * in CI, where the app runs inside a server checkout with openregister
+	 * enabled. A plain mock then returns null past the class_exists guard and
+	 * the test dies on a null call instead of asserting anything.
 	 *
 	 * @return void
 	 */
 	public function testAnIncompleteDrainDropsNothingAndLeavesTheFlagUnset(): void {
 		$tables = $this->legacyTables();
 
-		$this->migration()->postSchemaChange(
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willThrowException(new \RuntimeException('openregister unavailable'));
+
+		$migration = new Version2Date20260908000000(
+			$this->appConfig,
+			$this->db,
+			$this->createMock(IAppManager::class),
+			$this->createMock(LoggerInterface::class),
+			$container
+		);
+
+		$migration->postSchemaChange(
 			$this->createMock(IOutput::class),
 			fn () => $this->schemaWith($tables),
 			[]
