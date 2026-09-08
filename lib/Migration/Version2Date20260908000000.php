@@ -42,6 +42,7 @@ use Closure;
 use InvalidArgumentException;
 use OCA\Integriq\Service\Migration\LegacyToRegisterMigrator;
 use OCP\DB\ISchemaWrapper;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
@@ -81,6 +82,24 @@ class Version2Date20260908000000 extends SimpleMigrationStep {
 	];
 
 	/**
+	 * Constructor.
+	 *
+	 * @param IAppConfig         $appConfig  Reads and writes the storage_migrated flag.
+	 * @param IDBConnection      $connection Database connection used for the drop.
+	 * @param IAppManager        $appManager Resolves and loads the openregister app.
+	 * @param LoggerInterface    $logger     Logger for the failure paths.
+	 * @param ContainerInterface $container  Resolves the OpenRegister services lazily.
+	 */
+	public function __construct(
+		private readonly IAppConfig $appConfig,
+		private readonly IDBConnection $connection,
+		private readonly IAppManager $appManager,
+		private readonly LoggerInterface $logger,
+		private readonly ContainerInterface $container,
+	) {
+	}//end __construct()
+
+	/**
 	 * No schema diff. This app owns no tables of its own.
 	 *
 	 * @param IOutput                   $output        Migration output interface.
@@ -106,9 +125,6 @@ class Version2Date20260908000000 extends SimpleMigrationStep {
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
 	public function postSchemaChange(IOutput $output, Closure $schemaClosure, array $options): void {
-		$container = \OC::$server;
-		$appConfig = $container->get(IAppConfig::class);
-		$logger = $container->get(LoggerInterface::class);
 		$schema = $schemaClosure();
 
 		$present = [];
@@ -120,12 +136,12 @@ class Version2Date20260908000000 extends SimpleMigrationStep {
 
 		if ($present === []) {
 			$output->info('chain-B/C: no legacy openconnector_* table present — nothing to drain or drop.');
-			$appConfig->setValueString('integriq', 'storage_migrated', 'true');
+			$this->appConfig->setValueString('integriq', 'storage_migrated', 'true');
 			return;
 		}
 
-		if ($appConfig->getValueString('integriq', 'storage_migrated', '') !== 'true') {
-			if ($this->drain(output: $output, logger: $logger, appConfig: $appConfig, container: $container) === false) {
+		if ($this->appConfig->getValueString('integriq', 'storage_migrated', '') !== 'true') {
+			if ($this->drain(output: $output) === false) {
 				$output->warning(
 					'chain-B/C: legacy tables KEPT — the drain did not report every entity copied.'
 					. ' Use occ integriq:migrate-storage to retry, then re-run occ upgrade to drop them.'
@@ -134,52 +150,38 @@ class Version2Date20260908000000 extends SimpleMigrationStep {
 			}
 		}
 
-		$this->dropLegacyTables(
-			output: $output,
-			logger: $logger,
-			connection: $container->get(IDBConnection::class),
-			tables: $present
-		);
+		$this->dropLegacyTables(output: $output, tables: $present);
 	}//end postSchemaChange()
 
 	/**
 	 * Import the register descriptor and copy every legacy row into OpenRegister.
 	 *
-	 * @param IOutput         $output    Migration output interface.
-	 * @param LoggerInterface $logger    Logger for the failure paths.
-	 * @param IAppConfig      $appConfig App config, carrying the storage_migrated flag.
-	 * @param ContainerInterface $container The server container.
+	 * @param IOutput $output Migration output interface.
 	 *
 	 * @return bool True when every entity copied and the flag was set.
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 */
-	private function drain(
-		IOutput $output,
-		LoggerInterface $logger,
-		IAppConfig $appConfig,
-		ContainerInterface $container
-	): bool {
+	private function drain(IOutput $output): bool {
 		// `occ app:enable integriq` runs migrations with integriq's PSR-4 paths
 		// loaded but NOT openregister's, so the class_exists probe below would
 		// return false even when OR is enabled. Requiring OR's composer
 		// autoload directly registers its PSR-4 paths unconditionally and
 		// idempotently, independent of NC's per-command app-loading order.
-		$appManager = $container->get(\OCP\App\IAppManager::class);
 		try {
-			$orAutoload = $appManager->getAppPath('openregister').'/vendor/autoload.php';
+			$orAutoload = $this->appManager->getAppPath('openregister').'/vendor/autoload.php';
 			if (file_exists($orAutoload) === true) {
 				include_once $orAutoload;
 			}
 		} catch (\Throwable $e) {
-			$logger->warning('chain-B: getAppPath(openregister) failed: '.$e->getMessage(), ['exception' => $e]);
+			$this->logger->warning('chain-B: getAppPath(openregister) failed: '.$e->getMessage(), ['exception' => $e]);
 		}
 
 		try {
-			$appManager->loadApp('openregister');
+			$this->appManager->loadApp('openregister');
 		} catch (\Throwable $e) {
-			$logger->info('chain-B: loadApp(openregister) skipped: '.$e->getMessage());
+			$this->logger->info('chain-B: loadApp(openregister) skipped: '.$e->getMessage());
 		}
 
 		if (class_exists('\\OCA\\OpenRegister\\Service\\ConfigurationService') === false) {
@@ -191,8 +193,8 @@ class Version2Date20260908000000 extends SimpleMigrationStep {
 		}
 
 		try {
-			$configurationService = $container->get('OCA\\OpenRegister\\Service\\ConfigurationService');
-			$migrator = $container->get(LegacyToRegisterMigrator::class);
+			$configurationService = $this->container->get('OCA\\OpenRegister\\Service\\ConfigurationService');
+			$migrator = $this->container->get(LegacyToRegisterMigrator::class);
 		} catch (\Throwable $e) {
 			$output->warning('chain-B: failed to resolve services ('.$e->getMessage().'); skipping.');
 			return false;
@@ -203,7 +205,7 @@ class Version2Date20260908000000 extends SimpleMigrationStep {
 		$configurationService->importFromApp(
 			appId: 'integriq',
 			data: $descriptor,
-			version: $appConfig->getValueString('integriq', 'installed_version', '1.0.0')
+			version: $this->appConfig->getValueString('integriq', 'installed_version', '1.0.0')
 		);
 		$output->info('chain-B: register descriptor imported (idempotent — existing schemas reused).');
 
@@ -232,7 +234,7 @@ class Version2Date20260908000000 extends SimpleMigrationStep {
 			return false;
 		}
 
-		$appConfig->setValueString('integriq', 'storage_migrated', 'true');
+		$this->appConfig->setValueString('integriq', 'storage_migrated', 'true');
 		$output->info('chain-B: storage_migrated=true — all 15 entities copied successfully.');
 		return true;
 	}//end drain()
@@ -240,19 +242,12 @@ class Version2Date20260908000000 extends SimpleMigrationStep {
 	/**
 	 * Drop the legacy tables whose rows are now in OpenRegister.
 	 *
-	 * @param IOutput         $output     Migration output interface.
-	 * @param LoggerInterface $logger     Logger for the failure paths.
-	 * @param IDBConnection   $connection Database connection.
-	 * @param string[]        $tables     Unprefixed legacy tables that are present.
+	 * @param IOutput  $output Migration output interface.
+	 * @param string[] $tables Unprefixed legacy tables that are present.
 	 *
 	 * @return void
 	 */
-	private function dropLegacyTables(
-		IOutput $output,
-		LoggerInterface $logger,
-		IDBConnection $connection,
-		array $tables
-	): void {
+	private function dropLegacyTables(IOutput $output, array $tables): void {
 		$dropped = 0;
 
 		foreach ($tables as $table) {
@@ -263,11 +258,11 @@ class Version2Date20260908000000 extends SimpleMigrationStep {
 			}
 
 			try {
-				$connection->executeStatement(sprintf('DROP TABLE IF EXISTS *PREFIX*%s', $table));
+				$this->connection->executeStatement(sprintf('DROP TABLE IF EXISTS *PREFIX*%s', $table));
 				$dropped++;
 			} catch (\Throwable $e) {
 				$output->warning(sprintf('chain-B/C cleanup: could not drop `%s`: %s', $table, $e->getMessage()));
-				$logger->warning('chain-B/C cleanup: drop failed for '.$table, ['exception' => $e]);
+				$this->logger->warning('chain-B/C cleanup: drop failed for '.$table, ['exception' => $e]);
 			}
 		}
 
