@@ -508,8 +508,11 @@ an error.
 - **WHEN** they trigger a manual run
 - **THEN** a flow run is created for that flow
 - **AND** its status is reflected on the page without a reload
-- @e2e exclude needs a runnable seeded flow and a run to complete — covered by
-  `tests/e2e/ci/flow-controls.spec.ts` and by the engine's unit tests
+- @e2e exclude needs a runnable seeded flow and a run to complete, and by the
+  engine's unit tests. The Playwright spec this previously named has never
+  existed in this repository -- `git log --all` finds no commit that added it,
+  and there is no tests/e2e/ci/ directory. The run-creation half is NOT YET
+  VERIFIED in a browser
 
 #### Scenario: a suspended run is not shown as a failure
 
@@ -566,16 +569,22 @@ the operator has asked for any of them.
 - **WHEN** the admin expands that run in the run log
 - **THEN** the run's per-step entries are fetched and listed with their type,
   status and any error
-- @e2e exclude needs a flow with recorded runs — covered by
-  `tests/e2e/ci/flow-controls.spec.ts`, which creates a run, and by the
-  engine's unit tests
+- @e2e exclude needs a flow with recorded runs, and by the engine's unit
+  tests. The Playwright spec this previously named has never existed here (see
+  the note above); the closest live coverage is
+  tests/e2e/spec-coverage/flow-orchestration.spec.ts, whose failed-trace test
+  expands an ordered step timeline. The per-step fetch on EXPAND is NOT YET
+  VERIFIED
 
 #### Scenario: an empty history says so
 
 - **GIVEN** a flow that has never run
 - **WHEN** the admin opens its run log
 - **THEN** an empty state is shown rather than an empty list
-- @e2e exclude covered by `tests/e2e/ci/flow-controls.spec.ts`
+- @e2e exclude this is a browser-observable empty state and it has NO test.
+  The Playwright spec previously named here has never existed. Excluding an
+  e2e-shaped scenario from e2e on a spec that was never written is the exact
+  shape gate-113 exists to surface. NOT YET VERIFIED
 
 ### Requirement: A node that calls a Source once per item dispatches those calls concurrently (REQ-015)
 
