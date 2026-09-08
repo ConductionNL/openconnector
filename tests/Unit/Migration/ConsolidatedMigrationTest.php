@@ -22,6 +22,7 @@ namespace OCA\Integriq\Tests\Unit\Migration;
 use InvalidArgumentException;
 use OCA\Integriq\Migration\Version2Date20260908000000;
 use OCA\Integriq\Repair\MigrateLegacyStorage;
+use OCA\Integriq\Service\Migration\LegacyToRegisterMigrator;
 use OCP\App\IAppManager;
 use OCP\DB\ISchemaWrapper;
 use OCP\IAppConfig;
@@ -45,6 +46,16 @@ class ConsolidatedMigrationTest extends TestCase {
 	private IDBConnection $db;
 
 	private IAppConfig $appConfig;
+
+	/**
+	 * Make the drain's class_exists probe answer true in both environments.
+	 *
+	 * @return void
+	 */
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+		require_once __DIR__.'/../../stubs/openregister-service-stubs.php';
+	}
 
 	/**
 	 * Wire the doubles shared by every test.
@@ -284,6 +295,104 @@ class ConsolidatedMigrationTest extends TestCase {
 
 		$this->expectException(InvalidArgumentException::class);
 		$drop->invoke($migration, $this->createMock(IOutput::class), ['bad"; DROP TABLE x; --']);
+	}
+
+	/**
+	 * Build a container whose two lookups return working doubles.
+	 *
+	 * @param array<int,array<string,mixed>> $result What migrateAll reports.
+	 *
+	 * @return ContainerInterface
+	 */
+	private function containerThatDrains(array $result): ContainerInterface {
+		$configurationService = new class {
+			/**
+			 * @param string              $appId   Owning app id.
+			 * @param array<string,mixed> $data    Decoded descriptor.
+			 * @param string              $version App version.
+			 *
+			 * @return void
+			 */
+			public function importFromApp(string $appId, array $data, string $version): void {
+			}
+		};
+
+		$migrator = $this->createMock(LegacyToRegisterMigrator::class);
+		$migrator->method('migrateAll')->willReturn($result);
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static fn (string $id): object => $id === LegacyToRegisterMigrator::class
+				? $migrator
+				: $configurationService
+		);
+
+		return $container;
+	}
+
+	/**
+	 * A drain that copies every entity sets the flag and the tables then go.
+	 *
+	 * @return void
+	 */
+	public function testACleanDrainSetsTheFlagAndDropsTheTables(): void {
+		$tables = $this->legacyTables();
+		$result = array_map(
+			static fn (string $t): array => ['slug' => $t, 'legacyCount' => 2, 'migratedCount' => 2, 'skipped' => 0],
+			$tables
+		);
+
+		$migration = new Version2Date20260908000000(
+			$this->appConfig,
+			$this->db,
+			$this->createMock(IAppManager::class),
+			$this->createMock(LoggerInterface::class),
+			$this->containerThatDrains($result)
+		);
+
+		$migration->postSchemaChange(
+			$this->createMock(IOutput::class),
+			fn () => $this->schemaWith($tables),
+			[]
+		);
+
+		$this->assertSame('true', $this->appConfigStore['storage_migrated'] ?? null);
+		$this->assertCount(count($tables), $this->statements);
+	}
+
+	/**
+	 * One entity reporting a skip is enough to keep every table.
+	 *
+	 * This is the partial-drain case, and it is the one that would lose data if
+	 * the drop were unconditional: the skipped rows are still only in the
+	 * legacy table.
+	 *
+	 * @return void
+	 */
+	public function testASingleSkippedEntityKeepsEveryTable(): void {
+		$tables = $this->legacyTables();
+		$result = array_map(
+			static fn (string $t): array => ['slug' => $t, 'legacyCount' => 2, 'migratedCount' => 2, 'skipped' => 0],
+			$tables
+		);
+		$result[0]['skipped'] = 1;
+
+		$migration = new Version2Date20260908000000(
+			$this->appConfig,
+			$this->db,
+			$this->createMock(IAppManager::class),
+			$this->createMock(LoggerInterface::class),
+			$this->containerThatDrains($result)
+		);
+
+		$migration->postSchemaChange(
+			$this->createMock(IOutput::class),
+			fn () => $this->schemaWith($tables),
+			[]
+		);
+
+		$this->assertArrayNotHasKey('storage_migrated', $this->appConfigStore);
+		$this->assertSame([], $this->statements, 'a single skip must keep every table');
 	}
 
 	/**
