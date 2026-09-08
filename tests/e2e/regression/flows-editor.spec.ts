@@ -205,7 +205,12 @@ test.describe('the Flows surface', () => {
 		// aria-modal="true">` until the 60s budget ran out. An overlay eating a
 		// click reads as a hung editor, which is how this spec was misdiagnosed
 		// before.
-		await page.keyboard.press('Escape')
+		// Click the dialog's own Close button. Escape does not dismiss it: the
+		// previous attempt pressed Escape and then watched `toBeHidden` resolve
+		// the dialog as visible 24 times over 10s. The page snapshot in that
+		// trace lists the control by name, `button "Close"`, which is the
+		// fastest way to settle a question like this.
+		await settings.getByRole('button', { name: 'Close' }).click()
 		await expect(settings).toBeHidden({ timeout: 10000 })
 
 		await toolbar.getByRole('button', { name: 'Save' }).click()
