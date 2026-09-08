@@ -46,11 +46,69 @@ $autoloader = require __DIR__ . '/../vendor/autoload.php';
 // (OCA\OpenRegister, OCA\Tables, OCA\Forms) stay unconditional: those apps
 // genuinely may not be installed, and their class_exists() guards do work,
 // because nothing else is racing to define them.
+//
+// "Present" means INSTALLED, not merely checked out. `lib/base.php` from a
+// source tree that was never installed (the workspace checkout above
+// apps-extra/ has a 0-byte config/config.php) still declares `OC` and builds
+// `\OC::$server` before it throws "Not installed". That server cannot be
+// undone (`OC::$server` is a typed static), so from then on every
+// `\OC::$server->get()` in the code under test hits a container that knows
+// none of this app's registrations and autowires from scratch; constructor
+// cycles then recurse until memory runs out (19 GB and 6 GB of swap in one
+// openregister run on 2026-09-08). The decision therefore has to be made
+// BEFORE base.php is loaded, on the `installed` flag in config/config.php.
+
+/**
+ * Tell whether a Nextcloud root is an INSTALLED instance, not just a source tree.
+ *
+ * @param string $ncRoot Candidate Nextcloud root.
+ *
+ * @return bool True when config/config.php declares `installed => true`.
+ */
+function integriq_nc_root_is_installed(string $ncRoot): bool
+{
+	$configFile = $ncRoot . '/config/config.php';
+	if (is_file($configFile) === false || filesize($configFile) === 0) {
+		return false;
+	}
+
+	// The config file is a plain `$CONFIG = [...]` script; including it in a
+	// closure keeps `$CONFIG` out of the global scope.
+	$config = (static function () use ($configFile): array {
+		$CONFIG = [];
+		try {
+			include $configFile;
+		} catch (\Throwable) {
+			return [];
+		}
+
+		if (is_array($CONFIG) === false) {
+			return [];
+		}
+
+		return $CONFIG;
+	})();
+
+	return ($config['installed'] ?? false) === true;
+}//end integriq_nc_root_is_installed()
+
+$ncRoot = realpath(__DIR__ . '/../../..');
 $ncBase = __DIR__ . '/../../../lib/base.php';
-$ncConfig = __DIR__ . '/../../../config/config.php';
 $ncPresent = (defined('OC_CONSOLE') === false
-	&& is_readable($ncConfig) === true
-	&& file_exists($ncBase) === true);
+	&& $ncRoot !== false
+	&& file_exists($ncBase) === true
+	&& integriq_nc_root_is_installed($ncRoot) === true);
+
+if ($ncPresent === false && defined('OC_CONSOLE') === false && $ncRoot !== false && file_exists($ncBase) === true) {
+	fwrite(
+		STDERR,
+		sprintf(
+			"[integriq/tests/bootstrap] Nextcloud root at %s is not an installed instance (config/config.php lacks installed => true); "
+			. "skipping lib/base.php and running with composer autoload and stubs only (pure-unit mode).\n",
+			$ncRoot
+		)
+	);
+}
 
 // Register the OCP/NCU namespaces from the nextcloud/ocp dev dependency so that
 // unit tests can run in a bare environment (no installed Nextcloud server). When
@@ -422,20 +480,35 @@ if ($autoloader instanceof \Composer\Autoload\ClassLoader) {
 	}
 }
 
-// Bootstrap Nextcloud only when the config file is readable (i.e., in a
-// properly provisioned dev/CI environment). Skip silently in standalone mode —
-// OCP stubs are sufficient for unit-only test suites.
+// Bootstrap Nextcloud only when the root is an installed instance (i.e., in a
+// properly provisioned dev/CI environment). A bare source tree was reported
+// above and runs in pure-unit mode: OCP stubs are sufficient for unit-only
+// test suites.
 //
 // $ncPresent, decided at the top of this file, is the same condition; the core
 // and vendor stubs above were skipped precisely because this block is about to
 // run and provide the real classes.
 if ($ncPresent === true) {
-	if (file_exists($ncBase) === true) {
-		try {
-			require_once $ncBase;
-		} catch (\Throwable $e) {
-			// NC not fully installed — unit tests continue with vendor stubs only.
-		}
+	try {
+		require_once $ncBase;
+	} catch (\Throwable $e) {
+		// The root passed the installed check but base.php still failed
+		// (unreachable database, broken app, ...). `OC::$server` is a typed
+		// static that already holds a half-built container, so falling through
+		// to "stubs only" would be a lie that costs gigabytes: every
+		// `\OC::$server->get()` would autowire from scratch. Stop the run and
+		// say why.
+		fwrite(
+			STDERR,
+			sprintf(
+				"[integriq/tests/bootstrap] Nextcloud root at %s could not be initialised (%s).\n"
+				. "  A half-booted server cannot be undone, so the run stops here rather than pretending to be pure-unit.\n"
+				. "  Fix the instance, or define OC_CONSOLE for pure-unit mode.\n",
+				$ncRoot,
+				$e->getMessage()
+			)
+		);
+		exit(1);
 	}
 
 	// Load Test\TestCase and other NC test classes (NC convention).
