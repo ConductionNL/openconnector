@@ -9031,111 +9031,170 @@ class SynchronizationService {
 			];
 		}
 
-		unset($targetConfig['json']);
-		$targetConfig['multipart'] = $multipart;
-		// Guzzle sets Content-Type (including the boundary) automatically for multipart; remove
-		// any explicit override that would otherwise clobber the generated header.
-		unset($targetConfig['headers']['Content-Type'], $targetConfig['headers']['content-type']);
+    private function getFilenameFromHeaders(array $response, CallLog $result): ?string
+    {
+        $filename = null;
+        // Get a filename from the response. First try to do this using the Content-Disposition header
+        if (isset($response['headers']['Content-Disposition']) === true
+            && str_contains($response['headers']['Content-Disposition'][0], 'filename')) {
+            $filename = $this->parseContentDispositionFilename($response['headers']['Content-Disposition'][0]);
+        }
 
-	}//end applyFileUploadToTargetConfig()
+        if ($filename === null) {
+            // Otherwise, parse the url and content type header.
+            $parsedUrl = parse_url($result->getRequest()['url']);
+            $path = explode(separator:'/', string: $parsedUrl['path']);
+            $filename = end($path);
 
-	/**
-	 * Determines a filename from the response headers.
-	 *
-	 * @param array $response The response array containing headers.
-	 * @param ObjectEntity $result The CallLog ObjectEntity holding the request data.
-	 *
-	 * @return string|null The resolved filename, or null when none could be determined.
-	 */
-	private function getFilenameFromHeaders(array $response, ObjectEntity $result): ?string {
-		$filename = null;
-		// Get a filename from the response. First try to do this using the Content-Disposition header.
-		if (isset($response['headers']['Content-Disposition']) === true
-			&& str_contains($response['headers']['Content-Disposition'][0], 'filename') === true
-		) {
-			$filename = $this->parseContentDispositionFilename($response['headers']['Content-Disposition'][0]);
-		}
-
-		if ($filename === null) {
-			// Otherwise, parse the url and content type header. The CallLog is now
-			// an OpenRegister ObjectEntity; the `request` body lives under
-			// `getObject()['request']` instead of the legacy `getRequest()` getter.
-			$resultRequest = ($result->getObject()['request'] ?? []);
-			$parsedUrl = parse_url(($resultRequest['url'] ?? ''));
-			$path = explode(separator:'/', string: ($parsedUrl['path'] ?? ''));
-			$filename = end($path);
-
-			if (count(explode(separator: '.', string: $filename)) === 1
-				&& (isset($response['headers']['Content-Type']) === true || isset($response['headers']['content-type']) === true)
-			) {
-				if (isset($response['headers']['Content-Type']) === true) {
-					$explodedMimeType = explode(separator: '/', string: explode(separator: ';', string: $response['headers']['Content-Type'][0])[0]);
-				} else {
-					$explodedMimeType = explode(separator: '/', string: explode(separator: ';', string: $response['headers']['content-type'][0])[0]);
-				}
+            if (count(explode(separator: '.', string: $filename)) === 1
+                && (isset($response['headers']['Content-Type']) === true || isset($response['headers']['content-type']) === true)
+            ) {
+                $explodedMimeType = isset($response['headers']['Content-Type']) === true
+                    ? explode(separator: '/', string: explode(separator: ';', string: $response['headers']['Content-Type'][0])[0])
+                    : explode(separator: '/', string: explode(separator: ';', string: $response['headers']['content-type'][0])[0]);
 
 				$filename = $filename . '.' . end($explodedMimeType);
 			}
 		}//end if
 
-		return $filename;
-	}//end getFilenameFromHeaders()
-
-	/**
-	 * Parse a Content-Disposition header value and extract the filename per RFC 6266.
-	 *
-	 * Supports both the traditional `filename="…"` parameter and the RFC 5987
-	 * extended `filename*=charset''pct-encoded-value` form. When both are
-	 * present the extended form wins per RFC 6266 §4.3, with the plain
-	 * `filename` used as fallback when `filename*` is absent or carries an
-	 * unsupported charset.
-	 *
-	 * WOO-552: replaces the naive `explode('=', $header)` that corrupted
-	 * the filename as soon as xxllnc's Zaken API started emitting both
-	 * parameters (release 2026-08-19, temporarily rolled back, feature-
-	 * toggled re-rollout expected). Parameter-name matching is case-
-	 * insensitive; the plain `filename` parameter's surrounding quotes are
-	 * stripped.
-	 *
-	 * @param string $headerValue The raw Content-Disposition header value.
-	 * @return string|null        The extracted filename, or null when
-	 *                            neither `filename*` nor `filename` yielded
-	 *                            a value.
-	 */
-	private function parseContentDispositionFilename(string $headerValue): ?string {
-		// Split the header into parameter segments on `;`. The first
-		// segment is the disposition-type (attachment / inline), the rest
-		// are parameters. Splitting on `;` (instead of `=`) is what the
-		// naive pre-WOO-552 code got wrong: any `=` inside a value (bv.
-		// the charset''value shape of filename*) fooled the extractor.
-		$segments = array_map('trim', explode(';', $headerValue));
-
-		$filenameStar = null;
-		$filenamePlain = null;
-
-		foreach ($segments as $segment) {
-			// Split into name/value on the FIRST `=` only — the value side
-			// may legitimately contain further `=` characters (RFC 5987
-			// extended values, base64-ish payloads).
-			$eq = strpos($segment, '=');
-			if ($eq === false) {
-				continue;
-			}
-			$name = strtolower(trim(substr($segment, 0, $eq)));
-			$value = trim(substr($segment, $eq + 1));
-
-			if ($name === 'filename*') {
-				$filenameStar = $this->decodeRfc5987ExtendedValue($value);
-			} elseif ($name === 'filename') {
-				// RFC 6266 allows quoted or unquoted `filename`; strip
-				// matching surrounding double quotes when present.
-				$filenamePlain = trim($value, '"');
-			}
-		}
+                $filename = $filename.'.'.end($explodedMimeType);
+            }
+        }
 
 		// RFC 6266 §4.3: `filename*` wins when present and decodable.
 		return $filenameStar ?? $filenamePlain;
 	}//end parseContentDispositionFilename()
+
+    /**
+     * Parse a Content-Disposition header value and extract the filename per RFC 6266.
+     *
+     * Supports both the traditional `filename="…"` parameter and the RFC 5987
+     * extended `filename*=charset''pct-encoded-value` form. When both are present
+     * the extended form wins per RFC 6266 §4.3, with the plain `filename` used
+     * as fallback when `filename*` is absent or carries an unsupported charset.
+     *
+     * WOO-552: replaces the naive `explode('=', $header)` that corrupted the
+     * filename as soon as xxllnc's Zaken API started emitting both parameters
+     * (release 2026-08-19, temporarily rolled back, feature-toggled re-rollout
+     * expected). Parameter-name matching is case-insensitive; the plain
+     * `filename` parameter's surrounding quotes are stripped.
+     *
+     * @param string $headerValue The raw Content-Disposition header value.
+     * @return string|null        The extracted filename, or null when neither
+     *                            `filename*` nor `filename` yielded a value.
+     */
+    private function parseContentDispositionFilename(string $headerValue): ?string
+    {
+        // Split the header into parameter segments on `;` while respecting
+        // RFC 6266 §4 quoted-string grammar. Splitting on `;` (instead of
+        // `=`) is what the naive pre-WOO-552 code got wrong: any `=` inside
+        // a value (bv. the charset''value shape of filename*) fooled the
+        // extractor. And a NAIVE `explode(';', $header)` in turn corrupts
+        // filenames that legitimately contain a `;` inside quotes
+        // (bv. `filename="rapport; versie 2.pdf"`) — that's why we use
+        // the quoted-string-aware splitHeaderParameters() tokenizer.
+        $segments = $this->splitHeaderParameters($headerValue);
+
+        $filenameStar = null;
+        $filenamePlain = null;
+
+        foreach ($segments as $segment) {
+            // Split into name/value on the FIRST `=` only — the value side
+            // may legitimately contain further `=` characters (RFC 5987
+            // extended values, base64-ish payloads).
+            $eqPos = strpos($segment, '=');
+            if ($eqPos === false) {
+                continue;
+            }
+            $name = strtolower(trim(substr($segment, 0, $eqPos)));
+            $value = trim(substr($segment, $eqPos + 1));
+
+            if ($name === 'filename*') {
+                $filenameStar = $this->decodeRfc5987ExtendedValue($value);
+            } elseif ($name === 'filename') {
+                // RFC 6266 allows quoted or unquoted `filename`; strip
+                // matching surrounding double quotes when present.
+                $filenamePlain = trim($value, '"');
+            }
+        }
+
+        // RFC 6266 §4.3: `filename*` wins when present and decodable.
+        return $filenameStar ?? $filenamePlain;
+    }
+
+    /**
+     * Split a Content-Disposition header value into parameter segments,
+     * respecting RFC 6266 §4 quoted-string grammar.
+     *
+     * A naive `explode(';', $header)` also splits semicolons that are
+     * inside a quoted filename. For example,
+     * `attachment; filename="rapport; versie 2.pdf"` would corrupt to
+     * `rapport` instead of `rapport; versie 2.pdf`. This tokenizer
+     * tracks quote-open state and only splits on `;` outside quotes.
+     * The returned segments are trimmed.
+     *
+     * @param string $headerValue The raw Content-Disposition header value.
+     * @return array<int, string> Trimmed parameter segments, starting with
+     *                            the disposition-type (attachment/inline).
+     */
+    private function splitHeaderParameters(string $headerValue): array
+    {
+        $segments = [];
+        $current = '';
+        $inQuotes = false;
+        $length = strlen($headerValue);
+        for ($i = 0; $i < $length; $i++) {
+            $char = $headerValue[$i];
+            if ($char === '"') {
+                $inQuotes = ($inQuotes === false);
+                $current .= $char;
+                continue;
+            }
+            if ($char === ';' && $inQuotes === false) {
+                $segments[] = trim($current);
+                $current = '';
+                continue;
+            }
+            $current .= $char;
+        }
+        if ($current !== '') {
+            $segments[] = trim($current);
+        }
+        return $segments;
+    }
+
+    /**
+     * Decode an RFC 5987 extended parameter value of shape `charset''pct-encoded`.
+     *
+     * Only UTF-8 is supported — any other charset (bv. ISO-8859-1) triggers
+     * a fallback by returning null, causing {@see parseContentDispositionFilename()}
+     * to use the plain `filename` parameter instead. Malformed values also
+     * return null.
+     *
+     * @param string $value The raw extended value, e.g. `UTF-8''na%C3%AFef.pdf`.
+     * @return string|null  The decoded UTF-8 string, or null when unsupported.
+     */
+    private function decodeRfc5987ExtendedValue(string $value): ?string
+    {
+        // RFC 5987 shape: charset ' language ' value-chars
+        $parts = explode("'", $value, 3);
+        if (count($parts) !== 3) {
+            return null;
+        }
+        [$charset, $language, $encoded] = $parts;
+        unset($language); // Language tag is accepted but not used.
+
+        if (strcasecmp($charset, 'UTF-8') !== 0) {
+            $this->logger->info(
+                'Ignoring Content-Disposition filename* with unsupported charset; falling back to plain filename',
+                ['charset' => $charset]
+            );
+            return null;
+        }
+
+        // rawurldecode() implements the RFC 3986 §2.1 pct-decode.
+        return rawurldecode($encoded);
+    }
 
 	/**
 	 * Decode an RFC 5987 extended parameter value of shape
