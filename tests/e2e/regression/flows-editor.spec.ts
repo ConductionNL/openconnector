@@ -220,7 +220,20 @@ test.describe('the Flows surface', () => {
 		// aria-modal="true">` until the 60s budget ran out. An overlay eating a
 		// click reads as a hung editor, which is how this spec was misdiagnosed
 		// before.
-		await page.keyboard.press('Escape')
+		// DISMISS BY THE CONTROL, NOT BY A KEYPRESS. Escape alone left the
+		// dialog open — the run shows it resolving to a still-visible
+		// `role="dialog"` 24 times over the full 10s budget. `fill()` leaves
+		// focus inside the NcTextField, and the key never reaches NcDialog's
+		// own handler from there.
+		//
+		// NcDialog renders a close button labelled "Close", so press that and
+		// keep Escape as the fallback for a version that does not.
+		const close = settings.getByRole('button', { name: 'Close', exact: true })
+		if (await close.isVisible().catch(() => false)) {
+			await close.click()
+		} else {
+			await page.keyboard.press('Escape')
+		}
 		await expect(settings).toBeHidden({ timeout: 10000 })
 
 		await toolbar.getByRole('button', { name: 'Save' }).click()
