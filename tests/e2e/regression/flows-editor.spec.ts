@@ -58,23 +58,32 @@ async function openFlowActionsMenu(page: Page, item: Locator): Promise<void> {
 	const groups = [
 		page.locator('.app-sidebar-header__menu button'),
 		page.getByRole('button', { name: 'Flow actions' }),
+		// The sidebar's own Actions button, scoped. CnFlowSidebar puts the
+		// 'Flow actions' aria-label on the NcActions WRAPPER, and NcAppSidebar
+		// wraps that slot in an NcActions of its own, so the button a user
+		// clicks is named plainly 'Actions'.
+		page.locator('.app-sidebar-header__menu button'),
 		page.getByRole('button', {
 			name: /^(Actions|Open actions menu|More actions)$/i,
 		}),
 	]
 
-	for (const group of groups) {
-		const count = await group.count().catch(() => 0)
-		for (let i = 0; i < count; i++) {
-			await group
-				.nth(i)
-				.click({ timeout: 5_000 })
-				.catch(() => {})
-			if (await item.isVisible().catch(() => false)) {
-				return
-			}
+	for (const trigger of triggers) {
+		// Visible only, and a bounded click. The flow canvas renders three more
+		// buttons named 'Actions' that are never painted, so the unscoped
+		// name match finds four and `.first()` picks a hidden one. Clicking a
+		// hidden element waits for actionability, and with no timeout that wait
+		// is the whole 60s test budget: the run then reports 'Target page,
+		// context or browser has been closed' from the NEXT call, which reads
+		// as a hung editor rather than as the wrong button.
+		const candidate = trigger.filter({ visible: true }).first()
+		if ((await candidate.count()) === 0) {
+			continue
+		}
 
-			await page.keyboard.press('Escape').catch(() => {})
+		await candidate.click({ timeout: 5000 }).catch(() => {})
+		if (await item.isVisible().catch(() => false)) {
+			return
 		}
 	}
 
@@ -213,6 +222,17 @@ test.describe('the Flows surface', () => {
 		// wrapper or on the input itself is that component's business, and
 		// `[data-testid=…] input` finds nothing if it lands on the input.
 		await settings.getByLabel('Name', { exact: true }).fill(`${RUN_ID} minted`)
+
+		// Dismiss the dialog before touching the toolbar. CnFlowSettingsModal is
+		// an NcDialog and stays open until something closes it, and NcDialog's
+		// `.modal-wrapper` covers the page: Playwright reported the toolbar Save
+		// as "visible, enabled and stable" and then retried the click 96 times
+		// against `<div class="modal-wrapper"> from <div role="dialog"
+		// aria-modal="true">` until the 60s budget ran out. An overlay eating a
+		// click reads as a hung editor, which is how this spec was misdiagnosed
+		// before.
+		await page.keyboard.press('Escape')
+		await expect(settings).toBeHidden({ timeout: 10000 })
 
 		await toolbar.getByRole('button', { name: 'Save' }).click()
 

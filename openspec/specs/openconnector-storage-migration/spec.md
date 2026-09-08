@@ -6,7 +6,7 @@ TBD - created by archiving change openconnector-register-storage. Update Purpose
 ### Requirement: Migration class MUST provision the register via importFromApp
 
 The system MUST ship a Nextcloud migration class at
-`lib/Migration/Version2Date20260520xxxxxx.php` that on its `postSchemaChange`
+`lib/Migration/Version2Date20260908000000.php` that on its `postSchemaChange`
 hook calls
 `OCA\OpenRegister\Service\ConfigurationService::importFromApp('openconnector',
 <absolute-path-to-integriq_register.json>, <integriq-app-version>,
@@ -318,32 +318,45 @@ The command MUST:
   legacy); a follow-up full run is required
 - @e2e exclude an `occ upgrade` / console behaviour. A migration, its repair step and the retry command run there and nowhere else, so a browser session never reaches this path (`lib/Command/MigrateToOpenRegister.php`)
 
-### Requirement: Legacy tables MUST stay readable for one release as rollback buffer
+### Requirement: Legacy tables MUST be dropped once every row has reached OpenRegister
 
-After `storage_migrated = 'true'`, the system MUST NOT drop, truncate, or
-schema-alter `oc_openconnector_*` tables. Application code MUST NOT
-write to them either (write attempts via mapper code paths route to OR via
-the facade; direct SQL writes are out-of-band and not addressed here).
+The rollback buffer this requirement used to describe has served its purpose and
+is now removed. `Version2Date20260908000000` drops all 15 `oc_openconnector_*`
+tables in the same `occ upgrade` that drains them.
 
-A follow-up cleanup change (one release later, tracked as a separate GH issue
-that MUST be filed at proposal time per user's deferred-work rule) removes
-the legacy tables and the storage_migrated flag.
+The drop is conditional. It runs only when the drain reports every entity copied,
+or when `storage_migrated` was already `'true'` from an earlier run. A drain that
+reports a skip or an error leaves every table in place, because dropping a table
+whose rows did not reach OpenRegister would destroy them.
 
-#### Scenario: Legacy tables present after migration
-- GIVEN the migration succeeded and `storage_migrated = 'true'`
-- WHEN an admin queries `SELECT count(*) FROM oc_openconnector_sources`
-- THEN the table still exists and contains the pre-migration rows
-- @e2e exclude verified true rather than waived. Measured 2026-09-07 on a migrated instance: 15 `oc_openconnector*` tables are still present, because Version2Date20260520000099 drops each only once it is EMPTY and refuses on any that is not. That is a database state, not something a browser can read
+A fresh install never creates these tables at all, so there is nothing to drop
+there.
 
-#### Scenario: Rollback to legacy path
+#### Scenario: Legacy tables dropped after a successful drain
+- GIVEN an instance carrying the 15 legacy tables
+- WHEN `occ upgrade` runs and the drain reports every entity copied
+- THEN `storage_migrated` is `'true'`
+- AND none of the 15 `oc_openconnector_*` tables remains
+- @e2e exclude a database state reached through `occ upgrade`. A browser session never sees a table list, and the drop runs on the console path only
 
-> ⚠️ **Stale as written.** Verified 2026-09-07: the legacy read path is deleted, so a rollback to it is no longer possible in code. The legacy TABLES do survive as a rollback buffer, which the scenario below records. The cutover this spec describes has COMPLETED, and its transitional machinery is gone. Left visible rather than annotated, because a waiver would record coverage for deleted code.
-- GIVEN the migration succeeded and `storage_migrated = 'true'`
-- WHEN an admin runs `occ config:app:set openconnector storage_migrated --value=false`
-- THEN subsequent reads through `SourceMapper::find(int)` route to the
-  legacy table
-- AND the returned data matches the pre-migration data (legacy table not
-  modified)
+#### Scenario: Legacy tables kept when the drain is incomplete
+- GIVEN an instance carrying the 15 legacy tables
+- WHEN `occ upgrade` runs and the drain reports a skip or an error for any entity
+- THEN `storage_migrated` is NOT set
+- AND every legacy table is left in place, so no unmigrated row is lost
+- AND the migration reports that `occ integriq:migrate-storage` should be retried before the next upgrade
+- @e2e exclude the same `occ upgrade` path as the scenario above, and it turns on a partial drain that a browser cannot provoke
+
+#### Scenario: Rollback to the legacy read path is no longer possible
+
+> Recorded as removed rather than deleted. The legacy read path was deleted at
+> the cutover, and the tables that backed it are now dropped too, so setting
+> `storage_migrated` back to `'false'` no longer restores anything.
+
+- GIVEN an instance where the migration has dropped the legacy tables
+- WHEN an admin runs `occ config:app:set integriq storage_migrated --value=false`
+- THEN no read routes to a legacy table, because neither the path nor the tables exist
+- @e2e exclude an `occ` console behaviour over dropped tables, with no browser surface
 
 ### Requirement: Credential columns on Source MUST be copied verbatim during migration (currently plaintext)
 

@@ -71,7 +71,7 @@ THEN the command produces zero matches (no surviving references to deleted entit
 
 ### Requirement: integriq data migration MUST run at upgrade time
 
-The Nextcloud migration class `lib/Migration/Version2Date20260520000001.php` MUST run on `occ upgrade` and MUST: (a) call `\OCA\OpenRegister\Service\ConfigurationService::importFromApp()` to materialise the openconnector register from `lib/Settings/integriq_register.json`, then (b) call `\OCA\Integriq\Service\Migration\LegacyToRegisterMigrator::migrateAll()` to copy every row from each of the 15 `oc_openconnector_*` legacy tables into `oc_openregister_objects`.
+The Nextcloud migration class `lib/Migration/Version2Date20260908000000.php` MUST run on `occ upgrade` and MUST: (a) call `\OCA\OpenRegister\Service\ConfigurationService::importFromApp()` to materialise the openconnector register from `lib/Settings/integriq_register.json`, then (b) call `\OCA\Integriq\Service\Migration\LegacyToRegisterMigrator::migrateAll()` to copy every row from each of the 15 `oc_openconnector_*` legacy tables into `oc_openregister_objects`.
 
 The migrator MUST be idempotent (the migration class skips when the `openconnector.storage_migrated` IAppConfig flag is `'true'`), MUST preserve uuids byte-for-byte, MUST translate the 6 integer FK columns to OR uuids via a post-INSERT UPDATE pass, MUST branch `Synchronization.sourceId/targetId` across the 3 documented value formats (integer-PK, register/schema slug, uuid), MUST set the `owner` column to null on every migrated row (system-owned), and MUST emit a single summary entry in `oc_openregister_audit_trail` (NOT per-row).
 
@@ -84,7 +84,7 @@ On a clean full run, the migrator MUST set `openconnector.storage_migrated` to `
 
 GIVEN integriq is upgraded from a pre-chain-C version (legacy tables present, `storage_migrated` unset)
 WHEN `occ upgrade` runs
-THEN `Version2Date20260520000001::postSchemaChange()` MUST call `ConfigurationService::importFromApp()` followed by `LegacyToRegisterMigrator::migrateAll()`
+THEN `Version2Date20260908000000::postSchemaChange()` MUST call `ConfigurationService::importFromApp()` followed by `LegacyToRegisterMigrator::migrateAll()`
 AND on success MUST set `openconnector.storage_migrated = 'true'`
 
 #### Scenario: Migration is idempotent
