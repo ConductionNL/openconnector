@@ -45,18 +45,7 @@ async function openFlowActionsMenu(page: Page, item: Locator): Promise<void> {
 		return
 	}
 
-	// 🔴 MORE THAN ONE BUTTON IS CALLED "Actions". The canvas has one and
-	// NcAppSidebar renders one in its header. Taking `.first()` of each
-	// selector opened a menu that does not carry the flow actions and then
-	// moved on having tried ONE of them, with an unbounded click that spent the
-	// budget the other candidates needed — so this helper timed the whole test
-	// out instead of raising the error it was written to raise.
-	//
-	// Try every button each selector matches, bound each click, and press
-	// Escape between attempts so a menu that did open cannot cover the next
-	// candidate. Ported from openregister#3517.
-	const groups = [
-		page.locator('.app-sidebar-header__menu button'),
+	const triggers = [
 		page.getByRole('button', { name: 'Flow actions' }),
 		// The sidebar's own Actions button, scoped. CnFlowSidebar puts the
 		// 'Flow actions' aria-label on the NcActions WRAPPER, and NcAppSidebar
