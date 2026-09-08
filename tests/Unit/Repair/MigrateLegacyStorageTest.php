@@ -205,7 +205,7 @@ class MigrateLegacyStorageTest extends TestCase {
 	/**
 	 * A fresh install — no legacy table exists — declares the cutover complete.
 	 *
-	 * This is the ocon#1180 scenario: `Version2Date20260520000099` drops every
+	 * This is the ocon#1180 scenario: `Version2Date20260908000000` drops every
 	 * legacy table in the same schema pass that created it, so a first install
 	 * finds none of them, has nothing to copy, and must still end up with the
 	 * flag set.
