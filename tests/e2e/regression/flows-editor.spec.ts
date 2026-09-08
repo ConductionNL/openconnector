@@ -197,6 +197,22 @@ test.describe('the Flows surface', () => {
 		// `[data-testid=…] input` finds nothing if it lands on the input.
 		await settings.getByLabel('Name', { exact: true }).fill(`${RUN_ID} minted`)
 
+		// 🔴 CLOSE THE MODAL BEFORE REACHING FOR THE TOOLBAR. This dialog has
+		// no Save of its own: every field writes straight to the store on
+		// `update:model-value`, so the name is already staged and the only
+		// thing left is the editor's own Save. But the dialog is still open,
+		// and its mask sits over the toolbar.
+		//
+		// This is what the job was red on, and the shape is worth recognising
+		// because it does not read as an overlay problem. Playwright reports
+		// `locator.click: Test timeout`, and the call log says the button
+		// "resolved to", is "visible, enabled and stable", and then retries a
+		// hundred times against `<div class="modal-wrapper"> … subtree
+		// intercepts pointer events`. A visible, enabled, stable button that
+		// never takes a click is a mask, not a slow page.
+		await page.keyboard.press('Escape')
+		await expect(settings).toBeHidden({ timeout: 10000 })
+
 		await toolbar.getByRole('button', { name: 'Save' }).click()
 
 		// `replace`, not `push`: Back must still mean "the page before the
