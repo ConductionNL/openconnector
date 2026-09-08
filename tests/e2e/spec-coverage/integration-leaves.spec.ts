@@ -80,9 +80,9 @@ async function firstSource(page: Page, request: APIRequestContext) {
 function sourceIdOf(source: Record<string, unknown>) {
 	const id = String(
 		source.id
-		?? (source['@self'] as Record<string, unknown> | undefined)?.id
-		?? source.uuid
-		?? '',
+			?? (source['@self'] as Record<string, unknown> | undefined)?.id
+			?? source.uuid
+			?? '',
 	)
 	expect(id, 'the listed source must carry an id').not.toBe('')
 	return id
@@ -204,9 +204,15 @@ test.describe('REQ-OCL-002: the leaves on a source detail page', () => {
 		// asserting through it unconditionally is how this spec went red on CI
 		// against an app that was fine.
 		const hasFilesProvider = await page.evaluate(() => {
-			const registry = (window as unknown as {
-				OCA?: { OpenRegister?: { integrations?: { has?: (id: string) => boolean } } }
-			}).OCA?.OpenRegister?.integrations
+			const registry = (
+				window as unknown as {
+					OCA?: {
+						OpenRegister?: {
+							integrations?: { has?: (id: string) => boolean }
+						}
+					}
+				}
+			).OCA?.OpenRegister?.integrations
 			return typeof registry?.has === 'function' && registry.has('files')
 		})
 		test.skip(
@@ -270,9 +276,8 @@ test.describe('REQ-OCL-002: the leaves on a source detail page', () => {
 		expect(afterResp.status()).toBe(200)
 		const after = await afterResp.json()
 		const afterObject = after?.results?.[0] ?? after
-		expect(
-			first.name,
-			'rendering the leaves must not change the source',
-		).toBe(afterObject.name)
+		expect(first.name, 'rendering the leaves must not change the source').toBe(
+			afterObject.name,
+		)
 	})
 })
