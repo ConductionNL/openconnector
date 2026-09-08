@@ -604,11 +604,13 @@ class BrokeredCallService {
 	}//end isBrokerClassAvailable()
 
 	/**
-	 * Resolves the broker instance from the server container (protected seam for tests).
+	 * Resolves the broker instance from the injected container (protected seam for tests).
 	 *
 	 * @return object The CredentialBrokerService instance.
 	 *
 	 * @throws BrokeredCallConfigurationException When the container cannot resolve the broker.
+	 *
+	 * @spec exclude Container-resolution seam — lazy cross-app service lookup, no domain behavior (overridden in tests).
 	 */
 	protected function resolveBroker(): object {
 		if ($this->broker !== null) {
