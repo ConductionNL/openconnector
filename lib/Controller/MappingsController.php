@@ -36,6 +36,7 @@ use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 
@@ -62,6 +63,7 @@ class MappingsController extends Controller {
 	 * @param IUserSession $userSession The user session.
 	 * @param ActionAuthService $actionAuth The action authorization service.
 	 * @param LoggerInterface $logger Logger for non-fatal diagnostics.
+	 * @param ContainerInterface $container App container OpenRegister's mappers are resolved from.
 	 */
 	public function __construct(
 		$appName,
@@ -72,6 +74,7 @@ class MappingsController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly ActionAuthService $actionAuth,
 		private readonly LoggerInterface $logger,
+		private readonly ContainerInterface $container,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -345,7 +348,7 @@ class MappingsController extends Controller {
 			// OpenRegister's ObjectService no longer exposes getRegisters();
 			// fetch the register list via the mapper directly.
 			try {
-				$registerMapper = \OC::$server->get(RegisterMapper::class);
+				$registerMapper = $this->container->get(RegisterMapper::class);
 				$data['availableRegisters'] = $registerMapper->findAll();
 			} catch (\Throwable $e) {
 				$this->logger->warning(
