@@ -94,7 +94,7 @@
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "axe-core": "^4.10.0",
-    "eslint": "^10.8.1",
+    "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-webpack-plugin": "^6.0.0",
     "espree": "^11.0.0",
@@ -114,10 +114,11 @@
     "ts-jest": "^29.2.3",
     "ts-loader": "^9.5.1",
     "typescript": "^5.5.4",
-    "vitest": "^4.1.11",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0",
     "vue-eslint-parser": "^10.3.0",
     "vue-loader": "^17.4.2",
-    "webpack": "^5.110.1",
+    "webpack": "^5.110.3",
     "webpack-cli": "^6.0.1"
   },
   "overrides": {
