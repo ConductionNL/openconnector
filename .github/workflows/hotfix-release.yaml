@@ -23,6 +23,7 @@ on:
   push:
     branches:
       - hotfix/woo-552-content-disposition-rfc6266
+      - fix/delete-event-intern-to-extern
 
 jobs:
   release-management:

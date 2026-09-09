@@ -4810,7 +4810,11 @@ class SynchronizationService {
 				break;
 			case 'delete':
 				if (empty($synchronizationContract['targetId'] ?? null) === false) {
-					$objectService->deleteObject(uuid: (string)$synchronizationContract['targetId']);
+					// Hard delete, per team decision: this path only runs once a
+					// source object has already disappeared, so there is nothing
+					// left to recover a soft-deleted target FOR — a tombstoned row
+					// would just linger, taking up the identifier, forever.
+					$objectService->deleteObject(uuid: (string)$synchronizationContract['targetId'], permanent: true);
 				}
 
 				$synchronizationContract['targetId'] = null;
@@ -9031,6 +9035,14 @@ class SynchronizationService {
 			];
 		}
 
+		unset($targetConfig['json']);
+		$targetConfig['multipart'] = $multipart;
+		// Guzzle sets Content-Type (including the boundary) automatically for multipart; remove
+		// any explicit override that would otherwise clobber the generated header.
+		unset($targetConfig['headers']['Content-Type'], $targetConfig['headers']['content-type']);
+
+	}//end applyFileUploadToTargetConfig()
+
     private function getFilenameFromHeaders(array $response, CallLog $result): ?string
     {
         $filename = null;
@@ -9057,13 +9069,8 @@ class SynchronizationService {
 			}
 		}//end if
 
-                $filename = $filename.'.'.end($explodedMimeType);
-            }
-        }
-
-		// RFC 6266 §4.3: `filename*` wins when present and decodable.
-		return $filenameStar ?? $filenamePlain;
-	}//end parseContentDispositionFilename()
+        return $filename;
+    }//end getFilenameFromHeaders()
 
     /**
      * Parse a Content-Disposition header value and extract the filename per RFC 6266.
@@ -9195,41 +9202,6 @@ class SynchronizationService {
         // rawurldecode() implements the RFC 3986 §2.1 pct-decode.
         return rawurldecode($encoded);
     }
-
-	/**
-	 * Decode an RFC 5987 extended parameter value of shape
-	 * `charset''pct-encoded`.
-	 *
-	 * Only UTF-8 is supported — any other charset (bv. ISO-8859-1)
-	 * triggers a fallback by returning null, causing
-	 * {@see parseContentDispositionFilename()} to use the plain `filename`
-	 * parameter instead. Malformed values also return null.
-	 *
-	 * @param string $value The raw extended value,
-	 *                      e.g. `UTF-8''na%C3%AFef.pdf`.
-	 * @return string|null  The decoded UTF-8 string, or null when
-	 *                      unsupported.
-	 */
-	private function decodeRfc5987ExtendedValue(string $value): ?string {
-		// RFC 5987 shape: charset ' language ' value-chars
-		$parts = explode("'", $value, 3);
-		if (count($parts) !== 3) {
-			return null;
-		}
-		[$charset, $language, $encoded] = $parts;
-		unset($language); // Language tag is accepted but not used.
-
-		if (strcasecmp($charset, 'UTF-8') !== 0) {
-			$this->logger->info(
-				'Ignoring Content-Disposition filename* with unsupported charset; falling back to plain filename',
-				['charset' => $charset]
-			);
-			return null;
-		}
-
-		// rawurldecode() implements the RFC 3986 §2.1 pct-decode.
-		return rawurldecode($encoded);
-	}//end decodeRfc5987ExtendedValue()
 
 	/**
 	 * Extracts an endpoint from the given data and optionally retrieves a filename and tags.
