@@ -508,8 +508,8 @@ an error.
 - **WHEN** they trigger a manual run
 - **THEN** a flow run is created for that flow
 - **AND** its status is reflected on the page without a reload
-- @e2e exclude needs a runnable seeded flow and a run to complete — covered by
-  `tests/e2e/ci/flow-controls.spec.ts` and by the engine's unit tests
+- @e2e exclude needs a runnable seeded flow and a run to complete, which the e2e
+  seed does not build. Covered by the engine's unit tests only.
 
 #### Scenario: a suspended run is not shown as a failure
 
@@ -566,16 +566,15 @@ the operator has asked for any of them.
 - **WHEN** the admin expands that run in the run log
 - **THEN** the run's per-step entries are fetched and listed with their type,
   status and any error
-- @e2e exclude needs a flow with recorded runs — covered by
-  `tests/e2e/ci/flow-controls.spec.ts`, which creates a run, and by the
-  engine's unit tests
+- @e2e exclude needs a flow with recorded runs, which the e2e seed does not
+  create. Covered by the engine's unit tests only.
 
 #### Scenario: an empty history says so
 
 - **GIVEN** a flow that has never run
 - **WHEN** the admin opens its run log
 - **THEN** an empty state is shown rather than an empty list
-- @e2e exclude covered by `tests/e2e/ci/flow-controls.spec.ts`
+- @e2e exclude the empty run-log state has no e2e covering it.
 
 ### Requirement: A node that calls a Source once per item dispatches those calls concurrently (REQ-015)
 
