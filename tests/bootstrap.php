@@ -122,6 +122,41 @@ if ($autoloader instanceof \Composer\Autoload\ClassLoader && is_dir(__DIR__ . '/
 	}
 }
 
+// OpenRegister's PUBLISHED contracts. Not stubs: these are the real
+// files, shipped byte for byte by conduction/hydra-gates v1.18.0 and
+// held identical to openregister's own `lib/Contract/` by gate 67
+// (`openregister-contract-parity`). Loading the real definition is the
+// whole point: a hand-written double of a published contract is what
+// ADR-084 exists to stop.
+//
+// They need a `require_once` because the package declares no PSR-4
+// autoload for `OCA\OpenRegister\Contract\`; it ships the directory as
+// data. Verified against the installed vendor tree, not assumed:
+// `interface_exists()` on the resolver contract is false after a plain
+// composer install and true after this line.
+//
+// One source only. shillinq's run copied these files into its own repo
+// and dragged OpenRegister's `@spec` annotations along with them, which
+// the anchor gate then tried to resolve against the consuming repo:
+// seven findings for paths that were never going to be there. Reading
+// them out of vendor keeps the annotations pointing at the repo that
+// owns them.
+//
+// `RegisterSlugResolution` is a CLASS and `RegisterSlugResolverInterface`
+// an INTERFACE, so the guard has to ask both questions; a
+// `require_once` of an already-declared type is a fatal, not a no-op.
+$contractsDir = __DIR__ . '/../vendor/conduction/hydra-gates/hydra-gates/contracts';
+foreach (['RegisterSlugResolution', 'RegisterSlugResolverInterface'] as $contract) {
+	$fqcn = 'OCA\\OpenRegister\\Contract\\' . $contract;
+	if (class_exists($fqcn) === true || interface_exists($fqcn) === true) {
+		continue;
+	}
+
+	if (is_file($contractsDir . '/' . $contract . '.php') === true) {
+		require_once $contractsDir . '/' . $contract . '.php';
+	}
+}
+
 // Register test stubs for Doctrine\DBAL\* (referenced at parse-time by OCP
 // QueryBuilder interfaces) and OCA\OpenRegister\* (peer app not in vendor).
 // Stubs are guarded by class_exists() so they never clobber a real class when

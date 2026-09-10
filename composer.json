@@ -92,7 +92,7 @@
     },
     "require-dev": {
         "conduction/coding-standard": "^1.0",
-        "conduction/hydra-gates": "^1.8.2",
+        "conduction/hydra-gates": "^1.18.0",
         "cyclonedx/cyclonedx-php-composer": "^6.2",
         "nextcloud/ocp": "^34.0",
         "phpcsstandards/phpcsextra": "^1.5",
