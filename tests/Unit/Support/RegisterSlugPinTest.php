@@ -59,8 +59,8 @@ class RegisterSlugPinTest extends TestCase {
 	 * All ten, not just this app's own, and that is a departure from the
 	 * narrower list buildiq's copy of this guard carries. The reason is what
 	 * this app is: the fleet's service bus. It already writes into registers it
-	 * does not own — `zaken`, `documenten` and `vng-gemma` all appear in
-	 * register position under lib/ — so it is the app most likely to be the one
+	 * does not own (`zaken`, `documenten` and `vng-gemma` all appear in
+	 * register position under lib/), so it is the app most likely to be the one
 	 * that types another app's register slug. A guard scoped to `openconnector`
 	 * alone would watch the one slug this repository has already been cleaned
 	 * of and miss the nine it is most exposed to.
@@ -89,8 +89,8 @@ class RegisterSlugPinTest extends TestCase {
 	/**
 	 * Files allowed to name a superseded slug, and why.
 	 *
-	 * Each entry must be a genuine exception — a file that exists in order to
-	 * name the old slug — never a deferral. Anything else belongs in a resolver
+	 * Each entry must be a genuine exception, a file that exists in order to
+	 * name the old slug, never a deferral. Anything else belongs in a resolver
 	 * call.
 	 *
 	 * There is exactly one, and it is the rename itself: the repair step whose

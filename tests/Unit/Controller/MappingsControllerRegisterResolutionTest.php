@@ -52,7 +52,7 @@ use RuntimeException;
  *
  * Watched failing, not assumed. With `register: $register` reverted to
  * `register: ($data['register'] ?? 'openconnector')` and the resolution branch
- * removed, three assertions reddened and they were the right three. The exact
+ * removed, four of ten tests reddened and they were the right four. The exact
  * measurement is recorded in
  * {@see testAMigratedInstanceIsWrittenWithItsCurrentSlug}.
  *
@@ -60,7 +60,7 @@ use RuntimeException;
  *
  * The absence has to be visible. Before the resolution this path wrote into
  * `openconnector` regardless, and OpenRegister answers a write to a register
- * that is not there without raising — so the endpoint returned 200 carrying an
+ * that is not there without raising, so the endpoint returned 200 carrying an
  * object nobody could read back. An empty success and a real success are the
  * same response.
  */

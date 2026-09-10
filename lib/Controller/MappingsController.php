@@ -392,9 +392,9 @@ class MappingsController extends Controller {
 	 * already established that OpenRegister is present before it asks.
 	 *
 	 * @return RegisterSlugResolution|null The resolution, or null when the
-	 *                                     resolver itself could not be resolved —
-	 *                                     an OpenRegister too old to publish the
-	 *                                     contract. Handled identically to an
+	 *                                     resolver itself could not be resolved,
+	 *                                     which is an OpenRegister too old to
+	 *                                     publish the contract. Handled like an
 	 *                                     absent register by the caller, because
 	 *                                     in both cases this instance cannot say
 	 *                                     where the write should go.

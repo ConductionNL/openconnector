@@ -443,7 +443,7 @@ class Application extends App implements IBootstrap {
 		// Which slug this instance's registers actually answer to.
 		//
 		// Register slugs live in `openregister_registers`, and nine fleet apps
-		// ship a repair step that renames theirs — this app's own
+		// ship a repair step that renames theirs. This app's own
 		// {@see \OCA\Integriq\Repair\MigrateRegisterSlug} is one of them. The
 		// step runs per instance, so `openconnector` and `integriq` are both
 		// live across the estate on any given day, and a literal is wrong on

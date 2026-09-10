@@ -126,7 +126,7 @@ if ($autoloader instanceof \Composer\Autoload\ClassLoader && is_dir(__DIR__ . '/
 // files, shipped byte for byte by conduction/hydra-gates v1.18.0 and
 // held identical to openregister's own `lib/Contract/` by gate 67
 // (`openregister-contract-parity`). Loading the real definition is the
-// whole point — a hand-written double of a published contract is what
+// whole point: a hand-written double of a published contract is what
 // ADR-084 exists to stop.
 //
 // They need a `require_once` because the package declares no PSR-4
