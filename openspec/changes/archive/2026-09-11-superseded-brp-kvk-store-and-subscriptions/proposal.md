@@ -2,6 +2,30 @@
 kind: code
 ---
 
+> **SUPERSEDED (2026-09-11)** — Ruben rejected this design on 2026-09-11.
+> This change and OpenRegister's `registry-subscriptions`
+> (`openregister/openspec/changes/registry-subscriptions`) were written the
+> same morning and contradicted each other: this one gave integriq its own
+> `registryStore` register holding a second copy of every subscribed person
+> and company; OpenRegister's design updates the app's own person and
+> company records in place, where they already live. Decision: one record
+> per person or company, refreshed where it already lives, no second copy
+> of personal data — that is data minimisation and matches the
+> app-to-OpenRegister boundary (apps own their objects; OpenRegister owns
+> storage, schema and query for all of them). dossiq's `contacts-domain`
+> task 4.3 was already written against the OpenRegister shape before this
+> rejection landed.
+>
+> Never implemented (all tasks in `tasks.md` were unchecked). Superseded by
+> **`registry-subscription-connector`**, which keeps only the half of this
+> proposal that is genuinely integriq's: turning OpenRegister's
+> `RegistrySubscriptionRequestedEvent` into a live BRP/KvK subscription and
+> posting source changes back to OpenRegister's inbound update endpoint.
+> The `registryStore` register, `holders[]`, the CloudEvent fan-out and the
+> `integriq-registry-subject` data-provider leaf are dropped: OpenRegister's
+> `@self.registry` and query lenses on the app's own object make them
+> redundant. Archived without merging its delta spec.
+
 # Proposal: brp-kvk-store-and-subscriptions
 
 ## Summary
